@@ -4732,6 +4732,8 @@ router.post('/settings', requireAdminSession, express.urlencoded({ extended: tru
     const newSettings = { ...req.body };
     if (newSettings.whatsapp_enabled === 'true') newSettings.whatsapp_enabled = true;
     else if (newSettings.whatsapp_enabled === 'false') newSettings.whatsapp_enabled = false;
+    if (newSettings.voucher_enabled === 'true') newSettings.voucher_enabled = true;
+    else if (newSettings.voucher_enabled === 'false') newSettings.voucher_enabled = false;
 
     if (newSettings.qris_static_enabled === 'true') newSettings.qris_static_enabled = true;
     else if (newSettings.qris_static_enabled === 'false') newSettings.qris_static_enabled = false;

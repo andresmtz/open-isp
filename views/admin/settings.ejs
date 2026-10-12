@@ -432,6 +432,19 @@
           </div>
         </div>
 
+        <!-- Fitur Opsional -->
+        <div data-setcat="notif">
+          <h6 style="font-size:13px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px"><i class="bi bi-toggles"></i> Fitur Opsional</h6>
+          <div class="fg">
+            <label class="fl"><%= t('admin.set.voucher_enabled','Fitur Voucher (Beli Voucher Wi-Fi)') %></label>
+            <select class="fs" name="voucher_enabled">
+              <option value="true" <%= (settings.voucher_enabled === false || settings.voucher_enabled === 'false' || settings.voucher_enabled === '0' || settings.voucher_enabled === 0) ? '' : 'selected' %>><%= t('common.active','Aktif') %></option>
+              <option value="false" <%= (settings.voucher_enabled === false || settings.voucher_enabled === 'false' || settings.voucher_enabled === '0' || settings.voucher_enabled === 0) ? 'selected' : '' %>><%= t('common.inactive','Nonaktif') %></option>
+            </select>
+            <div style="font-size:10px; color:var(--muted); margin-top:4px">Nonaktifkan untuk menyembunyikan halaman Beli Voucher publik (mis. saat deploy).</div>
+          </div>
+        </div>
+
         <!-- WhatsApp -->
         <div data-setcat="notif">
           <h6 style="font-size:13px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px"><i class="bi bi-whatsapp"></i> Integrasi WhatsApp</h6>

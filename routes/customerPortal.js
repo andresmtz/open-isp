@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const customerDevice = require('../services/customerDeviceService');
 const { getSettingsWithCache, getNowLocal, getCurrentTimeInfo, getNowLocalISO, formatDateLocal, formatTimeLocal } = require('../config/settingsManager');
+function voucherFeatureOn() { try { const s = getSettingsWithCache() || {}; const v = s.voucher_enabled; return !(v === false || v === 'false' || v === '0' || v === 0); } catch (e) { return true; } }
 const noticeSvc = require('../services/serviceNoticeService');
 const ssidChangeCooldown = new Map(); // key: customer id / loginId -> timestamp terakhir ubah SSID
 const registrationService = require('../services/registrationService');
@@ -890,6 +891,7 @@ router.get('/check-billing', async (req, res) => {
 let _voucherLastGoodProfiles = null;
 
 router.get('/voucher', async (req, res) => {
+    if (!voucherFeatureOn()) return res.redirect('/customer/login?err=' + encodeURIComponent('Fitur voucher sedang dinonaktifkan'));
   const settings = getSettingsWithCache();
   const error = String(req.query.err || '').trim() || null;
   const info = String(req.query.info || '').trim() || null;
@@ -1149,6 +1151,7 @@ router.get('/voucher', async (req, res) => {
 });
 
 router.get('/voucher/qris/:orderId', async (req, res) => {
+    if (!voucherFeatureOn()) return res.redirect('/customer/login?err=' + encodeURIComponent('Fitur voucher sedang dinonaktifkan'));
   const settings = getSettingsWithCache();
   const orderId = Number(req.params.orderId || 0);
   const secret = settings.session_secret || 'rahasia-portal-pelanggan-default-ganti-ini';
@@ -1196,6 +1199,7 @@ router.get('/voucher/qris/:orderId', async (req, res) => {
 });
 // API endpoint untuk cek status voucher order (untuk auto-polling di halaman QRIS)
 router.get('/voucher/status/:orderId', async (req, res) => {
+    if (!voucherFeatureOn()) return res.json({ success: false, status: 'disabled', message: 'Fitur voucher dinonaktifkan' });
   const settings = getSettingsWithCache();
   const orderId = Number(req.params.orderId || 0);
   const secret = settings.session_secret || 'rahasia-portal-pelanggan-default-ganti-ini';
@@ -1224,6 +1228,7 @@ router.get('/voucher/status/:orderId', async (req, res) => {
 
 
 router.post('/public/voucher/create-payment', async (req, res) => {
+    if (!voucherFeatureOn()) return res.status(403).json({ success: false, message: 'Fitur voucher dinonaktifkan' });
   const settings = getSettingsWithCache();
 
   const buyerPhone = normalizeBuyerPhone(req.body.buyer_phone);
@@ -3352,6 +3357,7 @@ router.post('/payment/proof/:invoiceId', uploadProof.single('proof'), async (req
 });
 
 router.post('/voucher/proof/:orderId', uploadProof.single('proof'), async (req, res) => {
+    if (!voucherFeatureOn()) return res.redirect('/customer/login?err=' + encodeURIComponent('Fitur voucher sedang dinonaktifkan'));
   const settings = getSettingsWithCache();
   const secret = settings.session_secret || 'rahasia-portal-pelanggan-default-ganti-ini';
   const token = String(req.body && req.body.token ? req.body.token : '').trim();

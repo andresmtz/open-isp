@@ -142,6 +142,10 @@ function restoreDatabase(backupFileName) {
 
     // Restore database
     fs.copyFileSync(backupFilePath, dbPath);
+    // Buang WAL/SHM lama: backup VACUUM INTO self-contained, WAL lama milik DB sebelumnya
+    for (const ext of ['-wal', '-shm']) {
+      try { fs.unlinkSync(dbPath + ext); } catch (e) {}
+    }
 
     const stats = fs.statSync(dbPath);
     const sizeKB = Math.round(stats.size / 1024);

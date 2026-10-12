@@ -4959,6 +4959,7 @@ router.post('/backup/restore', requireAdminSession, express.urlencoded({ extende
   try {
     const { fileName, type } = req.body;
     let result;
+    let restartNeeded = false;
 
     if (type === 'database') {
       result = backupSvc.restoreDatabase(fileName);
@@ -4970,7 +4971,12 @@ router.post('/backup/restore', requireAdminSession, express.urlencoded({ extende
     }
 
     if (result.success) {
-      req.session._msg = { type: 'success', text: `Restore berhasil: ${fileName}` };
+      if (type === 'database') {
+        restartNeeded = true;
+        req.session._msg = { type: 'success', text: `Restore database berhasil: ${fileName}. Aplikasi restart otomatis untuk menerapkan...` };
+      } else {
+        req.session._msg = { type: 'success', text: `Restore berhasil: ${fileName}` };
+      }
     } else {
       req.session._msg = { type: 'error', text: `Gagal restore: ${result.error}` };
     }
@@ -4978,6 +4984,8 @@ router.post('/backup/restore', requireAdminSession, express.urlencoded({ extende
     req.session._msg = { type: 'error', text: `Gagal: ${e.message}` };
   }
   res.redirect('/admin/backup');
+  // DB di-swap: koneksi lama masih memakai file lama -> muat ulang proses (PM2/Docker restart otomatis)
+  if (restartNeeded) setTimeout(() => process.exit(0), 2000);
 });
 
 router.post('/backup/upload-restore', requireAdminSession, upload.single('backupFile'), (req, res) => {
@@ -4998,12 +5006,14 @@ router.post('/backup/upload-restore', requireAdminSession, upload.single('backup
 
     let result;
     let savedFileName = '';
+    let restartNeeded = false;
 
     if (ext === '.db' || ext === '.sqlite' || originalName.includes('billing_db')) {
       savedFileName = `uploaded_db_${timestamp}_${originalName}`;
       const savePath = path.join(backupDir, savedFileName);
       fs.writeFileSync(savePath, file.buffer);
       result = backupSvc.restoreDatabase(savedFileName);
+      restartNeeded = true;
     } else if (ext === '.json' || originalName.includes('settings')) {
       savedFileName = `uploaded_settings_${timestamp}_${originalName}`;
       const savePath = path.join(backupDir, savedFileName);
@@ -5035,6 +5045,7 @@ router.post('/backup/upload-restore', requireAdminSession, upload.single('backup
     req.session._msg = { type: 'error', text: 'Gagal upload & restore: ' + e.message };
   }
   res.redirect('/admin/backup');
+  if (restartNeeded && result && result.success) setTimeout(() => process.exit(0), 2000);
 });
 
 router.post('/backup/delete', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {

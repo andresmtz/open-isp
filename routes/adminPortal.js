@@ -4956,10 +4956,10 @@ router.post('/backup/create', requireAdminSession, express.urlencoded({ extended
 });
 
 router.post('/backup/restore', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
+  let restartNeeded = false;
   try {
     const { fileName, type } = req.body;
     let result;
-    let restartNeeded = false;
 
     if (type === 'database') {
       result = backupSvc.restoreDatabase(fileName);
@@ -4989,6 +4989,7 @@ router.post('/backup/restore', requireAdminSession, express.urlencoded({ extende
 });
 
 router.post('/backup/upload-restore', requireAdminSession, upload.single('backupFile'), (req, res) => {
+  let restartNeeded = false;
   try {
     const file = req.file;
     if (!file || !file.buffer || !file.originalname) {
@@ -5006,7 +5007,6 @@ router.post('/backup/upload-restore', requireAdminSession, upload.single('backup
 
     let result;
     let savedFileName = '';
-    let restartNeeded = false;
 
     if (ext === '.db' || ext === '.sqlite' || originalName.includes('billing_db')) {
       savedFileName = `uploaded_db_${timestamp}_${originalName}`;

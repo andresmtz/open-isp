@@ -1555,13 +1555,13 @@ async function generateIsolirPortalScript() {
   let port = 443;
   let isHttps = true;
   try {
-    const u = new URL(normalized || 'http://127.0.0.1:4555');
+    const u = new URL(normalized || 'http://127.0.0.1:3001');
     hostname = u.hostname;
     port = u.port ? parseInt(u.port, 10) : (u.protocol === 'https:' ? 443 : 80);
     isHttps = u.protocol === 'https:';
   } catch {
     hostname = 'GANTI-host-portal-billing';
-    port = 4555;
+    port = 3001;
     isHttps = false;
   }
 
@@ -1724,7 +1724,7 @@ async function setupIsolirFirewall(routerId = null) {
     try {
       const raw = String(settings.app_url || '').trim();
       const normalized = raw && /^https?:\/\//i.test(raw) ? raw : (raw ? `https://${raw}` : '');
-      const u = new URL(normalized || 'http://127.0.0.1:4555');
+      const u = new URL(normalized || 'http://127.0.0.1:3001');
       const isHttps = u.protocol === 'https:';
       const port = u.port ? parseInt(u.port, 10) : (isHttps ? 443 : 80);
       httpNatPort = isHttps ? 80 : port;

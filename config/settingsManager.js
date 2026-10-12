@@ -99,7 +99,7 @@ function startSettingsWatcher() {
 
       try {
         const s = getSettingsWithCache();
-        const port = s.server_port ?? 4555;
+        const port = s.server_port ?? 3001;
         const host = s.server_host || 'localhost';
         const gurl = s.genieacs_url || '(tidak diatur)';
         const company = s.company_header || '(default)';

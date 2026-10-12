@@ -1107,7 +1107,7 @@ app.post('/api/webhook/v1/payment-notif', multer().any(), async (req, res) => {
 
 // Variabel global untuk modul lain yang masih membaca konfigurasi (mis. skrip utilitas)
 global.appSettings = {
-  port: getSetting('server_port', 4555),
+  port: getSetting('server_port', 3001),
   host: getSetting('server_host', 'localhost'),
   genieacsUrl: getSetting('genieacs_url', 'http://localhost:7557'),
   genieacsUsername: getSetting('genieacs_username', ''),

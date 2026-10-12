@@ -17,6 +17,7 @@ async function checkDependencies() {
     mikrotik: [],
     genieacs: { status: 'unknown', message: '' },
     whatsapp: { status: 'unknown', message: '' },
+    telegram: { status: 'unknown', message: '' },
     paymentGateways: [],
     timestamp: new Date().toISOString()
   };
@@ -104,39 +105,54 @@ async function checkDependencies() {
     }
   }
 
-  // 3. Check WhatsApp Gateway (using whatsappStatus from whatsappBot)
+  // 3. Check WhatsApp Gateway (GoWA / Baileys sesuai setting wa_gateway_type)
   try {
-    // Import whatsappStatus dynamically to get real-time status
-    const whatsappBotModule = await import('./whatsappBot.mjs');
-    const waStatus = whatsappBotModule.whatsappStatus;
-    
-    // Check connection status
-    // Possible values: 'connecting', 'qr', 'open', 'loggedOut', 'close'
-    const isOnline = waStatus.connection === 'open';
-    const isQR = waStatus.connection === 'qr';
-    const isLoggedOut = waStatus.connection === 'loggedOut';
-    
-    let message = 'WhatsApp is disconnected';
-    if (isOnline) {
-      const phone = waStatus.user?.id ? String(waStatus.user.id).split(':')[0] : 'Unknown';
-      message = `WhatsApp connected (${phone})`;
-    } else if (isQR) {
-      message = 'WhatsApp waiting for QR scan';
-    } else if (isLoggedOut) {
-      message = 'WhatsApp logged out - scan QR again';
+    const { getSetting } = require('../config/settingsManager');
+    const gw = String(getSetting('wa_gateway_type', 'baileys') || 'baileys').toLowerCase();
+    if (gw === 'gowa') {
+      const base = String(getSetting('gowa_base_url', 'http://127.0.0.1:3000') || '').replace(/\/+$/, '');
+      const u = getSetting('gowa_username', '');
+      const p = getSetting('gowa_password', '');
+      const cfg = { timeout: 6000, validateStatus: (s) => s < 500 };
+      if (u && p) cfg.auth = { username: u, password: p };
+      const resp = await axios.get(`${base}/app/status`, cfg);
+      const res = (resp.data && resp.data.results) || {};
+      const isOnline = !!res.is_connected;
+      results.whatsapp = {
+        status: isOnline ? 'online' : 'offline',
+        message: isOnline ? `GoWA connected (${res.jid || res.device_id || '-'})` : 'GoWA tidak terhubung'
+      };
     } else {
-      message = `WhatsApp ${waStatus.connection || 'disconnected'}`;
+      const whatsappBotModule = await import('./whatsappBot.mjs');
+      const waStatus = whatsappBotModule.whatsappStatus;
+      const isOnline = waStatus && waStatus.connection === 'open';
+      const isQR = waStatus && waStatus.connection === 'qr';
+      const isLoggedOut = waStatus && waStatus.connection === 'loggedOut';
+      let message = 'WhatsApp is disconnected';
+      if (isOnline) { const phone = waStatus.user && waStatus.user.id ? String(waStatus.user.id).split(':')[0] : 'Unknown'; message = `WhatsApp connected (${phone})`; }
+      else if (isQR) message = 'WhatsApp waiting for QR scan';
+      else if (isLoggedOut) message = 'WhatsApp logged out - scan QR again';
+      else message = `WhatsApp ${(waStatus && waStatus.connection) || 'disconnected'}`;
+      results.whatsapp = { status: isOnline ? 'online' : 'offline', message };
     }
-    
-    results.whatsapp = {
-      status: isOnline ? 'online' : 'offline',
-      message: message
-    };
   } catch (err) {
-    results.whatsapp = {
-      status: 'offline',
-      message: `WhatsApp check error: ${err.message}`
-    };
+    results.whatsapp = { status: 'offline', message: `WhatsApp check error: ${err.message}` };
+  }
+
+  // 4. Check Telegram Bot
+  try {
+    const { getSetting } = require('../config/settingsManager');
+    const enabled = !!getSetting('telegram_enabled', false);
+    const token = String(getSetting('telegram_bot_token', '') || '').trim();
+    if (!enabled || !token) {
+      results.telegram = { status: 'offline', message: !enabled ? 'Telegram dinonaktifkan' : 'Token belum diisi' };
+    } else {
+      const resp = await axios.get(`https://api.telegram.org/bot${token}/getMe`, { timeout: 6000, validateStatus: (s) => s < 500 });
+      if (resp.data && resp.data.ok) results.telegram = { status: 'online', message: 'Terhubung sebagai @' + ((resp.data.result && resp.data.result.username) || '-') };
+      else results.telegram = { status: 'offline', message: (resp.data && resp.data.description) || 'getMe gagal' };
+    }
+  } catch (err) {
+    results.telegram = { status: 'offline', message: `Telegram check error: ${err.message}` };
   }
 
   return results;

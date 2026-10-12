@@ -568,10 +568,18 @@
               </td>
             </tr>
             <tr>
-              <td>WhatsApp Bot</td>
+              <td>WhatsApp Bot<div class="sc-label" style="font-size:11px"><%= dependencies.whatsapp.message %></div></td>
               <td class="text-right">
                 <span class="badge <%= dependencies.whatsapp.status === 'online' ? 'bs' : 'bd' %>">
                   <%= dependencies.whatsapp.status.toUpperCase() %>
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>Telegram Bot<div class="sc-label" style="font-size:11px"><%= dependencies.telegram ? dependencies.telegram.message : '' %></div></td>
+              <td class="text-right">
+                <span class="badge <%= (dependencies.telegram && dependencies.telegram.status === 'online') ? 'bs' : 'bd' %>">
+                  <%= dependencies.telegram ? dependencies.telegram.status.toUpperCase() : 'UNKNOWN' %>
                 </span>
               </td>
             </tr>

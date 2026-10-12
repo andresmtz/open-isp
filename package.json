@@ -10,9 +10,8 @@
     "fix-permissions": "sudo chown -R $USER:$USER ."
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "^7.0.0-rc11",
     "@zxing/library": "^0.21.3",
-    "axios": "^1.6.7",
+    "axios": "^1.20.0",
     "better-sqlite3": "^11.3.0",
     "compression": "^1.8.2",
     "dotenv": "^16.3.1",
@@ -22,7 +21,7 @@
     "express-session": "^1.18.1",
     "jimp": "^1.6.1",
     "jsqr": "^1.4.0",
-    "multer": "^2.1.1",
+    "multer": "^2.4.0",
     "net-snmp": "^3.26.1",
     "node-cron": "^4.2.1",
     "node-telegram-bot-api": "^0.66.0",

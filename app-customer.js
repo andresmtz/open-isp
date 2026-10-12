@@ -59,7 +59,7 @@ app.use(compression());
 const isProduction = process.env.NODE_ENV === 'production';
 const cookieSecure = getSetting('cookie_secure', isProduction);
 const trustProxySetting = getSetting('trust_proxy', true);
-app.set('trust proxy', trustProxySetting ? 1 : true);
+app.set('trust proxy', trustProxySetting ? 1 : false);
 
 // Middleware dasar
 app.use(express.json({

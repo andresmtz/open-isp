@@ -37,6 +37,8 @@ const server = http.createServer((req, res) => {
   );
 });
 
+server.on('error', (e) => console.error('[isolir-redirect] listen error:', e.message));
+
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[isolir-redirect] listening on 0.0.0.0:${PORT} -> ${TARGET}`);
 });

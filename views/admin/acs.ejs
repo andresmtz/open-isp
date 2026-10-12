@@ -174,7 +174,7 @@
                                         <span class="text-muted" style="font-size:12px;">-</span>
                                     <% } %>
                                 </td>
-                                <td><code><%= d.ip %></code></td>
+                                <td><code><%= d.ip || d.pppoe_ip || '-' %></code></td>
                                 <td><%= d.rx_power %> dBm</td>
                                 <td><%= d.pppoe_user %></td>
                                 <td><span class="acs-server-tag"><%= d.acs_server_name %></span></td>

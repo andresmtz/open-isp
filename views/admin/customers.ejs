@@ -247,7 +247,7 @@
               <td class="text-muted"><%= i+1 %></td>
               <td class="fw6">
                 <a href="javascript:void(0)" onclick="viewCustDetail(<%= i %>)" style="color:var(--primary);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="<%= t('admin.cust.tt_detail','Klik untuk lihat detail pelanggan & MikroTik') %>">
-                  <%= c.name %>
+                  <%= c.name %><% var _miss=[]; if(!c.phone)_miss.push('HP'); if(!c.lat||!c.lng)_miss.push('koordinat'); if(!c.genieacs_tag)_miss.push('ACS'); %><% if(_miss.length===0){ %><i class="bi bi-check-circle-fill" style="font-size:12px;color:#22c55e;vertical-align:middle;" title="<%= t('admin.customers.data_ok','Data lengkap') %>"></i><% } else { %><i class="bi bi-x-circle-fill" style="font-size:12px;color:#ef4444;vertical-align:middle;" title="<%= t('admin.customers.data_incomplete','Belum lengkap') %>: <%- _miss.join(', ') %>"></i><% } %>
                   <i class="bi bi-info-circle-fill" style="font-size:12px;opacity:0.75;"></i>
                 </a>
                 <% if (c.customer_code) { %><div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px;" title="ID Pelanggan"><i class="bi bi-person-badge"></i> <%= c.customer_code %></div><% } %>

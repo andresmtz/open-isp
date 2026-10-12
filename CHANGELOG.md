@@ -2,6 +2,17 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/) dan [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — setelah v0.5.1
+
+### Diperbaiki
+- Kolom **IP Address** di **GenieACS Pro** kini tampil saat **mode pencarian** (sebelumnya kosong).
+- Menu **Update GitHub** otomatis disembunyikan pada instalasi **tanpa `.git`** (container/Docker), tetap tampil pada instalasi git.
+
+### Ditambahkan
+- **Badge kelengkapan data** di daftar pelanggan: centang hijau = **nomor HP + koordinat + ACS** lengkap; silang merah = ada yang kurang (tooltip menyebut yang belum).
+- **Backend speedtest bawaan** (`/speedtest/*`) kini aktif (LibreSpeed self-hosted, same-origin).
+- `isolir-redirect-server` dapat dijalankan **embedded** dalam proses app (opt-out via `ISOLIR_REDIRECT_EMBEDDED=0`).
+
 ## [0.5.1] — 2026-10-13 — "pickle-lime"
 
 ### Diubah

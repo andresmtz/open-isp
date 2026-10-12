@@ -67,6 +67,7 @@ const app = express();
 
 // Kompresi gzip (performa: respons HTML/CSS/JS lebih kecil)
 app.use(compression());
+app.use('/speedtest', require('./routes/speedtest'));
 
 const isProduction = process.env.NODE_ENV === 'production';
 const cookieSecure = getSetting('cookie_secure', isProduction);
@@ -2242,3 +2243,8 @@ app.use(errorHandler);
 
 // Export app untuk testing
 module.exports = app;
+
+// isolir redirect server embedded (port 8099) — untuk container/reverse-proxy; opt-out: ISOLIR_REDIRECT_EMBEDDED=0
+if (String(process.env.ISOLIR_REDIRECT_EMBEDDED || '1') !== '0') {
+  try { require('./isolir-redirect-server.js'); } catch (e) { console.error('[isolir-redirect]', e.message); }
+}

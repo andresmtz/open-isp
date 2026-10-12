@@ -1052,6 +1052,7 @@ router.get('/', async (req, res) => {
                                     model: d._deviceId?._ProductClass || '-',
                                     rx_power: rxPower,
                                     pppoe_ip: ip,
+                                    ip: ip,
                                     pppoe_user: pppoeUser,
                                     customer_name: customerName,
                                     acs_server_id: server.id,

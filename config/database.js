@@ -10,6 +10,26 @@ if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
 const dbPath = path.join(dbDir, 'billing.db');
 
+// Terapkan restore DB yang ditunda SEBELUM koneksi dibuka.
+// (menimpa billing.db di bawah koneksi hidup bisa merusak DB karena WAL bercampur)
+const _pendingRestore = path.join(dbDir, '.restore-pending');
+if (fs.existsSync(_pendingRestore)) {
+  try {
+    const _bkName = fs.readFileSync(_pendingRestore, 'utf8').trim();
+    const _bkPath = path.join(__dirname, '..', 'backups', _bkName);
+    if (_bkName && fs.existsSync(_bkPath)) {
+      fs.copyFileSync(_bkPath, dbPath);
+      for (const _ext of ['-wal', '-shm']) { try { fs.unlinkSync(dbPath + _ext); } catch (e) {} }
+      console.log('[DB] Restore tertunda diterapkan dari ' + _bkName);
+    } else {
+      console.error('[DB] Restore tertunda dilewati, backup tidak ada: ' + _bkName);
+    }
+  } catch (e) {
+    console.error('[DB] Gagal menerapkan restore tertunda:', e.message);
+  }
+  try { fs.unlinkSync(_pendingRestore); } catch (e) {}
+}
+
 let db;
 try {
   db = new Database(dbPath);

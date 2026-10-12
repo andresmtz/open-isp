@@ -140,22 +140,19 @@ function restoreDatabase(backupFileName) {
       logger.warn('[Backup] Failed to create pre-restore backup');
     }
 
-    // Restore database
-    fs.copyFileSync(backupFilePath, dbPath);
-    // Buang WAL/SHM lama: backup VACUUM INTO self-contained, WAL lama milik DB sebelumnya
-    for (const ext of ['-wal', '-shm']) {
-      try { fs.unlinkSync(dbPath + ext); } catch (e) {}
-    }
+    // Tunda restore ke saat startup: menimpa DB di bawah koneksi hidup bisa merusak (WAL bercampur).
+    // Penanda dibaca config/database.js saat boot, sebelum koneksi dibuka.
+    const pendingPath = path.join(projectRoot, 'database', '.restore-pending');
+    fs.writeFileSync(pendingPath, backupFileName, 'utf8');
+    const size = fs.statSync(backupFilePath).size;
 
-    const stats = fs.statSync(dbPath);
-    const sizeKB = Math.round(stats.size / 1024);
+    logger.info(`[Backup] Restore dijadwalkan (diterapkan saat restart): ${backupFileName}`);
 
-    logger.info(`[Backup] Database restored from: ${backupFileName} (${sizeKB} KB)`);
-    
     return {
       success: true,
       fileName: backupFileName,
-      size: stats.size,
+      size,
+      pendingRestart: true,
       timestamp: getNowLocalISO(),
       preRestoreBackup: preRestoreBackup.fileName
     };

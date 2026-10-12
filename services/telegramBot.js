@@ -1,4 +1,4 @@
-const TelegramBot = require('node-telegram-bot-api');
+const { CompatBot } = require('./telegramCompat');
 const { getSetting, getNowLocal } = require('../config/settingsManager');
 const { logger } = require('../config/logger');
 const customerSvc = require('./customerService');
@@ -38,7 +38,7 @@ function initTelegram() {
     return; 
   }
 
-  bot = new TelegramBot(token, { polling: true });
+  bot = new CompatBot(token);
 
   // ── Wrapper aman: bila Telegram gagal parse Markdown (mis. underscore pada
   // username pelanggan), kirim ulang otomatis TANPA parse_mode.

@@ -5234,7 +5234,7 @@ router.post('/api/genieacs/settings', requireAdmin, async (req, res) => {
     // Save to file
     const fs = require('fs');
     const path = require('path');
-    const settingsPath = path.join(__dirname, '../settings.json');
+    const settingsPath = require('../config/paths').settingsPath;
     fs.writeFileSync(settingsPath, JSON.stringify(currentSettings, null, 2), 'utf8');
 
     // Log audit

@@ -17,7 +17,7 @@ let settingsCacheTime = 0;
 const CACHE_DURATION = 2000; // 2 detik
 
 // File system watcher untuk auto-reload settings
-const settingsPath = path.join(__dirname, '../settings.json');
+const { settingsPath } = require('./paths');
 let watcher = null;
 
 // Helper untuk baca settings.json secara dinamis

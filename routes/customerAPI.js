@@ -2190,7 +2190,7 @@ router.post('/app/admin/settings/update', requireAdminApiAuth, (req, res) => {
   try {
     const allowed = ['company_header', 'company_subheader', 'company_phone', 'company_address', 'timezone', 'qris_enabled', 'auto_isolate_enabled', 'webhook_secret'];
     const updates = req.body || {};
-    const settingsPath = require('path').join(__dirname, '../settings.json');
+    const settingsPath = require('../config/paths').settingsPath;
     const current = JSON.parse(require('fs').readFileSync(settingsPath, 'utf8'));
     let changed = 0;
     for (const key of allowed) {

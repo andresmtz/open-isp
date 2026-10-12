@@ -11,7 +11,7 @@ const { getSetting, getCurrentDateInTimezone, getNowLocalISO } = require('../con
 const projectRoot = path.join(__dirname, '..');
 const backupDir = path.join(projectRoot, 'backups');
 const dbPath = path.join(projectRoot, 'database', 'billing.db');
-const settingsPath = path.join(projectRoot, 'settings.json');
+const { settingsPath } = require('../config/paths');
 
 // Pastikan direktori backup ada
 if (!fs.existsSync(backupDir)) {

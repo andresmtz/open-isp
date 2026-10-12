@@ -1318,7 +1318,7 @@ router.put('/api/servers/legacy', requireAdmin, express.json(), async (req, res)
         if (clearPassword) currentSettings.genieacs_password = '';
         else if (String(passwordInput || '').trim()) currentSettings.genieacs_password = String(passwordInput || '');
 
-        const settingsPath = path.join(__dirname, '../settings.json');
+        const settingsPath = require('../config/paths').settingsPath;
         fs.writeFileSync(settingsPath, JSON.stringify(currentSettings, null, 2), 'utf8');
 
         res.json({ success: true, message: 'Default ACS berhasil diperbarui.' });

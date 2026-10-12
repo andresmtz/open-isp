@@ -63,7 +63,6 @@
 - `tickets` - Tiket support pelanggan
 
 ### 10. Payment & Digital
-- `digiflazz_transactions` - Transaksi pulsa/data Digiflazz
 - `vomit_log` - Log webhook pembayaran (generic)
 
 ---
@@ -433,23 +432,6 @@ CREATE TABLE vouchers (
   sold_to_agent TEXT,                      -- Agent ID
   used_by_customer TEXT,
   expiry_date DATE,
-  created_at DATETIME DEFAULT (NOW_LOCAL())
-);
-```
-
----
-
-### digiflazz_transactions
-```sql
-CREATE TABLE digiflazz_transactions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  agent_id INTEGER NOT NULL REFERENCES agents(id),
-  ref_id TEXT NOT NULL UNIQUE,             -- Digiflazz reference ID
-  phone_or_code TEXT NOT NULL,             -- Tujuan nomor / kode
-  product_sku TEXT NOT NULL,
-  amount INTEGER NOT NULL,
-  status TEXT DEFAULT 'pending',           -- pending, success, failed
-  response_data TEXT,                      -- JSON response
   created_at DATETIME DEFAULT (NOW_LOCAL())
 );
 ```

@@ -546,9 +546,7 @@ function forceUnlockCoreMenus() {
     let states = rowStates ? JSON.parse(rowStates.value) : {};
     let keys = rowKeys ? JSON.parse(rowKeys.value) : {};
     
-    const hasGit = fs.existsSync(path.join(__dirname, '..', '.git'));
-    const coreMenus = ['mikrotik', 'radius_server', 'whatsapp', 'broadcast', 'settings', 'backup', 'monitoring', 'audit_logs'];
-    if (hasGit) coreMenus.push('update');
+    const coreMenus = ['mikrotik', 'radius_server', 'whatsapp', 'broadcast', 'update', 'settings', 'backup', 'monitoring', 'audit_logs'];
     const passwordHash = 'af03458614be223016c5bc1c0788eaefc6a6bfd0c11cdcd4bc520f49d0cb474a'; // hash kode aktivasi default — plaintext hanya di settings.json (activation_code)
     
     const crypto = require('crypto');
@@ -570,8 +568,6 @@ function forceUnlockCoreMenus() {
         changed = true;
       }
     }
-
-    if (!hasGit && states['update'] !== 'hidden') { states['update'] = 'hidden'; changed = true; }
 
     if (changed) {
       const now = new Date().toISOString();

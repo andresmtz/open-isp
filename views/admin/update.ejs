@@ -29,6 +29,17 @@
         <% if (info && info.error) { %>
           <div class="alert alert-d"><i class="bi bi-exclamation-circle"></i> <%= info.error %></div>
         <% } %>
+        <% if (info && info.container) { %>
+          <div class="alert" style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.55">
+            <b><i class="bi bi-box-seam"></i> <%= t('admin.update.container_title', 'Instalasi Container (tanpa .git)') %></b><br>
+            <%= t('admin.update.container_msg', 'Pembaruan TIDAK lewat git. Bangun ulang image dari repo terbaru lalu ganti container:') %>
+            <div style="margin-top:8px;font-family:monospace;font-size:12px;background:rgba(0,0,0,.25);padding:8px 10px;border-radius:8px">
+              docker compose build &amp;&amp; docker compose up -d<br>
+              # atau: build image baru, lalu ganti tag/container
+            </div>
+            <%= t('admin.update.container_safe', 'Data (settings.json, database, uploads) tetap aman bila disimpan di volume/mount.') %>
+          </div>
+        <% } %>
         <div class="form-row" style="align-items:flex-start">
           <div class="fg">
             <label class="fl"><%= t('admin.update.server_version', 'Versi Server (version.txt)') %></label>
@@ -51,6 +62,7 @@
           </div>
         </div>
 
+        <% if (!(info && info.container)) { %>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
           <form method="GET" action="/admin/update">
             <button type="submit" class="btn btn-g"><i class="bi bi-arrow-repeat"></i> <%= t('admin.update.check', 'Cek Versi') %></button>
@@ -63,6 +75,7 @@
         <div style="margin-top:12px;color:var(--muted);font-size:12px;line-height:1.5">
           <%= t('admin.update.keep_files', 'File yang tidak ditimpa saat update: settings.json dan folder database. Setelah update selesai, restart aplikasi agar versi baru aktif.') %>
         </div>
+        <% } %>
       </div>
     </div>
 

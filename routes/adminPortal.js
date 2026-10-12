@@ -384,7 +384,9 @@ function getUpdateInfo(repoRoot) {
 
   const inside = runCmd('git', ['rev-parse', '--is-inside-work-tree'], repoRoot);
   if (!inside.ok) {
-    info.error = 'Folder ini belum menjadi git repository.';
+    // Tanpa .git (Docker/container): update dilakukan via rebuild image (bukan git)
+    info.container = true;
+    info.containerMessage = 'Instalasi ini berjalan sebagai kontainer/gambar (tanpa .git). Pembaruan dilakukan dengan membangun ulang image dari repo terbaru.';
     return info;
   }
 
@@ -4554,6 +4556,10 @@ router.get('/update', requireAdminSession, requireSidebarMenuAccess('update'), r
 
 router.post('/update/run', requireAdminSession, restrictToAdmin, (req, res) => {
   const repoRoot = path.resolve(__dirname, '..');
+  if (!runCmd('git', ['rev-parse', '--is-inside-work-tree'], repoRoot).ok) {
+    req.session._msg = { type: 'error', text: 'Instalasi kontainer (tanpa .git): pembaruan dilakukan dengan rebuild image, bukan lewat git.' };
+    return res.redirect('/admin/update');
+  }
   const log = [];
   const pushCmd = (label, r) => {
     log.push(`$ ${label}`.trim());

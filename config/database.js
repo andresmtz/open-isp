@@ -464,7 +464,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS wa_chat_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     direction TEXT NOT NULL DEFAULT 'outbound',
-    gateway TEXT NOT NULL DEFAULT 'baileys',
+    gateway TEXT NOT NULL DEFAULT 'gowa',
     sender_phone TEXT,
     recipient_phone TEXT,
     customer_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,

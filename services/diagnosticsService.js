@@ -108,7 +108,7 @@ async function checkDependencies() {
   // 3. Check WhatsApp Gateway (GoWA / Baileys sesuai setting wa_gateway_type)
   try {
     const { getSetting } = require('../config/settingsManager');
-    const gw = String(getSetting('wa_gateway_type', 'baileys') || 'baileys').toLowerCase();
+    const gw = String(getSetting('wa_gateway_type', 'gowa') || 'baileys').toLowerCase();
     if (gw === 'gowa') {
       const base = String(getSetting('gowa_base_url', 'http://127.0.0.1:3000') || '').replace(/\/+$/, '');
       const u = getSetting('gowa_username', '');

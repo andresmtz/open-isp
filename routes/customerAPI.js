@@ -2088,7 +2088,7 @@ router.get('/app/admin/olts', requireAdminApiAuth, (req, res) => {
 // ─── ADMIN NATIVE: WHATSAPP STATUS ───────────────────────────────────────────
 router.get('/app/admin/whatsapp/status', requireAdminApiAuth, async (req, res) => {
   try {
-    const gwType = String(require('../config/settingsManager').getSetting('wa_gateway_type', 'baileys') || 'baileys').toLowerCase();
+    const gwType = String(require('../config/settingsManager').getSetting('wa_gateway_type', 'gowa') || 'baileys').toLowerCase();
     let isConnected = false;
     let waNumber = '-';
     let waName = gwType.toUpperCase();

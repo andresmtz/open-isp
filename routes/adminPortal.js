@@ -6496,7 +6496,7 @@ router.get('/whatsapp/gowa/qr.png', requireAdminSession, async (req, res) => {
 });
 
 router.get('/whatsapp', requireAdminSession, requireSidebarMenuAccess('whatsapp'), async (req, res) => {
-  const waGatewayType = getSetting('wa_gateway_type', 'baileys');
+  const waGatewayType = getSetting('wa_gateway_type', 'gowa');
   const metaSettings = {
     meta_phone_number_id: getSetting('meta_phone_number_id', ''),
     meta_waba_id: getSetting('meta_waba_id', ''),
@@ -6611,7 +6611,7 @@ router.post('/whatsapp/test-fonnte', requireAdminSession, express.json(), async 
 
 // LIVE CHAT ROUTES
 router.get('/whatsapp/live-chat', requireAdminSession, requireSidebarMenuAccess('whatsapp'), async (req, res) => {
-  const waGatewayType = getSetting('wa_gateway_type', 'baileys');
+  const waGatewayType = getSetting('wa_gateway_type', 'gowa');
   const customers = customerSvc.getAllCustomers();
   res.render('admin/whatsapp_live_chat', {
     title: 'Live Chat WhatsApp',
@@ -7075,7 +7075,7 @@ router.post('/whatsapp/run-reminder-now', requireAdminSession, async (req, res) 
 
 router.get('/api/whatsapp/status', requireAdmin, async (req, res) => {
     try {
-      const gatewayType = getSetting('wa_gateway_type', 'baileys');
+      const gatewayType = getSetting('wa_gateway_type', 'gowa');
       if (gatewayType === 'fonnte') {
         const token = getSetting('fonnte_token', '');
         res.json({

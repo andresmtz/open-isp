@@ -62,7 +62,7 @@ async function runAutoBillingReminder() {
     const billingEnabled = getSetting('whatsapp_billing_to_customer_enabled', true);
     if (!enabled || !waEnabled || !billingEnabled) return { target: 0, sent: 0, failed: 0, skipped: 'disabled' };
 
-    const gatewayType = getSetting('wa_gateway_type', 'baileys');
+    const gatewayType = getSetting('wa_gateway_type', 'gowa');
     const waSvc = require('./whatsappService');
     
     if (gatewayType === 'meta') {

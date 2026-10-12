@@ -108,7 +108,7 @@ Dukungan sukarela tetap diterima lewat menu **Dukung OPEN-ISP** di aplikasi.
 
 ## Teknologi
 
-Node.js · Express · EJS · better-sqlite3 (SQLite) · Bootstrap 5 + Bootstrap Icons (vendor lokal) · Leaflet · PWA/Service Worker · sharp · net-snmp · MikroTik RouterOS API · Baileys / GoWA · Telegram Bot API.
+Node.js · Express · EJS · better-sqlite3 (SQLite) · Bootstrap 5 + Bootstrap Icons (vendor lokal) · Leaflet · PWA/Service Worker · sharp · net-snmp · MikroTik RouterOS API · GoWA (WhatsApp gateway) · Telegram Bot API.
 
 ## Lisensi &amp; Kredit
 

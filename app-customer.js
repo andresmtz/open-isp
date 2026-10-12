@@ -2211,7 +2211,7 @@ logger.info(`Attempting to start server on configured port: ${port}`);
 startServer(port);
 
 if (getSetting('whatsapp_enabled', false)) {
-  const gwType = getSetting('wa_gateway_type', 'baileys');
+  const gwType = getSetting('wa_gateway_type', 'gowa');
   if (gwType === 'baileys') {
     import('./services/whatsappBot.mjs')
       .then((mod) => mod.startWhatsAppBot())

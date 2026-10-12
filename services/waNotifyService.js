@@ -8,7 +8,7 @@ const path = require('path');
 const { getSetting } = require('../config/settingsManager');
 
 function gateway() {
-  return String(getSetting('wa_gateway_type', 'baileys') || 'baileys').toLowerCase();
+  return String(getSetting('wa_gateway_type', 'gowa') || 'baileys').toLowerCase();
 }
 
 function spx(t) {

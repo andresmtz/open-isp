@@ -140,7 +140,7 @@ function formatUnpaidInvoicesSummary(unpaidInvoices) {
  * @param {object} options Opsi tambahan: { templateName, parameters, langCode, url, filename }
  */
 async function sendWhatsAppMessage(toPhone, messageText, options = {}) {
-  const gatewayType = getSetting('wa_gateway_type', 'baileys'); // 'baileys', 'fonnte', or 'meta'
+  const gatewayType = getSetting('wa_gateway_type', 'gowa'); // 'baileys', 'fonnte', or 'meta'
 
   if (gatewayType === 'fonnte') {
     // Mode FONNTE API GATEWAY (Cloud / Self-Hosted)

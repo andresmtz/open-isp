@@ -933,7 +933,7 @@ export const whatsappStatus = {
   _connection: 'connecting',
   get connection() {
     try {
-      const gw = getSetting('wa_gateway_type', 'baileys');
+      const gw = getSetting('wa_gateway_type', 'gowa');
       if (gw === 'fonnte') {
         const token = getSetting('fonnte_token', '');
         return token ? 'open' : 'close';
@@ -954,7 +954,7 @@ export const whatsappStatus = {
   _user: null,
   get user() {
     try {
-      const gw = getSetting('wa_gateway_type', 'baileys');
+      const gw = getSetting('wa_gateway_type', 'gowa');
       if (gw === 'fonnte') {
         return { id: 'fonnte_gateway', name: 'Fonnte Gateway' };
       }
@@ -973,7 +973,7 @@ export const whatsappStatus = {
   _phoneNumber: null,
   get phoneNumber() {
     try {
-      const gw = getSetting('wa_gateway_type', 'baileys');
+      const gw = getSetting('wa_gateway_type', 'gowa');
       if (gw === 'fonnte') return 'Fonnte Gateway';
       if (gw === 'meta') return getSetting('meta_phone_number_id', 'Meta API');
       if (gw === 'gowa') return getSetting('gowa_device_id', '') || 'GOWA Gateway';
@@ -986,7 +986,7 @@ export const whatsappStatus = {
   _pushName: null,
   get pushName() {
     try {
-      const gw = getSetting('wa_gateway_type', 'baileys');
+      const gw = getSetting('wa_gateway_type', 'gowa');
       if (gw === 'fonnte') return 'Fonnte Gateway';
       if (gw === 'meta') return 'Meta Cloud API';
       if (gw === 'gowa') return 'GOWA Gateway';
@@ -1032,7 +1032,7 @@ function loadWhatsappAdminSendList() {
  * @param {string} priority - Priority level: 'high', 'medium', 'low'
  */
 export async function sendMonitoringAlert(message, priority = 'medium') {
-  const gatewayType = getSetting('wa_gateway_type', 'baileys');
+  const gatewayType = getSetting('wa_gateway_type', 'gowa');
   if (gatewayType === 'baileys' && (!currentSock || whatsappStatus._connection !== 'open')) {
     logger.warn('[WhatsApp] Bot belum siap (koneksi belum terbuka), tidak dapat mengirim alert monitoring');
     return { success: false, message: 'Bot belum siap' };
@@ -1139,7 +1139,7 @@ export async function simulateHumanTyping(sock, jid, text = '') {
 }
 
 export async function sendWA(to, text, options = {}) {
-  const gatewayType = getSetting('wa_gateway_type', 'baileys');
+  const gatewayType = getSetting('wa_gateway_type', 'gowa');
 
   let finalText = text;
   if (options.spintax !== false && typeof text === 'string' && text.includes('{') && text.includes('}')) {
@@ -1219,7 +1219,7 @@ export async function sendWA(to, text, options = {}) {
 }
 
 export async function sendWAImage(to, imageBuffer, caption = '', options = {}) {
-  const gatewayType = getSetting('wa_gateway_type', 'baileys');
+  const gatewayType = getSetting('wa_gateway_type', 'gowa');
 
   let finalCaption = caption;
   if (options.spintax !== false && typeof caption === 'string' && caption.includes('{') && caption.includes('}')) {
@@ -1286,7 +1286,7 @@ export async function sendWAImage(to, imageBuffer, caption = '', options = {}) {
 }
 
 export async function sendWADocument(to, documentBuffer, filename = 'Invoice.pdf', caption = '', mimetype = 'application/pdf', options = {}) {
-  const gatewayType = getSetting('wa_gateway_type', 'baileys');
+  const gatewayType = getSetting('wa_gateway_type', 'gowa');
 
   let finalCaption = caption;
   if (options.spintax !== false && typeof caption === 'string' && caption.includes('{') && caption.includes('}')) {

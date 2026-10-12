@@ -82,3 +82,6 @@ public/downloads/*.aab
 public/downloads/logo-*
 .npmrc
 .gitconfig
+
+# penanda restore tertunda (runtime)
+database/.restore-pending

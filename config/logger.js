@@ -27,11 +27,11 @@ const logger = winston.createLogger({
     transports: [
         // Log ke file
         new winston.transports.File({ 
-            filename: path.join(logsDir, 'error.log'), 
+            filename: path.join(logsDir, 'error.log'), maxsize: 10485760, maxFiles: 5, 
             level: 'error' 
         }),
         new winston.transports.File({ 
-            filename: path.join(logsDir, 'combined.log') 
+            filename: path.join(logsDir, 'combined.log'), maxsize: 10485760, maxFiles: 5 
         }),
         // Log ke console
         new winston.transports.Console({
@@ -46,7 +46,7 @@ const logger = winston.createLogger({
     ],
     exceptionHandlers: [
         new winston.transports.File({ 
-            filename: path.join(logsDir, 'exceptions.log') 
+            filename: path.join(logsDir, 'exceptions.log'), maxsize: 10485760, maxFiles: 5 
         }),
         new winston.transports.Console({
             format: winston.format.combine(
@@ -60,7 +60,7 @@ const logger = winston.createLogger({
     ],
     rejectionHandlers: [
         new winston.transports.File({
-            filename: path.join(logsDir, 'rejections.log')
+            filename: path.join(logsDir, 'rejections.log'), maxsize: 10485760, maxFiles: 5
         })
     ]
 });

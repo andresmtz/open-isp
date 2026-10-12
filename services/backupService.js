@@ -3,6 +3,7 @@
  * Melakukan backup otomatis database dan settings
  */
 const fs = require('fs');
+const Database = require('better-sqlite3');
 const path = require('path');
 const { logger } = require('../config/logger');
 const { getSetting, getCurrentDateInTimezone, getNowLocalISO } = require('../config/settingsManager');
@@ -41,8 +42,15 @@ function backupDatabase() {
     const backupFileName = `billing_db_${timestamp}.db`;
     const backupFilePath = path.join(backupDir, backupFileName);
 
-    // Copy database file
-    fs.copyFileSync(dbPath, backupFilePath);
+    // VACUUM INTO: snapshot konsisten & aman di mode WAL
+    // (menyalin file mentah bisa kehilangan transaksi terbaru yang masih di -wal)
+    if (fs.existsSync(backupFilePath)) fs.unlinkSync(backupFilePath);
+    const srcDb = new Database(dbPath, { readonly: true });
+    try {
+      srcDb.prepare('VACUUM INTO ?').run(backupFilePath);
+    } finally {
+      srcDb.close();
+    }
 
     // Compress backup (optional - bisa ditambahkan nanti)
     const stats = fs.statSync(backupFilePath);

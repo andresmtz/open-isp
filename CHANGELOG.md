@@ -2,7 +2,7 @@
 
 Format mengikuti [Keep a Changelog](https://keepachangelog.com/) dan [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — setelah v0.5.0
+## [0.5.1] — 2026-10-13 — "pickle-lime"
 
 ### Diubah
 - **WhatsApp** kini **notifikasi keluar saja** (interaksi/bot perintah dimatikan); interaksi dipindah ke **Telegram**.
@@ -19,6 +19,17 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/) dan [Semantic V
 - `getTechById` (notifikasi tiket oleh admin yang sebelumnya gagal).
 - Tabel `discount_logs` dibuat saat fresh-install (500 di `/admin/discounts`).
 - `.devcontainer` + `.nvmrc` untuk Codespaces (Node 22).
+- **Backup DB** memakai `VACUUM INTO` (konsisten walau mode WAL) dan **restore diterapkan saat startup** (sebelum koneksi DB dibuka); app restart otomatis untuk menerapkan.
+- **Logger** memutar berkas otomatis (10MB × 5) dan `console.*` sisi server diarahkan ke logger (log seragam di `logs/`).
+- `settings.json` permission di-set `600`.
+
+### Keamanan
+- **`npm audit`: 16 → 0** kerentanan.
+  - Hapus `@whiskeysockets/baileys` (tidak dipakai).
+  - Perbarui `axios`, `multer`, `brace-expansion`, `proxy-addr`.
+  - `xlsx` → build resmi **SheetJS 0.20.3**.
+  - `node-telegram-bot-api` 0.66 → **2.1.0** (via adapter v1→v2 internal).
+- Perbaiki bug **`trust proxy`** (`X-Forwarded-For` terbalik → IP bisa dipalsukan).
 
 ## [0.5.0] — 2026-10-09 — "pickle-lime"
 

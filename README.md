@@ -9,7 +9,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/lisensi-ISC-ADFF2F" alt="Lisensi: ISC">
-  <img src="https://img.shields.io/badge/versi-0.5_pickle--lime-ADFF2F" alt="Versi 0.5 (pickle-lime)">
+  <img src="https://img.shields.io/badge/versi-0.5.1_pickle--lime-ADFF2F" alt="Versi 0.5.1 (pickle-lime)">
   <img src="https://img.shields.io/badge/Node.js-%E2%89%A520-339933" alt="Node.js >= 20">
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/github/stars/oxpoe/open-isp?style=flat" alt="Stars">

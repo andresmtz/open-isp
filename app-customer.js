@@ -177,7 +177,7 @@ app.use((req, res, next) => {
   res.locals.uptimeUrl = getSetting('uptime_url', '');
   res.locals.heroVer = getSetting('landing_hero_version', '');
   res.locals.projectUrl = String(getSetting('project_url', 'https://github.com/oxpoe/open-isp') || '').replace(/\/+$/, '');
-  res.locals.appVersion = String(getSetting('app_version', '0.5') || '0.5');
+  res.locals.appVersion = String(getSetting('app_version', '0.5.1') || '0.5.1');
   res.locals.appVersionName = String(getSetting('app_version_name', 'pickle-lime') || 'pickle-lime');
   res.locals.pwaVersion = String(getSetting('pwa_version', '2.0') || '2.0');
   next();
@@ -1661,7 +1661,7 @@ function buildPwaManifest(scope, startUrl, desc, orientation) {
 app.get('/version.txt', (req, res) => {
   res.type('text/plain; charset=utf-8');
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-  const billing = String(getSetting('app_version', '0.5') || '0.5');
+  const billing = String(getSetting('app_version', '0.5.1') || '0.5.1');
   const nameV = String(getSetting('app_version_name', 'pickle-lime') || 'pickle-lime');
   const pwaV = String(getSetting('pwa_version', '2.0') || '2.0');
   const stUrl = String(getSetting('speedtest_url', '') || '');

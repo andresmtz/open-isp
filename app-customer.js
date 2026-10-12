@@ -11,6 +11,18 @@ const _jimpMod = require('jimp');
 const Jimp = _jimpMod.Jimp || _jimpMod;
 const qrisUtil = require('./utils/qrisUtil');
 const { logger } = require('./config/logger');
+
+// Semua console.* (server) diarahkan ke logger agar log seragam & tersimpan di logs/.
+// Dipasang SETELAH logger dibuat: winston sudah mengikat console asli -> tanpa rekursi.
+const _logFmt = (x) => {
+  if (x instanceof Error) return x.stack || x.message;
+  if (x && typeof x === 'object') { try { return JSON.stringify(x); } catch (e) { return String(x); } }
+  return typeof x === 'undefined' ? 'undefined' : String(x);
+};
+for (const [m, lvl] of [['log', 'info'], ['info', 'info'], ['warn', 'warn'], ['error', 'error'], ['debug', 'debug']]) {
+  console[m] = (...args) => logger[lvl](args.map(_logFmt).join(' '));
+}
+
 const db = require('./config/database');
 const customerSvc = require('./services/customerService');
 const noticeSvc = require('./services/serviceNoticeService');

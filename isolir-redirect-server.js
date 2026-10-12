@@ -14,7 +14,7 @@ let TARGET = process.env.ISOLIR_REDIRECT_URL || '';
 
 // Coba ambil target dari settings.json bila tersedia
 try {
-  const { getSetting } = require('/opt/billing-rtrw/config/settingsManager');
+  const { getSetting } = require('./config/settingsManager');
   const s = getSetting('isolir_portal_url', '') || '';
   if (s) TARGET = s;
 } catch (_) { /* abaikan */ }

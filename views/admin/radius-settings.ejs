@@ -415,8 +415,8 @@
 /radius incoming set accept=yes port=3799
 
 # 3. Tambahkan Server RADIUS Billing ke MikroTik
-/radius remove [find comment="RTRW-Billing-RADIUS"]
-/radius add service=ppp address=<%= typeof serverIp !== 'undefined' ? serverIp : '192.168.8.88' %> secret="<%= radiusStatus.secret %>" authentication-port=<%= radiusStatus.authPort %> accounting-port=<%= radiusStatus.acctPort %> timeout=3000ms comment="RTRW-Billing-RADIUS"
+/radius remove [find comment="OPEN-ISP-Billing-RADIUS"]
+/radius add service=ppp address=<%= typeof serverIp !== 'undefined' ? serverIp : '192.168.8.88' %> secret="<%= radiusStatus.secret %>" authentication-port=<%= radiusStatus.authPort %> accounting-port=<%= radiusStatus.acctPort %> timeout=3000ms comment="OPEN-ISP-Billing-RADIUS"
 
 # 4. Tambahkan IP Address Gateway Subnet Isolir RADIUS
 /ip address remove [find comment="Gateway-Isolir-RADIUS"]

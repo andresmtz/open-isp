@@ -2042,7 +2042,7 @@ async function getBackup(routerId = null) {
     rscLines.push(`# Router   : ${routerName} (${routerHost})`);
     rscLines.push(`# Tanggal  : ${nowStr}`);
     rscLines.push(`# Format   : RouterOS Script (.rsc) ROS7 Ready`);
-    rscLines.push(`# Generator: Billing RTRW System`);
+    rscLines.push(`# Generator: OPEN-ISP Billing System`);
     rscLines.push(`# ===================================================\n`);
 
     // 1. IP Pools

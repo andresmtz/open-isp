@@ -111,7 +111,7 @@ async function sendFonnteMessage(toPhone, messageText, options = {}) {
  * Test Koneksi / Kirim Pesan Uji Coba Fonnte
  */
 async function testFonnteConnection(targetPhone, customMessage) {
-  const msg = customMessage || '🔔 *Tes Koneksi Fonnte WhatsApp Gateway Berhasil!*\n\nSistem Billing RTRW Net siap mengirimkan notifikasi otomatis melalui gateway Fonnte.';
+  const msg = customMessage || '🔔 *Tes Koneksi Fonnte WhatsApp Gateway Berhasil!*\n\nOPEN-ISP siap mengirimkan notifikasi otomatis melalui gateway Fonnte.';
   return await sendFonnteMessage(targetPhone, msg);
 }
 

@@ -823,6 +823,26 @@ function initTelegram() {
     catch (e) { bot.sendMessage(msg.chat.id, 'Gagal: ' + e.message); }
   });
 
+  bot.onText(/\/cekterhubung\s+(\S+)/i, async (msg, match) => {
+    if (!isAdmin(msg)) return;
+    const chatId = msg.chat.id;
+    const tag = match[1];
+    try {
+      let dev = null;
+      try { dev = await customerDevice.findDeviceByTag(tag); } catch (e) {}
+      if (!dev) { try { dev = await customerDevice.findDeviceWithTagVariants(tag); } catch (e) {} }
+      if (!dev) return bot.sendMessage(chatId, '❌ Perangkat/tag "' + tag + '" tidak ditemukan.');
+      const m = customerDevice.mapDeviceData(dev, tag, false) || {};
+      const st = String(m.status || '').toLowerCase() === 'online' ? '🟢 Online' : '🔴 Offline';
+      let t = '📶 *CEK TERHUBUNG*\n\n';
+      t += '🏷️ Tag: ' + tag + '\n';
+      t += '📡 Status: ' + st + '\n';
+      if (m.lastInform) t += '🕒 Last Inform: ' + m.lastInform + '\n';
+      if (m.ssid && m.ssid !== '-') t += '📶 SSID: ' + m.ssid + '\n';
+      bot.sendMessage(chatId, t, { parse_mode: 'Markdown' });
+    } catch (e) { bot.sendMessage(chatId, 'Gagal: ' + e.message); }
+  });
+
   bot.onText(/\/ringkasan/i, async (msg) => {
     if (!isAdmin(msg)) return;
     const chatId = msg.chat.id;

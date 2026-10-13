@@ -33,7 +33,7 @@
         <h6><i class="bi bi-geo-alt-fill"></i> <%= t('admin.ar.list','Daftar Master Area / Wilayah') %> (<%= areas.length %>)</h6>
       </div>
       <div class="hint" style="padding:12px 16px 0 16px;font-size:12px;color:var(--muted)">
-        Area digunakan untuk mengelompokkan lokasi pelanggan dan wilayah tugas kolektor. Kolektor yang memiliki area tugas tertentu hanya akan mengelola pelanggan di area tersebut.
+        Las zonas sirven para agrupar la ubicación de los clientes y el área de trabajo de los cobradores. Un cobrador con zona asignada solo gestiona a los clientes de esa zona.
       </div>
       <div class="tbl-wrap" style="padding-top:12px">
         <table class="dtbl">
@@ -49,7 +49,7 @@
           </thead>
           <tbody>
             <% if (!areas || areas.length === 0) { %>
-              <tr><td colspan="6" class="text-center text-muted" style="padding:24px">Belum ada data area. Klik "<%= t('admin.ar.add','Tambah Area Baru') %>"<%= t('admin.ar.create_area',' untuk membuat area.') %></td></tr>
+              <tr><td colspan="6" class="text-center text-muted" style="padding:24px">Todavía no hay zonas. Hacé clic en "<%= t('admin.ar.add','Tambah Area Baru') %>"<%= t('admin.ar.create_area',' untuk membuat area.') %></td></tr>
             <% } else { %>
               <% areas.forEach((a, idx) => { %>
                 <tr>
@@ -123,12 +123,12 @@
           <textarea name="description" id="e-area-desc" class="fc" rows="3"></textarea>
         </div>
         <div class="hint" style="font-size:11px;color:var(--muted)">
-          <i class="bi bi-info-circle"></i> Mengubah nama area akan otomatis memperbarui nama area pada semua pelanggan dan kolektor terkait.
+          <i class="bi bi-info-circle"></i> Al cambiar el nombre de la zona se actualiza automáticamente en todos los clientes y cobradores asociados.
         </div>
       </div>
       <div class="mf">
         <button type="button" class="btn btn-g" onclick="closeModal('editAreaModal')"><%= t('common.cancel','Batal') %></button>
-        <button type="submit" class="btn btn-p"><i class="bi bi-check-lg"></i> <%= t('tech.mon.save','Simpan Perubahan') %></button>
+        <button type="submit" class="btn btn-p"><i class="bi bi-check-lg"></i> <%= t('tech.mon.save','Guardar cambios') %></button>
       </div>
     </form>
   </div>

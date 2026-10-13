@@ -265,11 +265,11 @@
       <!-- Bulk Actions Panel -->
       <div id="monBulkActionsPanel" style="display: none; background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.15); padding: 12px 20px; border-radius: 12px; margin-bottom: 16px; align-items: center; justify-content: space-between;">
           <div style="font-size: 13px; font-weight: 600; color: var(--text);">
-              <span id="monSelectedCount">0</span> perangkat terpilih
+              <span id="monSelectedCount">0</span> equipos seleccionados
           </div>
           <div style="display: flex; gap: 8px;">
               <button class="btn btn-p btn-sm" onclick="bulkMonSummon()" style="background: var(--primary);"><i class="bi bi-lightning-charge"></i> <%= t('admin.dash.summon_selected','Summon Terpilih') %></button>
-              <button class="btn btn-d btn-sm" onclick="bulkMonDelete()" style="background: var(--danger);"><i class="bi bi-trash"></i> <%= t('admin.dash.del_selected','Hapus Terpilih') %></button>
+              <button class="btn btn-d btn-sm" onclick="bulkMonDelete()" style="background: var(--danger);"><i class="bi bi-trash"></i> <%= t('admin.dash.del_selected','Eliminar seleccionados') %></button>
           </div>
       </div>
 
@@ -321,7 +321,7 @@
 <!-- ── MODAL EDIT SSID ── -->
 <div class="mo" id="ssidModal">
   <div class="mb">
-    <div class="mh"><span class="mt"><i class="bi bi-wifi"></i> <%= t('admin.dashboard.edit_ssid', 'Ubah SSID') %></span><button class="mc" onclick="closeModal('ssidModal')">&times;</button></div>
+    <div class="mh"><span class="mt"><i class="bi bi-wifi"></i> <%= t('admin.dashboard.edit_ssid', 'Cambiar SSID') %></span><button class="mc" onclick="closeModal('ssidModal')">&times;</button></div>
     <div class="mbody">
       <input type="hidden" id="edit-tag">
       <div class="fg"><label class="fl"><%= t('admin.dashboard.new_ssid', 'SSID Baru') %></label><input class="fc" id="new-ssid" placeholder="<%= t('admin.dashboard.new_ssid_placeholder', 'Nama WiFi baru') %>"></div>
@@ -339,10 +339,10 @@
 <!-- ── MODAL EDIT PASSWORD ── -->
 <div class="mo" id="passwordModal">
   <div class="mb">
-    <div class="mh"><span class="mt"><i class="bi bi-key"></i> <%= t('admin.dashboard.edit_wifi_password', 'Ubah Password WiFi') %></span><button class="mc" onclick="closeModal('passwordModal')">&times;</button></div>
+    <div class="mh"><span class="mt"><i class="bi bi-key"></i> <%= t('admin.dashboard.edit_wifi_password', 'Cambiar contraseña del WiFi') %></span><button class="mc" onclick="closeModal('passwordModal')">&times;</button></div>
     <div class="mbody">
       <input type="hidden" id="edit-pass-tag">
-      <div class="fg"><label class="fl"><%= t('admin.dashboard.new_password', 'Password Baru') %></label><input class="fc" id="new-password" type="text" placeholder="<%= t('admin.dashboard.new_password_placeholder', 'Minimal 8 karakter') %>"></div>
+      <div class="fg"><label class="fl"><%= t('admin.dashboard.new_password', 'Password Baru') %></label><input class="fc" id="new-password" type="text" placeholder="<%= t('admin.dashboard.new_password_placeholder', 'Mínimo 8 caracteres') %>"></div>
     </div>
     <div class="mf">
       <button class="btn btn-g" onclick="closeModal('passwordModal')"><%= t('common.cancel', 'Batal') %></button>
@@ -476,13 +476,13 @@ const I18N = {
   noIp: "<%= t('admin.dashboard.no_ip', 'No IP') %>",
   connectedSuffix: "<%= t('admin.dashboard.connected_suffix', 'dev tersambung') %>",
   titleDetail: "<%= t('common.details', 'Detail') %>",
-  titleEditSsid: "<%= t('admin.dashboard.edit_ssid', 'Ubah SSID') %>",
+  titleEditSsid: "<%= t('admin.dashboard.edit_ssid', 'Cambiar SSID') %>",
   titleEditPassword: "<%= t('admin.dashboard.edit_password', 'Ubah Password') %>",
   titleReboot: "<%= t('admin.dashboard.reboot', 'Reboot') %>",
-  ssidRequired: "<%= t('admin.dashboard.ssid_required', 'SSID tidak boleh kosong') %>",
+  ssidRequired: "<%= t('admin.dashboard.ssid_required', 'El SSID no puede quedar vacío') %>",
   ssidSent: "<%= t('admin.dashboard.ssid_sent', 'Perubahan SSID telah dikirim ke perangkat.') %>",
   ssidFailed: "<%= t('admin.dashboard.ssid_failed', 'Gagal mengubah SSID.') %>",
-  passwordMin: "<%= t('admin.dashboard.password_min', 'Password minimal 8 karakter') %>",
+  passwordMin: "<%= t('admin.dashboard.password_min', 'La contraseña debe tener al menos 8 caracteres') %>",
   passwordSent: "<%= t('admin.dashboard.password_sent', 'Perubahan Password telah dikirim ke perangkat.') %>",
   passwordFailed: "<%= t('admin.dashboard.password_failed', 'Gagal mengubah password.') %>",
   connectionError: "<%= t('admin.dashboard.connection_error', 'Terjadi kesalahan koneksi.') %>",
@@ -1004,15 +1004,15 @@ async function saveGenieACSSettings() {
 
   // Validate
   if (formData.genieacs_timeout < 5000 || formData.genieacs_timeout > 120000) {
-    showGenieACSMessage('Timeout harus antara 5000-120000 ms', 'danger');
+    showGenieACSMessage('El tiempo de espera debe estar entre 5000 y 120000 ms', 'danger');
     return;
   }
   if (formData.genieacs_rxpower_threshold < -40 || formData.genieacs_rxpower_threshold > -15) {
-    showGenieACSMessage('RX Power threshold harus antara -40 sampai -15 dBm', 'danger');
+    showGenieACSMessage('El umbral de potencia RX debe estar entre -40 y -15 dBm', 'danger');
     return;
   }
   if (formData.genieacs_monitoring_interval < 1 || formData.genieacs_monitoring_interval > 24) {
-    showGenieACSMessage('Monitoring interval harus antara 1-24 jam', 'danger');
+    showGenieACSMessage('El intervalo de monitoreo debe estar entre 1 y 24 horas', 'danger');
     return;
   }
 
@@ -1040,7 +1040,7 @@ async function saveGenieACSSettings() {
 }
 
 async function testGenieACSConnection() {
-  showGenieACSMessage('Testing koneksi ke GenieACS...', 'info');
+  showGenieACSMessage('Probando la conexión con GenieACS...', 'info');
 
   try {
     const response = await fetch('/admin/api/genieacs/test');
@@ -1050,7 +1050,7 @@ async function testGenieACSConnection() {
       const msg = result.message + (result.deviceCount !== undefined ? ' (' + result.deviceCount + ' devices)' : '');
       showGenieACSMessage(msg, 'success');
     } else {
-      showGenieACSMessage('Koneksi gagal: ' + result.message, 'danger');
+      showGenieACSMessage('Falló la conexión: ' + result.message, 'danger');
     }
   } catch (error) {
     showGenieACSMessage('Error: ' + error.message, 'danger');
@@ -1111,7 +1111,7 @@ function getSelectedMonDevices() {
 async function bulkMonSummon() {
   const devices = getSelectedMonDevices();
   if (devices.length === 0) return;
-  if (!confirm(`Summon / Sinkronisasi ulang ${devices.length} perangkat?`)) return;
+  if (!confirm(`¿Consultar / sincronizar de nuevo ${devices.length} equipos?`)) return;
   
   try {
     const res = await fetch('/admin/acs/api/bulk/refresh', {
@@ -1123,14 +1123,14 @@ async function bulkMonSummon() {
     showToast(d.message, d.success ? 's' : 'd');
     if (d.success) setTimeout(refreshAll, 1500);
   } catch (err) {
-    showToast('Gagal memproses bulk summon: ' + err.message, 'd');
+    showToast('No se pudo procesar la consulta masiva: ' + err.message, 'd');
   }
 }
 
 async function bulkMonDelete() {
   const devices = getSelectedMonDevices();
   if (devices.length === 0) return;
-  if (!confirm(`HAPUS ${devices.length} perangkat dari database ACS?\n(Tindakan ini tidak dapat dibatalkan)`)) return;
+  if (!confirm(`¿ELIMINAR ${devices.length} equipos de la base del ACS?\n(Esta acción no se puede deshacer)`)) return;
   
   try {
     const res = await fetch('/admin/acs/api/bulk/delete', {
@@ -1142,12 +1142,12 @@ async function bulkMonDelete() {
     showToast(d.message, d.success ? 's' : 'd');
     if (d.success) setTimeout(refreshAll, 1500);
   } catch (err) {
-    showToast('Gagal memproses bulk delete: ' + err.message, 'd');
+    showToast('No se pudo procesar la eliminación masiva: ' + err.message, 'd');
   }
 }
 
 async function summonMonDevice(deviceId, acsId) {
-  if (!confirm('Summon / Sinkronisasi ulang perangkat ' + deviceId + '?')) return;
+  if (!confirm('Consultar / sincronizar de nuevo el equipo ' + deviceId + '?')) return;
   try {
     const res = await fetch('/admin/acs/api/refresh/' + encodeURIComponent(deviceId), {
       method: 'POST',
@@ -1158,12 +1158,12 @@ async function summonMonDevice(deviceId, acsId) {
     showToast(d.message, d.success ? 's' : 'd');
     if (d.success) setTimeout(refreshAll, 1500);
   } catch (err) {
-    showToast('Gagal mengirim summon: ' + err.message, 'd');
+    showToast('No se pudo enviar la consulta: ' + err.message, 'd');
   }
 }
 
 async function deleteMonDevice(deviceId, acsId) {
-  if (!confirm('Hapus perangkat ' + deviceId + ' dari database ACS?')) return;
+  if (!confirm('¿Eliminar el equipo ' + deviceId + ' de la base del ACS?')) return;
   try {
     const res = await fetch('/admin/acs/api/device/' + encodeURIComponent(deviceId), {
       method: 'DELETE',
@@ -1174,7 +1174,7 @@ async function deleteMonDevice(deviceId, acsId) {
     showToast(d.message, d.success ? 's' : 'd');
     if (d.success) setTimeout(refreshAll, 1500);
   } catch (err) {
-    showToast('Gagal menghapus perangkat: ' + err.message, 'd');
+    showToast('No se pudo eliminar el equipo: ' + err.message, 'd');
   }
 }
 

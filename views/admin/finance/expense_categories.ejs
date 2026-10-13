@@ -2,7 +2,7 @@
 <html lang="<%= lang || 'id' %>">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Kategori Pengeluaran | <%= company %></title>
+  <title>Categorías de gastos | <%= company %></title>
   <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
   <link rel="stylesheet" href="/css/admin.css">
   <style>
@@ -25,11 +25,11 @@
 <%- include('../partials/sidebar', { activePage: 'expense_categories', company }) %>
 <div class="mw">
   <div class="topbar">
-    <div class="tb-title"><button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><i class="bi bi-tags"></i> Kategori Pengeluaran</div>
+    <div class="tb-title"><button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><i class="bi bi-tags"></i> Categorías de gastos</div>
     <div class="tb-right">
       <span class="adm-badge" style="font-size:12px;opacity:0.7;"><%= company %></span>
       <span class="adm-badge"><i class="bi bi-person-fill"></i> <%= (typeof session !== 'undefined' && session && session.isCashier) ? 'Kasir' : 'Admin' %></span>
-      <button class="btn btn-p btn-sm" onclick="openModal('addModal')"><i class="bi bi-plus-lg"></i> Tambah Kategori</button>
+      <button class="btn btn-p btn-sm" onclick="openModal('addModal')"><i class="bi bi-plus-lg"></i> Agregar categoría</button>
     </div>
   </div>
   <div class="page">
@@ -40,7 +40,7 @@
     <% } %>
 
     <div class="alert alert-info mb-4" style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); color:#bfdbfe;">
-      <i class="bi bi-lightbulb-fill"></i> Kategori ini digunakan untuk mengelompokkan jenis pengeluaran agar laporan laba rugi lebih mudah dibaca.
+      <i class="bi bi-lightbulb-fill"></i> Las categorías agrupan los tipos de gastos para que el estado de resultados sea más fácil de leer.
     </div>
 
     <div class="cat-grid">
@@ -52,7 +52,7 @@
             </div>
             <div>
               <div class="cat-name"><%= cat.name %></div>
-              <div class="cat-desc"><%= cat.description || 'Tidak ada deskripsi' %></div>
+              <div class="cat-desc"><%= cat.description || 'Sin descripción' %></div>
             </div>
           </div>
           <form method="POST" action="/admin/finance/expense-categories/<%= cat.id %>/delete" onsubmit="return confirm('Hapus kategori ini? (Pastikan tidak ada pengeluaran yang menggunakannya)')">
@@ -62,7 +62,7 @@
       <% }) %>
       <% if(categories.length === 0) { %>
         <div style="grid-column: 1/-1; padding: 40px; text-align:center; color:var(--muted); background:var(--bg2); border-radius:12px">
-          Belum ada kategori yang ditambahkan.
+          Todavía no hay categorías.
         </div>
       <% } %>
     </div>
@@ -72,12 +72,12 @@
 <!-- Modal Add -->
 <div class="mo" id="addModal">
   <div class="mb">
-    <div class="mh"><span class="mt"><i class="bi bi-plus-circle"></i> Tambah Kategori</span><button type="button" class="mc" onclick="closeModal('addModal')">&times;</button></div>
+    <div class="mh"><span class="mt"><i class="bi bi-plus-circle"></i> Agregar categoría</span><button type="button" class="mc" onclick="closeModal('addModal')">&times;</button></div>
     <form method="POST" action="/admin/finance/expense-categories">
       <div class="mbody">
         <div class="fg">
-          <label class="fl">Nama Kategori <span class="text-danger">*</span></label>
-          <input type="text" class="fc" name="name" required placeholder="Contoh: Bensin Kendaraan">
+          <label class="fl">Nombre de la categoría <span class="text-danger">*</span></label>
+          <input type="text" class="fc" name="name" required placeholder="Ejemplo: combustible">
         </div>
         <div class="fg">
           <label class="fl"><%= t('common.description','Deskripsi') %></label>
@@ -86,7 +86,7 @@
         
         <div class="form-row mt-3">
           <div class="fg">
-            <label class="fl">Pilih Ikon</label>
+            <label class="fl">Elegir ícono</label>
             <div class="icon-sel">
               <% const icons = ['bi-tag', 'bi-tools', 'bi-router', 'bi-wallet2', 'bi-lightning-charge', 'bi-car-front', 'bi-briefcase', 'bi-cup-hot', 'bi-house', 'bi-megaphone']; %>
               <% icons.forEach((icon, i) => { %>
@@ -105,7 +105,7 @@
       </div>
       <div class="mf">
         <button type="button" class="btn btn-g" onclick="closeModal('addModal')"><%= t('common.cancel','Batal') %></button>
-        <button type="submit" class="btn btn-p">Simpan Kategori</button>
+        <button type="submit" class="btn btn-p">Guardar categoría</button>
       </div>
     </form>
   </div>

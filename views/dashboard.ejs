@@ -63,7 +63,7 @@
 
   <!-- PROMO ROTATOR -->
   <div class="promo-rot" id="promoRot">
-    <div class="welcome"><i class="bi bi-wifi"></i><span>Selamat Datang di Portal Pelanggan</span></div>
+    <div class="welcome"><i class="bi bi-wifi"></i><span>Bienvenido al portal del cliente</span></div>
   </div>
   <script>
     fetch('/customer/api/promo-slides')
@@ -95,9 +95,9 @@
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
       <div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          <span class="id-badge"><i class="bi bi-person-badge"></i> ID: <b id="custIdText" class="mono"><%= profile ? (profile.customer_code || profile.genieacs_tag || profile.pppoe_username || profile.phone) : customer.phone %></b><button class="copy-mini" type="button" onclick="copyId()" title="Salin ID pelanggan"><i class="bi bi-clipboard"></i></button></span>
+          <span class="id-badge"><i class="bi bi-person-badge"></i> ID: <b id="custIdText" class="mono"><%= profile ? (profile.customer_code || profile.genieacs_tag || profile.pppoe_username || profile.phone) : customer.phone %></b><button class="copy-mini" type="button" onclick="copyId()" title="Copiar ID de cliente"><i class="bi bi-clipboard"></i></button></span>
           <% if (onuMissing) { %>
-            <button type="button" class="onu-chip" onclick="showModal('onuMissingModal')"><i class="bi bi-exclamation-triangle-fill"></i> ONU belum terdeteksi</button>
+            <button type="button" class="onu-chip" onclick="showModal('onuMissingModal')"><i class="bi bi-exclamation-triangle-fill"></i> ONU no detectada</button>
           <% } %>
           <% if (profile) { %>
             <span class="status-pill <%= profile.status === 'active' ? 'online' : 'suspended' %>">
@@ -109,11 +109,11 @@
         <h3><%= t('customer.dashboard.hello', 'Halo') %>, <%= profile ? profile.name : customer.phone %></h3>
         <p class="muted" style="font-size:13px;margin-top:6px;display:flex;gap:14px;flex-wrap:wrap">
           <span><i class="bi bi-reception-4" style="color:var(--success)"></i> Sinyal Optik: <strong style="color:var(--text)"><%= customer.rxPower || '-20 dBm' %></strong></span>
-          <span><i class="bi bi-hdd-network" style="color:var(--info)"></i> <span class="mono"><%= (profile && profile.pppoe_username) || customer.pppoeUsername || 'Belum ada akun PPPoE' %></span></span>
+          <span><i class="bi bi-hdd-network" style="color:var(--info)"></i> <span class="mono"><%= (profile && profile.pppoe_username) || customer.pppoeUsername || 'Todavía no hay cuenta PPPoE' %></span></span>
         </p>
         <% if (!((profile && profile.pppoe_username) || customer.pppoeUsername)) { %>
           <div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);color:var(--warning,#fbbf24);font-size:12.5px;display:flex;gap:8px;align-items:center">
-            <i class="bi bi-hourglass-split"></i> Akun PPPoE Anda belum dibuat — menunggu pemasangan/aktivasi oleh teknisi.
+            <i class="bi bi-hourglass-split"></i> Su cuenta PPPoE todavía no se creó — pendiente de instalación/activación por el técnico.
           </div>
         <% } %>
       </div>
@@ -150,7 +150,7 @@
       <div class="bico"><i class="bi bi-<%= hasUnpaid ? 'exclamation-triangle-fill' : 'shield-check' %>"></i></div>
       <div>
         <% if (hasUnpaid) { %>
-          <span class="badge bw" style="font-size:10px"><i class="bi bi-exclamation-circle"></i> TAGIHAN BELUM DIBAYAR <%= unpaidCount > 1 ? '('+unpaidCount+' BULAN)' : '' %></span>
+          <span class="badge bw" style="font-size:10px"><i class="bi bi-exclamation-circle"></i> FACTURA PENDIENTE <%= unpaidCount > 1 ? '('+unpaidCount+' MESES)' : '' %></span>
           <h5 style="margin-top:6px;color:var(--warning)"><%= APP_CUR %> <%= parseInt(totalUnpaidAmount || 0).toLocaleString(APP_LOCALE) %></h5>
           <div class="muted" style="font-size:12.5px;margin-top:2px">Periode <%= unpaidPeriods %></div>
           <div style="font-size:13px;margin-top:6px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">
@@ -163,9 +163,9 @@
             <% } %>
           </div>
         <% } else { %>
-          <span class="badge bs" style="font-size:10px"><i class="bi bi-check-circle"></i> SEMUA TAGIHAN LUNAS</span>
-          <h5 style="margin-top:6px">Layanan Internet Aktif</h5>
-          <div class="muted" style="font-size:12.5px;margin-top:2px">Terima kasih telah membayar tepat waktu!</div>
+          <span class="badge bs" style="font-size:10px"><i class="bi bi-check-circle"></i> TODAS LAS FACTURAS PAGADAS</span>
+          <h5 style="margin-top:6px">Servicio de internet activo</h5>
+          <div class="muted" style="font-size:12.5px;margin-top:2px">¡Gracias por pagar a tiempo!</div>
           <div style="font-size:13px;margin-top:6px;display:flex;align-items:center;gap:7px">
             <i class="bi bi-calendar-event" style="color:var(--success)"></i>
             <span>Jatuh tempo berikutnya: <strong style="color:var(--text)"><%= nextDueText %></strong></span>
@@ -174,7 +174,7 @@
       </div>
     </div>
     <% if (hasUnpaid) { %>
-      <button type="button" class="lbtn lbtn-primary lbtn-lg" onclick="openPaymentModal('<%= latestUnpaid.id %>', '<%= totalUnpaidAmount %>')"><i class="bi bi-wallet2"></i> Bayar Sekarang</button>
+      <button type="button" class="lbtn lbtn-primary lbtn-lg" onclick="openPaymentModal('<%= latestUnpaid.id %>', '<%= totalUnpaidAmount %>')"><i class="bi bi-wallet2"></i> Pagar ahora</button>
     <% } %>
   </section>
 
@@ -182,14 +182,14 @@
   <section class="svc-grid">
     <div class="svc-card">
       <div class="svc-ic"><i class="bi bi-box-seam"></i></div>
-      <div class="svc-tx"><span>Paket Berjalan</span>
-        <b><%= profile && profile.package_name ? profile.package_name : 'Belum ada paket' %></b>
+      <div class="svc-tx"><span>Plan actual</span>
+        <b><%= profile && profile.package_name ? profile.package_name : 'Sin plan' %></b>
         <small><% if (profile && Number(profile.speed_down) > 0) { %><%= Math.round(Number(profile.speed_down)/1000) %> Mbps<%= profile.speed_up ? ' / ' + Math.round(Number(profile.speed_up)/1000) + ' Mbps' : '' %><% } else { %>—<% } %></small>
       </div>
     </div>
     <div class="svc-card">
       <div class="svc-ic"><i class="bi bi-person-check"></i></div>
-      <div class="svc-tx"><span>Status Akun</span>
+      <div class="svc-tx"><span>Estado de la cuenta</span>
         <% if (profile && profile.status === 'active') { %><b class="ok">Aktif</b><% } else { %><b class="warn">Isolir</b><% } %>
         <small><%= profile ? profile.name : '—' %></small>
       </div>
@@ -197,14 +197,14 @@
     <div class="svc-card">
       <div class="svc-ic"><i class="bi bi-hdd-network"></i></div>
       <div class="svc-tx"><span>Internet (PPPoE)</span>
-        <% if (pppoeOnline === true) { %><b class="ok">Online</b><% } else if (pppoeOnline === false) { %><b class="off">Offline</b><% } else { %><b>Tidak diketahui</b><% } %>
-        <small class="mono"><%= (profile ? profile.pppoe_username : '') || customer.pppoeUsername || 'Belum dibuat' %></small>
+        <% if (pppoeOnline === true) { %><b class="ok">Online</b><% } else if (pppoeOnline === false) { %><b class="off">Offline</b><% } else { %><b>Desconocido</b><% } %>
+        <small class="mono"><%= (profile ? profile.pppoe_username : '') || customer.pppoeUsername || 'No creada' %></small>
       </div>
     </div>
     <div class="svc-card">
       <div class="svc-ic"><i class="bi bi-router"></i></div>
-      <div class="svc-tx"><span>Perangkat (ONU)</span>
-        <% if (onuMissing) { %><b class="warn">Tidak ditemukan</b><% } else { %><b class="ok">Terhubung</b><% } %>
+      <div class="svc-tx"><span>Equipo (ONU)</span>
+        <% if (onuMissing) { %><b class="warn">No encontrado</b><% } else { %><b class="ok">Terhubung</b><% } %>
         <small><%= customer.rxPower || '-' %> • <%= customer.model || 'ONU' %></small>
       </div>
     </div>
@@ -214,19 +214,19 @@
   <div class="action-grid">
     <% const navPayAmt = hasUnpaid ? totalUnpaidAmount : 0; %>
     <div class="action-item" onclick="<%= hasUnpaid ? "openPaymentModal('"+latestUnpaid.id+"','"+navPayAmt+"')" : "location.href='#billing-section'" %>">
-      <div class="action-icon ai-pay"><i class="bi bi-credit-card-2-front-fill"></i></div><div class="action-label">Bayar Tagihan</div>
+      <div class="action-icon ai-pay"><i class="bi bi-credit-card-2-front-fill"></i></div><div class="action-label">Registrar pago</div>
     </div>
     <div class="action-item" data-ssid-change onclick="editSsid('<%= (customer.tags && customer.tags[0]) || customer.id %>', '<%= customer.ssid %>')">
-      <div class="action-icon ai-ssid"><i class="bi bi-wifi"></i></div><div class="action-label">Nama WiFi</div>
+      <div class="action-icon ai-ssid"><i class="bi bi-wifi"></i></div><div class="action-label">Nombre del WiFi</div>
     </div>
     <div class="action-item" onclick="editPassword('<%= (customer.tags && customer.tags[0]) || customer.id %>')">
-      <div class="action-icon ai-pass"><i class="bi bi-key-fill"></i></div><div class="action-label">Sandi WiFi</div>
+      <div class="action-icon ai-pass"><i class="bi bi-key-fill"></i></div><div class="action-label">Contraseña del WiFi</div>
     </div>
     <div class="action-item" onclick="rebootDevice('<%= (customer.tags && customer.tags[0]) || customer.id %>')">
       <div class="action-icon ai-reboot"><i class="bi bi-arrow-clockwise"></i></div><div class="action-label">Restart Modem</div>
     </div>
     <div class="action-item" onclick="openNotifDrawer()"><div class="action-icon ai-ppob"><i class="bi bi-bell-fill"></i></div><div class="action-label">Notifikasi</div></div>
-    <div class="action-item" onclick="showModal('ticketModal')"><div class="action-icon ai-ticket"><i class="bi bi-headset"></i></div><div class="action-label">Bantuan / Tiket</div></div>
+    <div class="action-item" onclick="showModal('ticketModal')"><div class="action-icon ai-ticket"><i class="bi bi-headset"></i></div><div class="action-label">Ayuda / reclamos</div></div>
   </div>
 
   <!-- DEVICE + TRAFFIC -->
@@ -234,7 +234,7 @@
     <!-- Router card -->
     <div class="glass-card">
       <div class="glass-header">
-        <h5><i class="bi bi-router" style="color:var(--primary)"></i> Kontrol Perangkat Router</h5>
+        <h5><i class="bi bi-router" style="color:var(--primary)"></i> Control del router</h5>
         <span class="badge-soft"><%= customer.model !== '-' ? customer.model : 'ONT / ONU' %></span>
       </div>
       <div class="glass-body">
@@ -243,13 +243,13 @@
           <button type="button" id="btnDeviceRefresh" class="lbtn lbtn-ghost lbtn-sm"><i class="bi bi-arrow-repeat"></i> Poll ONU</button>
         </div>
         <div class="stats-grid" style="margin-bottom:14px">
-          <div class="stat-card"><div class="stat-icon <%= customer.status === 'Online' ? 'online' : 'offline' %>"><i class="bi bi-power"></i></div><div class="stat-label">Status Router</div><div class="stat-value"><%= customer.status %></div></div>
+          <div class="stat-card"><div class="stat-icon <%= customer.status === 'Online' ? 'online' : 'offline' %>"><i class="bi bi-power"></i></div><div class="stat-label">Estado del router</div><div class="stat-value"><%= customer.status %></div></div>
           <div class="stat-card"><div class="stat-icon activity"><i class="bi bi-reception-4"></i></div><div class="stat-label">Rx Optical</div><div class="stat-value"><%= customer.rxPower %></div></div>
-          <div class="stat-card"><div class="stat-icon people"><i class="bi bi-laptop"></i></div><div class="stat-label">User Terhubung</div><div class="stat-value"><%= customer.totalAssociations || 0 %> User</div></div>
+          <div class="stat-card"><div class="stat-icon people"><i class="bi bi-laptop"></i></div><div class="stat-label">Usuarios conectados</div><div class="stat-value"><%= customer.totalAssociations || 0 %> User</div></div>
         </div>
 
         <div class="wifi-box" style="margin-bottom:14px">
-          <div class="wifi-row"><span class="wifi-label" style="color:var(--info)"><i class="bi bi-wifi"></i> Nama SSID WiFi</span>
+          <div class="wifi-row"><span class="wifi-label" style="color:var(--info)"><i class="bi bi-wifi"></i> Nombre del WiFi (SSID)</span>
             <button class="link-btn" data-ssid-change onclick="editSsid('<%= (customer.tags && customer.tags[0]) || customer.id %>', '<%= customer.ssid %>')">Ubah <i class="bi bi-pencil"></i></button></div>
           <div class="wifi-val" style="margin-bottom:12px"><%= customer.ssid || '-' %></div>
           <div class="wifi-row"><span class="wifi-label" style="color:var(--success)"><i class="bi bi-shield-lock"></i> Password WiFi</span>
@@ -260,7 +260,7 @@
           </div>
         </div>
 
-        <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:8px"><i class="bi bi-people"></i> Perangkat Terhubung saat ini:</div>
+        <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:8px"><i class="bi bi-people"></i> Equipos conectados ahora:</div>
         <% if (connectedUsers && connectedUsers.length > 0) { %>
           <div class="dev-list">
             <% connectedUsers.forEach(function(u){ %>
@@ -277,7 +277,7 @@
             <% }); %>
           </div>
         <% } else { %>
-          <div class="dev-empty">Tidak ada perangkat aktif terdeteksi</div>
+          <div class="dev-empty">No se detectan equipos activos</div>
         <% } %>
       </div>
     </div>
@@ -307,53 +307,53 @@
             </div>
           </div>
         </div>
-        <div class="auth-alert info" style="margin-top:16px;justify-content:center"><i class="bi bi-info-circle"></i> Kecepatan disesuaikan dengan paket berlangganan Anda.</div>
+        <div class="auth-alert info" style="margin-top:16px;justify-content:center"><i class="bi bi-info-circle"></i> La velocidad corresponde a su plan contratado.</div>
       </div>
     </div>
   </div>
 
   <!-- TAGIHAN -->
   <details class="acc" id="billing-section" open>
-    <summary><span><i class="bi bi-receipt" style="color:var(--warning)"></i> Status Tagihan &amp; Riwayat Pembayaran</span><i class="bi bi-chevron-down chev"></i></summary>
+    <summary><span><i class="bi bi-receipt" style="color:var(--warning)"></i> Estado de facturas e historial de pagos</span><i class="bi bi-chevron-down chev"></i></summary>
     <div class="acc-body">
       <% if (invoices && invoices.length > 0) { %>
         <% invoices.forEach(function(inv){ %>
           <% const itemAmt = inv.amount != null ? inv.amount : (inv.package_price != null ? inv.package_price : 0); %>
           <div class="inv-card">
             <div class="inv-top">
-              <% if (inv.status === 'paid') { %><span class="badge bs" style="font-size:10px">LUNAS</span><% } else { %><span class="badge bd" style="font-size:10px">BELUM BAYAR</span><% } %>
+              <% if (inv.status === 'paid') { %><span class="badge bs" style="font-size:10px">LUNAS</span><% } else { %><span class="badge bd" style="font-size:10px">PENDIENTE</span><% } %>
               <span class="muted" style="font-size:12px"><i class="bi bi-calendar-event"></i> Periode <%= inv.period_month %>/<%= inv.period_year %></span>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap">
-              <div><div class="inv-name"><%= inv.package_name || 'Paket Internet' %></div><div class="inv-amt"><%= APP_CUR %> <%= parseInt(itemAmt || 0).toLocaleString(APP_LOCALE) %></div></div>
+              <div><div class="inv-name"><%= inv.package_name || 'Plan de internet' %></div><div class="inv-amt"><%= APP_CUR %> <%= parseInt(itemAmt || 0).toLocaleString(APP_LOCALE) %></div></div>
             </div>
             <div class="inv-actions">
               <% if (inv.status !== 'paid') { %>
                 <button class="lbtn lbtn-primary lbtn-sm" onclick="openPaymentModal('<%= inv.id %>', '<%= itemAmt %>')"><i class="bi bi-wallet2"></i> Bayar</button>
-                <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/invoice/<%= inv.id %>/pdf" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf-fill"></i> Tagihan PDF</a>
-                <button class="lbtn lbtn-ghost lbtn-sm" onclick="sendInvoiceWa(<%= inv.id %>, this)"><i class="bi bi-whatsapp"></i> Kirim ke WA</button>
+                <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/invoice/<%= inv.id %>/pdf" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf-fill"></i> Factura PDF</a>
+                <button class="lbtn lbtn-ghost lbtn-sm" onclick="sendInvoiceWa(<%= inv.id %>, this)"><i class="bi bi-whatsapp"></i> Enviar por WhatsApp</button>
               <% } else { %>
                 <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/invoice/<%= inv.id %>/print-thermal" target="_blank" rel="noopener"><i class="bi bi-receipt"></i> Struk Thermal</a>
                 <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/invoice/<%= inv.id %>/print" target="_blank" rel="noopener"><i class="bi bi-printer-fill"></i> Faktur A4</a>
                 <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/invoice/<%= inv.id %>/pdf" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf-fill"></i> PDF</a>
-                <button class="lbtn lbtn-ghost lbtn-sm" onclick="sendInvoiceWa(<%= inv.id %>, this)"><i class="bi bi-whatsapp"></i> Kirim ke WA</button>
+                <button class="lbtn lbtn-ghost lbtn-sm" onclick="sendInvoiceWa(<%= inv.id %>, this)"><i class="bi bi-whatsapp"></i> Enviar por WhatsApp</button>
               <% } %>
             </div>
           </div>
         <% }); %>
       <% } else { %>
-        <div class="dev-empty">Belum ada riwayat tagihan</div>
+        <div class="dev-empty">Todavía no hay facturas</div>
       <% } %>
     </div>
   </details>
 
   <!-- TIKET -->
   <details class="acc" id="ticket-section">
-    <summary><span><i class="bi bi-headset" style="color:#c084fc"></i> Tiket Keluhan &amp; Bantuan</span><i class="bi bi-chevron-down chev"></i></summary>
+    <summary><span><i class="bi bi-headset" style="color:#c084fc"></i> Reclamos y ayuda</span><i class="bi bi-chevron-down chev"></i></summary>
     <div class="acc-body">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px">
-        <span style="font-weight:700">Daftar Tiket Anda</span>
-        <button class="lbtn lbtn-primary lbtn-sm" onclick="showModal('ticketModal')"><i class="bi bi-plus-lg"></i> Buat Tiket</button>
+        <span style="font-weight:700">Sus reclamos</span>
+        <button class="lbtn lbtn-primary lbtn-sm" onclick="showModal('ticketModal')"><i class="bi bi-plus-lg"></i> Nuevo reclamo</button>
       </div>
       <% if (tickets && tickets.length > 0) { %>
         <div class="srch-wrap">
@@ -372,7 +372,7 @@
           </table>
         </div>
       <% } else { %>
-        <div class="dev-empty">Belum ada tiket keluhan yang dibuat.</div>
+        <div class="dev-empty">Todavía no cargó ningún reclamo.</div>
       <% } %>
     </div>
   </details>
@@ -386,7 +386,7 @@
       <button class="mc" onclick="hideModal('paymentModal')"><i class="bi bi-x-lg"></i></button></div>
     <div class="mbody">
       <div style="text-align:center;padding:14px;border-radius:14px;background:var(--bg);border:1px solid var(--warning-glow);margin-bottom:16px">
-        <div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.5px">Total Tagihan</div>
+        <div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.5px">Total adeudado</div>
         <h2 id="pay_amount_text" style="font-family:var(--font-display);color:var(--warning);font-size:26px;margin-top:4px"><%= APP_CUR %> 0</h2>
       </div>
       <div class="stack">
@@ -406,7 +406,7 @@
         <% } else { %>
           <button class="pay-item" style="text-align:left;width:100%" onclick="submitPayment('<%= _gwActive ? 'gateway' : 'qris' %>')">
             <div class="pay-icon"><i class="bi <%= _gwActive ? 'bi-credit-card-2-front' : 'bi-wallet2' %>"></i></div>
-            <div class="pay-info"><span class="pay-name">Bayar Sekarang</span><span class="pay-sub"><span class="pay-chip"><%= _gwActive ? 'Gateway Mayar' : 'QRIS / Transfer Bank / E-Wallet' %></span></span></div>
+            <div class="pay-info"><span class="pay-name">Pagar ahora</span><span class="pay-sub"><span class="pay-chip"><%= _gwActive ? 'Gateway Mayar' : 'QRIS / Transfer Bank / E-Wallet' %></span></span></div>
             <i class="bi bi-chevron-right" style="color:var(--primary)"></i>
           </button>
         <% } %>
@@ -427,17 +427,17 @@
 <!-- ═══ MODAL SSID ═══ -->
 <div class="mo" id="editSsidModal" onclick="if(event.target===this)hideModal('editSsidModal')">
   <div class="mb" style="max-width:460px">
-    <div class="mh"><h3><i class="bi bi-wifi" style="color:var(--info)"></i> Ubah Nama WiFi (SSID)</h3>
+    <div class="mh"><h3><i class="bi bi-wifi" style="color:var(--info)"></i> Cambiar nombre del WiFi (SSID)</h3>
       <button class="mc" onclick="hideModal('editSsidModal')"><i class="bi bi-x-lg"></i></button></div>
     <form action="/customer/change-ssid" method="POST">
       <div class="mbody">
         <div class="field" style="margin-top:0">
-          <label for="modalSsidInput">Nama WiFi (SSID) Baru</label>
-          <input type="text" name="ssid" id="modalSsidInput" class="inp inp-plain" placeholder="Contoh: WiFi_Rumah_Keluarga" required>
-          <div class="form-note">Perangkat akan terputus sesaat setelah nama WiFi diubah.</div>
+          <label for="modalSsidInput">Nuevo nombre del WiFi (SSID)</label>
+          <input type="text" name="ssid" id="modalSsidInput" class="inp inp-plain" placeholder="Ejemplo: WiFi_Casa_Familia" required>
+          <div class="form-note">Los dispositivos se desconectarán un momento después del cambio.</div>
         </div>
       </div>
-      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('editSsidModal')">Batal</button><button type="submit" class="lbtn lbtn-primary">Simpan Nama WiFi</button></div>
+      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('editSsidModal')">Batal</button><button type="submit" class="lbtn lbtn-primary">Guardar nombre del WiFi</button></div>
     </form>
   </div>
 </div>
@@ -445,17 +445,17 @@
 <!-- ═══ MODAL PASSWORD ═══ -->
 <div class="mo" id="editPasswordModal" onclick="if(event.target===this)hideModal('editPasswordModal')">
   <div class="mb" style="max-width:460px">
-    <div class="mh"><h3><i class="bi bi-shield-lock" style="color:var(--success)"></i> Ubah Password WiFi</h3>
+    <div class="mh"><h3><i class="bi bi-shield-lock" style="color:var(--success)"></i> Cambiar contraseña del WiFi</h3>
       <button class="mc" onclick="hideModal('editPasswordModal')"><i class="bi bi-x-lg"></i></button></div>
     <form action="/customer/change-password" method="POST">
       <div class="mbody">
         <div class="field" style="margin-top:0">
-          <label for="modalPassInput">Password WiFi Baru (Minimal 8 Karakter)</label>
-          <input type="password" name="password" id="modalPassInput" class="inp inp-plain" minlength="8" placeholder="Contoh: Rahasia12345" required>
-          <div class="form-note">Gunakan minimal 8 kombinasi huruf dan angka. Simpan password ini baik-baik.</div>
+          <label for="modalPassInput">Nueva contraseña del WiFi (mínimo 8 caracteres)</label>
+          <input type="password" name="password" id="modalPassInput" class="inp inp-plain" minlength="8" placeholder="Ejemplo: Secreta12345" required>
+          <div class="form-note">Use al menos 8 caracteres combinando letras y números. Guarde bien esta contraseña.</div>
         </div>
       </div>
-      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('editPasswordModal')">Batal</button><button type="submit" class="lbtn lbtn-primary">Simpan Password</button></div>
+      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('editPasswordModal')">Batal</button><button type="submit" class="lbtn lbtn-primary">Guardar contraseña</button></div>
     </form>
   </div>
 </div>
@@ -469,7 +469,7 @@
       <div class="mbody" style="text-align:center">
         <div style="width:64px;height:64px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;background:var(--wdim);color:var(--warning);font-size:28px"><i class="bi bi-exclamation-triangle-fill"></i></div>
         <h4 style="font-size:15px">Yakin ingin menyalakan ulang modem?</h4>
-        <p class="muted" style="font-size:13px;margin-top:8px">Proses reboot ±1–2 menit. Koneksi internet akan terputus sementara.</p>
+        <p class="muted" style="font-size:13px;margin-top:8px">El reinicio tarda ±1–2 minutos. La conexión a internet se cortará momentáneamente.</p>
       </div>
       <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('rebootModal')">Batal</button><button type="submit" class="lbtn lbtn-primary">Ya, Reboot Sekarang</button></div>
     </form>
@@ -479,7 +479,7 @@
 <!-- ═══ MODAL TIKET ═══ -->
 <div class="mo" id="ticketModal" onclick="if(event.target===this)hideModal('ticketModal')">
   <div class="mb" style="max-width:520px">
-    <div class="mh"><h3><i class="bi bi-headset" style="color:#c084fc"></i> Buat Tiket Keluhan Baru</h3>
+    <div class="mh"><h3><i class="bi bi-headset" style="color:#c084fc"></i> Nuevo reclamo</h3>
       <button class="mc" onclick="hideModal('ticketModal')"><i class="bi bi-x-lg"></i></button></div>
     <form action="/customer/tickets/create" method="POST" enctype="multipart/form-data">
       <input type="hidden" name="customerId" value="<%= profile ? profile.id : '' %>">
@@ -487,25 +487,25 @@
         <div class="field" style="margin-top:0">
           <label for="tk_subject">Jenis Kendala / Subjek</label>
           <select name="subject" id="tk_subject" class="inp inp-plain" required>
-            <option value="" disabled selected>-- Pilih Jenis Kendala --</option>
-            <option>Koneksi Terputus / Tidak Bisa Konek</option>
-            <option>Koneksi Lambat / Lemot</option>
+            <option value="" disabled selected>-- Elegir tipo de problema --</option>
+            <option>Sin conexión / no puedo conectarme</option>
+            <option>Conexión lenta</option>
             <option>Lampu PON Merah / Los Sinyal</option>
             <option>Kendala Lupa Password WiFi</option>
-            <option>Pertanyaan Tagihan &amp; Pembayaran</option>
+            <option>Consultas de facturación y pagos</option>
             <option>Lainnya</option>
           </select>
         </div>
         <div class="field">
-          <label for="tk_msg">Detail Pesan / Penjelasan</label>
-          <textarea name="message" id="tk_msg" class="inp inp-plain" rows="3" placeholder="Jelaskan kendala Anda…" required></textarea>
+          <label for="tk_msg">Detalle / explicación</label>
+          <textarea name="message" id="tk_msg" class="inp inp-plain" rows="3" placeholder="Describa su problema…" required></textarea>
         </div>
         <div class="field">
-          <label for="tk_photo">Foto Lampiran (Opsional)</label>
+          <label for="tk_photo">Foto adjunta (opcional)</label>
           <input type="file" name="photos" id="tk_photo" class="inp inp-plain" accept="image/*" multiple style="padding:10px">
         </div>
       </div>
-      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('ticketModal')">Batal</button><button type="submit" class="lbtn lbtn-primary">Kirim Tiket</button></div>
+      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('ticketModal')">Batal</button><button type="submit" class="lbtn lbtn-primary">Enviar reclamo</button></div>
     </form>
   </div>
 </div>
@@ -513,14 +513,14 @@
 <!-- ═══ POPUP AWAL: ONU TIDAK TERDETEKSI ═══ -->
 <div class="mo" id="onuMissingModal" onclick="if(event.target===this)hideModal('onuMissingModal')">
   <div class="mb" style="max-width:440px">
-    <div class="mh"><h3><i class="bi bi-exclamation-triangle-fill" style="color:var(--warning)"></i> ONU Belum Terdeteksi</h3>
+    <div class="mh"><h3><i class="bi bi-exclamation-triangle-fill" style="color:var(--warning)"></i> ONU no detectada</h3>
       <button class="mc" onclick="hideModal('onuMissingModal')"><i class="bi bi-x-lg"></i></button></div>
     <div class="mbody">
       <div class="onu-pop-ic"><i class="bi bi-router"></i></div>
-      <p style="font-size:13.5px;text-align:center">Perangkat ONU/ONT Anda belum terbaca di sistem, sehingga data sinyal optik, WiFi, dan trafik mungkin belum akurat.</p>
-      <div class="auth-alert warn" style="margin-top:14px"><i class="bi bi-info-circle"></i> Coba tekan “Poll ONU” pada kartu Kontrol Perangkat, atau buat tiket bantuan bila koneksi bermasalah.</div>
+      <p style="font-size:13.5px;text-align:center">Su equipo ONU/ONT todavía no se lee en el sistema, así que los datos de señal, WiFi y tráfico pueden no ser exactos.</p>
+      <div class="auth-alert warn" style="margin-top:14px"><i class="bi bi-info-circle"></i> Pruebe con "Consultar ONU" en la tarjeta Control del router, o cargue un reclamo si tiene problemas de conexión.</div>
     </div>
-    <div class="mf"><button class="lbtn lbtn-ghost" onclick="hideModal('onuMissingModal')">Nanti</button><button class="lbtn lbtn-primary" onclick="hideModal('onuMissingModal');showModal('ticketModal')"><i class="bi bi-headset"></i> Buat Tiket</button></div>
+    <div class="mf"><button class="lbtn lbtn-ghost" onclick="hideModal('onuMissingModal')">Nanti</button><button class="lbtn lbtn-primary" onclick="hideModal('onuMissingModal');showModal('ticketModal')"><i class="bi bi-headset"></i> Nuevo reclamo</button></div>
   </div>
 </div>
 
@@ -530,7 +530,7 @@
     <div class="mbody" style="text-align:center">
       <div class="wifi-status-ic" id="wifiStatusIc"><i class="bi bi-arrow-repeat spin"></i></div>
       <h4 id="wifiStatusTitle" style="font-size:16px">Memproses…</h4>
-      <p class="muted" id="wifiStatusMsg" style="font-size:13px;margin-top:6px">Mohon tunggu sebentar.</p>
+      <p class="muted" id="wifiStatusMsg" style="font-size:13px;margin-top:6px">Espere un momento.</p>
       <div id="wifiStatusActions" style="margin-top:16px;display:none"><button class="lbtn lbtn-primary" onclick="hideModal('wifiStatusModal')">Tutup</button></div>
     </div>
   </div>
@@ -540,7 +540,7 @@
 <div class="toast-wrap" id="toastWrap"></div>
 
 <!-- FLOATING TEMA -->
-<button class="theme-fab" onclick="toggleDashTheme()" aria-label="Ganti tema" title="Mode Gelap / Terang">
+<button class="theme-fab" onclick="toggleDashTheme()" aria-label="Cambiar tema" title="Mode Gelap / Terang">
   <i class="bi bi-circle-half"></i>
 </button>
 
@@ -562,13 +562,13 @@
     var el = document.getElementById('custIdText'); if(!el) return;
     var val = el.textContent.trim();
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(val).then(function(){ toast('ID pelanggan disalin: ' + val, 'success'); }).catch(function(){ fallbackCopy(val); });
+      navigator.clipboard.writeText(val).then(function(){ toast('ID de cliente copiado: ' + val, 'success'); }).catch(function(){ fallbackCopy(val); });
     } else { fallbackCopy(val); }
   }
   function fallbackCopy(text){
     var ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px';
     document.body.appendChild(ta); ta.select();
-    try{ document.execCommand('copy'); toast('ID pelanggan disalin', 'success'); }catch(e){ toast('Gagal menyalin', 'error'); }
+    try{ document.execCommand('copy'); toast('ID de cliente copiado', 'success'); }catch(e){ toast('No se pudo copiar', 'error'); }
     document.body.removeChild(ta);
   }
 
@@ -595,27 +595,27 @@
   async function submitWifiForm(form, kind){
     var fd = new FormData(form);
     hideModal(kind==='ssid' ? 'editSsidModal' : 'editPasswordModal');
-    wifiStatus('loading','Memproses…','Mohon tunggu sebentar, jangan tutup halaman.');
+    wifiStatus('loading','Memproses…','Espere un momento, no cierre la página.');
     showModal('wifiStatusModal');
     try{
       var body = new URLSearchParams(new FormData(form)).toString();
       var r = await fetch(form.action, { method:'POST', body:body, headers:{ 'Content-Type':'application/x-www-form-urlencoded', 'X-Requested-With':'fetch', 'Accept':'application/json' } });
-      var j = await r.json().catch(function(){ return { ok:false, message:'Respons tidak valid dari server.' }; });
+      var j = await r.json().catch(function(){ return { ok:false, message:'Respuesta inválida del servidor.' }; });
       if (j && j.ok) {
         if (kind==='ssid') {
           var v=String(fd.get('ssid')||''); var val=document.querySelector('.wifi-val'); if(val) val.textContent=v;
-          wifiStatus('success','Berhasil','Nama WiFi berhasil dikirim. Perubahan aktif dalam 1-5 menit. Mohon tunggu dan jangan ulangi agar tidak membebani server.');
+          wifiStatus('success','Berhasil','Nombre del WiFi enviado. El cambio se aplica en 1 a 5 minutos. Espere y no repita la solicitud.');
           startSsidCooldown(300);
         } else {
-          wifiStatus('success','Berhasil', j.message || 'Perubahan berhasil disimpan.');
+          wifiStatus('success','Berhasil', j.message || 'Cambios guardados.');
         }
       } else if (j && j.cooldown) {
-        wifiStatus('error','Tunggu dulu', j.message || 'Mohon tunggu sebelum mengubah lagi.');
+        wifiStatus('error','Espere un momento', j.message || 'Espere antes de volver a cambiarlo.');
         if (j.retryAfter) startSsidCooldown(j.retryAfter);
       } else {
-        wifiStatus('error','Gagal', (j && j.message) || 'Terjadi kesalahan. Silakan coba lagi.');
+        wifiStatus('error','Gagal', (j && j.message) || 'Ocurrió un error. Intente de nuevo.');
       }
-    }catch(e){ wifiStatus('error','Gagal','Tidak dapat menghubungi server. Periksa koneksi Anda.'); }
+    }catch(e){ wifiStatus('error','Gagal','No se pudo contactar al servidor. Revise su conexión.'); }
   }
   document.addEventListener('DOMContentLoaded', function(){
     var f1=document.querySelector('#editSsidModal form'); if(f1) f1.addEventListener('submit',function(e){e.preventDefault();submitWifiForm(f1,'ssid');});
@@ -639,7 +639,7 @@
       return;
     }
     var mins = Math.ceil(remain/60000);
-    btns.forEach(function(b){ b.style.pointerEvents='none'; b.style.opacity='.5'; b.setAttribute('title',' Mohon tunggu ~'+mins+' menit sebelum mengubah nama WiFi lagi'); });
+    btns.forEach(function(b){ b.style.pointerEvents='none'; b.style.opacity='.5'; b.setAttribute('title',' Espere ~'+mins+' minutos antes de volver a cambiar el nombre del WiFi'); });
     setTimeout(applySsidCooldown, Math.min(remain, 30000));
   }
 
@@ -664,9 +664,9 @@
     try {
       const r = await fetch('/customer/invoice/' + invId + '/send-pdf-wa', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
       const j = await r.json().catch(function(){ return {}; });
-      alert(j.message || (j.ok ? 'Invoice dikirim ke WhatsApp Anda.' : 'Gagal mengirim invoice.'));
+      alert(j.message || (j.ok ? 'Factura enviada a su WhatsApp.' : 'No se pudo enviar la factura.'));
     } catch (e) {
-      alert('Gagal mengirim invoice: ' + e.message);
+      alert('No se pudo enviar la factura: ' + e.message);
     } finally {
       if (btn) { btn.disabled = false; btn.innerHTML = old; }
     }
@@ -741,15 +741,15 @@
     var container = document.getElementById('notifListContainer'); if (!container) return;
     var notifs = [];
     <% if (paidInvoices && paidInvoices.length > 0) { paidInvoices.slice(0,3).forEach(function(inv){ var pAmt = inv.amount != null ? inv.amount : (inv.package_price != null ? inv.package_price : 0); %>
-      notifs.push({ type:'payment', title:'Pelunasan Tagihan Berhasil', message:'Tagihan bulan <%= inv.period_month %>/<%= inv.period_year %> sebesar <%= APP_CUR %> <%= parseInt(pAmt || 0).toLocaleString(APP_LOCALE) %> telah LUNAS.', time:'Terkonfirmasi Sistem' });
+      notifs.push({ type:'payment', title:'Pago recibido', message:'Tagihan bulan <%= inv.period_month %>/<%= inv.period_year %> sebesar <%= APP_CUR %> <%= parseInt(pAmt || 0).toLocaleString(APP_LOCALE) %> telah LUNAS.', time:'Confirmado por el sistema' });
     <% }); } %>
     <% if (hasUnpaid) { var uAmt = latestUnpaid.amount != null ? latestUnpaid.amount : (latestUnpaid.package_price != null ? latestUnpaid.package_price : 0); %>
-      notifs.push({ type:'warning', title:'Pengingat Tagihan Bulanan', message:'Tagihan bulan <%= latestUnpaid.period_month %>/<%= latestUnpaid.period_year %> sebesar <%= APP_CUR %> <%= parseInt(uAmt || 0).toLocaleString(APP_LOCALE) %> menunggu pembayaran.', time:'Jatuh Tempo Tgl 20' });
+      notifs.push({ type:'warning', title:'Recordatorio de factura mensual', message:'Tagihan bulan <%= latestUnpaid.period_month %>/<%= latestUnpaid.period_year %> sebesar <%= APP_CUR %> <%= parseInt(uAmt || 0).toLocaleString(APP_LOCALE) %> menunggu pembayaran.', time:'Jatuh Tempo Tgl 20' });
     <% } %>
     var badge = document.getElementById('notifCountBadge');
     if (badge && notifs.length > 0) { badge.innerText = notifs.length; badge.style.display = 'flex'; }
     if (!notifs.length) {
-      container.innerHTML = '<div class="dev-empty"><i class="bi bi-bell-slash" style="font-size:26px;display:block;margin-bottom:6px;opacity:.5"></i>Belum ada notifikasi baru</div>';
+      container.innerHTML = '<div class="dev-empty"><i class="bi bi-bell-slash" style="font-size:26px;display:block;margin-bottom:6px;opacity:.5"></i>No hay notificaciones nuevas</div>';
     } else {
       container.innerHTML = notifs.map(function(n){
         return '<div class="notif-item ' + (n.type === 'payment' ? 'unread' : '') + '">' +

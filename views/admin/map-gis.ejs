@@ -236,7 +236,7 @@
   <%- include('partials/topbar', {
     pageIcon: 'ti-map-2',
     pageTitle: 'Peta Geografis (Real GIS Map)',
-    pageDesc: 'Visualisasi Geografis Jaringan Fiber Optik, ODC, ODP, HTB P2P & Pelanggan',
+    pageDesc: 'Mapa geográfico de la red de fibra óptica, ODC, NAP, HTB P2P y clientes',
     showRouterSelector: false
   }) %>
 
@@ -770,7 +770,7 @@
         m.bindPopup(buildNodePopupHtml({
           type: '<%= t('admin.gis.el_htb','HTB Media Converter') %> (P2P 1:1)',
           title: odp.name,
-          subtitle: `P2P Target: ${targetCust?.name || 'Belum Ada'}`,
+          subtitle: `Destino P2P: ${targetCust?.name || 'Sin asignar'}`,
           status: odpStatus,
           lat: lat,
           lng: lng,
@@ -822,7 +822,7 @@
         m.bindPopup(buildNodePopupHtml({
           type: isCascade ? 'ODP Cascade' : '<%= t('admin.gis.el_odp','ODP Distribusi') %>',
           title: odp.name,
-          subtitle: `Port: ${totalCust}/${capacity} (${activeCust} Aktif)`,
+          subtitle: `Puertos: ${totalCust}/${capacity} (${activeCust} activos)`,
           status: odpStatus,
           lat: lat,
           lng: lng,
@@ -918,7 +918,7 @@
         className: 'gis-cable-offline'
       }).addTo(groupCables);
 
-      line.bindTooltip(`${opts.label} • OFFLINE (Statis Merah)`, { sticky: true });
+      line.bindTooltip(`${opts.label} • DESCONECTADO (rojo fijo)`, { sticky: true });
       cableRegistry.push(line);
 
     } else if (isStandby) {
@@ -930,7 +930,7 @@
         className: 'gis-cable-standby'
       }).addTo(groupCables);
 
-      line.bindTooltip(`${opts.label} • Standby (Kosong)`, { sticky: true });
+      line.bindTooltip(`${opts.label} • En espera (libre)`, { sticky: true });
       cableRegistry.push(line);
 
     } else {
@@ -948,7 +948,7 @@
         className: 'gis-cable-flow'
       }).addTo(groupCables);
 
-      flowLine.bindTooltip(`${opts.label} • Online Aktif`, { sticky: true });
+      flowLine.bindTooltip(`${opts.label} • En línea`, { sticky: true });
       cableRegistry.push(glowLine);
       cableRegistry.push(flowLine);
     }
@@ -1088,7 +1088,7 @@
     });
 
     if (results.length === 0) {
-      dropdown.innerHTML = `<div class="p-3 text-center text-slate-500 italic">Tidak ditemukan titik "${val}"</div>`;
+      dropdown.innerHTML = `<div class="p-3 text-center text-slate-500 italic">No se encontró el punto "${val}"</div>`;
       dropdown.classList.remove('hidden');
       return;
     }

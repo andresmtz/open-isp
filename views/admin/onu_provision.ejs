@@ -180,7 +180,7 @@
               <i class="bi bi-plug"></i> <%= t('admin.dash.test_conn','Test Koneksi') %>
             </button>
             <button type="submit" name="action" value="save" class="btn btn-p">
-              <i class="bi bi-save"></i> Simpan Konfigurasi
+              <i class="bi bi-save"></i> Guardar configuración
             </button>
           </div>
         </form>
@@ -191,13 +191,13 @@
     <!-- Tabs -->
     <div class="tab-buttons">
       <button class="tab-btn active" onclick="switchTab('unconfigured')">
-        <i class="bi bi-exclamation-triangle"></i> ONU Belum Terkonfigurasi
+        <i class="bi bi-exclamation-triangle"></i> ONU sin configurar
       </button>
       <button class="tab-btn" onclick="switchTab('configured')">
         <i class="bi bi-check-circle"></i> ONU Terkonfigurasi
       </button>
       <button class="tab-btn" onclick="switchTab('provision')">
-        <i class="bi bi-plus-circle"></i> Provision Manual
+        <i class="bi bi-plus-circle"></i> Alta manual
       </button>
     </div>
 
@@ -205,7 +205,7 @@
     <div id="tab-unconfigured" class="tab-content active">
       <div class="card">
         <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center">
-          <h6 style="margin:0"><i class="bi bi-search"></i> Scan ONU Belum Terkonfigurasi</h6>
+          <h6 style="margin:0"><i class="bi bi-search"></i> Buscar ONU sin configurar</h6>
           <button onclick="scanUnconfiguredONUs()" class="btn btn-p btn-sm">
             <i class="bi bi-arrow-clockwise"></i> Scan Ulang
           </button>
@@ -213,7 +213,7 @@
         <div class="card-bd">
           <% if (oltConfig.vendor === 'ZTE') { %>
             <div class="fg">
-              <label class="fl">PON Interface (contoh: 1/1/1)</label>
+              <label class="fl">Interfaz PON (ejemplo: 1/1/1)</label>
               <input type="text" class="fc" id="scanPon" placeholder="1/1/1">
             </div>
           <% } else { %>
@@ -247,16 +247,16 @@
     <div id="tab-configured" class="tab-content">
       <div class="card">
         <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center">
-          <h6 style="margin:0"><i class="bi bi-list-check"></i> Daftar ONU Terkonfigurasi</h6>
+          <h6 style="margin:0"><i class="bi bi-list-check"></i> ONU configuradas</h6>
           <button onclick="scanConfiguredONUs()" class="btn btn-p btn-sm">
-            <i class="bi bi-arrow-clockwise"></i> Muat Ulang / Scan
+            <i class="bi bi-arrow-clockwise"></i> Recargar / buscar
           </button>
         </div>
         <div class="card-bd">
           <div id="configuredList">
             <div class="hint" style="text-align:center;padding:40px">
               <i class="bi bi-info-circle" style="font-size:32px;opacity:0.5"></i>
-              <p><%= t('admin.onu.hint_reload','Klik "Muat Ulang / Scan" untuk memantau status ONU terkonfigurasi via SNMP') %></p>
+              <p><%= t('admin.onu.hint_reload','Klik "Recargar / buscar" untuk memantau status ONU terkonfigurasi via SNMP') %></p>
             </div>
           </div>
         </div>
@@ -267,7 +267,7 @@
     <div id="tab-provision" class="tab-content">
       <div class="card">
         <div class="card-hd">
-          <h6 style="margin:0"><i class="bi bi-plus-circle"></i> Provision ONU Manual</h6>
+          <h6 style="margin:0"><i class="bi bi-plus-circle"></i> Alta manual de ONU</h6>
         </div>
         <div class="card-bd">
           <form method="POST" action="/admin/onu-provision/provision">
@@ -289,7 +289,7 @@
                   <input type="text" class="fc" name="sn" placeholder="<%= oltConfig.vendor === 'ZTE' ? 'ZTEGC1234567' : oltConfig.vendor === 'VSOL' ? 'VSOL12345678' : 'CDAT12345678' %>" required>
                 </div>
                 <div class="fg">
-                  <label class="fl">Nama ONU</label>
+                  <label class="fl">Nombre de la ONU</label>
                   <input type="text" class="fc" name="name" placeholder="Customer-001" required>
                 </div>
                 <div class="fg">
@@ -329,7 +329,7 @@
                   <input type="text" class="fc" name="sn" placeholder="<%= oltConfig.vendor === 'Huawei' ? '48575443ABCD1234' : 'FHTT12345678' %>" required>
                 </div>
                 <div class="fg">
-                  <label class="fl">Nama ONU</label>
+                  <label class="fl">Nombre de la ONU</label>
                   <input type="text" class="fc" name="name" placeholder="Customer-001" required>
                 </div>
                 <div class="fg">
@@ -391,7 +391,7 @@
                 </label>
                 <div id="lanModeFields" style="display:none;padding-top:12px;border-top:1px solid rgba(71,85,105,.3)">
                   <div class="fg" style="margin:0 0 12px 0">
-                    <label class="fl">Pilih Mode</label>
+                    <label class="fl">Elegir modo</label>
                     <select class="fs" name="lanMode" id="lanMode" onchange="togglePPPoEFields()">
                       <option value="bridge">Bridge (Default)</option>
                       <option value="router">Router (PPPoE)</option>
@@ -475,7 +475,7 @@
                     <div class="fg" style="margin:0">
                       <label class="fl">Periodic Inform Interval (seconds)</label>
                       <input type="number" class="fc" name="tr069PeriodicInform" value="300" min="60" max="86400">
-                      <div class="hint" style="font-size:11px;margin-top:4px">Default: 300 detik (5 menit). Range: 60-86400 detik</div>
+                      <div class="hint" style="font-size:11px;margin-top:4px">Predeterminado: 300 segundos (5 minutos). Rango: 60-86400 segundos</div>
                     </div>
                   </div>
                 </div>
@@ -526,7 +526,7 @@ async function scanUnconfiguredONUs() {
   if (vendor === 'ZTE' || vendor === 'VSOL' || vendor === 'CData' || vendor === 'HSGQ' || vendor === 'Hioso') {
     const pon = document.getElementById('scanPon').value;
     if (!pon) {
-      alert('Masukkan PON interface (contoh: 1/1/1 atau epon 0/1)');
+      alert('Ingresá la interfaz PON (ejemplo: 1/1/1 o epon 0/1)');
       return;
     }
     params.pon = pon;
@@ -705,7 +705,7 @@ function toggleTR069Fields() {
 
 // Reset form
 function resetForm() {
-  if (confirm('Reset semua field form?')) {
+  if (confirm('¿Limpiar todos los campos del formulario?')) {
     document.querySelector('form[action="/admin/onu-provision/provision"]').reset();
     
     // Reset all toggle states
@@ -801,7 +801,7 @@ async function scanConfiguredONUs() {
       });
       listDiv.innerHTML = html;
     } else {
-      const errorMsg = data.error || 'Tidak ada ONU terkonfigurasi yang ditemukan';
+      const errorMsg = data.error || 'No se encontraron ONU configuradas';
       listDiv.innerHTML = `<div class="hint" style="text-align:center;padding:40px"><i class="bi bi-info-circle" style="font-size:32px;color:#f59e0b"></i><p>\${errorMsg}</p></div>`;
     }
   } catch (error) {
@@ -811,13 +811,13 @@ async function scanConfiguredONUs() {
 
 // Reboot Configured ONU
 async function rebootConfiguredOnu(oltId, index) {
-  if (!confirm('Apakah Anda yakin ingin me-reboot ONU dengan index ' + index + '?')) return;
+  if (!confirm('¿Seguro que querés reiniciar la ONU con índice ' + index + '?')) return;
   
   try {
     const res = await fetch(`/admin/olts/\${oltId}/onu/\${index}/reboot`, { method: 'POST' });
     const data = await res.json();
     if (data.success) {
-      alert('Perintah reboot berhasil dikirim!');
+      alert('¡Orden de reinicio enviada!');
       scanConfiguredONUs();
     } else {
       alert('Gagal: ' + data.error);
@@ -829,7 +829,7 @@ async function rebootConfiguredOnu(oltId, index) {
 
 // Rename Configured ONU
 async function renameConfiguredOnu(oltId, index, oldName) {
-  const newName = prompt('Masukkan nama baru untuk ONU:', oldName);
+  const newName = prompt('Nuevo nombre para la ONU:', oldName);
   if (!newName || newName.trim() === '') return;
   
   try {
@@ -840,7 +840,7 @@ async function renameConfiguredOnu(oltId, index, oldName) {
     });
     const data = await res.json();
     if (data.success) {
-      alert('Nama ONU berhasil diubah!');
+      alert('¡Nombre de la ONU actualizado!');
       scanConfiguredONUs();
     } else {
       alert('Gagal: ' + data.error);
@@ -852,7 +852,7 @@ async function renameConfiguredOnu(oltId, index, oldName) {
 
 // Delete Configured ONU
 async function deleteConfiguredOnu(index, sn) {
-  if (!confirm('Apakah Anda yakin ingin menghapus/menghilangkan otorisasi ONU dengan Serial Number ' + sn + '?')) return;
+  if (!confirm('¿Seguro que querés quitar la autorización de la ONU con número de serie ' + sn + '?')) return;
   
   try {
     const res = await fetch('/admin/onu-provision/delete', {
@@ -865,7 +865,7 @@ async function deleteConfiguredOnu(index, sn) {
     });
     const data = await res.json();
     if (data.success) {
-      alert('ONU berhasil dihapus!');
+      alert('¡ONU eliminada!');
       scanConfiguredONUs();
     } else {
       alert('Gagal: ' + data.error);

@@ -34,7 +34,7 @@
         <div class="muted" style="font-size:11px;margin-top:5px"><%= t('tech.cc.required_pppoe','Wajib untuk pelanggan PPPoE/Hotspot') %></div>
       </div>
       <div class="p-field"><label><%= t('tech.cc.pppoe_user','PPPoE Username') %></label>
-        <input id="pppoe_username" name="pppoe_username" class="p-input" list="pppoeList" placeholder="Pilih / cari dari MikroTik">
+        <input id="pppoe_username" name="pppoe_username" class="p-input" list="pppoeList" placeholder="Elegir / buscar en el MikroTik">
         <datalist id="pppoeList"></datalist>
         <div id="pppoeHint" class="muted" style="font-size:11px;margin-top:5px"></div>
       </div>
@@ -75,7 +75,7 @@
       <div id="odpInfo" class="muted" style="font-size:11.5px;margin-top:6px"></div>
     </div>
     <div class="p-grid2">
-      <div class="p-field"><label><%= t('tech.cc.cust_port','Port Pelanggan (ODP)') %></label><input id="pon_port" name="pon_port" class="p-input" placeholder="contoh: 1"></div>
+      <div class="p-field"><label><%= t('tech.cc.cust_port','Port Pelanggan (ODP)') %></label><input id="pon_port" name="pon_port" class="p-input" placeholder="ejemplo: 1"></div>
       <div class="p-field"><label><%= t('tech.cc.update_odp','Update ODP') %></label><select name="update_odp" id="update_odp" class="p-input" onchange="toggleOdpEdit()"><option value="0"><%= t('tech.cc.no','Tidak') %></option><option value="1"><%= t('tech.cc.yes','Ya') %></option></select></div>
     </div>
 
@@ -99,9 +99,9 @@
 
 <script>
   function getLocation() {
-    if (!navigator.geolocation) return alert('Geolocation tidak didukung di perangkat ini.');
+    if (!navigator.geolocation) return alert('Este dispositivo no admite geolocalización.');
     navigator.geolocation.getCurrentPosition(function(pos){ document.getElementById('lat').value = pos.coords.latitude; document.getElementById('lng').value = pos.coords.longitude; },
-      function(err){ alert('Gagal mengambil lokasi: ' + (err.message || err)); }, { enableHighAccuracy: true, timeout: 8000 });
+      function(err){ alert('No se pudo obtener la ubicación: ' + (err.message || err)); }, { enableHighAccuracy: true, timeout: 8000 });
   }
   function toggleOdpEdit() { document.getElementById('odpEdit').style.display = document.getElementById('update_odp').value === '1' ? 'block' : 'none'; }
   function copyCustomerToOdp() { document.getElementById('odp_lat').value = document.getElementById('lat').value; document.getElementById('odp_lng').value = document.getElementById('lng').value; }
@@ -116,7 +116,7 @@
     try {
       var res = await fetch('/tech/api/odps/' + encodeURIComponent(odpId) + '/ports');
       var data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal ambil info ODP');
+      if (!res.ok) throw new Error(data.error || 'No se pudo obtener la información de la NAP');
       var used = Array.isArray(data.usedPorts) ? data.usedPorts.join(', ') : '';
       infoEl.innerText = 'Port terpakai: ' + data.usedCount + '/' + data.capacity + ' • Sisa: ' + data.remaining + (used ? ' • (' + used + ')' : '');
     } catch (e) { infoEl.innerText = e.message; }
@@ -124,15 +124,15 @@
   async function loadPppoeUsers() {
     var routerId = (document.getElementById('router_id') || {}).value || '';
     var hint = document.getElementById('pppoeHint'), list = document.getElementById('pppoeList');
-    if (hint) hint.innerText = 'Memuat user PPPoE dari MikroTik…';
+    if (hint) hint.innerText = 'Cargando usuarios PPPoE del MikroTik…';
     if (list) list.innerHTML = '';
     try {
       var url = routerId ? '/tech/api/mikrotik/pppoe-users?routerId=' + encodeURIComponent(routerId) : '/tech/api/mikrotik/pppoe-users';
       var res = await fetch(url); var data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal memuat user PPPoE');
+      if (!res.ok) throw new Error(data.error || 'No se pudieron cargar los usuarios PPPoE');
       var users = Array.isArray(data) ? data : [];
       if (list) list.innerHTML = users.filter(function(u){return u && u.name;}).map(function(u){ return '<option value="' + String(u.name).replace(/"/g,'&quot;') + '"></option>'; }).join('');
-      if (hint) hint.innerText = users.length ? ('Tersedia ' + users.length + ' user PPPoE.') : 'Tidak ada user PPPoE.';
+      if (hint) hint.innerText = users.length ? ('Tersedia ' + users.length + ' user PPPoE.') : 'No hay usuarios PPPoE.';
     } catch (e) { if (hint) hint.innerText = e.message; }
   }
   async function loadPppoeProfiles() {
@@ -141,7 +141,7 @@
     try {
       var url = routerId ? '/tech/api/mikrotik/pppoe-profiles?routerId=' + encodeURIComponent(routerId) : '/tech/api/mikrotik/pppoe-profiles';
       var res = await fetch(url); var data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal memuat profile PPPoE');
+      if (!res.ok) throw new Error(data.error || 'No se pudieron cargar los perfiles PPPoE');
       var profiles = Array.isArray(data) ? data : [];
       var opts = ['<option value="isolir">isolir</option>'];
       for (var i = 0; i < profiles.length; i++) { var p = profiles[i]; if (!p || !p.name || p.name === 'isolir') continue; opts.push('<option value="' + String(p.name).replace(/"/g,'&quot;') + '">' + p.name + '</option>'); }

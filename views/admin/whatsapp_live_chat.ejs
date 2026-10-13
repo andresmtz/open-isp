@@ -64,7 +64,7 @@
         };
         var gw = GW[gatewayType] || { cls: 'bp', icon: 'whatsapp', label: 'WhatsApp Gateway' };
       %>
-      <span class="badge <%= gw.cls %>" title="Gateway WhatsApp aktif">
+      <span class="badge <%= gw.cls %>" title="Gateway de WhatsApp activo">
         <i class="bi bi-<%= gw.icon %>"></i> <%= gw.label %>
       </span>
       <a href="/admin/logout" class="btn btn-g btn-sm"><i class="bi bi-box-arrow-left"></i></a>
@@ -92,15 +92,15 @@
         <div class="chat-inbox-header">
           <span><i class="bi bi-inbox-fill"></i> Percakapan</span>
           <div style="display:flex;gap:6px">
-            <button class="btn btn-p btn-sm" onclick="openNewChatModal()" title="Mulai Chat Baru"><i class="bi bi-plus-lg"></i> Chat Baru</button>
+            <button class="btn btn-p btn-sm" onclick="openNewChatModal()" title="Iniciar chat"><i class="bi bi-plus-lg"></i> Nuevo chat</button>
             <button class="btn btn-g btn-sm" onclick="loadConversations()" title="Refresh Chat"><i class="bi bi-arrow-clockwise"></i></button>
           </div>
         </div>
         <div class="chat-inbox-search">
-          <input type="text" id="chatSearch" class="fc" placeholder="Cari nama atau nomor..." onkeyup="filterUserList()">
+          <input type="text" id="chatSearch" class="fc" placeholder="Buscar nombre o número..." onkeyup="filterUserList()">
         </div>
         <div class="chat-user-list" id="userList">
-          <div class="text-center text-muted py-4" style="padding:20px;">Memuat percakapan...</div>
+          <div class="text-center text-muted py-4" style="padding:20px;">Cargando conversaciones...</div>
         </div>
       </div>
 
@@ -108,7 +108,7 @@
       <div class="chat-main">
         <div class="chat-main-header">
           <div class="chat-main-title" id="chatHeaderTitle">
-            <i class="bi bi-person-circle"></i> Memuat chat...
+            <i class="bi bi-person-circle"></i> Cargando chat...
           </div>
           <div id="chatHeaderSub" style="font-size:11px;" class="text-muted"></div>
         </div>
@@ -116,13 +116,13 @@
         <div class="chat-messages" id="chatMessages">
           <div style="margin:auto;text-align:center;color:var(--muted)">
             <i class="bi bi-chat-text" style="font-size:48px;display:block;margin-bottom:10px;"></i>
-            Pilih pelanggan dari daftar di sebelah kiri atau klik <strong>+ Chat Baru</strong> untuk membalas/mengirim WhatsApp.
+            Elegí un cliente de la lista de la izquierda o hacé clic en <strong>+ Nuevo chat</strong> para responder o enviar un WhatsApp.
           </div>
         </div>
 
         <form class="chat-input-area" id="chatForm" onsubmit="sendChatMessage(event)">
           <input type="hidden" id="activePhone" value="">
-          <textarea id="chatInput" class="fc" placeholder="Tulis pesan WhatsApp... (Tekan Enter untuk kirim, Shift+Enter untuk baris baru)" disabled required onkeydown="handleKeyDown(event)"></textarea>
+          <textarea id="chatInput" class="fc" placeholder="Escribí un mensaje de WhatsApp... (Enter para enviar, Shift+Enter para nueva línea)" disabled required onkeydown="handleKeyDown(event)"></textarea>
           <button type="submit" class="btn btn-p" id="sendBtn" disabled>
             <i class="bi bi-send-fill"></i> Kirim
           </button>
@@ -136,14 +136,14 @@
 <div class="mo" id="newChatModal">
   <div class="mb" style="max-width:520px;">
     <div class="mh">
-      <span class="mt"><i class="bi bi-chat-plus-fill"></i> Mulai Percakapan WhatsApp Baru</span>
+      <span class="mt"><i class="bi bi-chat-plus-fill"></i> Iniciar una nueva conversación de WhatsApp</span>
       <button type="button" class="mc" onclick="closeModal('newChatModal')">&times;</button>
     </div>
     <div class="mbody">
       <div class="fg mb12">
-        <label class="fl">Pilih Pelanggan Terdaftar:</label>
+        <label class="fl">Elegir un cliente registrado:</label>
         <select class="fs" id="selectCustomerPhone" onchange="document.getElementById('manualPhoneInput').value=this.value">
-          <option value="">-- Pilih dari Daftar Pelanggan --</option>
+          <option value="">-- Elegir de la lista de clientes --</option>
           <% if (typeof customers !== 'undefined' && customers) { %>
             <% customers.forEach(c => { %>
               <% if (c.phone) { %>
@@ -154,8 +154,8 @@
         </select>
       </div>
       <div class="fg">
-        <label class="fl">Atau Ketik Nomor WA Manual:</label>
-        <input type="text" id="manualPhoneInput" class="fc" placeholder="Contoh: 08123456789 atau 628123456789">
+        <label class="fl">O escribir el número a mano:</label>
+        <input type="text" id="manualPhoneInput" class="fc" placeholder="Ejemplo: 0981123456 o 595981123456">
       </div>
     </div>
     <div class="mf">
@@ -192,7 +192,7 @@ async function loadConversations() {
 function renderUserList(list) {
   const container = document.getElementById('userList');
   if (!list || list.length === 0) {
-    container.innerHTML = `<div class="text-center text-muted" style="padding:24px;">Belum ada percakapan WhatsApp. Klik <b>+ Chat Baru</b>.</div>`;
+    container.innerHTML = `<div class="text-center text-muted" style="padding:24px;">Todavía no hay conversaciones de WhatsApp. Hacé clic en <b>+ Nuevo chat</b>.</div>`;
     return;
   }
 
@@ -235,7 +235,7 @@ function closeModal(id) {
 function startNewChatFromModal() {
   const phoneVal = document.getElementById('manualPhoneInput').value.trim();
   if (!phoneVal) {
-    alert('Harap pilih pelanggan atau ketik nomor WhatsApp.');
+    alert('Elegí un cliente o escribí un número de WhatsApp.');
     return;
   }
   closeModal('newChatModal');
@@ -308,7 +308,7 @@ async function loadChatMessages(phone, showSpinner = false) {
     }
   } catch (e) {
     if (showSpinner) {
-      container.innerHTML = `<div class="text-center text-danger" style="margin:auto;">Gagal memuat pesan: ${e.message}</div>`;
+      container.innerHTML = `<div class="text-center text-danger" style="margin:auto;">No se pudieron cargar los mensajes: ${e.message}</div>`;
     }
   }
 }
@@ -327,7 +327,7 @@ async function sendChatMessage(e) {
   const text = inputEl.value.trim();
 
   if (!phone) {
-    alert('Silakan pilih percakapan atau nomor tujuan terlebih dahulu.');
+    alert('Primero elegí una conversación o un número de destino.');
     return;
   }
   if (!text) return;
@@ -349,10 +349,10 @@ async function sendChatMessage(e) {
       inputEl.focus();
     } else {
       const errDetail = typeof data.error === 'object' ? (data.error.message || JSON.stringify(data.error)) : String(data.error || 'Terjadi kesalahan');
-      alert('Gagal mengirim pesan WA: ' + errDetail);
+      alert('No se pudo enviar el WhatsApp: ' + errDetail);
     }
   } catch (err) {
-    alert('Gagal membuat request: ' + err.message);
+    alert('No se pudo crear la solicitud: ' + err.message);
   } finally {
     sendBtn.disabled = false;
   }

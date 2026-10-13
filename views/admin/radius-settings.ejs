@@ -387,7 +387,7 @@
               <h6 style="margin:0;"><i class="bi bi-terminal-fill"></i> <%= t('admin.rds.script_title','Script Setup Otomatis MikroTik (RADIUS & Isolir)') %></h6>
               <div style="display:flex;align-items:center;gap:8px;">
                 <label style="font-size:12px;margin:0;color:var(--muted);white-space:nowrap;"><%= t('admin.rds.billing_ip','IP Server Billing:') %></label>
-                <input type="text" id="billing-ip-input" class="fc" value="<%= typeof serverIp !== 'undefined' ? serverIp : '192.168.8.88' %>" oninput="updateScriptIp(this.value)" style="width:140px;height:30px;font-size:12px;padding:3px 8px;" title="Ubah IP server jika router mengakses lewat IP lain/VPS">
+                <input type="text" id="billing-ip-input" class="fc" value="<%= typeof serverIp !== 'undefined' ? serverIp : '192.168.8.88' %>" oninput="updateScriptIp(this.value)" style="width:140px;height:30px;font-size:12px;padding:3px 8px;" title="Cambiá la IP del servidor si el router accede por otra IP/VPS">
                 <button type="button" class="btn btn-s btn-sm" onclick="copyMikrotikScript()"><i class="bi bi-clipboard-check"></i> <%= t('admin.rds.copy_script','Salin Script MikroTik') %></button>
               </div>
             </div>
@@ -508,7 +508,7 @@
           <h6 style="margin:0;"><i class="bi bi-wifi"></i> <%= t('admin.rds.online_title','Sesi Aktif RADIUS (Active Connections)') %></h6>
           <% if (onlineSessions && onlineSessions.length > 0) { %>
             <form action="/admin/radius/clear-stale" method="POST" onsubmit="return confirm('<%= t('admin.rds.confirm_clear','Bersihkan semua sesi aktif yang tidak ada pembaruan lebih dari 2 jam?') %>')" style="margin:0;">
-              <button type="submit" class="btn btn-w btn-sm" title="Tandai sesi yang sudah tidak ada pembaruan > 2 jam sebagai stopped">
+              <button type="submit" class="btn btn-w btn-sm" title="Marcar como detenidas las sesiones sin actualización hace más de 2 horas">
                 <i class="bi bi-clock-history"></i> <%= t('admin.rds.clear_stale','Bersihkan Sesi Usang') %>
               </button>
             </form>
@@ -592,7 +592,7 @@
                   <th>Username</th>
                   <th>Session ID</th>
                   <th><%= t('admin.rds.th_nasip','NAS IP') %></th>
-                  <th>Status Type</th>
+                  <th>Tipo de estado</th>
                   <th>Upload</th>
                   <th>Download</th>
                   <th><%= t('admin.common.uptime','Uptime') %></th>
@@ -718,7 +718,7 @@
       </div>
       <div class="mf">
         <button type="button" class="btn btn-g" onclick="closeModal('editNasModal')"><%= t('common.cancel','Batal') %></button>
-        <button type="submit" class="btn btn-p"><i class="bi bi-check-lg"></i> <%= t('tech.mon.save','Simpan Perubahan') %></button>
+        <button type="submit" class="btn btn-p"><i class="bi bi-check-lg"></i> <%= t('tech.mon.save','Guardar cambios') %></button>
       </div>
     </form>
   </div>

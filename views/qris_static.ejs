@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Pembayaran | <%= settings.company_header || 'OPEN-ISP' %></title>
+  <title>Pago | <%= settings.company_header || 'OPEN-ISP' %></title>
   <meta name="theme-color" content="#0A0D14">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,7 +27,7 @@
   <div class="iso-card">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
       <div>
-        <div style="font-family:var(--font-display);font-weight:700;font-size:18px"><i class="bi bi-credit-card-2-front" style="color:var(--primary)"></i> Pembayaran Tagihan</div>
+        <div style="font-family:var(--font-display);font-weight:700;font-size:18px"><i class="bi bi-credit-card-2-front" style="color:var(--primary)"></i> Pago de factura</div>
         <div class="muted" style="font-size:12.5px"><%= settings.company_header || 'OPEN-ISP' %></div>
       </div>
       <% if (backUrl) { %>
@@ -75,11 +75,11 @@
 
       <!-- Nominal (tampil untuk semua metode) -->
       <div class="iso-amt-box" style="text-align:center;margin-bottom:14px">
-        <div class="l">Nominal yang harus dibayar (WAJIB tepat)</div>
+        <div class="l">Monto a pagar (debe ser EXACTO)</div>
         <div class="v"><%= APP_CUR %> <%= Number(amountUnique || 0).toLocaleString(APP_LOCALE) %></div>
-        <% if (uniqueCode) { %><div class="iso-unique">Kode unik <span class="mono"><%= String(uniqueCode).padStart(3, '0') %></span></div><% } %>
+        <% if (uniqueCode) { %><div class="iso-unique">Código único <span class="mono"><%= String(uniqueCode).padStart(3, '0') %></span></div><% } %>
         <div class="iso-actions" style="margin-top:12px">
-          <button class="iso-btn ghost" type="button" id="copyAmountBtn"><i class="bi bi-clipboard"></i> Salin Nominal</button>
+          <button class="iso-btn ghost" type="button" id="copyAmountBtn"><i class="bi bi-clipboard"></i> Copiar monto</button>
         </div>
       </div>
 
@@ -89,14 +89,13 @@
           <% if (qrisQrUrl) { %>
             <div class="iso-qr" style="margin-top:0"><img id="qrisImage" src="<%= qrisQrUrl %>" alt="QRIS"></div>
           <% } else { %>
-            <div class="auth-alert warn" style="justify-content:center">QRIS belum diatur oleh admin.</div>
+            <div class="auth-alert warn" style="justify-content:center">El administrador todavía no configuró el QR.</div>
           <% } %>
           <div class="iso-actions">
             <% if (qrisQrUrl) { %><button class="iso-btn ghost" type="button" id="downloadQrBtn"><i class="bi bi-download"></i> Download QRIS</button><% } %>
           </div>
           <div class="iso-help">
-            Scan QRIS di atas (DANA / OVO / ShopeePay / LinkAja / GoPay, dll), lalu masukkan nominal persis seperti tertera.
-            Status lunas terverifikasi otomatis setelah pembayaran terdeteksi.
+            Escanee el QR de arriba con la app de su banco o billetera e ingrese el monto exacto indicado. El pago se verifica automáticamente cuando se detecta.
           </div>
         </div>
       </div>
@@ -106,7 +105,7 @@
       <div class="pay-panel <%= defaultMethod === 'bank' ? 'active' : '' %>" data-panel="bank">
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px">
           <div style="font-weight:700"><i class="bi bi-bank" style="color:var(--primary)"></i> Transfer Bank</div>
-          <div class="muted" style="font-size:12.5px;margin-top:3px">Transfer <b>tepat</b> sebesar <b><%= APP_CUR %> <%= Number(amountUnique || 0).toLocaleString(APP_LOCALE) %></b> (sudah termasuk kode unik) ke salah satu rekening:</div>
+          <div class="muted" style="font-size:12.5px;margin-top:3px">Transfer <b>tepat</b> sebesar <b><%= APP_CUR %> <%= Number(amountUnique || 0).toLocaleString(APP_LOCALE) %></b> (ya incluye el código único) a una de estas cuentas:</div>
           <% bankAccounts.forEach(function(a){ %>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px">
             <div>
@@ -126,7 +125,7 @@
       <div class="pay-panel <%= defaultMethod === 'ewallet' ? 'active' : '' %>" data-panel="ewallet">
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px">
           <div style="font-weight:700"><i class="bi bi-phone" style="color:var(--primary)"></i> E-Wallet</div>
-          <div class="muted" style="font-size:12.5px;margin-top:3px">Kirim <b>tepat</b> sebesar <b><%= APP_CUR %> <%= Number(amountUnique || 0).toLocaleString(APP_LOCALE) %></b> ke salah satu e-wallet:</div>
+          <div class="muted" style="font-size:12.5px;margin-top:3px">Kirim <b>tepat</b> sebesar <b><%= APP_CUR %> <%= Number(amountUnique || 0).toLocaleString(APP_LOCALE) %></b> a una de estas billeteras:</div>
           <% ewalletAccounts.forEach(function(a){ %>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px">
             <div>
@@ -141,11 +140,11 @@
       </div>
       <% } %>
 
-      <div class="iso-poll"><div class="spin-pulse"></div><span>Menunggu pembayaran… (Auto-Check)</span></div>
+      <div class="iso-poll"><div class="spin-pulse"></div><span>Esperando el pago… (verificación automática)</span></div>
 
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:14px">
-        <div style="font-weight:700">Konfirmasi Pembayaran</div>
-        <div class="muted" style="font-size:12.5px;margin-top:3px">Jika pembayaran belum otomatis terdeteksi, kirim bukti transfer ke admin.</div>
+        <div style="font-weight:700">Confirmar pago</div>
+        <div class="muted" style="font-size:12.5px;margin-top:3px">Si el pago no se detecta automáticamente, envíe el comprobante a la administración.</div>
 
         <% const proofAction = String(proofActionUrl || `/customer/payment/proof/${invoiceId}`); %>
         <form method="POST" action="<%= proofAction %>" enctype="multipart/form-data" style="margin-top:12px">
@@ -158,25 +157,25 @@
         </form>
 
         <% if (proofUrl) { %>
-          <div class="muted" style="font-size:12px;margin-top:8px">Bukti tersimpan: <a href="<%= proofUrl %>" target="_blank" rel="noopener"><%= proofUrl %></a></div>
+          <div class="muted" style="font-size:12px;margin-top:8px">Comprobante guardado: <a href="<%= proofUrl %>" target="_blank" rel="noopener"><%= proofUrl %></a></div>
         <% } %>
 
         <%
           const adminWa = String(adminWaDigits || '').trim();
           const msgLines = [
-            isVoucher ? 'Konfirmasi pembayaran Voucher' : 'Konfirmasi pembayaran',
+            isVoucher ? 'Confirmación de pago de ficha' : 'Confirmación de pago',
             `${refPrefix}-${invoiceId}${periodText ? ' • ' + periodText : ''}`,
-            `Nama: ${customerName || (isVoucher ? 'Pembeli Voucher' : 'Pelanggan')}`,
-            `Nominal: ${APP_CUR} ${Number(amountUnique || 0).toLocaleString(APP_LOCALE)} (kode ${String(uniqueCode || 0).padStart(3, '0')})`,
-            proofUrl ? `Bukti: ${proofUrl}` : 'Bukti: (sudah diupload / akan dikirim)',
+            `Nombre: ${customerName || (isVoucher ? 'Comprador de ficha' : 'Cliente')}`,
+            `Monto: ${APP_CUR} ${Number(amountUnique || 0).toLocaleString(APP_LOCALE)} (código ${String(uniqueCode || 0).padStart(3, '0')})`,
+            proofUrl ? `Bukti: ${proofUrl}` : 'Comprobante: (ya subido / se enviará)',
           ];
           const waLink = adminWa ? `https://wa.me/${adminWa}?text=${encodeURIComponent(msgLines.join('\n'))}` : '';
         %>
 
         <% if (waLink) { %>
-          <a class="iso-btn wa iso-space" href="<%= waLink %>" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Kirim WhatsApp ke Admin</a>
+          <a class="iso-btn wa iso-space" href="<%= waLink %>" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Enviar WhatsApp a la administración</a>
         <% } else { %>
-          <div class="auth-alert warn" style="margin-top:12px">Nomor admin WhatsApp belum diatur.</div>
+          <div class="auth-alert warn" style="margin-top:12px">El número de WhatsApp de la administración no está configurado.</div>
         <% } %>
       </div>
     <% } %>
@@ -243,7 +242,7 @@
           ? '/customer/voucher/status/' + refId + '?t=' + encodeURIComponent(token)
           : '/customer/payment/status/' + refId + '?t=' + encodeURIComponent(token);
         var res = await fetch(url, { method: 'GET', credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
-        if (!res.ok) throw new Error('Status check failed');
+        if (!res.ok) throw new Error('No se pudo verificar el estado');
         var data = await res.json();
         if (data.status === 'fulfilled' || data.status === 'paid') {
           var bUrl = <%- JSON.stringify(String(backUrl || '')).split('<').join('\\u003c') %>;

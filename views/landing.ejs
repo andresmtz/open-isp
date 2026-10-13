@@ -49,7 +49,7 @@
       <% if (projectUrl) { %><a href="<%= projectUrl %>" target="_blank" rel="noopener" title="Repositori Open Source"><i class="bi bi-github"></i> <%= t('landing.footer.github','GitHub') %></a><% } %>
     </nav>
     <div class="header-actions">
-      <button class="icon-btn" onclick="toggleTheme()" aria-label="Ganti tema"><i class="bi bi-moon-stars-fill" id="themeIcon"></i></button>
+      <button class="icon-btn" onclick="toggleTheme()" aria-label="Cambiar tema"><i class="bi bi-moon-stars-fill" id="themeIcon"></i></button>
       <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/login" id="loginBtn"><i class="bi bi-box-arrow-in-right"></i> <%= t('landing.nav.login','Masuk') %></a>
       <a class="lbtn lbtn-primary lbtn-sm" href="/customer/register"><i class="bi bi-person-plus"></i> <%= t('landing.nav.register','Daftar') %></a>
       <button class="icon-btn hamburger" onclick="toggleMenu()" aria-label="Menu"><i class="bi bi-list"></i></button>
@@ -63,11 +63,11 @@
       <a href="#area" onclick="toggleMenu()"><%= t('landing.hero.stat_areas','Area Layanan') %></a>
       <a href="#testimoni" onclick="toggleMenu()"><%= t('landing.testi.eyebrow','Testimoni') %></a>
       <a href="#faq" onclick="toggleMenu()"><%= t('landing.nav.faq','FAQ') %></a>
-      <% if (_upt) { %><a href="<%= _upt %>" target="_blank" rel="noopener" onclick="toggleMenu()"><i class="bi bi-activity"></i> <%= t('landing.footer.server_status','Status Server') %></a><% } %>
+      <% if (_upt) { %><a href="<%= _upt %>" target="_blank" rel="noopener" onclick="toggleMenu()"><i class="bi bi-activity"></i> <%= t('landing.footer.server_status','Estado del servidor') %></a><% } %>
       <% if (projectUrl) { %><a href="<%= projectUrl %>" target="_blank" rel="noopener" onclick="toggleMenu()"><i class="bi bi-github"></i> <%= t('landing.footer.repo_gh','Repositori (GitHub)') %></a><% } %>
       <% if (projectUrl) { %><a href="<%= projectUrl %>/wiki" target="_blank" rel="noopener" onclick="toggleMenu()"><i class="bi bi-journal-text"></i> <%= t('landing.footer.wiki2','Wiki / Dokumentasi') %></a><% } %>
       <a href="/customer/login"><i class="bi bi-box-arrow-in-right"></i> <%= t('landing.nav.cust_login','Masuk Pelanggan') %></a>
-      <a href="/customer/check-billing"><i class="bi bi-receipt"></i> <%= t('landing.hero.check','Cek Tagihan') %></a>
+      <a href="/customer/check-billing"><i class="bi bi-receipt"></i> <%= t('landing.hero.check','Consultar deuda') %></a>
       <a href="/lang/es" onclick="toggleMenu()"><i class="bi bi-translate"></i> Idioma: Español</a>
       <a href="/lang/en" onclick="toggleMenu()"><i class="bi bi-translate"></i> Language: English</a>
     </div>
@@ -84,7 +84,7 @@
       <div class="cta-row">
         <a class="lbtn lbtn-primary" href="/customer/register"><i class="bi bi-person-plus-fill"></i> <%= t('landing.hero.subscribe','Daftar Berlangganan') %></a>
         <% if (waLink) { %><a class="lbtn lbtn-wa" href="<%= waLink %>" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> <%= t('landing.hero.wa','Chat WhatsApp') %></a><% } %>
-        <a class="lbtn lbtn-ghost" href="/customer/check-billing"><i class="bi bi-receipt"></i> <%= t('landing.hero.check','Cek Tagihan') %></a>
+        <a class="lbtn lbtn-ghost" href="/customer/check-billing"><i class="bi bi-receipt"></i> <%= t('landing.hero.check','Consultar deuda') %></a>
       </div>
       <div class="hero-stats">
         <div class="st"><b data-count="<%= stats.packages %>"><%= stats.packages %></b><span><%= t('landing.hero.stat_packages','Pilihan Paket') %></span></div>
@@ -313,7 +313,7 @@
         <a class="brand" href="/" style="margin-bottom:14px">
           <img class="bmark" src="<%= brandLogo %>" alt="<%= brandName %>"><span class="bname"><%= brandName %></span>
         </a>
-        <p class="muted" style="font-size:14px;max-width:40ch"><%= t('landing.footer.tagline','Micro Internet Provider dan Server Platform.') %></p>
+        <p class="muted" style="font-size:14px;max-width:40ch"><%= t('landing.footer.tagline','Proveedor de internet por fibra óptica.') %></p>
         <p class="muted" style="font-size:13px;margin-top:8px;max-width:40ch">Internet Freedom — We Are Open-Source.</p>
         <p class="muted" style="font-size:12.5px;margin-top:12px"><i class="bi bi-building"></i> PT Artha Mega Data</p>
       </div>
@@ -325,7 +325,7 @@
           <a href="#cara-daftar"><%= t('landing.nav.how','Cara Daftar') %></a>
           <a href="#area"><%= t('landing.hero.stat_areas','Area Layanan') %></a>
           <a href="#faq"><%= t('landing.nav.faq','FAQ') %></a>
-          <% if (_upt) { %><a href="<%= _upt %>" target="_blank" rel="noopener"><%= t('landing.footer.server_status','Status Server') %></a><% } %>
+          <% if (_upt) { %><a href="<%= _upt %>" target="_blank" rel="noopener"><%= t('landing.footer.server_status','Estado del servidor') %></a><% } %>
         </div>
       </div>
       <% if (projectUrl) { %>
@@ -346,7 +346,7 @@
           <% if (settings.company_phone) { %><div class="ci"><i class="bi bi-telephone-fill"></i><span><%= settings.company_phone %></span></div><% } %>
           <% if (settings.company_email) { %><div class="ci"><i class="bi bi-envelope-fill"></i><span><%= settings.company_email %></span></div><% } %>
           <div class="ci"><i class="bi bi-box-arrow-in-right"></i><a href="/customer/login"><%= t('landing.footer.portal','Portal Pelanggan') %></a></div>
-          <div class="ci"><i class="bi bi-receipt"></i><a href="/customer/check-billing"><%= t('landing.hero.check','Cek Tagihan') %></a></div>
+          <div class="ci"><i class="bi bi-receipt"></i><a href="/customer/check-billing"><%= t('landing.hero.check','Consultar deuda') %></a></div>
         </div>
       </div>
     </div>

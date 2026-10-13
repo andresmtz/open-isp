@@ -37,11 +37,11 @@
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
           <h2 style="font-size:16pt;font-weight:800;text-transform:uppercase;margin:0"><%= company %></h2>
-          <div style="font-size:10pt;color:#334155"><%= t('admin.nav.customer_tickets', 'Daftar Tiket Gangguan & Tugas Teknisi') %> &bull; Status: <%= filterStatus ? filterStatus.toUpperCase() : 'SEMUA' %></div>
+          <div style="font-size:10pt;color:#334155"><%= t('admin.nav.customer_tickets', 'Daftar Tiket Gangguan & Tugas Teknisi') %> &bull; Estado: <%= filterStatus ? filterStatus.toUpperCase() : 'SEMUA' %></div>
         </div>
         <div style="text-align:right;font-size:8.5pt;color:#475569">
           <div>Dicetak: <%= typeof getNowLocal === 'function' ? getNowLocal() : (typeof formatDateLocal === 'function' ? formatDateLocal(new Date()) : new Date().toLocaleString(APP_LOCALE)) %></div>
-          <div>Total Tiket: <strong><%= tickets.length %> Kasus</strong></div>
+          <div>Total de tickets: <strong><%= tickets.length %> Kasus</strong></div>
         </div>
       </div>
     </div>
@@ -51,9 +51,9 @@
       <div class="card-hd" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <h6><i class="bi bi-list-ul"></i> <%= t('admin.tickets.list_title', 'Daftar Keluhan & Tugas') %> (<%= tickets.length %>)</h6>
         <div style="display:flex;gap:8px">
-          <button type="button" class="btn btn-g btn-sm" onclick="window.print()" title="Cetak Rekap Tiket"><i class="bi bi-printer"></i> Cetak</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="window.print()" title="Imprimir resumen de tickets"><i class="bi bi-printer"></i> Cetak</button>
           <button class="btn btn-p btn-sm" onclick="openModal('createTicketModal')">
-            <i class="bi bi-plus-circle me-1"></i> + Buat Tiket / Tugas Baru
+            <i class="bi bi-plus-circle me-1"></i> + Crear ticket / tarea
           </button>
         </div>
       </div>
@@ -61,7 +61,7 @@
         <form method="GET" action="/admin/tickets" class="srow" style="margin-bottom:18px">
           <div class="sinput" style="max-width:340px">
             <i class="bi bi-search"></i>
-            <input class="fc" name="search" placeholder="Cari pelanggan / subjek / pesan..." value="<%= (typeof filterSearch!=='undefined'?filterSearch:'') %>">
+            <input class="fc" name="search" placeholder="Buscar cliente / asunto / mensaje..." value="<%= (typeof filterSearch!=='undefined'?filterSearch:'') %>">
           </div>
           <select class="fs" name="tech_id" style="width:180px" onchange="this.form.submit()">
             <option value=""><%= t('admin.tk.all_techs','Semua Teknisi') %></option>
@@ -109,7 +109,7 @@
                 <% if (ticket.technician_name) { %>
                   <div class="fw6" style="font-size:12px"><i class="bi bi-person-badge me-1"></i><%= ticket.technician_name %></div>
                 <% } else { %>
-                  <span class="text-muted small"><%= t('admin.tickets.no_technician', 'Belum ada') %></span>
+                  <span class="text-muted small"><%= t('admin.tickets.no_technician', 'No existe') %></span>
                 <% } %>
               </td>
               <td>
@@ -122,20 +122,20 @@
                 <div class="act">
                   <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
-                    <button class="btn act-item update-btn" title="<%= t('admin.tickets.actions.update_status', 'Update Status') %>"
+                    <button class="btn act-item update-btn" title="<%= t('admin.tickets.actions.update_status', 'Actualizar estado') %>"
                       data-id="<%= ticket.id %>" data-status="<%= ticket.status %>" data-message="<%= ticket.message %>"
                       data-subject="<%= ticket.subject %>" data-customer="<%= ticket.customer_name %>"
                       data-notes="<%= ticket.technician_notes || '' %>" data-photos="<%= ticket.photos || '' %>"
                       data-customer-photos="<%= ticket.customer_photos || '' %>" data-tech-id="<%= ticket.technician_id || '' %>"
-                      data-tech="<%= ticket.technician_name || t('admin.tickets.no_technician', 'Belum ada') %>"><i class="bi bi-pencil"></i> Update Status</button>
+                      data-tech="<%= ticket.technician_name || t('admin.tickets.no_technician', 'No existe') %>"><i class="bi bi-pencil"></i> Actualizar estado</button>
                     <% if ((ticket.photos && ticket.photos !== '' && ticket.photos !== '[]') || (ticket.customer_photos && ticket.customer_photos !== '' && ticket.customer_photos !== '[]')) { %>
-                    <button class="btn act-item primary view-photos-btn" title="Lihat Foto"
+                    <button class="btn act-item primary view-photos-btn" title="Ver foto"
                       data-id="<%= ticket.id %>" data-photos="<%= ticket.photos || '' %>"
                       data-customer-photos="<%= ticket.customer_photos || '' %>"
-                      data-customer="<%= ticket.customer_name %>" data-subject="<%= ticket.subject %>"><i class="bi bi-images"></i> <%= t('admin.common.view_photo','Lihat Foto') %></button>
+                      data-customer="<%= ticket.customer_name %>" data-subject="<%= ticket.subject %>"><i class="bi bi-images"></i> <%= t('admin.common.view_photo','Ver foto') %></button>
                     <% } %>
                     <div class="act-sep"></div>
-                    <button type="submit" form="tdel-<%= ticket.id %>" class="act-item danger"><i class="bi bi-trash"></i> Hapus Keluhan</button>
+                    <button type="submit" form="tdel-<%= ticket.id %>" class="act-item danger"><i class="bi bi-trash"></i> Eliminar reclamo</button>
                   </div>
                 </div>
               </td>
@@ -152,13 +152,13 @@
 <div class="mo" id="createTicketModal">
   <div class="mb">
     <div class="mh">
-      <span class="mt"><i class="bi bi-plus-circle me-1"></i> Buat Tiket / Tugas Teknisi Baru</span>
+      <span class="mt"><i class="bi bi-plus-circle me-1"></i> Crear ticket / tarea para técnicos</span>
       <button class="mc" onclick="closeModal('createTicketModal')">&times;</button>
     </div>
     <form method="POST" action="/admin/tickets/create">
       <div class="mbody">
         <div class="fg">
-          <label class="fl">Pilih Pelanggan (Opsional)</label>
+          <label class="fl">Elegir cliente (opcional)</label>
           <select class="fs" name="customer_id" id="createCustomerId">
             <option value="0"><%= t('admin.tk.general_task','-- Tugas Umum / Non-Pelanggan (Maintenance) --') %></option>
             <% if (typeof customers !== 'undefined' && customers) { %>
@@ -170,14 +170,14 @@
         </div>
         <div class="fg">
           <label class="fl">Judul / Subjek Kendala</label>
-          <input class="fc" name="subject" placeholder="Contoh: Perbaikan ODP 02, Tarik Kabel Baru, Sinyal High Drop" required>
+          <input class="fc" name="subject" placeholder="Ejemplo: reparación NAP 02, tendido de cable nuevo, señal muy baja" required>
         </div>
         <div class="fg">
-          <label class="fl">Detail Pesan / Instruksi Tugas</label>
-          <textarea class="fc" name="message" rows="3" placeholder="Tuliskan detail pekerjaan atau instruksi teknisi secara jelas..." required></textarea>
+          <label class="fl">Detalle / instrucciones de la tarea</label>
+          <textarea class="fc" name="message" rows="3" placeholder="Escribí con claridad el detalle del trabajo o las instrucciones para el técnico..." required></textarea>
         </div>
         <div class="fg">
-          <label class="fl">Tugaskan ke Teknisi (Opsional)</label>
+          <label class="fl">Asignar a un técnico (opcional)</label>
           <select class="fs" name="technician_id">
             <option value=""><%= t('admin.tk.unassigned','-- Belum Ditugaskan (Bebas) --') %></option>
             <% if (typeof technicians !== 'undefined' && technicians) { %>
@@ -188,7 +188,7 @@
           </select>
         </div>
         <div class="fg">
-          <label class="fl">Status Awal</label>
+          <label class="fl">Estado inicial</label>
           <select class="fs" name="status">
             <option value="open"><%= t('admin.tk.st_open','Belum Ditangani (Open)') %></option>
             <option value="in_progress"><%= t('admin.tk.st_progress','Sedang Dikerjakan (In Progress)') %></option>
@@ -197,7 +197,7 @@
       </div>
       <div class="mf">
         <button type="button" class="btn btn-g" onclick="closeModal('createTicketModal')"><%= t('common.cancel','Batal') %></button>
-        <button type="submit" class="btn btn-p"><i class="bi bi-send me-1"></i> Simpan & Tugaskan</button>
+        <button type="submit" class="btn btn-p"><i class="bi bi-send me-1"></i> Guardar y asignar</button>
       </div>
     </form>
   </div>
@@ -224,11 +224,11 @@
         </div>
         <div class="fg"><label class="fl"><%= t('admin.tickets.modal.message', 'Detail Pesan') %></label><textarea class="fc" id="upMessage" rows="3" readonly></textarea></div>
         <div class="fg" id="techNotesContainer" style="display:none;">
-          <label class="fl"><i class="bi bi-pencil-square me-1"></i>Catatan Teknisi</label>
+          <label class="fl"><i class="bi bi-pencil-square me-1"></i>Notas del técnico</label>
           <textarea class="fc" id="upNotes" rows="3" readonly style="background:#f8f9fa"></textarea>
         </div>
         <div class="fg">
-          <label class="fl"><%= t('admin.tickets.actions.update_status', 'Update Status') %></label>
+          <label class="fl"><%= t('admin.tickets.actions.update_status', 'Actualizar estado') %></label>
           <select class="fs" name="status" id="upStatus">
             <option value="open"><%= t('admin.tickets.status.open', 'Belum Ditangani') %></option>
             <option value="in_progress"><%= t('admin.tickets.status.in_progress', 'Sedang Dikerjakan') %></option>
@@ -238,7 +238,7 @@
       </div>
       <div class="mf">
         <button type="button" class="btn btn-g" onclick="closeModal('updateModal')"><%= t('common.cancel', 'Batal') %></button>
-        <button type="submit" class="btn btn-p"><i class="bi bi-check-lg"></i> <%= t('admin.tickets.actions.save_changes', 'Simpan Perubahan') %></button>
+        <button type="submit" class="btn btn-p"><i class="bi bi-check-lg"></i> <%= t('admin.tickets.actions.save_changes', 'Guardar cambios') %></button>
       </div>
     </form>
   </div>
@@ -248,7 +248,7 @@
 <div class="mo" id="photoModal">
   <div class="mb" style="max-width:900px">
     <div class="mh">
-      <span class="mt"><i class="bi bi-images"></i> Foto Pekerjaan</span>
+      <span class="mt"><i class="bi bi-images"></i> Fotos del trabajo</span>
       <button class="mc" onclick="closeModal('photoModal')">&times;</button>
     </div>
     <div class="mbody">
@@ -320,7 +320,7 @@ document.addEventListener('click', function(e) {
     if (customerPhotos.length > 0) {
       const customerSection = document.createElement('div');
       customerSection.className = 'col-12 mb-3';
-      customerSection.innerHTML = '<h6 class="text-primary mb-2"><i class="bi bi-person-circle me-1"></i>Foto dari Pelanggan</h6>';
+      customerSection.innerHTML = '<h6 class="text-primary mb-2"><i class="bi bi-person-circle me-1"></i>Fotos del cliente</h6>';
       gallery.appendChild(customerSection);
       
       customerPhotos.forEach((photo, index) => {
@@ -342,7 +342,7 @@ document.addEventListener('click', function(e) {
     if (techPhotos.length > 0) {
       const techSection = document.createElement('div');
       techSection.className = 'col-12 mb-3 mt-3';
-      techSection.innerHTML = '<h6 class="text-success mb-2"><i class="bi bi-tools me-1"></i>Foto dari Teknisi</h6>';
+      techSection.innerHTML = '<h6 class="text-success mb-2"><i class="bi bi-tools me-1"></i>Fotos del técnico</h6>';
       gallery.appendChild(techSection);
       
       techPhotos.forEach((photo, index) => {

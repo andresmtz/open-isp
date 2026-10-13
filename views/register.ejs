@@ -26,7 +26,7 @@
       <img class="bmark" src="<%= brandLogo %>" alt="<%= brandName %>"><span class="bname"><%= brandName %></span>
     </a>
     <div class="header-actions" style="margin-left:auto;display:flex;align-items:center;gap:6px">
-      <button class="icon-btn" onclick="toggleTheme()" aria-label="<%= t('customer.register.aria_theme', 'Ganti tema') %>"><i class="bi bi-moon-stars-fill"></i></button>
+      <button class="icon-btn" onclick="toggleTheme()" aria-label="<%= t('customer.register.aria_theme', 'Cambiar tema') %>"><i class="bi bi-moon-stars-fill"></i></button>
       <% (typeof availableLangs !== 'undefined' && availableLangs ? availableLangs : ['es','en','id']).forEach(function(L){ %>
         <a href="/lang/<%= L %>" class="lbtn lbtn-ghost lbtn-sm" style="padding:4px 8px;<%= (lang === L) ? 'font-weight:800;color:var(--primary);opacity:1' : 'opacity:.65' %>"><%= String(L).toUpperCase() %></a>
       <% }); %>
@@ -52,7 +52,7 @@
         <div style="display:flex;gap:9px;align-items:center"><i class="bi bi-check-circle-fill" style="font-size:18px"></i> <strong><%= success %></strong></div>
         <% if (typeof newCustomer !== 'undefined' && newCustomer) { var _np = (typeof packages !== 'undefined' && packages) ? packages.find(function(p){return String(p.id)===String(newCustomer.package_id);}) : null; %>
         <div style="margin-top:12px;width:100%;font-size:13.5px;line-height:1.8">
-          <div><%= t('customer.register.succ_id', 'ID Pelanggan') %>: <b style="color:var(--primary);font-size:16px"><%= newCustomer.customer_code %></b></div>
+          <div><%= t('customer.register.succ_id', 'ID de cliente') %>: <b style="color:var(--primary);font-size:16px"><%= newCustomer.customer_code %></b></div>
           <div><%= t('customer.register.succ_pkg', 'Paket') %>: <b><%= _np ? _np.name : (newCustomer.package_name || '-') %></b></div>
           <% if (typeof bill !== 'undefined' && bill) { %>
           <div><%= t('customer.register.succ_estimate', 'Estimasi Biaya Awal') %>: <b><%= APP_CUR %> <%= Number(bill.total||0).toLocaleString(APP_LOCALE) %></b></div>
@@ -76,7 +76,7 @@
       <div class="field">
         <label for="phone"><i class="bi bi-whatsapp"></i> <%= t('customer.register.form_phone', 'Nomor WhatsApp Aktif') %></label>
         <div class="wrap"><i class="bi bi-whatsapp lead-ic"></i>
-          <input type="text" class="inp" id="phone" name="phone" placeholder="<%= t('customer.register.form_phone_ph', 'Contoh: 081234567890') %>" required inputmode="tel" autocomplete="tel"></div>
+          <input type="text" class="inp" id="phone" name="phone" placeholder="<%= t('customer.register.form_phone_ph', 'Ejemplo: 0981123456') %>" required inputmode="tel" autocomplete="tel"></div>
       </div>
 
       <div class="field">
@@ -136,7 +136,7 @@
           <div style="display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0"><span><%= t('customer.register.est_install', 'Biaya Pasang') %></span><span id="reInstall"><%= APP_CUR %> 0</span></div>
           <div style="display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0"><span><%= t('customer.register.est_prorata', 'Paket Prorata') %> (<span id="reDays">0</span> <%= t('customer.register.est_days', 'hari') %>)</span><span id="reProrata"><%= APP_CUR %> 0</span></div>
           <div id="reDiscRow" style="display:none;justify-content:space-between;font-size:13.5px;padding:4px 0;color:var(--danger,#fb7185)"><span><%= t('customer.register.est_discount', 'Diskon Voucher') %> <span id="reVoucherCode"></span></span><span id="reDiscount">- <%= APP_CUR %> 0</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;padding:8px 0 2px;border-top:1px solid var(--border);margin-top:6px"><span><%= t('customer.register.est_total', 'Total Bayar Awal') %></span><span id="reTotal" style="color:var(--primary)"><%= APP_CUR %> 0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;padding:8px 0 2px;border-top:1px solid var(--border);margin-top:6px"><span><%= t('customer.register.est_total', 'Total del pago inicial') %></span><span id="reTotal" style="color:var(--primary)"><%= APP_CUR %> 0</span></div>
           <div style="font-size:11.5px;color:var(--muted);margin-top:6px"><%= t('customer.register.est_note_pre', 'Paket dihitung prorata s/d') %> <b id="reDue">-</b> <%= t('customer.register.est_note_post', '(acuan tanggal 5). Ini estimasi; nominal final ditetapkan admin.') %></div>
         </div>
 
@@ -177,7 +177,7 @@
     fillRequired2: "<%= t('customer.register.js_fill_required2', 'Lengkapi Nama, No. WhatsApp, dan Alamat terlebih dahulu.') %>",
     pickPackage: "<%= t('customer.register.js_pick_package', 'Pilih paket layanan terlebih dahulu.') %>",
     gpsUnsupported: "<%= t('customer.register.js_gps_unsupported', 'GPS tidak didukung di perangkat ini.') %>",
-    gpsFail: "<%= t('customer.register.js_gps_fail', 'Gagal mengambil lokasi: ') %>",
+    gpsFail: "<%= t('customer.register.js_gps_fail', 'No se pudo obtener la ubicación: ') %>",
     voucherEnter: "<%= t('customer.register.voucher_note', 'Punya kode promo? Masukkan untuk potongan biaya awal.') %>",
     voucherPickPkg: "<%= t('customer.register.voucher_pick_pkg', 'Pilih paket dulu untuk cek voucher.') %>"
   };

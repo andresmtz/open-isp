@@ -195,13 +195,13 @@
               </div>
               <div class="fg">
                 <label class="fl"><%= t('admin.settings.telegram.admin_id', 'Admin Telegram ID') %></label>
-                <input class="fc" name="telegram_admin_id" value="<%= settings.telegram_admin_id || '' %>" placeholder="Contoh: 12345678">
+                <input class="fc" name="telegram_admin_id" value="<%= settings.telegram_admin_id || '' %>" placeholder="Ejemplo: 12345678">
               </div>
             </div>
             <div class="fg">
               <label class="fl"><%= t('admin.settings.telegram.bot_token', 'Telegram Bot Token') %></label>
               <div style="display:flex;gap:8px">
-                <input class="fc" name="telegram_bot_token" value="<%= settings.telegram_bot_token || '' %>" placeholder="Dapatkan dari @BotFather">
+                <input class="fc" name="telegram_bot_token" value="<%= settings.telegram_bot_token || '' %>" placeholder="Obtenelo de @BotFather">
                 <button type="button" class="btn btn-g" onclick="syncTelegram()" title="<%= t('admin.settings.telegram.sync_title', 'Sinkronkan / Hapus Webhook Lama') %>"><i class="bi bi-arrow-repeat"></i> <%= t('admin.settings.telegram.sync', 'Sinkronkan') %></button>
               </div>
             </div>
@@ -227,12 +227,12 @@
           <div class="fg">
             <label class="fl"><%= t('admin.set.id_prefix','Prefix ID Pelanggan') %></label>
             <input class="fc" name="customer_id_prefix" value="<%= settings.customer_id_prefix || 'SKY' %>" placeholder="SKY" style="text-transform:uppercase" maxlength="12">
-            <div style="font-size:10px; color:var(--muted); margin-top:4px">Format ID Pelanggan: <span class="mono">PREFIX-angka</span> (contoh: <span class="mono"><%= (settings.customer_id_prefix || 'SKY') %>-48213</span>). Hanya angka setelah tanda hubung. ID <b>permanen</b> &amp; otomatis untuk pelanggan baru.</div>
+            <div style="font-size:10px; color:var(--muted); margin-top:4px">Formato del ID de cliente: <span class="mono">PREFIX-angka</span> (ejemplo: <span class="mono"><%= (settings.customer_id_prefix || 'SKY') %>-48213</span>). Hanya angka setelah tanda hubung. ID <b>permanen</b> y automático para clientes nuevos.</div>
           </div>
           <div class="fg">
             <label class="fl"><%= t('admin.set.id_digits','Jumlah Digit Angka ID Pelanggan') %></label>
             <input class="fc" type="number" name="customer_id_digits" value="<%= settings.customer_id_digits || 5 %>" min="4" max="10" step="1">
-            <div style="font-size:10px; color:var(--muted); margin-top:4px">Default 5 → contoh <span class="mono">SKY-48213</span>.</div>
+            <div style="font-size:10px; color:var(--muted); margin-top:4px">Predeterminado 5 → ejemplo <span class="mono">SKY-48213</span>.</div>
           </div>
           <div class="fg">
             <label class="fl"><%= t('admin.settings.footer_info', 'Info Footer') %></label>
@@ -291,7 +291,7 @@
           </div>
           <div class="fg">
             <label class="fl"><%= t('admin.settings.operational_hours', 'Jam Operasional') %></label>
-            <input class="fc" name="operational_hours" value="<%= settings.operational_hours || '' %>" placeholder="Setiap Hari: 08.00 - 22.00 WIB">
+            <input class="fc" name="operational_hours" value="<%= settings.operational_hours || '' %>" placeholder="Todos los días: 08:00 - 20:00">
           </div>
           <div class="form-row">
             <div class="fg">
@@ -331,7 +331,7 @@
               Gunakan Built-in ACS Server (TR-069)
             </label>
             <div style="font-size:10px; color:var(--muted); margin-top:4px; padding-left:20px;">
-              Jika diaktifkan, aplikasi akan bertindak sebagai server ACS TR-069 sendiri (endpoint: <span class="mono" style="font-weight:700;">/acs</span>) tanpa perlu server GenieACS terpisah.
+              Si se activa, la aplicación funciona como su propio servidor ACS TR-069 (endpoint: <span class="mono" style="font-weight:700;">/acs</span>) tanpa perlu server GenieACS terpisah.
             </div>
           </div>
 
@@ -374,7 +374,7 @@
             </div>
             <div class="fg" id="default_router_div" style="flex:1; <%= (settings.multi_router_mode === 'disabled') ? '' : 'display:none' %>">
               <label class="fl">Default Router ID <span style="color:var(--muted); font-weight:normal;">(Opsional)</span></label>
-              <input class="fc" type="number" name="default_router_id" id="default_router_id" value="<%= settings.default_router_id || '' %>" placeholder="Kosongkan untuk auto-detect" min="1">
+              <input class="fc" type="number" name="default_router_id" id="default_router_id" value="<%= settings.default_router_id || '' %>" placeholder="Dejá vacío para detectar automáticamente" min="1">
               <div class="hint"><%= t('admin.set.mr_default_hint','Opsional. Jika kosong, sistem auto-detect router pertama (ID terkecil). Jika diisi, gunakan nilai ini.') %></div>
             </div>
           </div>
@@ -440,7 +440,7 @@
               <option value="true" <%= (settings.voucher_enabled === false || settings.voucher_enabled === 'false' || settings.voucher_enabled === '0' || settings.voucher_enabled === 0) ? '' : 'selected' %>><%= t('common.active','Aktif') %></option>
               <option value="false" <%= (settings.voucher_enabled === false || settings.voucher_enabled === 'false' || settings.voucher_enabled === '0' || settings.voucher_enabled === 0) ? 'selected' : '' %>><%= t('common.inactive','Nonaktif') %></option>
             </select>
-            <div style="font-size:10px; color:var(--muted); margin-top:4px">Nonaktifkan untuk menyembunyikan halaman Beli Voucher publik (mis. saat deploy).</div>
+            <div style="font-size:10px; color:var(--muted); margin-top:4px">Desactivalo para ocultar la página pública de compra de fichas.</div>
           </div>
         </div>
 
@@ -457,12 +457,12 @@
           <div class="fg">
             <label class="fl"><%= t('admin.set.wa_numbers','Nomor Admin WA (Pisahkan dengan koma)') %></label>
             <input class="fc" name="whatsapp_admin_numbers" value="<%= (settings.whatsapp_admin_numbers || []).join(', ') %>" placeholder="6281xxx, 6282xxx">
-            <div style="font-size:10px; color:var(--muted); margin-top:4px"><%= t('admin.set.wa_numbers_hint','Nomor admin akan menerima notifikasi monitoring sistem. Nomor teknisi diambil otomatis dari ') %><a href="/admin/technicians" style="color:var(--brand);font-weight:600">Data Teknisi</a>.</div>
+            <div style="font-size:10px; color:var(--muted); margin-top:4px"><%= t('admin.set.wa_numbers_hint','Nomor admin akan menerima notifikasi monitoring sistem. Nomor teknisi diambil otomatis dari ') %><a href="/admin/technicians" style="color:var(--brand);font-weight:600">Datos del técnico</a>.</div>
           </div>
           <div class="fg">
             <label class="fl"><%= t('admin.set.wa_delay','Jeda Antar Pesan Broadcast (Detik)') %></label>
             <input class="fc" type="number" name="whatsapp_broadcast_delay" value="<%= settings.whatsapp_broadcast_delay || 2 %>" min="1" max="60">
-            <div style="font-size:10px; color:var(--muted); margin-top:4px">Rekomendasi: Minimal 2 detik agar tidak terdeteksi spam oleh WhatsApp.</div>
+            <div style="font-size:10px; color:var(--muted); margin-top:4px">Recomendado: al menos 2 segundos para que WhatsApp no lo detecte como spam.</div>
           </div>
         </div>
 
@@ -482,7 +482,7 @@
                     <button class="btn btn-s" type="button" onclick="uploadBrandLogo('portal', this)" style="height:38px"><i class="bi bi-upload"></i> Upload</button>
                   </div>
                   <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
-                    <div style="font-size:10px; color:var(--muted)">Saat ini:</div>
+                    <div style="font-size:10px; color:var(--muted)">Actual:</div>
                     <img src="<%= settings.logo_portal || settings.company_logo || '/img/logo.png' %>?v=<%= Date.now() %>" alt="Logo Portal" style="height:40px; object-fit:contain; background:rgba(255,255,255,0.05); border-radius:6px; padding:4px; border:1px solid var(--border)">
                   </div>
                 </div>
@@ -491,12 +491,12 @@
                   <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap">
                     <div style="flex:1 1 200px">
                       <input class="fc" type="file" id="brand_invoice_file" accept="image/png,image/jpeg,image/jpg,image/webp">
-                      <div style="font-size:10px; color:var(--muted); margin-top:4px">Dipakai pada semua cetakan PDF (invoice, faktur, struk, laporan).</div>
+                      <div style="font-size:10px; color:var(--muted); margin-top:4px">Se usa en todos los PDF (facturas, recibos, tickets, reportes).</div>
                     </div>
                     <button class="btn btn-s" type="button" onclick="uploadBrandLogo('invoice', this)" style="height:38px"><i class="bi bi-upload"></i> Upload</button>
                   </div>
                   <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
-                    <div style="font-size:10px; color:var(--muted)">Saat ini:</div>
+                    <div style="font-size:10px; color:var(--muted)">Actual:</div>
                     <img src="<%= settings.logo_invoice || settings.logo_portal || settings.company_logo || '/img/logo.png' %>?v=<%= Date.now() %>" alt="Logo Invoice" style="height:40px; object-fit:contain; background:rgba(255,255,255,0.05); border-radius:6px; padding:4px; border:1px solid var(--border)">
                   </div>
                 </div>
@@ -529,7 +529,7 @@
                 <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap">
                   <div style="flex:1 1 200px">
                     <input class="fc" type="file" id="brand_hero_file" accept="image/png,image/jpeg,image/jpg,image/webp">
-                    <div style="font-size:10px; color:var(--muted); margin-top:4px"><%= t('admin.set.hero_hint','PNG/JPEG otomatis dikonversi ke ') %><b>WebP</b> (+ fallback JPEG) agar lebih ringan. Rasio disarankan 16:10 (mis. 1600×1000).</div>
+                    <div style="font-size:10px; color:var(--muted); margin-top:4px"><%= t('admin.set.hero_hint','PNG/JPEG otomatis dikonversi ke ') %><b>WebP</b> (+ respaldo JPEG) para que pese menos. Relación recomendada 16:10 (ej. 1600×1000).</div>
                   </div>
                   <button class="btn btn-s" type="button" onclick="uploadBrandLogo('hero', this)" style="height:38px"><i class="bi bi-upload"></i> Upload</button>
                 </div>
@@ -560,7 +560,7 @@
               <div class="fg">
                 <label class="fl"><%= t('admin.set.speed_link','Link Speed Test') %></label>
                 <input class="fc" name="speedtest_url" id="speedtest_url_input" value="<%= settings.speedtest_url || '' %>" placeholder="https://speed.domain-anda.com">
-                <div style="font-size:10px; color:var(--muted); margin-top:4px">Bisa <b>internal</b><%= t('admin.set.speedtest_hint2',' (LibreSpeed / OpenSpeedTest self-hosted) atau ') %><b>eksternal</b> (Ookla Custom, Cloudflare, Google Fiber, dll). Harus bisa diakses <b>public</b><%= t('admin.set.speedtest_hint3','. Jika dikosongkan, dashboard pelanggan menampilkan ') %><i><%= t('admin.set.speedtest_notset','"Speedtest belum di setup"') %></i>.</div>
+                <div style="font-size:10px; color:var(--muted); margin-top:4px">Bisa <b>internal</b><%= t('admin.set.speedtest_hint2',' (LibreSpeed / OpenSpeedTest self-hosted) atau ') %><b>eksternal</b> (Ookla personalizado, Cloudflare, Google Fiber, etc.). Debe ser accesible <b>public</b><%= t('admin.set.speedtest_hint3','. Jika dikosongkan, dashboard pelanggan menampilkan ') %><i><%= t('admin.set.speedtest_notset','"Speedtest belum di setup"') %></i>.</div>
               </div>
               <div class="fg">
                 <label class="fl"><%= t('admin.set.speed_mode','Mode Tampilan di Dashboard Pelanggan') %></label>
@@ -568,7 +568,7 @@
                   <option value="iframe" <%= (settings.speedtest_mode || 'iframe') === 'iframe' ? 'selected' : '' %>><%= t('admin.set.sp_mode_iframe','Embed / iframe — untuk provider yang mengizinkan') %></option>
                   <option value="tab" <%= settings.speedtest_mode === 'tab' ? 'selected' : '' %>><%= t('admin.set.sp_mode_tab','Buka Tab Baru — untuk provider yang memblokir iframe') %></option>
                 </select>
-                <div style="font-size:10px; color:var(--muted); margin-top:4px"><%= t('admin.set.speedtest_btn_hint','Di halaman pelanggan tersedia tombol ') %><b>Muat Ulang</b> (reload speed test) &amp; <b>Bersihkan Cache</b>.</div>
+                <div style="font-size:10px; color:var(--muted); margin-top:4px"><%= t('admin.set.speedtest_btn_hint','Di halaman pelanggan tersedia tombol ') %><b>Recargar</b> (reload speed test) &amp; <b>Bersihkan Cache</b>.</div>
               </div>
               <script>
                 function applySpeedtestPreset(v) {
@@ -591,22 +591,22 @@
               <div class="fg">
                 <label class="fl"><%= t('admin.set.repo_link','Link Repositori Proyek (GitHub)') %></label>
                 <input class="fc" name="project_url" value="<%= settings.project_url || 'https://github.com/oxpoe/open-isp' %>" placeholder="https://github.com/oxpoe/open-isp">
-                <div style="font-size:10px; color:var(--muted); margin-top:4px"><%= t('admin.set.repo_hint','Dipakai untuk tautan ') %><b>Repo</b>, <b>Form/Issue</b> (<code>/issues/new/choose</code>), <b>Wiki</b>, dan <b>Lisensi</b> di landing page.</div>
+                <div style="font-size:10px; color:var(--muted); margin-top:4px"><%= t('admin.set.repo_hint','Dipakai untuk tautan ') %><b>Repo</b>, <b>Form/Issue</b> (<code>/issues/new/choose</code>), <b>Wiki</b>, y <b>Lisensi</b> di landing page.</div>
               </div>
               <div class="fg">
                 <label class="fl"><%= t('admin.set.uptime_link','Link Uptime Website (Status)') %></label>
                 <input class="fc" name="uptime_url" value="<%= settings.uptime_url || '' %>" placeholder="https://status.domain-anda.com">
-                <div style="font-size:10px; color:var(--muted); margin-top:4px"><%= t('admin.set.uptime_hint','Dipakai untuk tombol/redirect ') %><b><%= t('common.status','Status') %></b> di landing page. Jika dikosongkan, landing page <b>tidak menampilkan tab Status</b>.</div>
+                <div style="font-size:10px; color:var(--muted); margin-top:4px"><%= t('admin.set.uptime_hint','Dipakai untuk tombol/redirect ') %><b><%= t('common.status','Status') %></b> di landing page. Jika dikosongkan, landing page <b>no muestra la pestaña Estado</b>.</div>
               </div>
             </div>
           </div>
         </div>
 
         <div class="settings-span-2" data-setcat="pembayaran">
-          <h6 style="font-size:13px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px"><i class="bi bi-wallet2"></i> Pengaturan Payment Gateway</h6>
+          <h6 style="font-size:13px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px"><i class="bi bi-wallet2"></i> Configuración de pasarela de pago</h6>
           
           <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
-            <h6 style="font-size:12px; margin-bottom: 10px;">QRIS Statis (Semi-Otomatis)</h6>
+            <h6 style="font-size:12px; margin-bottom: 10px;">QR estático (semiautomático)</h6>
             <div class="form-row3">
               <div class="fg">
                 <label class="fl"><%= t('admin.set.qris_status','Status QRIS Statis') %></label>
@@ -617,11 +617,11 @@
               </div>
               <div class="fg">
                 <label class="fl"><%= t('admin.set.qris_url','QRIS Static QR URL') %></label>
-                <input class="fc" name="qris_static_qr_url" value="<%= settings.qris_static_qr_url || '' %>" placeholder="https://.../qris.png atau link QRIS">
+                <input class="fc" name="qris_static_qr_url" value="<%= settings.qris_static_qr_url || '' %>" placeholder="https://.../qr.png o enlace del QR">
               </div>
               <div class="fg">
                 <label class="fl"><%= t('admin.set.qris_note','Catatan') %></label>
-                <input class="fc" value="Portal pelanggan akan menampilkan QRIS + nominal unik (kode bayar)." readonly>
+                <input class="fc" value="El portal del cliente mostrará el QR + monto único (código de pago)." readonly>
               </div>
             </div>
             <div class="fg" style="margin-top:10px">
@@ -664,7 +664,7 @@
                     img.src = url;
                     await new Promise((resolve, reject) => {
                       img.onload = () => resolve();
-                      img.onerror = () => reject(new Error('Gagal membaca gambar'));
+                      img.onerror = () => reject(new Error('No se pudo leer la imagen'));
                     });
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -694,7 +694,7 @@
                   btn.disabled = true;
                   try {
                     const r = await fetch('/admin/settings/qris-upload', { method: 'POST', body: fd, credentials: 'same-origin' });
-                    if (!r.ok) throw new Error('Upload gagal');
+                    if (!r.ok) throw new Error('Falló la subida');
                     window.location.href = '/admin/settings';
                   } catch (e) {
                     window.location.href = '/admin/settings';
@@ -714,7 +714,7 @@
 
             <!-- Transfer Bank & E-Wallet Manual (Mode 2) -->
             <div style="margin-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 15px;">
-              <h6 style="font-size:12px; margin-bottom: 10px;"><i class="bi bi-bank"></i> Transfer Bank &amp; E-Wallet (Manual, Mode 2)</h6>
+              <h6 style="font-size:12px; margin-bottom: 10px;"><i class="bi bi-bank"></i> Transferencia bancaria y billetera (manual, modo 2)</h6>
               <div class="form-row3">
                 <div class="fg">
                   <label class="fl"><%= t('admin.set.bank_status','Status Transfer Bank') %></label>
@@ -803,7 +803,7 @@
 
           <!-- Payment Mode & Mayar -->
           <div style="grid-column:1/-1;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">
-            <h6 style="font-size:12px;margin-bottom:10px"><i class="bi bi-credit-card-2-front"></i> Mode Pembayaran</h6>
+            <h6 style="font-size:12px;margin-bottom:10px"><i class="bi bi-credit-card-2-front"></i> Modo de pago</h6>
             <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
               <div>
                 <label class="fl"><%= t('admin.set.pay_mode','Mode') %></label>
@@ -816,7 +816,7 @@
               <div>
                 <label class="fl"><%= t('admin.set.mayar_key','Mayar API Key') %></label>
                 <input class="fc" type="password" name="mayar_api_key" value="<%= settings.mayar_api_key || '' %>" placeholder="API key Mayar (Bearer)">
-                <div class="hint">Webhook Mayar: <span class="mono">https://&lt;domain-anda&gt;/api/webhook/mayar</span></div>
+                <div class="hint">Webhook Mayar: <span class="mono">https://&lt;su-dominio&gt;/api/webhook/mayar</span></div>
               </div>
             </div>
           </div>
@@ -834,7 +834,7 @@
       </div>
       
           <div class="card-bd" style="border-top:1px solid var(--border);padding-top:20px;text-align:right">
-            <button type="submit" class="btn btn-p"><i class="bi bi-save"></i> <%= t('admin.set.save','Simpan Pengaturan') %></button>
+            <button type="submit" class="btn btn-p"><i class="bi bi-save"></i> <%= t('admin.set.save','Guardar configuración') %></button>
           </div>
         </div>
     </form>
@@ -848,7 +848,7 @@ function copyInput(id, name) {
   if (el) {
     el.select();
     document.execCommand('copy');
-    alert(name + ' berhasil disalin!');
+    alert(name + ' ¡copiado!');
   }
 }
 function toggleSecret(id) {
@@ -870,14 +870,14 @@ async function testWebhook() {
     const j = await res.json().catch(function () { return {}; });
     if (out) {
       if (j && j.status === 'processed') { out.textContent = 'Webhook OK — ' + JSON.stringify(j); out.style.color = 'var(--success)'; }
-      else { out.textContent = 'Webhook gagal — ' + JSON.stringify(j); out.style.color = 'var(--danger)'; }
+      else { out.textContent = 'Falló el webhook — ' + JSON.stringify(j); out.style.color = 'var(--danger)'; }
     }
   } catch (e) {
-    if (out) { out.textContent = 'Gagal — ' + e.message; out.style.color = 'var(--danger)'; }
+    if (out) { out.textContent = 'Falló — ' + e.message; out.style.color = 'var(--danger)'; }
   }
 }
 window.regenPwaIcons = function (btn) {
-  if (!confirm('Buat ulang ikon PWA (192/512/maskable/apple) dari logo saat ini?')) return;
+  if (!confirm('¿Regenerar los íconos de la app (192/512/maskable/apple) a partir del logo actual?')) return;
   var old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Memproses...';
   fetch('/admin/settings/regenerate-icons', { method: 'POST' })
     .then(function (r) { return r.json().catch(function () { return {}; }); })
@@ -887,18 +887,18 @@ window.regenPwaIcons = function (btn) {
 };
 
 window.runAutoDeactivate = function () {
-  if (!confirm('Jalankan auto-nonaktif sekarang? Pelanggan yang menunggak sesuai batas akan diisolir.')) return;
+  if (!confirm('¿Ejecutar ahora la desactivación automática? Los clientes que superen el límite de deuda serán suspendidos.')) return;
   fetch('/admin/customers/auto-deactivate-now', { method: 'POST' })
     .then(function (r) { return r.json(); })
     .then(function (d) { alert(d.message || 'Selesai'); if (d.processed > 0) location.reload(); })
-    .catch(function () { alert('Gagal menjalankan auto-nonaktif'); });
+    .catch(function () { alert('No se pudo ejecutar la desactivación automática'); });
 };
 
 function copyWebhook() {
   const el = document.getElementById('webhook_url');
   el.select();
   document.execCommand('copy');
-  alert('Link Webhook berhasil disalin!');
+  alert('¡Enlace del webhook copiado!');
 }
 async function syncTelegram() {
   try {
@@ -967,7 +967,7 @@ function updateNotifHint() {
   if (perm === 'unsupported') msg = 'Notifikasi browser tidak didukung di device ini.';
   else if (perm === 'denied') msg = 'Notifikasi diblokir. Izinkan di pengaturan browser.';
   else if (perm === 'granted') msg = enabled ? 'Notif aktif. Notifikasi muncul saat ada log baru (mode Live).' : 'Notif siap, tapi masih nonaktif.';
-  else msg = 'Klik "Aktifkan Notif" untuk minta izin notifikasi.';
+  else msg = 'Hacé clic en "Activar avisos" para pedir permiso de notificaciones.';
   el.textContent = msg;
 }
 
@@ -978,7 +978,7 @@ async function enableEwalletNotif() {
     if (perm === 'granted') {
       setNotifEnabled(true);
       updateNotifHint();
-      try { new Notification('E-Wallet Monitor', { body: 'Notifikasi aktif.' }); } catch {}
+      try { new Notification('E-Wallet Monitor', { body: 'Notificaciones activas.' }); } catch {}
       return;
     }
     setNotifEnabled(false);
@@ -997,7 +997,7 @@ function showEwalletNotification(row) {
   if (!notifEnabled()) return;
   if (!canNotify() || Notification.permission !== 'granted') return;
   const svc = String(row?.service || 'E-Wallet');
-  const amt = row?.parsed_ok ? `${APP_CUR} ${(Number(row.parsed_amount) || 0).toLocaleString(APP_LOCALE)}` : 'Nominal tidak terdeteksi';
+  const amt = row?.parsed_ok ? `${APP_CUR} ${(Number(row.parsed_amount) || 0).toLocaleString(APP_LOCALE)}` : 'Monto no detectado';
   const body = String(row?.content || '').replace(/\r?\n/g, ' ').slice(0, 140);
   try {
     new Notification(`${svc}: ${amt}`, { body });
@@ -1040,7 +1040,7 @@ async function loadEwalletLogs() {
     const url = `/admin/api/webhook/payment-notif/logs?limit=${encodeURIComponent(limit)}&service=${encodeURIComponent(service)}&q=${encodeURIComponent(q)}`;
     const res = await fetch(url);
     const data = await res.json();
-    if (!res.ok || !data.ok) throw new Error(data.error || 'Gagal memuat log');
+    if (!res.ok || !data.ok) throw new Error(data.error || 'No se pudo cargar el registro');
     const rows = Array.isArray(data.rows) ? data.rows : [];
     if (rows.length === 0) {
       body.innerHTML = '<tr><td colspan="7" class="text-center text-muted"><%= t('admin.set.no_data','Belum ada data.') %></td></tr>';
@@ -1102,7 +1102,7 @@ async function loadEwalletLogs() {
         if (ok) {
           alert(`Tersalin:\n${shortText}`);
         } else {
-          alert('Gagal menyalin.');
+          alert('No se pudo copiar.');
         }
       });
     });
@@ -1112,11 +1112,11 @@ async function loadEwalletLogs() {
 }
 
 async function clearEwalletLogs() {
-  if (!confirm('Hapus semua log e-wallet?')) return;
+  if (!confirm('¿Eliminar todo el registro de billeteras?')) return;
   try {
     const res = await fetch('/admin/api/webhook/payment-notif/clear', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
     const data = await res.json();
-    if (!res.ok || !data.ok) throw new Error(data.error || 'Gagal menghapus log');
+    if (!res.ok || !data.ok) throw new Error(data.error || 'No se pudo eliminar el registro');
     await loadEwalletLogs();
   } catch (e) {
     alert(e.message);
@@ -1128,7 +1128,7 @@ async function uploadBrandLogo(type, btn) {
   const map = { portal: 'brand_portal_file', invoice: 'brand_invoice_file', pwa: 'brand_pwa_file', hero: 'brand_hero_file' };
   const input = document.getElementById(map[type]);
   const f = input && input.files && input.files[0] ? input.files[0] : null;
-  if (!f) { alert('Pilih file logo terlebih dahulu'); return; }
+  if (!f) { alert('Primero elegí el archivo del logo'); return; }
   const fd = new FormData();
   fd.append('logo_file', f);
   const old = btn.innerHTML;
@@ -1136,7 +1136,7 @@ async function uploadBrandLogo(type, btn) {
   btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Upload...';
   try {
     const r = await fetch('/admin/settings/branding/logo/' + type, { method: 'POST', body: fd, credentials: 'same-origin' });
-    if (!r.ok) throw new Error('Upload logo gagal');
+    if (!r.ok) throw new Error('Falló la subida del logo');
     window.location.href = '/admin/settings';
   } catch (e) {
     alert(e.message);

@@ -138,7 +138,7 @@
         <div class="muted" style="font-size:12px"><%= collectorName %></div>
       </div>
       <div class="d-flex gap-2">
-        <button type="button" class="btn btn-outline-light btn-sm" id="topbarThemeBtn" title="Ganti tema"><i class="bi bi-circle-half"></i></button>
+        <button type="button" class="btn btn-outline-light btn-sm" id="topbarThemeBtn" title="Cambiar tema"><i class="bi bi-circle-half"></i></button>
         <a class="btn btn-outline-light btn-sm" href="/collector"><i class="bi bi-house-door-fill"></i> <%= t('collector.home','Beranda') %></a>
         <a class="btn btn-outline-danger btn-sm" href="/collector/logout"><i class="bi bi-box-arrow-left"></i></a>
       </div>
@@ -210,13 +210,13 @@
               <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px;">
                 <% if (todayAttendance.check_in_photo) { %>
                   <a href="<%= todayAttendance.check_in_photo %>" target="_blank" style="color: white; text-decoration: none; font-size: 12px;">
-                    <img src="<%= todayAttendance.check_in_photo %>" alt="Foto check-in" style="width: 72px; height: 72px; object-fit: cover; border-radius: 10px; display: block; margin-bottom: 4px;">
+                    <img src="<%= todayAttendance.check_in_photo %>" alt="Foto de entrada" style="width: 72px; height: 72px; object-fit: cover; border-radius: 10px; display: block; margin-bottom: 4px;">
                     <%= t('collector.checkin','Check-in') %>
                   </a>
                 <% } %>
                 <% if (todayAttendance.check_out_photo) { %>
                   <a href="<%= todayAttendance.check_out_photo %>" target="_blank" style="color: white; text-decoration: none; font-size: 12px;">
-                    <img src="<%= todayAttendance.check_out_photo %>" alt="Foto check-out" style="width: 72px; height: 72px; object-fit: cover; border-radius: 10px; display: block; margin-bottom: 4px;">
+                    <img src="<%= todayAttendance.check_out_photo %>" alt="Foto de salida" style="width: 72px; height: 72px; object-fit: cover; border-radius: 10px; display: block; margin-bottom: 4px;">
                     <%= t('collector.checkout','Check-out') %>
                   </a>
                 <% } %>
@@ -240,7 +240,7 @@
             </div>
 
             <div id="checkoutPhotoInfo" style="font-size: 11px; color: var(--muted); margin-top: 6px;"><%= t('collector.no_selfie_out','Belum ada foto selfie dipilih. Foto wajib untuk check-out.') %></div>
-            <div id="checkoutPhotoStatus" style="display: inline-block; margin-top: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; background: var(--ddim); color: var(--danger); border: 1px solid var(--danger-glow);"><%= t('collector.selfie_required','Foto wajib') %></div>
+            <div id="checkoutPhotoStatus" style="display: inline-block; margin-top: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; background: var(--ddim); color: var(--danger); border: 1px solid var(--danger-glow);"><%= t('collector.selfie_required','Foto obligatoria') %></div>
             
             <div style="margin-top: 8px;">
               <button type="button" onclick="clearSelectedPhoto('checkoutPhoto')" class="btn btn-sm btn-outline-danger" id="checkoutPhotoClearBtn" style="display: none; border-radius: 8px; font-size: 11px;"><%= t('collector.delete_photo','Hapus Foto') %></button>
@@ -248,7 +248,7 @@
             
             <div id="checkoutPhotoPreviewWrap" style="display: none; margin-top: 8px;">
               <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;"><%= t('collector.photo_preview','Preview foto final yang akan dikirim:') %></div>
-              <img id="checkoutPhotoPreview" alt="Preview foto check-out" style="width: 100%; max-width: 240px; border-radius: 12px; border: 1px solid var(--border); object-fit: cover;">
+              <img id="checkoutPhotoPreview" alt="Vista previa de la foto de salida" style="width: 100%; max-width: 240px; border-radius: 12px; border: 1px solid var(--border); object-fit: cover;">
             </div>
           </div>
           <button id="checkoutSubmitBtn" class="btn btn-danger btn-action mt-2 w-100" onclick="checkout(event)" disabled style="opacity: 0.55; cursor: not-allowed; border-radius: 12px; padding: 10px; font-weight: 600;">
@@ -278,7 +278,7 @@
           </div>
 
           <div id="checkinPhotoInfo" style="font-size: 11px; color: var(--muted); margin-top: 6px;"><%= t('collector.no_selfie_in','Belum ada foto selfie dipilih. Foto wajib untuk check-in.') %></div>
-          <div id="checkinPhotoStatus" style="display: inline-block; margin-top: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; background: var(--ddim); color: var(--danger); border: 1px solid var(--danger-glow);"><%= t('collector.selfie_required','Foto wajib') %></div>
+          <div id="checkinPhotoStatus" style="display: inline-block; margin-top: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; background: var(--ddim); color: var(--danger); border: 1px solid var(--danger-glow);"><%= t('collector.selfie_required','Foto obligatoria') %></div>
           
           <div style="margin-top: 8px;">
             <button type="button" onclick="clearSelectedPhoto('checkinPhoto')" class="btn btn-sm btn-outline-danger" id="checkinPhotoClearBtn" style="display: none; border-radius: 8px; font-size: 11px;"><%= t('collector.delete_photo','Hapus Foto') %></button>
@@ -286,7 +286,7 @@
           
           <div id="checkinPhotoPreviewWrap" style="display: none; margin-top: 8px;">
             <div style="font-size: 11px; color: var(--muted); margin-bottom: 6px;"><%= t('collector.photo_preview','Preview foto final yang akan dikirim:') %></div>
-            <img id="checkinPhotoPreview" alt="Preview foto check-in" style="width: 100%; max-width: 240px; border-radius: 12px; border: 1px solid var(--border); object-fit: cover;">
+            <img id="checkinPhotoPreview" alt="Vista previa de la foto de entrada" style="width: 100%; max-width: 240px; border-radius: 12px; border: 1px solid var(--border); object-fit: cover;">
           </div>
         </div>
         <button id="checkinSubmitBtn" class="btn btn-success btn-action mt-2 w-100" onclick="checkin(event)" disabled style="opacity: 0.55; cursor: not-allowed; border-radius: 12px; padding: 10px; font-weight: 600;">
@@ -295,7 +295,7 @@
       <% } %>
 
       <div id="locationInfo" style="display: none; font-size: 11px; color: var(--muted); margin-top: 10px; padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 8px;">
-        <i class="bi bi-geo-alt-fill"></i> <%= t('collector.getting_gps','Mengambil lokasi GPS...') %>
+        <i class="bi bi-geo-alt-fill"></i> <%= t('collector.getting_gps','Obteniendo ubicación GPS...') %>
       </div>
     </div>
 
@@ -315,7 +315,7 @@
       </div>
       <div class="stat-box" style="border-left: 3px solid #f59e0b;">
         <div class="val text-warning"><%= summary.total_minutes ? Math.floor(summary.total_minutes / 60) : 0 %></div>
-        <div class="lbl">Total Jam</div>
+        <div class="lbl">Total de horas</div>
       </div>
       <div class="stat-box" style="border-left: 3px solid #8b5cf6;">
         <div class="val" style="color: #a78bfa;"><%= summary.avg_minutes ? Math.floor(summary.avg_minutes / 60) : 0 %></div>
@@ -325,7 +325,7 @@
 
     <!-- Riwayat Terakhir -->
     <h6 class="mb-3 text-secondary fw-bold text-uppercase" style="font-size: 13px; letter-spacing: 1px;">
-      <i class="bi bi-clock-history me-1"></i><%= t('collector.recent_history','Riwayat Terakhir') %>
+      <i class="bi bi-clock-history me-1"></i><%= t('collector.recent_history','Historial reciente') %>
     </h6>
 
     <% if (history && history.length > 0) { %>
@@ -364,7 +364,7 @@
     <% } else { %>
       <div class="text-center py-5">
         <i class="bi bi-inbox text-secondary" style="font-size: 40px;"></i>
-        <p class="text-secondary mt-2 small"><%= t('collector.no_history','Belum ada riwayat absensi') %></p>
+        <p class="text-secondary mt-2 small"><%= t('collector.no_history','Todavía no hay historial de asistencia') %></p>
       </div>
     <% } %>
 
@@ -377,7 +377,7 @@
         <i class="bi bi-grid-3x3-gap"></i><span>Semua</span>
       </a>
       <a class="bni" href="/collector?scope=today#data-tagihan">
-        <i class="bi bi-calendar-check"></i><span>Hari Ini</span>
+        <i class="bi bi-calendar-check"></i><span>Hoy</span>
       </a>
       <a class="bni" href="/collector?scope=unpaid#data-tagihan">
         <i class="bi bi-exclamation-circle"></i><span>Belum</span>
@@ -463,22 +463,22 @@
       const file = input.files && input.files[0];
       delete processedAttendancePhotos[inputId];
       if (!file) {
-        info.textContent = 'Belum ada foto selfie dipilih.';
+        info.textContent = 'Todavía no se eligió una selfie.';
         resetPhotoPreview(previewWrapId, previewImgId);
-        if (config) setPhotoStatus(config.statusId, 'Foto wajib', 'idle');
+        if (config) setPhotoStatus(config.statusId, 'Foto obligatoria', 'idle');
         if (config) setSubmitButtonState(config.submitBtnId, false);
         const clearBtn = document.getElementById(inputId + 'ClearBtn');
         if (clearBtn) clearBtn.style.display = 'none';
         return;
       }
-      info.textContent = `Foto dipilih: ${file.name} (${Math.round(file.size / 1024)} KB)`;
+      info.textContent = `Foto elegida: ${file.name} (${Math.round(file.size / 1024)} KB)`;
       if (config) setPhotoStatus(config.statusId, 'Menyiapkan preview', 'processing');
       const clearBtn = document.getElementById(inputId + 'ClearBtn');
       if (clearBtn) clearBtn.style.display = 'inline-block';
       refreshPhotoPreview(inputId).catch((error) => {
         info.textContent = error.message;
         resetPhotoPreview(previewWrapId, previewImgId);
-        if (config) setPhotoStatus(config.statusId, 'Preview gagal', 'error');
+        if (config) setPhotoStatus(config.statusId, 'Falló la vista previa', 'error');
       });
     }
 
@@ -493,9 +493,9 @@
       input.value = '';
       delete processedAttendancePhotos[inputId];
       const info = document.getElementById(config.infoId);
-      if (info) info.textContent = 'Belum ada foto selfie dipilih. Foto wajib untuk absensi.';
+      if (info) info.textContent = 'Todavía no se eligió una selfie. La foto es obligatoria para la asistencia.';
       resetPhotoPreview(config.previewWrapId, config.previewImgId);
-      setPhotoStatus(config.statusId, 'Foto wajib', 'idle');
+      setPhotoStatus(config.statusId, 'Foto obligatoria', 'idle');
       setSubmitButtonState(config.submitBtnId, false);
       const clearBtn = document.getElementById(inputId + 'ClearBtn');
       if (clearBtn) clearBtn.style.display = 'none';
@@ -509,18 +509,18 @@
       if (!config || !info) return null;
 
       if (!file) {
-        info.textContent = 'Belum ada foto selfie dipilih. Foto wajib untuk absensi.';
+        info.textContent = 'Todavía no se eligió una selfie. La foto es obligatoria para la asistencia.';
         resetPhotoPreview(config.previewWrapId, config.previewImgId);
         delete processedAttendancePhotos[inputId];
-        setPhotoStatus(config.statusId, 'Foto wajib', 'idle');
+        setPhotoStatus(config.statusId, 'Foto obligatoria', 'idle');
         setSubmitButtonState(config.submitBtnId, false);
         return null;
       }
 
       if (!currentLocation) {
-        info.textContent = `Foto dipilih: ${file.name} (${Math.round(file.size / 1024)} KB). Preview menunggu lokasi GPS.`;
+        info.textContent = `Foto elegida: ${file.name} (${Math.round(file.size / 1024)} KB). La vista previa espera la ubicación GPS.`;
         resetPhotoPreview(config.previewWrapId, config.previewImgId);
-        setPhotoStatus(config.statusId, 'Menunggu GPS', 'waiting');
+        setPhotoStatus(config.statusId, 'Esperando GPS', 'waiting');
         setSubmitButtonState(config.submitBtnId, false);
         return null;
       }
@@ -530,30 +530,30 @@
       if (!force && cached && cached.cacheKey === cacheKey && cached.file) {
         setPhotoPreview(config.previewWrapId, config.previewImgId, cached.file);
         info.textContent = `Preview siap: ${(cached.file.filename || cached.file.name)} (${Math.round(cached.file.size / 1024)} KB).`;
-        setPhotoStatus(config.statusId, 'Preview siap dikirim', 'ready');
+        setPhotoStatus(config.statusId, 'Vista previa lista para enviar', 'ready');
         setSubmitButtonState(config.submitBtnId, true);
         return cached.file;
       }
 
-      info.textContent = 'Memproses foto untuk preview...';
-      setPhotoStatus(config.statusId, 'Memproses foto', 'processing');
+      info.textContent = 'Procesando la foto...';
+      setPhotoStatus(config.statusId, 'Procesando foto', 'processing');
       setSubmitButtonState(config.submitBtnId, false);
       let processedFile;
       try {
         processedFile = await processAttendancePhotoFile(file, currentLocation);
       } catch (error) {
         processedFile = file;
-        info.textContent = `Foto asli siap dikirim: ${file.name} (${Math.round(file.size / 1024)} KB).`;
-        setPhotoStatus(config.statusId, 'Foto asli siap dikirim', 'ready');
+        info.textContent = `Foto original lista para enviar: ${file.name} (${Math.round(file.size / 1024)} KB).`;
+        setPhotoStatus(config.statusId, 'Foto original lista para enviar', 'ready');
       }
       processedAttendancePhotos[inputId] = { cacheKey, file: processedFile };
       setPhotoPreview(config.previewWrapId, config.previewImgId, processedFile);
       if (processedFile === file) {
-        info.textContent = `Foto asli siap dikirim: ${file.name} (${Math.round(file.size / 1024)} KB).`;
-        setPhotoStatus(config.statusId, 'Foto asli siap dikirim', 'ready');
+        info.textContent = `Foto original lista para enviar: ${file.name} (${Math.round(file.size / 1024)} KB).`;
+        setPhotoStatus(config.statusId, 'Foto original lista para enviar', 'ready');
       } else {
         info.textContent = `Preview siap: ${processedFile.filename} (${Math.round(processedFile.size / 1024)} KB).`;
-        setPhotoStatus(config.statusId, 'Preview siap dikirim', 'ready');
+        setPhotoStatus(config.statusId, 'Vista previa lista para enviar', 'ready');
       }
       setSubmitButtonState(config.submitBtnId, true);
       return processedFile;
@@ -596,7 +596,7 @@
         };
         img.onerror = () => {
           URL.revokeObjectURL(objectUrl);
-          reject(new Error('Gagal membaca foto yang dipilih'));
+          reject(new Error('No se pudo leer la foto elegida'));
         };
         img.src = objectUrl;
       });
@@ -608,7 +608,7 @@
           try {
             const dataUrl = canvas.toDataURL(type, quality);
             const parts = dataUrl.split(',');
-            if (parts.length < 2) throw new Error('Gagal memproses foto absensi');
+            if (parts.length < 2) throw new Error('No se pudo procesar la foto de asistencia');
             const mime = (parts[0].match(/data:(.*?);base64/) || [])[1] || type || 'image/jpeg';
             const binary = atob(parts[1]);
             const len = binary.length;
@@ -616,7 +616,7 @@
             for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
             resolve(new Blob([bytes], { type: mime }));
           } catch (e) {
-            reject(new Error('Gagal memproses foto absensi'));
+            reject(new Error('No se pudo procesar la foto de asistencia'));
           }
         };
 
@@ -642,8 +642,8 @@
       });
       return [
         '<%= settings.companyName %>'.toUpperCase(),
-        'KOLEKTOR PORTAL - ABSENSI',
-        `Waktu: ${timestamp}`,
+        'PORTAL DEL COBRADOR - ASISTENCIA',
+        `Hora: ${timestamp}`,
         `GPS: ${location.lat}, ${location.lng}`
       ];
     }
@@ -712,13 +712,13 @@
     function getLocation() {
       return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
-          reject(new Error('Geolocation tidak didukung browser Anda'));
+          reject(new Error('Tu navegador no admite geolocalización'));
           return;
         }
 
         const locationInfo = document.getElementById('locationInfo');
         locationInfo.style.display = 'block';
-        locationInfo.innerHTML = '<i class="bi bi-geo-alt-fill"></i> Mengambil lokasi GPS...';
+        locationInfo.innerHTML = '<i class="bi bi-geo-alt-fill"></i> Obteniendo ubicación GPS...';
 
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -726,12 +726,12 @@
               lat: position.coords.latitude.toString(),
               lng: position.coords.longitude.toString()
             };
-            locationInfo.innerHTML = `<i class="bi bi-geo-alt-fill text-success"></i> Lokasi berhasil didapat`;
+            locationInfo.innerHTML = `<i class="bi bi-geo-alt-fill text-success"></i> Ubicación obtenida`;
             refreshAllPhotoPreviews();
             resolve(currentLocation);
           },
           (error) => {
-            locationInfo.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Gagal mendapatkan lokasi GPS';
+            locationInfo.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> No se pudo obtener la ubicación GPS';
             reject(error);
           },
           {
@@ -746,7 +746,7 @@
     async function checkin(evt) {
       const btn = evt.currentTarget;
       if (!document.getElementById('checkinPhoto')?.files?.[0]) {
-        alert('Foto check-in wajib diunggah sebelum absensi.');
+        alert('La foto de entrada es obligatoria antes de registrar la asistencia.');
         return;
       }
       try {
@@ -772,7 +772,7 @@
           btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Check-in Sekarang';
         }
       } catch (error) {
-        alert('Gagal check-in: ' + error.message);
+        alert('No se pudo registrar la entrada: ' + error.message);
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Check-in Sekarang';
       }
@@ -781,7 +781,7 @@
     async function checkout(evt) {
       const btn = evt.currentTarget;
       if (!document.getElementById('checkoutPhoto')?.files?.[0]) {
-        alert('Foto check-out wajib diunggah sebelum absensi.');
+        alert('La foto de salida es obligatoria antes de registrar la asistencia.');
         return;
       }
       try {
@@ -807,7 +807,7 @@
           btn.innerHTML = '<i class="bi bi-box-arrow-right me-2"></i>Check-out Sekarang';
         }
       } catch (error) {
-        alert('Gagal check-out: ' + error.message);
+        alert('No se pudo registrar la salida: ' + error.message);
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-box-arrow-right me-2"></i>Check-out Sekarang';
       }

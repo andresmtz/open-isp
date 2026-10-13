@@ -22,7 +22,7 @@
     <div class="col-12 col-md-7">
       <div class="input-group">
         <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-search"></i></span>
-        <input type="text" id="search-input" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Cari: Nama / No HP / PPPoE / SN / Tag..." oninput="filterDevices()">
+        <input type="text" id="search-input" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Buscar: nombre / teléfono / PPPoE / SN / etiqueta..." oninput="filterDevices()">
       </div>
     </div>
     <div class="col-12 col-md-5">
@@ -61,13 +61,13 @@
         <input type="hidden" id="modal-action-type">
         
         <div id="ssid-input-group" class="d-none">
-          <label class="form-label small text-secondary"><%= t('tech.mon.new_ssid','Nama WiFi (SSID) Baru') %></label>
-          <input type="text" id="new-ssid" class="form-control bg-dark border-secondary text-white" placeholder="Masukkan SSID baru">
+          <label class="form-label small text-secondary"><%= t('tech.mon.new_ssid','Nuevo nombre del WiFi (SSID)') %></label>
+          <input type="text" id="new-ssid" class="form-control bg-dark border-secondary text-white" placeholder="Ingrese el nuevo SSID">
         </div>
         
         <div id="pass-input-group" class="d-none">
           <label class="form-label small text-secondary"><%= t('tech.mon.new_pass','Password WiFi Baru') %></label>
-          <input type="text" id="new-password" class="form-control bg-dark border-secondary text-white" placeholder="Minimal 8 karakter">
+          <input type="text" id="new-password" class="form-control bg-dark border-secondary text-white" placeholder="Mínimo 8 caracteres">
         </div>
         
         <div id="reboot-confirm" class="d-none text-center py-2">
@@ -77,7 +77,7 @@
       </div>
       <div class="modal-footer border-secondary">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-        <button type="button" id="btn-submit-action" class="btn btn-primary btn-sm"><%= t('tech.mon.save','Simpan Perubahan') %></button>
+        <button type="button" id="btn-submit-action" class="btn btn-primary btn-sm"><%= t('tech.mon.save','Guardar cambios') %></button>
       </div>
     </div>
   </div>
@@ -98,7 +98,7 @@
           
           <div class="p-3 bg-secondary bg-opacity-10 border border-secondary rounded mb-3" style="font-size: 13px;">
               <div class="row g-2">
-                  <div class="col-6"><strong><%= t('tech.mon.sn','SN Perangkat:') %></strong> <span id="lblWanSn" class="text-primary fw-bold">-</span></div>
+                  <div class="col-6"><strong><%= t('tech.mon.sn','SN del equipo:') %></strong> <span id="lblWanSn" class="text-primary fw-bold">-</span></div>
                   <div class="col-6"><strong><%= t('tech.mon.vendor','Vendor:') %></strong> <span id="lblWanVendor" class="text-info fw-bold" style="text-transform: capitalize;">-</span></div>
                   <div class="col-6"><strong><%= t('tech.mon.model','Tipe Model:') %></strong> <span id="lblWanModel" class="fw-bold">-</span></div>
               </div>
@@ -284,7 +284,7 @@ async function loadDevices() {
     allDevices = data.devices || [];
     filterDevices(); // Apply client search if any
   } catch (e) {
-    container.innerHTML = `<div class="alert alert-danger small">Gagal memuat data: ${e.message}</div>`;
+    container.innerHTML = `<div class="alert alert-danger small">No se pudieron cargar los datos: ${e.message}</div>`;
   }
 }
 
@@ -382,17 +382,17 @@ function openActionModal(tag, type, currentSsid = '') {
   submitBtn.className = 'btn btn-primary btn-sm';
   
   if (type === 'ssid') {
-    document.getElementById('modalTitle').innerText = 'Ubah SSID';
+    document.getElementById('modalTitle').innerText = 'Cambiar SSID';
     document.getElementById('ssid-input-group').classList.remove('d-none');
     document.getElementById('new-ssid').value = currentSsid;
-    submitBtn.innerText = 'Simpan SSID';
+    submitBtn.innerText = 'Guardar SSID';
   } else if (type === 'pass') {
-    document.getElementById('modalTitle').innerText = 'Ubah Password WiFi';
+    document.getElementById('modalTitle').innerText = 'Cambiar contraseña del WiFi';
     document.getElementById('pass-input-group').classList.remove('d-none');
     document.getElementById('new-password').value = '';
-    submitBtn.innerText = 'Simpan Password';
+    submitBtn.innerText = 'Guardar contraseña';
   } else if (type === 'reboot') {
-    document.getElementById('modalTitle').innerText = 'Reboot Perangkat';
+    document.getElementById('modalTitle').innerText = 'Reiniciar equipo';
     document.getElementById('reboot-confirm').classList.remove('d-none');
     submitBtn.innerText = 'Ya, Reboot Now';
     submitBtn.className = 'btn btn-danger btn-sm';
@@ -411,12 +411,12 @@ document.getElementById('btn-submit-action').addEventListener('click', async fun
   
   if (type === 'ssid') {
     const ssid = document.getElementById('new-ssid').value.trim();
-    if (!ssid) return alert('SSID tidak boleh kosong');
+    if (!ssid) return alert('El SSID no puede quedar vacío');
     url = `/tech/api/device/${tag}/ssid`;
     body = { ssid };
   } else if (type === 'pass') {
     const password = document.getElementById('new-password').value.trim();
-    if (password.length < 8) return alert('Password minimal 8 karakter');
+    if (password.length < 8) return alert('La contraseña debe tener al menos 8 caracteres');
     url = `/tech/api/device/${tag}/password`;
     body = { password };
   } else if (type === 'reboot') {
@@ -436,7 +436,7 @@ document.getElementById('btn-submit-action').addEventListener('click', async fun
     const result = await res.json();
     
     if (result.success || result.ok) {
-      alert('Perintah berhasil dikirim!');
+      alert('¡Orden enviada!');
       actionModal.hide();
       setTimeout(loadDevices, 2000);
     } else {
@@ -446,7 +446,7 @@ document.getElementById('btn-submit-action').addEventListener('click', async fun
     alert('Error: ' + e.message);
   } finally {
     btn.disabled = false;
-    btn.innerText = 'Simpan Perubahan';
+    btn.innerText = 'Guardar cambios';
   }
 });
 
@@ -518,11 +518,11 @@ async function toggleWifiFields() {
                 d.bands.forEach(b => {
                     if (b.index === '1') {
                         document.getElementById('wifiSsid24').value = b.ssid;
-                        document.getElementById('wifiSsid24').placeholder = 'Nama Wi-Fi 2.4G';
+                        document.getElementById('wifiSsid24').placeholder = 'Nombre del WiFi 2.4G';
                     } else if (b.index === '5' || b.index === '2') {
                         band5Fields.style.display = 'block';
                         document.getElementById('wifiSsid5').value = b.ssid;
-                        document.getElementById('wifiSsid5').placeholder = 'Nama Wi-Fi 5G';
+                        document.getElementById('wifiSsid5').placeholder = 'Nombre del WiFi 5G';
                     }
                 });
             }
@@ -639,7 +639,7 @@ async function submitAddWanForm(e) {
             addWanModal.hide();
             setTimeout(loadDevices, 2000);
         } else {
-            alert(data.message || 'Gagal menjalankan provisioning');
+            alert(data.message || 'No se pudo ejecutar el aprovisionamiento');
         }
     } catch (err) {
         alert('Terjadi kesalahan: ' + err.message);

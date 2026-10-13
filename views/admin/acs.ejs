@@ -132,11 +132,11 @@
                 <!-- Bulk Actions Panel -->
                 <div id="bulkActionsPanel" style="display: none; background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.15); padding: 12px 20px; border-radius: 12px; margin-bottom: 20px; align-items: center; justify-content: space-between;">
                     <div style="font-size: 13px; font-weight: 600; color: var(--text);">
-                        <span id="selectedCount">0</span> perangkat terpilih
+                        <span id="selectedCount">0</span> equipos seleccionados
                     </div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-p btn-sm" onclick="bulkSummon()" style="background: var(--primary);"><i class="bi bi-arrow-repeat"></i> Summon Terpilih</button>
-                        <button class="btn btn-d btn-sm" onclick="bulkDelete()" style="background: var(--danger);"><i class="bi bi-trash"></i> Hapus Terpilih</button>
+                        <button class="btn btn-d btn-sm" onclick="bulkDelete()" style="background: var(--danger);"><i class="bi bi-trash"></i> Eliminar seleccionados</button>
                     </div>
                 </div>
 
@@ -239,7 +239,7 @@
                                             <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                                             <div class="act-menu">
                                                 <button type="button" class="act-item primary" onclick="openEditLegacyAcsModal()"><i class="bi bi-pencil-square"></i> <%= t('admin.acs.edit_default','Edit Default ACS') %></button>
-                                                <button type="button" class="act-item danger" disabled style="opacity:.5;cursor:not-allowed"><i class="bi bi-trash"></i> Hapus (tidak bisa)</button>
+                                                <button type="button" class="act-item danger" disabled style="opacity:.5;cursor:not-allowed"><i class="bi bi-trash"></i> Eliminar (no permitido)</button>
                                             </div>
                                         </div>
                                     <% } %>
@@ -263,10 +263,10 @@
                     <label style="display:flex; gap:6px; align-items:center; font-size:13px; color:var(--muted);">
                         <input type="checkbox" id="logOnlyError" onchange="loadAcsLogs()"> Hanya error / fault
                     </label>
-                    <button class="btn btn-p btn-sm" onclick="loadAcsLogs()"><i class="bi bi-arrow-clockwise"></i> <%= t('admin.acs.reload','Muat Ulang') %></button>
-                    <span style="font-size:12px; color:var(--muted);">Log diambil dari tiap ACS (Built-in: riwayat task; GenieACS: <code>/faults</code>).</span>
+                    <button class="btn btn-p btn-sm" onclick="loadAcsLogs()"><i class="bi bi-arrow-clockwise"></i> <%= t('admin.acs.reload','Recargar') %></button>
+                    <span style="font-size:12px; color:var(--muted);">Registros tomados de cada ACS (incorporado: historial de tareas; GenieACS: <code>/faults</code>).</span>
                 </div>
-                <div id="acsLogContainer"><div class="text-muted" style="padding:12px;">Pilih filter lalu klik "<%= t('admin.acs.reload','Muat Ulang') %>"<%= t('admin.acs.load_log',' untuk memuat log.') %></div></div>
+                <div id="acsLogContainer"><div class="text-muted" style="padding:12px;">Elegí un filtro y hacé clic en "<%= t('admin.acs.reload','Recargar') %>"<%= t('admin.acs.load_log',' untuk memuat log.') %></div></div>
             </div>
         </div>
         <footer style="margin-top: 30px; padding: 20px; text-align: center; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border);">
@@ -289,7 +289,7 @@
         
         <div style="background: var(--sub-bg); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed var(--border);">
             <div style="display: flex; gap: 15px; font-size: 13px;">
-                <div><strong>SN Perangkat:</strong> <span id="lblWanSn" class="text-primary" style="font-weight: 700;">-</span></div>
+                <div><strong>SN del equipo:</strong> <span id="lblWanSn" class="text-primary" style="font-weight: 700;">-</span></div>
                 <div><strong>Vendor:</strong> <span id="lblWanVendor" style="text-transform: capitalize; font-weight: 700;">-</span></div>
                 <div><strong>Tipe:</strong> <span id="lblWanModel" style="font-weight: 700;">-</span></div>
             </div>
@@ -312,7 +312,7 @@
         <div style="margin-bottom: 20px;">
             <label style="display:flex; align-items:center; gap:10px; font-size:13px; color:var(--text); font-weight:700; cursor:pointer;">
               <input type="checkbox" id="wanDhcp" checked style="width:18px; height:18px;">
-              <i class="bi bi-hdd-rack text-primary"></i> Aktifkan DHCP Server LAN (Rekomendasi: Nonaktifkan jika Bridge)
+              <i class="bi bi-hdd-rack text-primary"></i> Activar servidor DHCP en LAN (recomendado: desactivar si es bridge)
             </label>
         </div>
 
@@ -516,12 +516,12 @@ function loadAcsLogs() {
     if (!el) return;
     var server = (document.getElementById('logServerFilter') || {}).value || 'all';
     var onlyErr = (document.getElementById('logOnlyError') || {}).checked ? '1' : '0';
-    el.innerHTML = '<div class="text-muted" style="padding:12px;">Memuat log…</div>';
+    el.innerHTML = '<div class="text-muted" style="padding:12px;">Cargando registros…</div>';
     fetch('/admin/acs/logs?server=' + encodeURIComponent(server) + '&onlyError=' + onlyErr + '&limit=200')
         .then(function(r){ return r.json(); })
         .then(function(d){
-            if (!d || !d.ok) { el.innerHTML = '<div style="color:var(--danger);padding:12px;">Gagal: ' + escAcs((d && d.error) || '') + '</div>'; return; }
-            if (!d.servers.length) { el.innerHTML = '<div class="text-muted" style="padding:12px;">Tidak ada server ACS.</div>'; return; }
+            if (!d || !d.ok) { el.innerHTML = '<div style="color:var(--danger);padding:12px;">Error: ' + escAcs((d && d.error) || '') + '</div>'; return; }
+            if (!d.servers.length) { el.innerHTML = '<div class="text-muted" style="padding:12px;">No hay servidores ACS.</div>'; return; }
             el.innerHTML = d.servers.map(function(s){
                 var rows = (s.entries && s.entries.length) ? s.entries.map(function(e){
                     var color = e.status === 'completed' ? '#10b981' : (e.status === 'skipped' ? '#f59e0b' : '#ef4444');
@@ -532,7 +532,7 @@ function loadAcsLogs() {
                         '<td style="font-size:12px;font-weight:700;color:' + color + ';">' + escAcs(e.status || '-') + '</td>' +
                         '<td style="font-size:12px;color:var(--muted);max-width:520px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escAcs(e.message || '') + '">' + escAcs(e.message || '') + '</td>' +
                     '</tr>';
-                }).join('') : '<tr><td colspan="5" class="text-muted" style="text-align:center;padding:16px;">Tidak ada log.</td></tr>';
+                }).join('') : '<tr><td colspan="5" class="text-muted" style="text-align:center;padding:16px;">No hay registros.</td></tr>';
                 return '<div style="margin-bottom:22px;">' +
                     '<div style="font-weight:700;margin-bottom:8px;"><i class="bi bi-hdd-rack"></i> ' + escAcs(s.name) + ' <code style="font-size:11px;color:var(--muted);">' + escAcs(s.url) + '</code> <span class="badge" style="font-size:10px;">' + (s.entries ? s.entries.length : 0) + '</span></div>' +
                     '<div class="table-container"><table><thead><tr><th><%= t('collector.col_time','Waktu') %></th><th>Perangkat</th><th><%= t('common.actions','Aksi') %></th><th><%= t('common.status','Status') %></th><th>Pesan</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
@@ -625,7 +625,7 @@ async function saveServer(e) {
         });
         const data = await res.json();
         if (data && data.success) return location.reload();
-        alert((data && data.message) ? data.message : 'Gagal menyimpan server');
+        alert((data && data.message) ? data.message : 'No se pudo guardar el servidor');
     } finally {
         btn.disabled = false;
         txt.style.display = 'inline-block';
@@ -633,7 +633,7 @@ async function saveServer(e) {
     }
 }
 async function deleteServer(id) {
-    if(!confirm('Hapus server ini?')) return;
+    if(!confirm('¿Eliminar este servidor?')) return;
     const res = await fetch('/admin/acs/api/servers/' + id, { method: 'DELETE' });
     if((await res.json()).success) location.reload();
 }
@@ -713,11 +713,11 @@ async function toggleWifiFields() {
                 d.bands.forEach(b => {
                     if (b.index === '1') {
                         document.getElementById('wifiSsid24').value = b.ssid;
-                        document.getElementById('wifiSsid24').placeholder = 'Nama Wi-Fi 2.4G';
+                        document.getElementById('wifiSsid24').placeholder = 'Nombre del WiFi 2.4G';
                     } else if (b.index === '5' || b.index === '2') {
                         band5Fields.style.display = 'block';
                         document.getElementById('wifiSsid5').value = b.ssid;
-                        document.getElementById('wifiSsid5').placeholder = 'Nama Wi-Fi 5G';
+                        document.getElementById('wifiSsid5').placeholder = 'Nombre del WiFi 5G';
                     }
                 });
             }
@@ -771,11 +771,11 @@ function renderAddWanProgress(data) {
     if (!box || !badge || !summary || !list) return;
 
     box.style.display = 'block';
-    summary.textContent = data.summary || 'Workflow sedang diproses.';
+    summary.textContent = data.summary || 'El proceso está en curso.';
 
     if (data.hasFailure) {
         badge.className = 'text-danger';
-        badge.textContent = 'Ada Gagal';
+        badge.textContent = 'Hubo fallas';
     } else if (data.done) {
         badge.className = 'text-success';
         badge.textContent = 'Selesai';
@@ -820,7 +820,7 @@ async function pollAddWanProgress() {
             cache: 'no-store'
         });
         const data = await res.json();
-        if (!data || !data.success) throw new Error(data && data.message ? data.message : 'Gagal membaca progress Add WAN');
+        if (!data || !data.success) throw new Error(data && data.message ? data.message : 'No se pudo leer el progreso del alta WAN');
 
         renderAddWanProgress(data);
 
@@ -843,7 +843,7 @@ async function pollAddWanProgress() {
     } catch (err) {
         stopAddWanProgressPolling();
         const summary = document.getElementById('addWanProgressSummary');
-        if (summary) summary.textContent = 'Gagal membaca progress workflow Add WAN.';
+        if (summary) summary.textContent = 'No se pudo leer el progreso del proceso de alta WAN.';
         const btn = document.getElementById('btn-save-add-wan');
         const txt = btn ? btn.querySelector('.btn-text') : null;
         const ldr = btn ? btn.querySelector('.btn-loader') : null;
@@ -973,7 +973,7 @@ async function submitAddWanForm(e) {
                 location.reload();
             }
         } else {
-            alert(data.message || 'Gagal menjalankan provisioning');
+            alert(data.message || 'No se pudo ejecutar el aprovisionamiento');
         }
     } catch (err) {
         alert('Terjadi kesalahan: ' + err.message);
@@ -992,13 +992,13 @@ async function syncAllACS() {
 }
 
 async function syncOnuTags() {
-    if (!confirm('Sinkron Tag ONU pelanggan dari device.id ACS sekarang? (Tag diisi otomatis dari PPPoE user ONU)')) return;
+    if (!confirm('¿Sincronizar ahora las etiquetas ONU de los clientes desde device.id del ACS? (La etiqueta se toma del usuario PPPoE de la ONU)')) return;
     try {
         const res = await fetch('/admin/acs/api/sync/tags', { method: 'POST' });
         const d = await res.json();
         alert(d.message);
         if (d.success) location.reload();
-    } catch (e) { alert('Gagal sync tag: ' + e.message); }
+    } catch (e) { alert('No se pudieron sincronizar las etiquetas: ' + e.message); }
 }
 
 function toggleSelectAll(master) {
@@ -1036,7 +1036,7 @@ function getSelected<%= t('admin.acs.tab_devices','Perangkat') %>() {
 async function bulkSummon() {
     const devices = getSelected<%= t('admin.acs.tab_devices','Perangkat') %>();
     if (devices.length === 0) return;
-    if (!confirm(`Summon / Sinkronisasi ulang ${devices.length} perangkat?`)) return;
+    if (!confirm(`¿Consultar / sincronizar de nuevo ${devices.length} equipos?`)) return;
     
     try {
         const res = await fetch('/admin/acs/api/bulk/refresh', {
@@ -1048,14 +1048,14 @@ async function bulkSummon() {
         alert(d.message);
         if (d.success) location.reload();
     } catch (err) {
-        alert('Gagal memproses bulk summon: ' + err.message);
+        alert('No se pudo procesar la consulta masiva: ' + err.message);
     }
 }
 
 async function bulkDelete() {
     const devices = getSelected<%= t('admin.acs.tab_devices','Perangkat') %>();
     if (devices.length === 0) return;
-    if (!confirm(`HAPUS ${devices.length} perangkat dari database ACS?\n(Tindakan ini tidak dapat dibatalkan)`)) return;
+    if (!confirm(`¿ELIMINAR ${devices.length} equipos de la base del ACS?\n(Esta acción no se puede deshacer)`)) return;
     
     try {
         const res = await fetch('/admin/acs/api/bulk/delete', {
@@ -1067,12 +1067,12 @@ async function bulkDelete() {
         alert(d.message);
         if (d.success) location.reload();
     } catch (err) {
-        alert('Gagal memproses bulk delete: ' + err.message);
+        alert('No se pudo procesar la eliminación masiva: ' + err.message);
     }
 }
 
 async function deleteDevice(deviceId, acsId) {
-    if (!confirm('Hapus perangkat ' + deviceId + ' dari database ACS?')) return;
+    if (!confirm('¿Eliminar el equipo ' + deviceId + ' de la base del ACS?')) return;
     try {
         const res = await fetch('/admin/acs/api/device/' + encodeURIComponent(deviceId), {
             method: 'DELETE',
@@ -1083,7 +1083,7 @@ async function deleteDevice(deviceId, acsId) {
         alert(d.message);
         if (d.success) location.reload();
     } catch (err) {
-        alert('Gagal menghapus perangkat: ' + err.message);
+        alert('No se pudo eliminar el equipo: ' + err.message);
     }
 }
 

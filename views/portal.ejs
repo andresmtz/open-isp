@@ -1186,7 +1186,7 @@
               <button onclick="switchTab('home')" class="press w-9 h-9 rounded-full flex items-center justify-center" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text);" aria-label="<%= t('pwa.nav.back_home','Kembali ke Beranda') %>"><i class="bi bi-chevron-left"></i></button>
               <h2 class="text-xl font-bold" style="font-family:'Space Grotesk',sans-serif;"><%= t('pwa.nav.billing','Tagihan') %></h2>
             </div>
-            <span class="text-xs font-bold px-2.5 py-1 rounded-full" style="<%= portal.bill ? 'background:rgba(251,191,36,0.12);color:#FBBF24;border:1px solid rgba(251,191,36,0.2);' : 'background:rgba(173,255,47,0.12);color:var(--lime);border:1px solid var(--lime-border);' %>"><%= portal.bill ? t('pwa.status.unpaid','BELUM BAYAR') : t('pwa.status.paid','LUNAS') %></span>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full" style="<%= portal.bill ? 'background:rgba(251,191,36,0.12);color:#FBBF24;border:1px solid rgba(251,191,36,0.2);' : 'background:rgba(173,255,47,0.12);color:var(--lime);border:1px solid var(--lime-border);' %>"><%= portal.bill ? t('pwa.status.unpaid','PENDIENTE') : t('pwa.status.paid','LUNAS') %></span>
           </div>
 
           <div class="relative rounded-[24px] overflow-hidden noise" style="background:var(--surface);border:1px solid var(--lime-border);box-shadow:0 20px 50px -26px rgba(173,255,47,.5);">
@@ -1198,8 +1198,8 @@
               <p class="text-[11px] mb-2" style="color:var(--muted);"><%= t('pwa.billing.nominal_note_pre','Harga paket') %> <%= portal.bill.amount %> <%= t('pwa.billing.nominal_note_mid','+ kode unik') %> <b style="color:var(--lime);"><%= portal.bill.uniqueCode %></b></p>
               <% } %>
               <p class="text-xs mb-6" style="color:<%= portal.bill && portal.bill.overdue ? '#EF4444' : 'var(--muted)' %>;"><%= portal.bill ? portal.bill.dueFull : t('pwa.thanks','Terima kasih') %></p>
-              <button class="btn-lime press w-full py-4 text-base flex items-center justify-center gap-2" onclick="payWith('Bayar Sekarang')">
-                <i class="ph-fill ph-credit-card text-lg"></i><%= t('pwa.billing.pay_now','Bayar Sekarang') %>
+              <button class="btn-lime press w-full py-4 text-base flex items-center justify-center gap-2" onclick="payWith('Pagar ahora')">
+                <i class="ph-fill ph-credit-card text-lg"></i><%= t('pwa.billing.pay_now','Pagar ahora') %>
               </button>
               <p class="text-[11px] mt-3" style="color:var(--muted);"><%= t('pwa.billing.methods','Metode pembayaran: QRIS · Transfer Bank · E-Wallet') %></p>
             </div>
@@ -1260,7 +1260,7 @@
           <% } else { %>
           <div class="flex items-center justify-between gap-2 px-1">
             <p class="text-xs font-semibold" style="color:var(--muted);"><%= t('pwa.speedtest.provider','Penyedia Speed Test') %></p>
-            <button type="button" onclick="reloadSpeedtest()" class="press inline-flex items-center gap-1.5" style="padding:8px 12px;border-radius:11px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-size:12px;font-weight:700;"><i class="bi bi-arrow-clockwise"></i> <%= t('common.reload','Muat Ulang') %></button>
+            <button type="button" onclick="reloadSpeedtest()" class="press inline-flex items-center gap-1.5" style="padding:8px 12px;border-radius:11px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-size:12px;font-weight:700;"><i class="bi bi-arrow-clockwise"></i> <%= t('common.reload','Recargar') %></button>
           </div>
           <div class="relative rounded-[24px] overflow-hidden" style="background:var(--surface);border:1px solid var(--border);">
             <iframe id="speedtestFrame" data-base="<%= portal.speedtestUrl %>" src="<%= portal.speedtestUrl %>" title="Speed Test" style="width:100%;height:74vh;border:0;display:block;background:var(--surface);" loading="lazy" referrerpolicy="no-referrer"></iframe>
@@ -1425,7 +1425,7 @@
               <span class="avatar-init" style="width:76px;height:76px;font-size:29px;" role="img" aria-label="<%= portal.name %>"><%= portal.initials %></span>
             </div>
             <h2 class="text-lg font-semibold mt-3" style="font-family:'Space Grotesk',sans-serif;color:var(--text);"><%= portal.name %></h2>
-            <p class="text-xs mt-0.5" style="color:var(--muted);"><%= t('pwa.field.customer_id','ID Pelanggan') %> · <%= portal.code %></p>
+            <p class="text-xs mt-0.5" style="color:var(--muted);"><%= t('pwa.field.customer_id','ID de cliente') %> · <%= portal.code %></p>
             <div class="flex items-center gap-2 mt-2.5">
               <span class="plan-badge"><%= portal.packageName %></span>
               <span class="badge-online"><span class="dot"></span><%= portal.statusText %></span>
@@ -1579,7 +1579,7 @@
         <label class="field-label" for="ssid-input"><%= t('pwa.net.ssid','Nama WiFi (SSID)') %></label>
         <div class="field-input-wrap">
           <i class="ph-fill ph-wifi-high" style="color:var(--lime);font-size:16px;"></i>
-          <input class="field-input" type="text" id="ssid-input" value="OPEN-ISP-AD" placeholder="<%= t('pwa.wifi.name_ph','Nama WiFi') %>" maxlength="32" autocomplete="off">
+          <input class="field-input" type="text" id="ssid-input" value="OPEN-ISP-AD" placeholder="<%= t('pwa.wifi.name_ph','Nombre del WiFi') %>" maxlength="32" autocomplete="off">
         </div>
       </div>
 
@@ -1607,7 +1607,7 @@
       <p class="modal-sub"><%= t('pwa.account.data_note','Data akun Anda. Untuk mengubah data, ajukan ke admin.') %></p>
       <div class="info-list">
         <div class="info-row"><span class="info-k"><%= t('pwa.field.name','Nama') %></span><span class="info-v"><%= portal.profileInfo.name %></span></div>
-        <div class="info-row"><span class="info-k"><%= t('pwa.field.customer_id','ID Pelanggan') %></span><span class="info-v"><%= portal.profileInfo.code %></span></div>
+        <div class="info-row"><span class="info-k"><%= t('pwa.field.customer_id','ID de cliente') %></span><span class="info-v"><%= portal.profileInfo.code %></span></div>
         <div class="info-row"><span class="info-k"><%= t('pwa.field.phone','No. HP / WA') %></span><span class="info-v"><%= portal.profileInfo.phone %></span></div>
         <div class="info-row"><span class="info-k"><%= t('pwa.field.address','Alamat') %></span><span class="info-v"><%= portal.profileInfo.address %></span></div>
         <div class="info-row"><span class="info-k"><%= t('pwa.field.area','Area') %></span><span class="info-v"><%= portal.profileInfo.area %></span></div>
@@ -1616,7 +1616,7 @@
       </div>
       <div class="modal-actions">
         <button type="button" class="btn-cancel" onclick="closeInfoPribadi()"><%= t('common.close','Tutup') %></button>
-        <a href="https://wa.me/<%= portal.waPhone %>?text=<%= encodeURIComponent(t('pwa.wa_edit_prefix','Halo Admin, saya ingin mengubah data pelanggan saya. ID: ') + portal.profileInfo.code + ' (' + portal.profileInfo.name + '). Data yang ingin diubah: ') %>" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;padding:14px 16px;border-radius:14px;background:var(--lime);color:#0A0D14;font-weight:700;font-family:'Space Grotesk',sans-serif;text-decoration:none;font-size:14px;"><%= t('pwa.wifi.apply','Ajukan Perubahan') %></a>
+        <a href="https://wa.me/<%= portal.waPhone %>?text=<%= encodeURIComponent(t('pwa.wa_edit_prefix','Halo Admin, saya ingin mengubah data pelanggan saya. ID: ') + portal.profileInfo.code + ' (' + portal.profileInfo.name + '). Datos que quiero cambiar: ') %>" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;padding:14px 16px;border-radius:14px;background:var(--lime);color:#0A0D14;font-weight:700;font-family:'Space Grotesk',sans-serif;text-decoration:none;font-size:14px;"><%= t('pwa.wifi.apply','Ajukan Perubahan') %></a>
       </div>
     </div>
   </div>
@@ -1694,18 +1694,18 @@
           <label class="field-label" for="bt-subject"><%= t('pwa.help.issue_type','Jenis Kendala') %></label>
           <select class="field-box" id="bt-subject" name="subject" required>
             <option value="" disabled selected><%= t('pwa.help.pick_issue','-- Pilih jenis kendala --') %></option>
-            <option><%= t('pwa.help.i_disconnected','Koneksi Terputus / Tidak Bisa Konek') %></option>
-            <option><%= t('pwa.help.i_slow','Koneksi Lambat / Lemot') %></option>
+            <option><%= t('pwa.help.i_disconnected','Sin conexión / no puedo conectarme') %></option>
+            <option><%= t('pwa.help.i_slow','Conexión lenta') %></option>
             <option><%= t('pwa.help.i_pon','Lampu PON Merah / Los Sinyal') %></option>
             <option><%= t('pwa.help.i_pwd','Kendala Lupa Password WiFi') %></option>
-            <option><%= t('pwa.help.topic_billing','Pertanyaan Tagihan &amp; Pembayaran') %></option>
+            <option><%= t('pwa.help.topic_billing','Consultas de facturación y pagos') %></option>
             <option><%= t('pwa.help.i_other','Lainnya') %></option>
           </select>
           <p class="field-box-hint"><i class="bi bi-chevron-down"></i><%= t('pwa.help.pick_hint','Ketuk untuk memilih jenis kendala') %></p>
         </div>
         <div class="field">
           <label class="field-label" for="bt-msg"><%= t('pwa.help.message','Detail Pesan') %></label>
-          <textarea class="field-box" id="bt-msg" name="message" rows="3" placeholder="<%= t('pwa.help.message_ph','Jelaskan kendala Anda…') %>" required style="min-height:92px;resize:vertical;"></textarea>
+          <textarea class="field-box" id="bt-msg" name="message" rows="3" placeholder="<%= t('pwa.help.message_ph','Describa su problema…') %>" required style="min-height:92px;resize:vertical;"></textarea>
         </div>
         <div class="field">
           <label class="field-label" for="bt-photo"><%= t('pwa.help.photo','Foto Lampiran (opsional)') %></label>
@@ -1899,8 +1899,8 @@
   /* ═══════ Status jaringan (situasional) ═══════ */
   const NET = {
     normal: { label: 'Normal' },
-    maintenance: { label: 'Perbaikan', icon: 'ph-fill ph-warning-circle', title: <%- JSON.stringify((portal.notice && portal.notice.label) || 'Perbaikan Sistem').split('<').join('\\u003c') %>, msg: <%- JSON.stringify((portal.notice && portal.notice.text) || 'Sedang ada perbaikan sistem.').split('<').join('\\u003c') %><% if (portal.notice && portal.notice.estimateText) { %> + ' <strong><%= t('pwa.estimate_prefix','Estimasi:') %> <%= portal.notice.estimateText %></strong>'<% } %> },
-    outage: { label: 'Gangguan', icon: 'ph-fill ph-x-circle', title: <%- JSON.stringify((portal.notice && portal.notice.label) || 'Gangguan Masal').split('<').join('\\u003c') %>, msg: <%- JSON.stringify((portal.notice && portal.notice.text) || 'Sedang terjadi gangguan jaringan.').split('<').join('\\u003c') %><% if (portal.notice && portal.notice.estimateText) { %> + ' <strong><%= t('pwa.estimate_prefix','Estimasi:') %> <%= portal.notice.estimateText %></strong>'<% } %> }
+    maintenance: { label: 'Perbaikan', icon: 'ph-fill ph-warning-circle', title: <%- JSON.stringify((portal.notice && portal.notice.label) || 'Mantenimiento del sistema').split('<').join('\\u003c') %>, msg: <%- JSON.stringify((portal.notice && portal.notice.text) || 'Estamos realizando un mantenimiento del sistema.').split('<').join('\\u003c') %><% if (portal.notice && portal.notice.estimateText) { %> + ' <strong><%= t('pwa.estimate_prefix','Estimasi:') %> <%= portal.notice.estimateText %></strong>'<% } %> },
+    outage: { label: 'Gangguan', icon: 'ph-fill ph-x-circle', title: <%- JSON.stringify((portal.notice && portal.notice.label) || 'Caída general').split('<').join('\\u003c') %>, msg: <%- JSON.stringify((portal.notice && portal.notice.text) || 'Hay una falla en la red.').split('<').join('\\u003c') %><% if (portal.notice && portal.notice.estimateText) { %> + ' <strong><%= t('pwa.estimate_prefix','Estimasi:') %> <%= portal.notice.estimateText %></strong>'<% } %> }
   };
   let netState = '<%= portal.netState %>';
   function setNetworkStatus(s) {
@@ -1952,7 +1952,7 @@
     }, o.duration || 1400);
   }
   function payWith(m) {
-    const t = { 'Bayar Sekarang': ['Menyiapkan pembayaran...', 'Instruksi pembayaran dikirim'], QRIS: ['Membuat kode QRIS...', 'Kode QRIS siap dipakai'], Transfer: ['Mengambil detail rekening...', 'Detail transfer siap'] }[m];
+    const t = { 'Pagar ahora': ['Preparando el pago...', 'Instrucciones de pago enviadas'], QRIS: ['Generando el código QR...', 'Código QR listo'], Transfer: ['Obteniendo los datos de la cuenta...', 'Datos para transferir listos'] }[m];
     runAction({ loading: t[0], success: t[1], icon: 'ph-fill ph-credit-card', duration: 1600 });
   }
   function refreshDevices() { runAction({ loading: '<%= t('pwa.js.loading_devices','Memuat perangkat...') %>', success: '<%= t('pwa.js.devices_updated','Daftar perangkat diperbarui') %>', duration: 1200 }); }
@@ -2047,8 +2047,8 @@
   function saveWifiSetting() {
     const ssid = document.getElementById('ssid-input').value.trim();
     const pwd = document.getElementById('pwd-input').value;
-    if (!ssid) { showToast('<%= t('pwa.js.ssid_empty','SSID tidak boleh kosong') %>', true); return; }
-    if (pwd.length < 8) { showToast('Password minimal 8 karakter', true); return; }
+    if (!ssid) { showToast('<%= t('pwa.js.ssid_empty','El SSID no puede quedar vacío') %>', true); return; }
+    if (pwd.length < 8) { showToast('La contraseña debe tener al menos 8 caracteres', true); return; }
     runAction({ loading: '<%= t('pwa.js.saving_wifi','Menyimpan pengaturan WiFi...') %>', success: '<%= t('pwa.js.wifi_saved','Pengaturan WiFi tersimpan') %>', icon: 'ph-bold ph-wifi-high', duration: 1600, onDone: () => { wifi.ssid = ssid; wifi.pwd = pwd; renderWifi(); closeSettingModal(); } });
   }
   document.addEventListener('keydown', e => {
@@ -2149,7 +2149,7 @@
         localStorage.setItem('sf-speed-history', JSON.stringify(h.slice(0, 5)));
       } catch (e) {}
       renderSpeedHistory();
-      window.showToast('Tes selesai — ↓' + downMbps.toFixed(1) + ' Mbps · ↑' + upMbps.toFixed(1) + ' Mbps · ' + pingMs + ' ms');
+      window.showToast('Test terminado — ↓' + downMbps.toFixed(1) + ' Mbps · ↑' + upMbps.toFixed(1) + ' Mbps · ' + pingMs + ' ms');
     } catch (e) {
       statusEl.textContent = '<%= t('pwa.js.speed_done_fail','Tes gagal') %>';
       window.showToast('<%= t('pwa.js.speed_failed','Tes kecepatan gagal:') %>' + (e && e.message ? e.message : 'error'), true);
@@ -2197,7 +2197,7 @@
           btn.disabled = false;
           btn.innerHTML = '<i class="ph-fill ph-arrow-clockwise text-lg"></i> Tes Ulang';
           stTesting = false;
-          showToast('Tes kecepatan selesai');
+          showToast('Test de velocidad terminado');
         }
       };
       requestAnimationFrame(step);
@@ -2370,7 +2370,7 @@ window.__PORTAL__ = <%- portalJson %>;
   // Override aksi -> endpoint nyata
   window.payWith = function(m){
     if (P.bill && P.bill.id) { window.location.href = '/customer/payment/create/' + P.bill.id + '?method=' + encodeURIComponent(m || 'BayarSekarang'); }
-    else showToast('Tidak ada tagihan aktif', true);
+    else showToast('No hay facturas pendientes', true);
   };
   /* ═══ Speed Test: muat ulang & bersihkan cache ═══ */
   window.reloadSpeedtest = function () {
@@ -2438,8 +2438,8 @@ window.__PORTAL__ = <%- portalJson %>;
     if ((window.__PORTAL__ || {}).onuDetected === false) { showToast('<%= t('pwa.js.onu_missing_wifi','ONU tidak terdeteksi — ubah sandi tidak dapat dilakukan.') %>', true); setTimeout(window.openOnuModal, 900); return; }
     var ssid = document.getElementById('ssid-input').value.trim();
     var pwd  = document.getElementById('pwd-input').value;
-    if (!ssid) { showToast('<%= t('pwa.js.ssid_empty','SSID tidak boleh kosong') %>', true); return; }
-    if (pwd && pwd.length < 8) { showToast('Password minimal 8 karakter', true); return; }
+    if (!ssid) { showToast('<%= t('pwa.js.ssid_empty','El SSID no puede quedar vacío') %>', true); return; }
+    if (pwd && pwd.length < 8) { showToast('La contraseña debe tener al menos 8 caracteres', true); return; }
     var chain = Promise.resolve();
     if (pwd) chain = chain.then(function(){ return doPost('/customer/change-password', {password:pwd}); });
     chain = chain.then(function(){ return doPost('/customer/change-ssid', {ssid:ssid}); });
@@ -2688,7 +2688,7 @@ window.__PORTAL__ = <%- portalJson %>;
     showToast('<%= t('pwa.js.sending_wa','Mengirim tagihan ke WhatsApp...') %>');
     fetch('/customer/invoice/' + id + '/send-pdf-wa', { method:'POST', headers:{ 'Content-Type':'application/json','X-Requested-With':'fetch','Accept':'application/json' }, credentials:'same-origin' })
       .then(function(r){ return r.json().catch(function(){ return { success:r.ok }; }); })
-      .then(function(res){ var ok = !(res && res.success === false); showToast((res && res.message) || (ok ? '<%= t('pwa.js.sent_wa','Tagihan terkirim ke WhatsApp') %>' : '<%= t('pwa.js.send_failed','Gagal mengirim') %>'), !ok); })
+      .then(function(res){ var ok = !(res && res.success === false); showToast((res && res.message) || (ok ? '<%= t('pwa.js.sent_wa','Tagihan terkirim ke WhatsApp') %>' : '<%= t('pwa.js.send_failed','No se pudo enviar') %>'), !ok); })
       .catch(function(){ showToast('<%= t('pwa.js.send_failed_wa','Gagal mengirim ke WhatsApp') %>', true); });
   };
 })();
@@ -2708,7 +2708,7 @@ window.__PORTAL__ = <%- portalJson %>;
       var bar = document.createElement('div');
       bar.id = 'pwa-update-bar';
       bar.style.cssText = 'position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:300;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:var(--surface-2);border:1px solid var(--lime-border);box-shadow:0 12px 32px -12px rgba(0,0,0,.7);font-size:12px;color:var(--text);white-space:nowrap';
-      bar.innerHTML = '<i class="bi bi-arrow-repeat" style="color:var(--lime)"></i> <span><%= t('pwa.update.available','Versi baru tersedia') %></span> <button type="button" class="press" style="padding:6px 10px;border-radius:9px;background:var(--lime);color:#0A0D14;font-weight:700;border:0"><%= t('common.reload','Muat Ulang') %></button>';
+      bar.innerHTML = '<i class="bi bi-arrow-repeat" style="color:var(--lime)"></i> <span><%= t('pwa.update.available','Versi baru tersedia') %></span> <button type="button" class="press" style="padding:6px 10px;border-radius:9px;background:var(--lime);color:#0A0D14;font-weight:700;border:0"><%= t('common.reload','Recargar') %></button>';
       bar.querySelector('button').onclick = function () { try { sessionStorage.removeItem('pwa_seen_ver'); } catch (e) {} location.reload(); };
       document.body.appendChild(bar);
     }

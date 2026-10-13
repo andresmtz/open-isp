@@ -607,7 +607,7 @@
         </div>
         <div class="card-bd err-log-box mh300">
           <% if (recentErrors.length === 0) { %>
-            <p class="text-muted text-center py-5">Tidak ada log error terbaru</p>
+            <p class="text-muted text-center py-5">No hay errores recientes</p>
           <% } else { %>
             <% recentErrors.forEach(err => { %>
               <div style="font-family: monospace; font-size: 11px; color: var(--danger); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 4px 0; white-space: pre-wrap;">
@@ -802,7 +802,7 @@
   async function testGenieACSConnection() {
     const messageDiv = document.getElementById('genieacsMessage');
     messageDiv.className = 'alert alert-info';
-    messageDiv.innerHTML = '<i class="bi bi-hourglass-split"></i> Testing koneksi ke GenieACS...';
+    messageDiv.innerHTML = '<i class="bi bi-hourglass-split"></i> Probando la conexión con GenieACS...';
     messageDiv.style.display = 'block';
 
     try {
@@ -880,7 +880,7 @@
   async function testGenieACSConnectionModal() {
     const messageDiv = document.getElementById('genieacsMessageModal');
     messageDiv.className = 'alert alert-info';
-    messageDiv.innerHTML = '<i class="bi bi-hourglass-split"></i> Testing koneksi ke GenieACS...';
+    messageDiv.innerHTML = '<i class="bi bi-hourglass-split"></i> Probando la conexión con GenieACS...';
     messageDiv.style.display = 'block';
 
     try {

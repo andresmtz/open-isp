@@ -325,7 +325,7 @@
                 <% if (att.check_in_lat && att.check_in_lng) { %>
                   <a href="https://www.google.com/maps?q=<%= att.check_in_lat %>,<%= att.check_in_lng %>" 
                      target="_blank" class="location-link">
-                    <i class="bi bi-geo-alt-fill"></i> Lihat Map
+                    <i class="bi bi-geo-alt-fill"></i> Ver mapa
                   </a>
                 <% } else { %>
                   <span class="text-muted">-</span>
@@ -392,10 +392,10 @@
   function exportData() {
     const date = document.getElementById('filterDate').value;
     const today = new Date().toISOString().split('T')[0];
-    const startDate = prompt('Tanggal Mulai (YYYY-MM-DD):', date || today);
+    const startDate = prompt('Fecha de inicio (AAAA-MM-DD):', date || today);
     if (!startDate) return;
     
-    const endDate = prompt('Tanggal Akhir (YYYY-MM-DD):', date || today);
+    const endDate = prompt('Fecha de fin (AAAA-MM-DD):', date || today);
     if (!endDate) return;
     
     window.location.href = `/admin/attendance/export?startDate=${startDate}&endDate=${endDate}`;
@@ -405,7 +405,7 @@
     const checkIn = prompt('<%= t('admin.att.checkin_time','Waktu Check-in') %> (YYYY-MM-DD HH:MM:SS):');
     if (!checkIn) return;
     
-    const checkOut = prompt('Waktu Check-out (YYYY-MM-DD HH:MM:SS) - kosongkan jika belum:');
+    const checkOut = prompt('Hora de salida (AAAA-MM-DD HH:MM:SS) - dejar vacío si todavía no salió:');
     const checkInNote = prompt('Catatan Check-in:') || '';
     const checkOutNote = prompt('Catatan Check-out:') || '';
     
@@ -429,7 +429,7 @@
       }
     })
     .catch(err => {
-      alert('Gagal update: ' + err.message);
+      alert('No se pudo actualizar: ' + err.message);
     });
   }
 

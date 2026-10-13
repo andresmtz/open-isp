@@ -35,7 +35,7 @@
             <%= t('admin.update.container_msg', 'Pembaruan TIDAK lewat git. Bangun ulang image dari repo terbaru lalu ganti container:') %>
             <div style="margin-top:8px;font-family:monospace;font-size:12px;background:rgba(0,0,0,.25);padding:8px 10px;border-radius:8px">
               docker compose build &amp;&amp; docker compose up -d<br>
-              # atau: build image baru, lalu ganti tag/container
+              # o: construir una imagen nueva y cambiar la etiqueta/contenedor
             </div>
             <%= t('admin.update.container_safe', 'Data (settings.json, database, uploads) tetap aman bila disimpan di volume/mount.') %>
           </div>

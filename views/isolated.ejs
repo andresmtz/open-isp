@@ -34,7 +34,7 @@
       <div class="iso-info">
         <div class="row"><span class="label"><%= t('iso.cust_name','Nama Pelanggan') %></span><span class="val"><%= customer.name %></span></div>
         <div class="row"><span class="label"><%= t('iso.phone','No. Telepon') %></span><span class="val"><%= customer.phone %></span></div>
-        <% if (customer.package_name) { %><div class="row"><span class="label"><%= t('iso.pkg_net','Paket Internet') %></span><span class="val"><%= customer.package_name %></span></div><% } %>
+        <% if (customer.package_name) { %><div class="row"><span class="label"><%= t('iso.pkg_net','Plan de internet') %></span><span class="val"><%= customer.package_name %></span></div><% } %>
       </div>
 
       <form action="/customer/reconnect" method="POST">
@@ -52,7 +52,7 @@
 
       <div class="iso-info">
         <div class="row"><span class="label"><%= t('iso.cust_name','Nama Pelanggan') %></span><span class="val"><%= customer.name %></span></div>
-        <div class="row"><span class="label">ID Pelanggan</span><span class="val mono"><%= customer.customer_code || ('SKY-' + customer.id) %></span></div>
+        <div class="row"><span class="label">ID de cliente</span><span class="val mono"><%= customer.customer_code || ('SKY-' + customer.id) %></span></div>
         <div class="row"><span class="label">Status</span><span class="val" style="color:var(--danger);font-weight:700"><%= t('iso.isolated_status','Terisolir') %></span></div>
         <% if (customer.package_name) { %><div class="row"><span class="label"><%= t('iso.pkg_sub','Paket Langganan') %></span><span class="val"><%= customer.package_name %></span></div><% } %>
       </div>
@@ -92,7 +92,7 @@
           <div class="wrap"><i class="bi bi-search lead-ic"></i>
             <input class="inp" id="q" name="q" value="<%= searchQuery || '' %>" placeholder="No. WA / ID / Username…" required autofocus></div>
         </div>
-        <button type="submit" class="iso-btn primary"><i class="bi bi-search"></i> Cek Tagihan</button>
+        <button type="submit" class="iso-btn primary"><i class="bi bi-search"></i> Consultar deuda</button>
       </form>
       <% if (searchQuery && !customer) { %>
         <div class="iso-error"><i class="bi bi-x-circle"></i> <%= t('iso.data_for','Data untuk') %> "<strong><%= searchQuery %></strong>" <%= t('iso.not_found','tidak ditemukan. Pastikan nomor WhatsApp atau ID sudah benar.') %></div>
@@ -127,7 +127,7 @@
 
     <!-- Content -->
     <div id="qrisContentState" style="display:none">
-      <div class="gt"><i class="bi bi-qr-code-scan"></i> <span id="qrisGatewayTitle"><%= t('iso.qris_payment','PEMBAYARAN QRIS') %></span></div>
+      <div class="gt"><i class="bi bi-qr-code-scan"></i> <span id="qrisGatewayTitle"><%= t('iso.qris_payment','PAGO CON QR') %></span></div>
       <div class="per" id="qrisInvoicePeriod"><%= t('iso.net_bill','Tagihan Internet') %></div>
 
       <div class="iso-qr"><img id="qrisImage" src="" alt="QRIS Code"></div>
@@ -142,7 +142,7 @@
 
       <div class="iso-actions">
         <button type="button" class="iso-btn ghost" onclick="downloadQrImage()"><i class="bi bi-download"></i> Simpan</button>
-        <button type="button" class="iso-btn ghost" onclick="copyAmount()"><i class="bi bi-clipboard-check"></i> <%= t('iso.copy_amount','Salin Nominal') %></button>
+        <button type="button" class="iso-btn ghost" onclick="copyAmount()"><i class="bi bi-clipboard-check"></i> <%= t('iso.copy_amount','Copiar monto') %></button>
       </div>
       <button type="button" class="iso-btn ghost iso-space" onclick="closeQuickQris()"><i class="bi bi-x-lg"></i> Tutup</button>
 
@@ -151,7 +151,7 @@
       </div>
 
       <div id="qrisHelpText" class="iso-help">
-        Buka aplikasi m-Banking / E-Wallet (BCA, BRI, Mandiri, DANA, GoPay, OVO, ShopeePay), pilih Scan QRIS, lalu arahkan ke barcode di atas atau unggah dari galeri.
+        Abra la app de su banco o billetera, elija la opción para escanear QR y apunte al código de arriba o súbalo desde la galería.
       </div>
     </div>
 
@@ -183,12 +183,12 @@
     })
     .then(function(res){ return res.json(); })
     .then(function(data){
-      if (!data.success) { alert(data.message || 'Gagal menyiapkan pembayaran QRIS.'); closeQuickQris(); return; }
+      if (!data.success) { alert(data.message || 'No se pudo preparar el pago por QR.'); closeQuickQris(); return; }
       if (data.paid) { showSuccessState(); return; }
 
       loadingState.style.display = 'none'; contentState.style.display = 'block';
-      document.getElementById('qrisGatewayTitle').innerText = data.gatewayName || 'PEMBAYARAN QRIS';
-      document.getElementById('qrisInvoicePeriod').innerText = 'Invoice #' + data.invoiceId + ' • Periode: ' + (data.periodText || '');
+      document.getElementById('qrisGatewayTitle').innerText = data.gatewayName || 'PAGO CON QR';
+      document.getElementById('qrisInvoicePeriod').innerText = 'Invoice #' + data.invoiceId + ' • Período: ' + (data.periodText || '');
       document.getElementById('qrisImage').src = data.qrDataUrl || '';
       currentAmountNumber = data.amount;
       document.getElementById('qrisAmountDisplay').innerText = APP_CUR + ' ' + Number(data.amount).toLocaleString(APP_LOCALE);
@@ -198,7 +198,7 @@
         var base = Number(data.nominalAsli || (Number(data.amount) - Number(data.uniqueCode)));
         uniqueBadge.style.display = 'block';
         uniqueBadge.innerHTML = 'Tagihan: ' + APP_CUR + ' ' + base.toLocaleString(APP_LOCALE)
-          + ' + Kode Unik: ' + APP_CUR + ' ' + Number(data.uniqueCode).toLocaleString(APP_LOCALE)
+          + ' + Código único: ' + APP_CUR + ' ' + Number(data.uniqueCode).toLocaleString(APP_LOCALE)
           + ' = <b>' + APP_CUR + ' ' + Number(data.amount).toLocaleString(APP_LOCALE) + '</b>';
       } else { uniqueBadge.style.display = 'none'; }
 
@@ -211,7 +211,7 @@
 
       startPollingPayment(invoiceId, token);
     })
-    .catch(function(err){ alert('Terjadi kesalahan saat memuat QRIS: ' + err.message); closeQuickQris(); });
+    .catch(function(err){ alert('Ocurrió un error al cargar el QR: ' + err.message); closeQuickQris(); });
   }
 
   function closeQuickQris() {
@@ -250,7 +250,7 @@
   function copyAmount() {
     if (!currentAmountNumber) return;
     navigator.clipboard.writeText(String(currentAmountNumber))
-      .then(function(){ alert('Nominal ' + APP_CUR + ' ' + Number(currentAmountNumber).toLocaleString(APP_LOCALE) + ' berhasil disalin!'); })
+      .then(function(){ alert('Nominal ' + APP_CUR + ' ' + Number(currentAmountNumber).toLocaleString(APP_LOCALE) + ' ¡copiado!'); })
       .catch(function(){ alert('Nominal: ' + APP_CUR + ' ' + currentAmountNumber); });
   }
 </script>

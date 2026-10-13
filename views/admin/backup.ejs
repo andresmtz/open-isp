@@ -142,10 +142,10 @@
             <table class="dtbl">
               <thead>
                 <tr>
-                  <th>Nama File</th>
+                  <th>Nombre del archivo</th>
                   <th><%= t('common.type','Tipe') %></th>
                   <th class="num">Ukuran</th>
-                  <th>Tanggal Dibuat</th>
+                  <th>Fecha de creación</th>
                   <th class="text-right"><%= t('common.actions','Aksi') %></th>
                 </tr>
               </thead>
@@ -184,7 +184,7 @@
                         <a class="act-item primary" href="/admin/backup/download/<%= encodeURIComponent(backup.fileName) %>" download><i class="bi bi-download"></i> Download</a>
                         <button type="button" class="act-item success" onclick="restoreBackup('<%= backup.fileName %>', '<%= backup.type %>')"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
                         <div class="act-sep"></div>
-                        <button type="button" class="act-item danger" onclick="deleteBackup('<%= backup.fileName %>')"><i class="bi bi-trash"></i> Hapus Backup</button>
+                        <button type="button" class="act-item danger" onclick="deleteBackup('<%= backup.fileName %>')"><i class="bi bi-trash"></i> Eliminar respaldo</button>
                       </div>
                     </div>
                   </td>
@@ -201,7 +201,7 @@
 
 <script>
   function restoreBackup(fileName, type) {
-    if (!confirm('Apakah Anda yakin ingin merestore backup ini? Data saat ini akan ditimpa.')) {
+    if (!confirm('¿Seguro que querés restaurar este respaldo? Los datos actuales se van a sobrescribir.')) {
       return;
     }
 
@@ -217,7 +217,7 @@
   }
 
   function deleteBackup(fileName) {
-    if (!confirm('Apakah Anda yakin ingin menghapus backup ini?')) {
+    if (!confirm('¿Seguro que querés eliminar este respaldo?')) {
       return;
     }
 

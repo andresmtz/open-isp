@@ -56,7 +56,7 @@
         <div class="card-bd">
           <div class="alert alert-i" style="margin-bottom: 14px; background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3);">
             <div style="font-weight: 800; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; color: var(--primary);">
-              <i class="bi bi-shield-check" style="font-size: 16px;"></i> Anti-Banned Aktif (Spintax + Jeda Mengetik)
+              <i class="bi bi-shield-check" style="font-size: 16px;"></i> Anti-bloqueo activo (spintax + pausa de escritura)
             </div>
             <div style="font-size: 12px; line-height: 1.5; color: var(--text);">
               • <strong><%= t('admin.bc.spintax','Variasi Kata Spintax:') %></strong> <%- t('admin.bc.spintax_desc','Gunakan <code>{Halo|Selamat Pagi|Yth.}</code> agar isi pesan otomatis diacak & tidak dianggap spam.') %><br>
@@ -138,14 +138,14 @@
             <div class="fg" id="bsStatic"><label class="fl"><%= t('admin.bc.delay_sec','Jeda (detik)') %></label>
               <input class="fc" type="number" name="interval_value" value="15" min="3" max="600">
             </div>
-            <div class="fg" id="bsRandom" style="display:none"><label class="fl">Jeda acak (min–max detik)</label>
+            <div class="fg" id="bsRandom" style="display:none"><label class="fl">Pausa aleatoria (mín–máx segundos)</label>
               <div style="display:flex;gap:6px">
                 <input class="fc" type="number" name="interval_min" value="15" min="3" max="600">
                 <input class="fc" type="number" name="interval_max" value="40" min="3" max="900">
               </div>
             </div>
           </div>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px"><i class="bi bi-info-circle"></i><%= t('admin.bc.send_to',' Kirim ke pelanggan ') %><b><%= t('admin.bc.unpaid','belum bayar') %></b><%= t('admin.bc.on_date',' pada tanggal isolir terpilih. Gunakan ') %><b>Random</b> agar tidak dianggap spam/di-ban.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px"><i class="bi bi-info-circle"></i><%= t('admin.bc.send_to',' Kirim ke pelanggan ') %><b><%= t('admin.bc.unpaid','belum bayar') %></b><%= t('admin.bc.on_date',' pada tanggal isolir terpilih. Gunakan ') %><b>Random</b> para que no se considere spam ni se bloquee el número.</div>
         </div>
         <div class="card-bd" style="border-top:1px solid var(--border);background:var(--bg2);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
           <div id="bsResult" style="font-size:12px" class="text-muted"></div>
@@ -243,7 +243,7 @@ async function checkBroadcastStatus() {
         broadcastCounter.style.display = 'none';
       }
     }
-  } catch (e) { console.error('Status check failed', e); }
+  } catch (e) { console.error('No se pudo verificar el estado', e); }
 }
 
 // Jalankan pengingat tagihan otomatis sekarang (manual)
@@ -255,9 +255,9 @@ async function runReminderNow(btn) {
   try {
     const r = await fetch('/admin/whatsapp/run-reminder-now', { method: 'POST' });
     const j = await r.json().catch(function () { return {}; });
-    if (out) { out.textContent = j.ok ? (j.message || 'Berhasil.') : ('Gagal — ' + (j.message || 'Terjadi kesalahan.')); out.style.color = j.ok ? 'var(--success)' : 'var(--danger)'; }
+    if (out) { out.textContent = j.ok ? (j.message || 'Berhasil.') : ('Falló — ' + (j.message || 'Terjadi kesalahan.')); out.style.color = j.ok ? 'var(--success)' : 'var(--danger)'; }
   } catch (e) {
-    if (out) { out.textContent = 'Gagal — ' + e.message; out.style.color = 'var(--danger)'; }
+    if (out) { out.textContent = 'Falló — ' + e.message; out.style.color = 'var(--danger)'; }
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = old; }
   }
@@ -269,7 +269,7 @@ checkBroadcastStatus();
 
 function bsToggle(){ var m=(document.getElementById('bsMode')||{}).value; document.getElementById('bsStatic').style.display = m==='static'?'':'none'; document.getElementById('bsRandom').style.display = m==='random'?'':'none'; }
 async function bsStop(){ try{ await fetch('/admin/api/whatsapp/billing-send-stop',{method:'POST'}); }catch(e){} }
-async function bsPoll(){ try{ const r=await fetch('/admin/api/whatsapp/billing-send-status'); const s=await r.json(); const box=document.getElementById('bsProgress'); if(!s||(!s.running&&!s.total)) return; box.style.display='block'; const pct = s.total? Math.round(((s.sent+s.failed)/s.total)*100):0; document.getElementById('bsBar').style.width=pct+'%'; document.getElementById('bsProgressText').textContent=(s.running?'Mengirim…':'Selesai')+' '+s.sent+'/'+s.total+' terkirim, '+s.failed+' gagal'+(s.last?(' • terakhir: '+s.last):'')+(s.label?(' • '+s.label):''); }catch(e){} }
+async function bsPoll(){ try{ const r=await fetch('/admin/api/whatsapp/billing-send-status'); const s=await r.json(); const box=document.getElementById('bsProgress'); if(!s||(!s.running&&!s.total)) return; box.style.display='block'; const pct = s.total? Math.round(((s.sent+s.failed)/s.total)*100):0; document.getElementById('bsBar').style.width=pct+'%'; document.getElementById('bsProgressText').textContent=(s.running?'Mengirim…':'Selesai')+' '+s.sent+'/'+s.total+' enviados, '+s.failed+' gagal'+(s.last?(' • terakhir: '+s.last):'')+(s.label?(' • '+s.label):''); }catch(e){} }
 setInterval(bsPoll, 3000); bsPoll();
 
 </script>

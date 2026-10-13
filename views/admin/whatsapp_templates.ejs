@@ -110,10 +110,10 @@
         </div>
         <div class="card-bd" style="border-top: 1px solid var(--border); background: var(--bg2); display: flex; flex-wrap:wrap; gap:10px; justify-content: space-between; align-items: center;">
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button type="button" class="btn btn-primary btn-sm" onclick="fillOfficialReceiptPreset()"><i class="bi bi-receipt-cutoff"></i> Muat Template Struk Resmi Lengkap</button>
-            <button type="button" class="btn btn-g btn-sm" onclick="fillSpintaxPreset()"><i class="bi bi-magic"></i> Muat Template Ringkas (Spintax Anti-Ban)</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="fillOfficialReceiptPreset()"><i class="bi bi-receipt-cutoff"></i> Cargar plantilla completa de comprobante</button>
+            <button type="button" class="btn btn-g btn-sm" onclick="fillSpintaxPreset()"><i class="bi bi-magic"></i> Cargar plantilla breve (spintax anti-bloqueo)</button>
             <button type="button" class="btn btn-w btn-sm" onclick="showMetaConverter()"><i class="bi bi-meta"></i> <i class="bi bi-magic"></i> <%= t('admin.wt.convert','Konversi Format Meta Cloud API') %></button>
-            <div style="flex-basis:100%; font-size:11.5px; color:var(--muted); margin-top:4px"><i class="bi bi-exclamation-circle" style="color:var(--primary)"></i> Setiap template <b><%= t('admin.wt.warn_custid','wajib menyertakan variabel ID Pelanggan') %></b> <b style="color:var(--primary)">{{id_pelanggan}}</b>.</div>
+            <div style="flex-basis:100%; font-size:11.5px; color:var(--muted); margin-top:4px"><i class="bi bi-exclamation-circle" style="color:var(--primary)"></i> Cada plantilla <b><%= t('admin.wt.warn_custid','wajib menyertakan variabel ID Pelanggan') %></b> <b style="color:var(--primary)">{{id_pelanggan}}</b>.</div>
             <div id="presetStatus" style="flex-basis:100%; font-size:12px; display:none"></div>
           </div>
           <button type="submit" class="btn btn-p"><i class="bi bi-save"></i> <%= t('admin.wt.save','Simpan Template') %></button>
@@ -140,7 +140,7 @@
           </div>
 
           <div class="fg mb12">
-            <label class="fl">Hasil Format Teks Template untuk Meta Business Manager (Placeholder {{1}}, {{2}}...):</label>
+            <label class="fl">Texto de la plantilla para Meta Business Manager (marcadores {{1}}, {{2}}...):</label>
             <textarea class="fc" id="metaFormattedResult" rows="6" readonly style="background:var(--bg3); font-family:monospace;"></textarea>
           </div>
 
@@ -179,21 +179,21 @@ function openModal(id){ var el = document.getElementById(id); if (el) el.classLi
 function closeModal(id){ var el = document.getElementById(id); if (el) el.classList.remove('show'); }
 
 /* ===== VERSI LENGKAP (Profesional) ===== */
-var TMPL_AB_LENGKAP = '👋 Yth. *{{nama}}*,\n\n📢 Berikut kami sampaikan rincian tagihan internet Anda.\n\n📋 *RINCIAN TAGIHAN*\n• 🆔 ID Pelanggan  : *{{id_pelanggan}}*\n• 📦 Paket         : {{paket}}\n• 💰 Total Tagihan : *{{moneda}} {{tagihan}}*\n• 🗓️ Periode       : {{rincian}}\n\n💳 Mohon melakukan pembayaran sebelum tanggal jatuh tempo melalui portal pelanggan:\n🔗 {{link}}\n\n🙏 Terima kasih atas kepercayaan Anda.\n🏢 {{company}}';
-var TMPL_QR_LENGKAP = '👋 Yth. *{{nama}}*,\n\n📢 Berikut tagihan internet Anda beserta kode pembayaran QRIS.\n\n📋 *RINCIAN TAGIHAN*\n• 🆔 ID Pelanggan  : *{{id_pelanggan}}*\n• 📦 Paket         : {{paket}}\n• 💰 Total Tagihan : *{{moneda}} {{tagihan}}*\n• 🗓️ Periode       : {{rincian}}\n\n📱 Silakan scan QRIS terlampir untuk melakukan pembayaran:\n🔗 {{link}}\n\n🙏 Terima kasih.\n🏢 {{company}}';
-var TMPL_PS_LENGKAP = '🧾 *BUKTI PEMBAYARAN RESMI — LUNAS* ✅\n🏢 *{{company}}*\n────────────────────────────\n👋 Yth. *{{nama}}*,\n\n✅ Pembayaran tagihan internet Anda telah kami terima & verifikasi.\n\n📋 *RINCIAN PEMBAYARAN*\n• 🆔 ID Pelanggan   : *{{id_pelanggan}}*\n• 🧾 No. Invoice    : #INV-{{no_invoice}}\n• 📦 Paket Layanan  : {{paket}}\n• 🗓️ Periode        : {{periode}}\n• 🕒 Waktu Bayar    : {{waktu}}\n• 💳 Metode Bayar   : {{metode}}\n• 💰 Total Bayar    : *{{moneda}} {{total}}*\n• 📌 Status         : *LUNAS* ✅\n\n🌐 Status layanan: *AKTIF* dan dapat digunakan dengan nyaman.\n\n────────────────────────────\n📄 Unduh Invoice (PDF): {{link_pdf}}\n\n────────────────────────────\n🔗 Cek Tagihan / Riwayat:\n{{link_portal}}\n\n📞 Bantuan: WhatsApp {{company_phone}}\n_Simpan pesan ini sebagai bukti pembayaran yang sah dari {{company}}._';
-var TMPL_IS_LENGKAP = '⚠️ Yth. *{{nama}}*,\n\n🚫 Layanan internet Anda (📦 Paket {{paket}}) saat ini *DITANGGUHKAN* karena tagihan belum dilunasi.\n\n📋 *RINCIAN TAGIHAN*\n• 🆔 ID Pelanggan  : *{{id_pelanggan}}*\n• 💰 Total Tagihan : *{{moneda}} {{tagihan}}*\n\n💳 Mohon segera melakukan pembayaran melalui portal pelanggan:\n🔗 {{link}}\n\n✅ Setelah pembayaran diterima, layanan akan aktif kembali otomatis.\n\n🙏 Terima kasih.\n🏢 {{company}}';
+var TMPL_AB_LENGKAP = '👋 Estimado/a *{{nama}}*,\n\n📢 Le enviamos el detalle de su factura de internet.\n\n📋 *DETALLE DE LA FACTURA*\n• 🆔 ID de cliente : *{{id_pelanggan}}*\n• 📦 Plan          : {{paket}}\n• 💰 Monto         : *{{moneda}} {{tagihan}}*\n• 🗓️ Período       : {{rincian}}\n\n💳 Por favor, realice el pago antes de la fecha de vencimiento. Detalle:\n🔗 {{link}}\n\n🙏 Gracias por su confianza.\n🏢 {{company}}';
+var TMPL_QR_LENGKAP = '👋 Estimado/a *{{nama}}*,\n\n📢 Le enviamos su factura de internet con el código de pago QR.\n\n📋 *DETALLE DE LA FACTURA*\n• 🆔 ID de cliente : *{{id_pelanggan}}*\n• 📦 Plan          : {{paket}}\n• 💰 Monto         : *{{moneda}} {{tagihan}}*\n• 🗓️ Período       : {{rincian}}\n\n📱 Escanee el QR adjunto para pagar:\n🔗 {{link}}\n\n🙏 Gracias.\n🏢 {{company}}';
+var TMPL_PS_LENGKAP = '🧾 *COMPROBANTE DE PAGO — PAGADO* ✅\n🏢 *{{company}}*\n────────────────────────────\n👋 Estimado/a *{{nama}}*,\n\n✅ Recibimos y verificamos el pago de su factura de internet.\n\n📋 *DETALLE DEL PAGO*\n• 🆔 ID de cliente  : *{{id_pelanggan}}*\n• 🧾 Factura N.º    : {{no_invoice}}\n• 📦 Plan           : {{paket}}\n• 🗓️ Período        : {{periode}}\n• 🕒 Fecha de pago  : {{waktu}}\n• 💳 Forma de pago  : {{metode}}\n• 💰 Total pagado   : *{{moneda}} {{total}}*\n• 📌 Estado         : *PAGADO* ✅\n\n🌐 Estado del servicio: *ACTIVO*.\n\n────────────────────────────\n📄 Factura (PDF): {{link_pdf}}\n\n────────────────────────────\n🔗 Consultar facturas:\n{{link_portal}}\n\n📞 Ayuda: WhatsApp {{company_phone}}\n_Conserve este mensaje como comprobante de pago de {{company}}._';
+var TMPL_IS_LENGKAP = '⚠️ Estimado/a *{{nama}}*,\n\n🚫 Su servicio de internet (📦 plan {{paket}}) está *SUSPENDIDO* por falta de pago.\n\n📋 *DETALLE DE LA DEUDA*\n• 🆔 ID de cliente : *{{id_pelanggan}}*\n• 💰 Monto         : *{{moneda}} {{tagihan}}*\n\n💳 Por favor, regularice su pago. Detalle:\n🔗 {{link}}\n\n✅ Al registrarse el pago, el servicio se rehabilita automáticamente.\n\n🙏 Gracias.\n🏢 {{company}}';
 /* ===== VERSI SPINTAX ANTI-BAN ===== */
-var TMPL_AB_SPINTAX = '{Halo|Hai|Salam} *{{nama}}*,\n\n{Ini adalah|Berikut} pengingat tagihan internet Anda.\n\n📋 *RINGKASAN TAGIHAN*\n• ID Pelanggan  : *{{id_pelanggan}}*\n• Paket         : {{paket}}\n• Total Tagihan : *{{moneda}} {{tagihan}}*\n• Periode       : {{rincian}}\n\n{Mohon|Silakan} {segera|lakukan} pembayaran melalui portal pelanggan:\n{{link}}\n\n{Terima kasih atas perhatian & kerja samanya.|Terima kasih.}\n— Admin {{company}}';
-var TMPL_QR_SPINTAX = '{Halo|Hai|Salam} *{{nama}}*,\n\n{Berikut|Ini adalah} tagihan internet Anda:\n\n📋 *RINGKASAN TAGIHAN*\n• ID Pelanggan  : *{{id_pelanggan}}*\n• Paket         : {{paket}}\n• Total Tagihan : *{{moneda}} {{tagihan}}*\n• Periode       : {{rincian}}\n\n{Silakan scan|Mohon scan} QRIS terlampir (atau buka link): {{link}}\n\nTerima kasih.\n— {{company}}';
-var TMPL_PS_SPINTAX = '{Halo|Hai|Salam} *{{nama}}*,\n\n{Terima kasih|Terima kasih banyak}, pembayaran tagihan internet Anda telah kami terima.\n\n📋 *RINCIAN PEMBAYARAN*\n• ID Pelanggan   : *{{id_pelanggan}}*\n• No. Invoice    : #INV-{{no_invoice}}\n• Paket Layanan  : {{paket}}\n• Periode        : {{periode}}\n• Waktu Bayar    : {{waktu}}\n• Metode Bayar   : {{metode}}\n• Total Bayar    : *{{moneda}} {{total}}*\n• Status         : *LUNAS* ✅\n\n📄 Unduh Invoice (PDF): {{link_pdf}}\n🔗 Cek Tagihan: {{link_portal}}\n— {{company}}';
-var TMPL_IS_SPINTAX = '{Halo|Hai|Salam} *{{nama}}*,\n\nLayanan internet Anda (Paket {{paket}}) {ditangguhkan|terisolir sementara} karena belum melunasi tagihan.\n\n📋 *RINGKASAN TAGIHAN*\n• ID Pelanggan  : *{{id_pelanggan}}*\n• Total Tagihan : *{{moneda}} {{tagihan}}*\n\n{Mohon segera|Silakan} lakukan pembayaran via portal pelanggan:\n{{link}}\n\nTerima kasih.\n— {{company}}';
-var TMPL_AL_LENGKAP = '✅ *Tagihan LUNAS*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nTerima kasih, tagihan layanan internet Anda telah kami tandai *LUNAS* secara otomatis.\n\n💵 Nominal: *{{moneda}} {{tagihan}}*\n📅 Periode: {{rincian}}\n\nPesan ini kami kirim sebagai validasi & pencatatan. Terima kasih 🙏\n— {{company}}';
-var TMPL_DE_LENGKAP = '⚠️ *Layanan Dinonaktifkan*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nLayanan internet Anda untuk sementara kami *nonaktifkan* karena tagihan belum diselesaikan selama *{{bulan_nunggak}} bulan berturut-turut*.\n\nApabila bulan depan masih belum dibayar, akun Anda akan *DIHAPUS OTOMATIS* dan untuk berlangganan kembali harus *mendaftar dari awal*.\n\nBayar: {{link}}\n— {{company}}';
-var TMPL_DL_LENGKAP = '🗑️ *Akun Dihapus*\n\nYth. *{{nama}}*,\n\nAkun layanan internet Anda telah *DIHAPUS OTOMATIS* karena tagihan tidak dibayar *{{bulan_nunggak}} bulan berturut-turut*.\n\nUntuk berlangganan kembali, silakan *mendaftar dari awal*. Terima kasih.\n— {{company}}';
-var TMPL_AL_SPINTAX = '{Halo|Salam} *{{nama}}*,\n\n{Terima kasih|Alhamdulillah}, tagihan internet Anda *LUNAS* otomatis.\n\n💰 Nominal: *{{moneda}} {{tagihan}}*\n📅 Periode: {{rincian}}\n\n{Terima kasih atas kerja samanya.|Terima kasih.}\n— {{company}}';
-var TMPL_DE_SPINTAX = '{Halo|Salam} *{{nama}}*,\n\nLayanan internet Anda {dinonaktifkan|kami nonaktifkan sementara} karena menunggak *{{bulan_nunggak}} bulan* berturut-turut.\n\n{Mohon segera|Silakan} lunasi, jika tidak akun akan *DIHAPUS OTOMATIS* dan harus daftar ulang:\n{{link}}\n— {{company}}';
-var TMPL_DL_SPINTAX = '{Halo|Salam} *{{nama}}*,\n\nAkun Anda *DIHAPUS OTOMATIS* karena menunggak *{{bulan_nunggak}} bulan* berturut-turut. {Silakan|Mohon} mendaftar dari awal untuk berlangganan kembali.\n— {{company}}';
+var TMPL_AB_SPINTAX = '{Hola|Buenas|Saludos} *{{nama}}*,\n\n{Le recordamos|Le enviamos el recordatorio de} su factura de internet.\n\n📋 *RESUMEN DE LA FACTURA*\n• ID de cliente : *{{id_pelanggan}}*\n• Plan          : {{paket}}\n• Monto         : *{{moneda}} {{tagihan}}*\n• Período       : {{rincian}}\n\n{Por favor|Le pedimos} {regularice|realice} su pago. Detalle:\n{{link}}\n\n{Gracias por su atención.|Gracias.}\n— {{company}}';
+var TMPL_QR_SPINTAX = '{Hola|Buenas|Saludos} *{{nama}}*,\n\n{Le enviamos|Este es el detalle de} su factura de internet:\n\n📋 *RESUMEN DE LA FACTURA*\n• ID de cliente : *{{id_pelanggan}}*\n• Plan          : {{paket}}\n• Monto         : *{{moneda}} {{tagihan}}*\n• Período       : {{rincian}}\n\n{Escanee|Por favor escanee} el QR adjunto (o abra el enlace): {{link}}\n\nGracias.\n— {{company}}';
+var TMPL_PS_SPINTAX = '{Hola|Buenas|Saludos} *{{nama}}*,\n\n{Gracias|Muchas gracias}, recibimos el pago de su factura de internet.\n\n📋 *DETALLE DEL PAGO*\n• ID de cliente  : *{{id_pelanggan}}*\n• Factura N.º    : {{no_invoice}}\n• Plan           : {{paket}}\n• Período        : {{periode}}\n• Fecha de pago  : {{waktu}}\n• Forma de pago  : {{metode}}\n• Total pagado   : *{{moneda}} {{total}}*\n• Estado         : *PAGADO* ✅\n\n📄 Factura (PDF): {{link_pdf}}\n🔗 Consultar facturas: {{link_portal}}\n— {{company}}';
+var TMPL_IS_SPINTAX = '{Hola|Buenas|Saludos} *{{nama}}*,\n\nSu servicio de internet (plan {{paket}}) {fue suspendido|está suspendido temporalmente} por falta de pago.\n\n📋 *RESUMEN DE LA DEUDA*\n• ID de cliente : *{{id_pelanggan}}*\n• Monto         : *{{moneda}} {{tagihan}}*\n\n{Por favor|Le pedimos que} regularice su pago. Detalle:\n{{link}}\n\nGracias.\n— {{company}}';
+var TMPL_AL_LENGKAP = '✅ *Factura saldada*\n\nEstimado/a *{{nama}}* (ID: {{id_pelanggan}}),\n\nSu factura del período {{rincian}} quedó registrada como *PAGADA*.\n\n💵 Monto: *{{moneda}} {{tagihan}}*\n\n¡Gracias! 🙏\n— {{company}}';
+var TMPL_DE_LENGKAP = '⚠️ *Servicio dado de baja*\n\nEstimado/a *{{nama}}* (ID: {{id_pelanggan}}),\n\nSu servicio de internet fue *dado de baja* por registrar *{{bulan_nunggak}} meses* sin pagar.\n\nSi el mes próximo la deuda sigue pendiente, su cuenta será *ELIMINADA* y para volver a contratar deberá solicitar una nueva instalación.\n\nDetalle de su deuda: {{link}}\n— {{company}}';
+var TMPL_DL_LENGKAP = 'Estimado/a *{{nama}}*,\n\nSu cuenta de internet fue *eliminada* por registrar *{{bulan_nunggak}} meses* sin pagar.\n\nSi desea volver a contratar el servicio, deberá solicitar una nueva instalación.\n— {{company}}';
+var TMPL_AL_SPINTAX = '{Hola|Saludos} *{{nama}}*,\n\n{Gracias|Muchas gracias}, su factura de internet quedó *PAGADA*.\n\n💰 Monto: *{{moneda}} {{tagihan}}*\n📅 Período: {{rincian}}\n\n{Gracias por su confianza.|Gracias.}\n— {{company}}';
+var TMPL_DE_SPINTAX = '{Hola|Saludos} *{{nama}}*,\n\nSu servicio de internet {fue dado de baja|está dado de baja temporalmente} por registrar *{{bulan_nunggak}} meses* de deuda.\n\n{Por favor|Le pedimos que} regularice su situación; de lo contrario la cuenta será *ELIMINADA* y deberá solicitar una nueva instalación:\n{{link}}\n— {{company}}';
+var TMPL_DL_SPINTAX = '{Hola|Saludos} *{{nama}}*,\n\nSu cuenta fue *ELIMINADA* por registrar *{{bulan_nunggak}} meses* de deuda. {Si desea|Para} volver a contratar el servicio, solicite una nueva instalación.\n— {{company}}';
 
 
 function applyPreset(set, msg) {
@@ -204,13 +204,13 @@ function applyPreset(set, msg) {
   });
   highlightField(document.querySelector('[name="whatsapp_auto_billing_message"]'));
   var names = set.map(function (p) { return p[2]; }).join(' / ');
-  setPresetStatus('Dimuat ' + ok + ' template (' + names + '). Klik "<%= t('admin.wt.save','Simpan Template') %>" untuk menyimpan.\n' + (msg || ''));
+  setPresetStatus('Dimuat ' + ok + ' plantilla (' + names + '). Klik "<%= t('admin.wt.save','Simpan Template') %>" untuk menyimpan.\n' + (msg || ''));
 }
 function fillOfficialReceiptPreset() {
   applyPreset([
     ['whatsapp_auto_billing_message', TMPL_AB_LENGKAP, 'Pengingat'],
     ['whatsapp_billing_qris_message', TMPL_QR_LENGKAP, 'QRIS'],
-    ['whatsapp_payment_success_message', TMPL_PS_LENGKAP, 'Pembayaran Sukses'],
+    ['whatsapp_payment_success_message', TMPL_PS_LENGKAP, 'Comprobante de pago'],
     ['whatsapp_isolir_message', TMPL_IS_LENGKAP, 'Isolir'],
     ['whatsapp_autolunas_message', TMPL_AL_LENGKAP, 'Auto-Lunas'],
     ['whatsapp_deactivated_message', TMPL_DE_LENGKAP, 'Auto-Nonaktif'],
@@ -221,7 +221,7 @@ function fillSpintaxPreset() {
   applyPreset([
     ['whatsapp_auto_billing_message', TMPL_AB_SPINTAX, 'Pengingat'],
     ['whatsapp_billing_qris_message', TMPL_QR_SPINTAX, 'QRIS'],
-    ['whatsapp_payment_success_message', TMPL_PS_SPINTAX, 'Pembayaran Sukses'],
+    ['whatsapp_payment_success_message', TMPL_PS_SPINTAX, 'Comprobante de pago'],
     ['whatsapp_isolir_message', TMPL_IS_SPINTAX, 'Isolir'],
     ['whatsapp_autolunas_message', TMPL_AL_SPINTAX, 'Auto-Lunas'],
     ['whatsapp_deactivated_message', TMPL_DE_SPINTAX, 'Auto-Nonaktif'],
@@ -259,7 +259,7 @@ function convertCurrentTemplate() {
   var map2 = document.getElementById('metaParamMapping');
   if (map2) {
     if (!varMatches.length) {
-      map2.innerHTML = '<span class="text-muted">Tidak ada variabel {{variabel}} dalam template ini.</span>';
+      map2.innerHTML = '<span class="text-muted">Esta plantilla no tiene variables {{variabel}}.</span>';
     } else {
       map2.innerHTML = varMatches.map(function (v) {
         return '<b>{{' + v.index + '}}</b> <i class="bi bi-arrow-right"></i> ' + v.name + (v.name === 'id_pelanggan' ? ' <span style="color:var(--primary)">(ID Pelanggan)</span>' : '');
@@ -272,7 +272,7 @@ function copyMetaTemplateResult() {
   if (!resultEl) return;
   resultEl.select();
   navigator.clipboard.writeText(resultEl.value).then(function () {
-    alert('Teks format Meta API berhasil disalin! Silakan paste di Meta Business Manager untuk pengajuan template.');
+    alert('¡Texto en formato Meta API copiado! Pegalo en Meta Business Manager para enviar la plantilla a aprobación.');
   }).catch(function () { try { document.execCommand('copy'); } catch (e) {} });
 }
 </script>

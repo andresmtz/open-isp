@@ -544,7 +544,7 @@
           <div class="company-avatar-fallback" id="companyAvatar" style="display:none;"><%= companyInitial %></div>
           <div>
             <div class="company-title"><%= company %></div>
-            <div class="company-details"><%= settings.company_address || 'Pusat Layanan Internet Terpercaya' %></div>
+            <div class="company-details"><%= settings.company_address || 'Proveedor de servicios de internet' %></div>
             <% if (settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers.length > 0) { %>
             <div class="company-details">Telp/WA: +<%= settings.whatsapp_admin_numbers[0] %></div>
             <% } %>
@@ -559,7 +559,7 @@
           <% if (isPaid) { %>
           <span class="status-badge paid"><span class="badge-dot"></span>LUNAS</span>
           <% } else { %>
-          <span class="status-badge unpaid"><span class="badge-dot"></span>BELUM BAYAR</span>
+          <span class="status-badge unpaid"><span class="badge-dot"></span>PENDIENTE</span>
           <% } %>
         </div>
       </div>
@@ -572,7 +572,7 @@
         <div class="card-heading">Ditagihkan Kepada</div>
         <div class="client-name"><%= customer.name %></div>
         <% if (customer.customer_code) { %>
-        <div class="meta-item"><span><i class="bi bi-person-badge"></i></span> ID Pelanggan: <strong><%= customer.customer_code %></strong></div>
+        <div class="meta-item"><span><i class="bi bi-person-badge"></i></span> ID de cliente: <strong><%= customer.customer_code %></strong></div>
         <% } %>
         <div class="meta-list">
           <% if (customer.phone) { %>
@@ -596,15 +596,15 @@
             <span class="value"><%= isPaid && invoice.paid_at ? formatDateLocal(invoice.paid_at) : getNowLocal() %></span>
           </div>
           <div class="summary-item">
-            <span class="label">Periode Tagihan</span>
+            <span class="label">Período facturado</span>
             <span class="value"><%= periodStr %></span>
           </div>
           <div class="summary-item" style="margin-top:6px;">
-            <span class="label">Kasir / Penerima</span>
+            <span class="label">Cajero / recibido por</span>
             <span class="value"><%= invoice.paid_by_name || 'Sistem' %></span>
           </div>
           <div class="summary-item" style="margin-top:6px;">
-            <span class="label">Metode Pembayaran</span>
+            <span class="label">Forma de pago</span>
             <span class="value"><%= invoice.payment_gateway ? invoice.payment_gateway.toUpperCase() : 'Tunai / Transfer' %></span>
           </div>
         </div>
@@ -623,7 +623,7 @@
         <thead>
           <tr>
             <th style="width: 50px;">#</th>
-            <th>Deskripsi Layanan</th>
+            <th>Descripción del servicio</th>
             <th style="width: 120px;"><%= t('pwa.field.period','Periode') %></th>
             <th class="text-right" style="width: 140px;"><%= t('common.amount_qty','Jumlah') %></th>
           </tr>
@@ -632,7 +632,7 @@
           <tr>
             <td>01</td>
             <td>
-              <div class="item-title">Layanan Internet — <%= customer.package_name || 'Paket Internet Broadband' %></div>
+              <div class="item-title">Servicio de internet — <%= customer.package_name || 'Plan de internet de banda ancha' %></div>
               <div class="item-sub">Langganan bulanan internet high-speed</div>
             </td>
             <td><%= periodStr %></td>
@@ -645,8 +645,8 @@
     <!-- Bottom Layout (Notes & Totals) -->
     <div class="bottom-layout">
       <div class="notes-card">
-        <div><i class="bi bi-clipboard-check"></i> <strong>Catatan Pembayaran:</strong></div>
-        <div><%= invoice.notes || 'Terima kasih telah berlangganan layanan internet kami. Simpan struk ini sebagai bukti pembayaran yang sah.' %></div>
+        <div><i class="bi bi-clipboard-check"></i> <strong>Nota del pago:</strong></div>
+        <div><%= invoice.notes || 'Gracias por contratar nuestro servicio de internet. Conserve este recibo como comprobante de pago.' %></div>
         <% if (invoice.payment_order_id) { %>
         <div style="font-size:10px; margin-top:2px; color:var(--primary);">Referensi Transaksi: <strong><%= invoice.payment_order_id %></strong></div>
         <% } %>
@@ -662,7 +662,7 @@
           <span class="val"><%= Number(invoice.discount_amount||0) > 0 ? ('- ' + APP_CUR + ' ' + Number(invoice.discount_amount).toLocaleString(APP_LOCALE)) : (APP_CUR + ' 0') %></span>
         </div>
         <div class="total-line grand-total">
-          <span class="lbl">Total Bayar</span>
+          <span class="lbl">Total pagado</span>
           <span class="val"><%= APP_CUR %> <%= Number(invoice.amount || 0).toLocaleString(APP_LOCALE) %></span>
         </div>
       </div>
@@ -672,8 +672,8 @@
     <div class="invoice-footer">
       <div class="footer-info">
         <div style="font-weight:700; color:var(--text-dark);"><%= company %></div>
-        <div><%= settings.company_address || 'Pusat Layanan Internet' %></div>
-        <div>Dicetak Otomatis pada <%= getNowLocal() %></div>
+        <div><%= settings.company_address || 'Proveedor de servicios de internet' %></div>
+        <div>Impreso automáticamente el <%= getNowLocal() %></div>
       </div>
 
       <div class="signature-area">
@@ -689,18 +689,18 @@
 
 <!-- Floating Action Buttons -->
 <div class="print-controls">
-  <button class="btn-action btn-print" onclick="window.print();" title="Cetak Faktur A4">
-    <span><i class="bi bi-printer-fill"></i></span> Cetak A4
+  <button class="btn-action btn-print" onclick="window.print();" title="Imprimir factura A4">
+    <span><i class="bi bi-printer-fill"></i></span> Imprimir A4
   </button>
-  <a href="/admin/billing/<%= invoice.id %>/print-thermal" target="_blank" class="btn-action btn-print" style="text-decoration:none; background: linear-gradient(135deg, #0284c7, #06b6d4);" title="Cetak Struk Bluetooth Thermal 58mm/80mm">
+  <a href="/admin/billing/<%= invoice.id %>/print-thermal" target="_blank" class="btn-action btn-print" style="text-decoration:none; background: linear-gradient(135deg, #0284c7, #06b6d4);" title="Imprimir ticket térmico Bluetooth 58mm/80mm">
     <span><i class="bi bi-receipt"></i></span> Struk Thermal
   </a>
   <a href="/admin/billing/<%= invoice.id %>/pdf" target="_blank" class="btn-action btn-print" style="text-decoration:none; background: linear-gradient(135deg, #059669, #10b981);">
-    <span><i class="bi bi-download"></i></span> Unduh PDF
+    <span><i class="bi bi-download"></i></span> Descargar PDF
   </a>
   <% if (customer && customer.phone) { %>
   <button class="btn-action btn-print" id="btnSendWaPdf" onclick="sendInvoicePdfWa('<%= invoice.id %>')" style="background: linear-gradient(135deg, #25d366, #128c7e);">
-    <span><i class="bi bi-phone"></i></span> Kirim PDF WA
+    <span><i class="bi bi-phone"></i></span> Enviar PDF por WhatsApp
   </button>
   <% } %>
   <button class="btn-action btn-close" onclick="window.close();">

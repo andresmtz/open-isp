@@ -114,7 +114,7 @@
             <table class="dtbl">
               <thead>
                 <tr>
-                  <th><%= t('admin.inventory.cat_name', 'Nama Kategori') %></th>
+                  <th><%= t('admin.inventory.cat_name', 'Nombre de la categoría') %></th>
                   <th><%= t('admin.inventory.cat_desc', 'Keterangan') %></th>
                   <th class="text-right"><%= t('admin.inventory.th_action', 'Aksi') %></th>
                 </tr>
@@ -139,12 +139,12 @@
           </div>
         </div>
         <div class="card w300">
-          <div class="card-hd"><h6><i class="bi bi-plus-lg"></i> <%= t('admin.inventory.cat_add', 'Tambah Kategori') %></h6></div>
+          <div class="card-hd"><h6><i class="bi bi-plus-lg"></i> <%= t('admin.inventory.cat_add', 'Agregar categoría') %></h6></div>
           <div class="card-bd">
             <form action="/admin/inventory/category/add" method="POST">
-              <div class="fg"><label class="fl"><%= t('admin.inventory.cat_name', 'Nama Kategori') %></label><input class="fc" name="name" required></div>
+              <div class="fg"><label class="fl"><%= t('admin.inventory.cat_name', 'Nombre de la categoría') %></label><input class="fc" name="name" required></div>
               <div class="fg"><label class="fl"><%= t('admin.inventory.cat_desc', 'Keterangan') %></label><textarea class="fc" name="description"></textarea></div>
-              <button class="btn btn-p w-100"><%= t('admin.inventory.cat_save', 'Simpan Kategori') %></button>
+              <button class="btn btn-p w-100"><%= t('admin.inventory.cat_save', 'Guardar categoría') %></button>
             </form>
           </div>
         </div>

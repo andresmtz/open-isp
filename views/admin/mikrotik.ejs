@@ -33,7 +33,7 @@
           <% }) %>
         </select>
       </div>
-      <button id="auto-refresh-toggle" onclick="toggleAutoRefresh()" class="btn btn-sm" style="background:rgba(34,197,94,0.2);color:#22c55e;border:1px solid rgba(34,197,94,0.3)" title="Auto-refresh aktif (10 detik)">
+      <button id="auto-refresh-toggle" onclick="toggleAutoRefresh()" class="btn btn-sm" style="background:rgba(34,197,94,0.2);color:#22c55e;border:1px solid rgba(34,197,94,0.3)" title="Actualización automática activa (10 segundos)">
         <i class="bi bi-arrow-clockwise"></i>
         <span id="refresh-status">Auto</span>
       </button>
@@ -54,31 +54,31 @@
     <!-- Summary Cards -->
     <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px;position:relative">
       <!-- 1. PPPoE Online -->
-      <div class="sc p" onclick="showOnlineUsersModal()" style="cursor:pointer" title="Klik untuk melihat detail user online">
+      <div class="sc p" onclick="showOnlineUsersModal()" style="cursor:pointer" title="Clic para ver los usuarios en línea">
         <i class="bi bi-ethernet sc-icon"></i>
         <div class="sc-label"><%= t('admin.mikrotik.stats.pppoe_online', 'PPPoE Online') %></div>
         <div class="sc-val" id="pppoe-online-count">0</div>
       </div>
       <!-- 2. PPPoE Offline -->
-      <div class="sc w" onclick="showOfflineUsersModal()" style="cursor:pointer" title="Klik untuk melihat detail user offline">
+      <div class="sc w" onclick="showOfflineUsersModal()" style="cursor:pointer" title="Clic para ver los usuarios desconectados">
         <i class="bi bi-plug sc-icon"></i>
         <div class="sc-label"><%= t('admin.mikrotik.stats.pppoe_offline', 'PPPoE Offline') %></div>
         <div class="sc-val" id="pppoe-offline-count">0</div>
       </div>
       <!-- 3. Total Secrets -->
-      <div class="sc w" onclick="showAllSecretsModal()" style="cursor:pointer" title="Klik untuk melihat semua PPPoE secrets">
+      <div class="sc w" onclick="showAllSecretsModal()" style="cursor:pointer" title="Clic para ver todos los secrets PPPoE">
         <i class="bi bi-people sc-icon"></i>
         <div class="sc-label"><%= t('admin.mikrotik.stats.total_secrets', 'Total Secrets') %></div>
         <div class="sc-val" id="total-secrets-count">0</div>
       </div>
       <!-- 4. Hotspot Online -->
-      <div class="sc s" onclick="showHotspotOnlineModal()" style="cursor:pointer" title="Klik untuk melihat detail hotspot online">
+      <div class="sc s" onclick="showHotspotOnlineModal()" style="cursor:pointer" title="Clic para ver el hotspot en línea">
         <i class="bi bi-wifi sc-icon"></i>
         <div class="sc-label"><%= t('admin.mikrotik.stats.hotspot_online', 'Hotspot Online') %></div>
         <div class="sc-val" id="hotspot-online-count">0</div>
       </div>
       <!-- 5. Total Hotspot -->
-      <div class="sc d" onclick="showAllHotspotModal()" style="cursor:pointer" title="Klik untuk melihat semua hotspot users">
+      <div class="sc d" onclick="showAllHotspotModal()" style="cursor:pointer" title="Clic para ver todos los usuarios hotspot">
         <i class="bi bi-person-badge sc-icon"></i>
         <div class="sc-label"><%= t('admin.mikrotik.stats.total_hotspot', 'Total Hotspot') %></div>
         <div class="sc-val" id="total-hotspot-count">0</div>
@@ -346,7 +346,7 @@
 <div class="mo" id="hotspotOnlineModal">
   <div class="mb" style="max-width:900px">
     <div class="mh">
-      <span class="mt"><i class="bi bi-wifi"></i> Daftar Hotspot User Online</span>
+      <span class="mt"><i class="bi bi-wifi"></i> Usuarios hotspot en línea</span>
       <button class="mc" onclick="closeModal('hotspotOnlineModal')">&times;</button>
     </div>
     <div class="mbody" style="max-height:500px;overflow-y:auto">
@@ -386,7 +386,7 @@
 <div class="mo" id="allSecretsModal">
   <div class="mb" style="max-width:900px">
     <div class="mh">
-      <span class="mt"><i class="bi bi-people"></i> Semua PPPoE Secrets</span>
+      <span class="mt"><i class="bi bi-people"></i> Todos los secrets PPPoE</span>
       <button class="mc" onclick="closeModal('allSecretsModal')">&times;</button>
     </div>
     <div class="mbody" style="max-height:500px;overflow-y:auto">
@@ -425,7 +425,7 @@
 <div class="mo" id="allHotspotModal">
   <div class="mb" style="max-width:900px">
     <div class="mh">
-      <span class="mt"><i class="bi bi-person-badge"></i> Semua Hotspot Users</span>
+      <span class="mt"><i class="bi bi-person-badge"></i> Todos los usuarios hotspot</span>
       <button class="mc" onclick="closeModal('allHotspotModal')">&times;</button>
     </div>
     <div class="mbody" style="max-height:500px;overflow-y:auto">
@@ -478,7 +478,7 @@
                 <input type="checkbox" id="pp_remote_manual_toggle"> Manual
               </label>
             </div>
-            <input class="fc" id="pp_remote_manual" placeholder="Pilih pool atau isi manual" style="margin-top:8px;display:none">
+            <input class="fc" id="pp_remote_manual" placeholder="Elegí un pool o completalo a mano" style="margin-top:8px;display:none">
           </div>
         </div>
         <div class="fg"><label class="fl">Rate Limit (Rx/Tx e.g. 5M/10M)</label><input class="fc" id="pp_rate"></div>
@@ -533,7 +533,7 @@
     addHotspotProfile: "<%= t('admin.mikrotik.actions.add_hotspot_profile', 'Tambah Hotspot Profile') %>",
     editHotspotProfile: "<%= t('admin.mikrotik.actions.edit_hotspot_profile', 'Edit Hotspot Profile') %>",
     saveFailed: "<%= t('admin.mikrotik.errors.save_failed', 'Gagal menyimpan') %>",
-    deleteFailed: "<%= t('admin.mikrotik.errors.delete_failed', 'Gagal menghapus') %>",
+    deleteFailed: "<%= t('admin.mikrotik.errors.delete_failed', 'No se pudo eliminar') %>",
     deleteSecretConfirm: "<%= t('admin.mikrotik.confirm.delete_secret', 'Hapus secret ini?') %>",
     deleteHotspotConfirm: "<%= t('admin.mikrotik.confirm.delete_hotspot_user', 'Hapus user hotspot ini?') %>",
     deleteProfileConfirm: "<%= t('admin.mikrotik.confirm.delete_profile', 'Hapus profile ini?') %>",
@@ -595,7 +595,7 @@
     const totalEl = document.getElementById('online-users-total');
     
     if (!onlineUsersData || onlineUsersData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Tidak ada user online</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay usuarios en línea</td></tr>';
       if (totalEl) totalEl.textContent = '0';
     } else {
       if (totalEl) totalEl.textContent = onlineUsersData.length;
@@ -623,7 +623,7 @@
     const totalEl = document.getElementById('offline-users-total');
     
     if (!offlineUsersData || offlineUsersData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Tidak ada user offline</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay usuarios desconectados</td></tr>';
       if (totalEl) totalEl.textContent = '0';
     } else {
       if (totalEl) totalEl.textContent = offlineUsersData.length;
@@ -651,7 +651,7 @@
     const totalEl = document.getElementById('hotspot-online-total');
     
     if (!hotspotOnlineData || hotspotOnlineData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Tidak ada hotspot user online</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay usuarios hotspot en línea</td></tr>';
       if (totalEl) totalEl.textContent = '0';
     } else {
       if (totalEl) totalEl.textContent = hotspotOnlineData.length;
@@ -679,7 +679,7 @@
     const totalEl = document.getElementById('all-secrets-total');
     
     if (!pppoeData || pppoeData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Tidak ada PPPoE secrets</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay secrets PPPoE</td></tr>';
       if (totalEl) totalEl.textContent = '0';
     } else {
       if (totalEl) totalEl.textContent = pppoeData.length;
@@ -717,7 +717,7 @@
     const totalEl = document.getElementById('all-hotspot-total');
     
     if (!allHotspotUsersData || allHotspotUsersData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Tidak ada hotspot users</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay usuarios hotspot</td></tr>';
       if (totalEl) totalEl.textContent = '0';
     } else {
       if (totalEl) totalEl.textContent = allHotspotUsersData.length;
@@ -1380,7 +1380,7 @@
       const sharedEl = document.getElementById('hp_shared');
       const onLoginEl = document.getElementById('hp_onlogin');
       if (!idEl || !nameEl || !rateEl || !sharedEl) {
-        alert('Form hotspot profile tidak lengkap. Silakan refresh halaman.');
+        alert('El formulario del perfil hotspot está incompleto. Actualizá la página.');
         return;
       }
 
@@ -1423,7 +1423,7 @@
       if (statusEl) statusEl.textContent = '';
       const m = String(err?.message || '');
       if (m.toLowerCase().includes('aborted') || m.toLowerCase().includes('abort')) {
-        alert('Timeout saat menyimpan Hotspot Profile (lebih dari 10 detik). Cek koneksi API MikroTik / beban router.');
+        alert('Tiempo agotado al guardar el perfil hotspot (más de 10 segundos). Revisá la conexión API con el MikroTik / la carga del router.');
       } else {
         alert(m || I18N.saveFailed);
       }
@@ -1437,7 +1437,7 @@
     const statusEl = document.getElementById('hotspotProfileStatus');
     if (statusEl) statusEl.textContent = 'Klik diterima...';
     if (!formEl) {
-      if (statusEl) statusEl.textContent = 'Form tidak ditemukan';
+      if (statusEl) statusEl.textContent = 'Formulario no encontrado';
       return;
     }
     if (typeof formEl.requestSubmit === 'function') {
@@ -1582,14 +1582,14 @@
       btn.style.background = 'rgba(34,197,94,0.2)';
       btn.style.color = '#22c55e';
       btn.style.borderColor = 'rgba(34,197,94,0.3)';
-      btn.title = 'Auto-refresh aktif (10 detik)';
+      btn.title = 'Actualización automática activa (10 segundos)';
       if (status) status.textContent = 'Auto';
       startAutoRefresh();
     } else {
       btn.style.background = 'rgba(239,68,68,0.2)';
       btn.style.color = '#ef4444';
       btn.style.borderColor = 'rgba(239,68,68,0.3)';
-      btn.title = 'Auto-refresh nonaktif (klik untuk aktifkan)';
+      btn.title = 'Actualización automática inactiva (clic para activar)';
       if (status) status.textContent = 'Manual';
       stopAutoRefresh();
     }

@@ -48,7 +48,7 @@
         </div>
       </div>
       <div class="d-flex gap-2">
-        <button type="button" class="btn btn-outline-light btn-sm" id="topbarThemeBtn" title="Ganti tema"><i class="bi bi-circle-half"></i></button>
+        <button type="button" class="btn btn-outline-light btn-sm" id="topbarThemeBtn" title="Cambiar tema"><i class="bi bi-circle-half"></i></button>
         <a href="/lang/<%= lang === 'en' ? 'es' : 'en' %>" class="btn btn-outline-light btn-sm" style="text-decoration:none" title="<%= lang === 'en' ? 'Español' : 'English' %>"><i class="bi bi-translate"></i> <%= lang === 'en' ? 'ES' : 'EN' %></a>
         <a class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1" href="/collector/attendance">
           <i class="bi bi-calendar-check"></i> <%= t('collector.absensi','Absensi') %>
@@ -161,7 +161,7 @@
                       <span class="badge bg-secondary ms-1" style="font-size:10px;opacity:0.8"><%= inv.customer_status %></span>
                     <% } %>
                   </div>
-                  <div class="muted" style="font-size:12px"><%= inv.package_name || 'Internet' %> <%= invId ? ('• Invoice #' + invId) : '• Belum Ada Invoice' %></div>
+                  <div class="muted" style="font-size:12px"><%= inv.package_name || 'Internet' %> <%= invId ? ('• Invoice #' + invId) : '• Sin factura' %></div>
                 </div>
                 <div class="text-end">
                   <div style="font-weight:900"><%= APP_CUR %> <%= amount.toLocaleString(APP_LOCALE) %></div>
@@ -172,7 +172,7 @@
                   <% } else if (noInvoice) { %>
                     <span class="badgey w" style="background:rgba(99,102,241,0.15);color:#a5b4fc;border-color:rgba(99,102,241,0.3)"><i class="bi bi-file-earmark-plus"></i> <%= t('collector.status_belum_tagihan','BELUM TAGIHAN') %></span>
                   <% } else { %>
-                    <span class="badgey d"><i class="bi bi-exclamation-circle"></i> <%= t('collector.status_belum_bayar','BELUM BAYAR') %></span>
+                    <span class="badgey d"><i class="bi bi-exclamation-circle"></i> <%= t('collector.status_belum_bayar','PENDIENTE') %></span>
                   <% } %>
                 </div>
               </div>
@@ -181,7 +181,7 @@
                 <tr><td><%= t('collector.col_period','Periode') %></td><td><%= month %>/<%= year %></td></tr>
                 <tr><td><%= t('collector.col_area','Area / Wilayah') %></td><td><strong style="color:#a5b4fc"><%= inv.customer_area || '-' %></strong></td></tr>
                 <tr><td><%= t('collector.col_due','Jatuh Tempo') %></td><td><%= inv.isolate_day ? ('Tgl ' + inv.isolate_day) : '-' %></td></tr>
-                <tr><td><%= t('collector.col_cust_id','ID Pelanggan') %></td><td>#<%= inv.customer_id %></td></tr>
+                <tr><td><%= t('collector.col_cust_id','ID de cliente') %></td><td>#<%= inv.customer_id %></td></tr>
                 <tr><td><%= t('collector.col_pppoe','PPPoE') %></td><td><%= inv.pppoe_username ? inv.pppoe_username : '-' %></td></tr>
                 <tr><td><%= t('collector.col_onu_tag','Tag ONU') %></td><td><%= inv.genieacs_tag ? inv.genieacs_tag : '-' %></td></tr>
                 <tr><td><%= t('collector.col_address','Alamat') %></td><td><%= inv.customer_address ? inv.customer_address : '-' %></td></tr>
@@ -211,7 +211,7 @@
                     <input type="hidden" name="search" value="<%= search || '' %>">
                     <input class="form-control form-control-sm" name="note" placeholder="Catatan (opsional)">
                     <button class="btn btn-warning btn-sm fw-bold" type="submit">
-                      <i class="bi bi-cash-stack"></i> <%= noInvoice ? 'Buat & Bayar Tagihan' : 'Ajukan Pembayaran' %>
+                      <i class="bi bi-cash-stack"></i> <%= noInvoice ? 'Crear y cobrar factura' : 'Enviar cobro' %>
                     </button>
                   </form>
                 <% } %>
@@ -252,7 +252,7 @@
                   <td style="font-size:12px">
                     <% if (st === 'approved') { %>
                       <span class="badgey s"><%= t('collector.approved','APPROVED') %></span>
-                      <a href="/collector/invoice/<%= r.invoice_id %>/print-thermal" target="_blank" class="btn btn-sm btn-outline-light ms-1" style="font-size:11px;padding:2px 6px;" title="Cetak Struk Thermal"><i class="bi bi-printer"></i> <%= t('collector.struk','Struk') %></a>
+                      <a href="/collector/invoice/<%= r.invoice_id %>/print-thermal" target="_blank" class="btn btn-sm btn-outline-light ms-1" style="font-size:11px;padding:2px 6px;" title="Imprimir ticket térmico"><i class="bi bi-printer"></i> <%= t('collector.struk','Struk') %></a>
                     <% } else if (st === 'rejected') { %>
                       <span class="badgey d"><%= t('collector.rejected','REJECTED') %></span>
                     <% } else { %>
@@ -291,7 +291,7 @@
         <i class="bi bi-grid-3x3-gap"></i><span><%= t('collector.filter_all','Semua') %></span>
       </a>
       <a class="bni <%= activeScope === 'today' ? 'active' : '' %>" href="/collector?<%= qsToday %>#data-tagihan">
-        <i class="bi bi-calendar-check"></i><span><%= t('collector.today','Hari Ini') %></span>
+        <i class="bi bi-calendar-check"></i><span><%= t('collector.today','Hoy') %></span>
       </a>
       <a class="bni <%= activeScope === 'unpaid' ? 'active' : '' %>" href="/collector?<%= qsUnpaid %>#data-tagihan">
         <i class="bi bi-exclamation-circle"></i><span><%= t('collector.btn_belum','Belum') %></span>
@@ -320,11 +320,11 @@
     })();
 
     async function sendWaPdf(invId) {
-      if (!confirm('Kirimkan dokumen Invoice PDF ke WhatsApp pelanggan sekarang?')) return;
+      if (!confirm('¿Enviar ahora la factura PDF al WhatsApp del cliente?')) return;
       try {
         const res = await fetch('/collector/invoice/' + invId + '/send-pdf-wa', { method: 'POST' });
         const data = await res.json();
-        alert(data.message || (data.success ? 'Berhasil dikirim!' : 'Gagal mengirim'));
+        alert(data.message || (data.success ? '¡Enviado!' : 'No se pudo enviar'));
       } catch (e) {
         alert('Error: ' + e.message);
       }

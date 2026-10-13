@@ -44,7 +44,7 @@
     <div class="donate-grid">
       <!-- FORM -->
       <div>
-        <div class="iso-sec" style="margin-top:0"><i class="bi bi-wallet2"></i> 1. Masukkan Detail Donasi</div>
+        <div class="iso-sec" style="margin-top:0"><i class="bi bi-wallet2"></i> 1. Datos de la donación</div>
 
         <label class="label-cap"><%= t('donate.quick_amount','Pilih Nominal Cepat (Rp)') %></label>
         <div class="preset-grid" style="margin-bottom:14px">
@@ -66,19 +66,19 @@
         <div class="field">
           <label for="inputName"><i class="bi bi-person"></i> <%= t('donate.donor_name','Nama Donatur (Opsional)') %></label>
           <div class="wrap"><i class="bi bi-person lead-ic"></i>
-            <input type="text" id="inputName" class="inp" placeholder="Hamba Allah / Nama Anda" value="Hamba Allah"></div>
+            <input type="text" id="inputName" class="inp" placeholder="Anónimo / tu nombre" value="Hamba Allah"></div>
         </div>
 
         <div class="field">
           <label for="inputPhone"><i class="bi bi-whatsapp"></i> <%= t('donate.phone','Nomor WhatsApp * (untuk kode aktivasi)') %></label>
           <div class="wrap"><i class="bi bi-whatsapp lead-ic"></i>
-            <input type="tel" id="inputPhone" class="inp" placeholder="Contoh: 081234567890" required></div>
+            <input type="tel" id="inputPhone" class="inp" placeholder="Ejemplo: 0981123456" required></div>
           <div class="form-note"><%= t('donate.thanks_note','Ucapan terima kasih & kode aktivasi sidebar dikirim ke nomor ini.') %></div>
         </div>
 
         <div class="field">
           <label for="inputNotes"><i class="bi bi-chat-left-text"></i> <%= t('donate.message','Pesan / Doa (Opsional)') %></label>
-          <textarea id="inputNotes" class="inp inp-plain" rows="2" placeholder="Semoga aplikasinya berkah dan semakin maju…"></textarea>
+          <textarea id="inputNotes" class="inp inp-plain" rows="2" placeholder="Que la aplicación siga creciendo…"></textarea>
         </div>
 
         <button type="button" class="iso-btn primary" onclick="generateQris()"><i class="bi bi-qr-code-scan"></i> <%= t('donate.show_qris','Tampilkan QRIS Donasi') %></button>
@@ -86,7 +86,7 @@
 
       <!-- QRIS -->
       <div>
-        <div class="iso-sec" style="margin-top:0"><i class="bi bi-qr-code"></i> 2. Scan QRIS Pembayaran</div>
+        <div class="iso-sec" style="margin-top:0"><i class="bi bi-qr-code"></i> 2. Escanear el QR de pago</div>
 
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center">
           <div class="iso-qr" style="margin-top:0"><img id="qrImage" src="/qris/static.jpg?amount=50000" alt="QRIS Donasi" onerror="handleQrError()"></div>
@@ -98,7 +98,7 @@
           </div>
 
           <div class="iso-actions">
-            <button type="button" class="iso-btn ghost" onclick="copyNominal()"><i class="bi bi-clipboard"></i> <%= t('iso.copy_amount','Salin Nominal') %></button>
+            <button type="button" class="iso-btn ghost" onclick="copyNominal()"><i class="bi bi-clipboard"></i> <%= t('iso.copy_amount','Copiar monto') %></button>
             <button type="button" class="iso-btn ghost" onclick="downloadQr()"><i class="bi bi-download"></i> <%= t('donate.dl_qr','Download QR') %></button>
           </div>
 
@@ -123,7 +123,7 @@
           <% if (bankAccounts.length) { %>
             <div class="iso-sec" style="margin-top:0"><i class="bi bi-bank"></i> Transfer Bank</div>
             <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:14px">
-              <div class="muted" style="font-size:12.5px;margin-bottom:6px">Transfer <b>tepat</b> sebesar <b id="bankAmountText">-</b> (sudah termasuk kode unik) ke salah satu rekening:</div>
+              <div class="muted" style="font-size:12.5px;margin-bottom:6px">Transfer <b>tepat</b> sebesar <b id="bankAmountText">-</b> (ya incluye el código único) a una de estas cuentas:</div>
               <% bankAccounts.forEach(function(a){ %>
               <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px">
                 <div>
@@ -139,7 +139,7 @@
           <% if (ewalletAccounts.length) { %>
             <div class="iso-sec" style="margin-top:14px"><i class="bi bi-phone"></i> E-Wallet</div>
             <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:14px">
-              <div class="muted" style="font-size:12.5px;margin-bottom:6px"><%= t('donate.send','Kirim') %> <b>tepat</b> sebesar <b id="ewalletAmountText">-</b> ke salah satu e-wallet:</div>
+              <div class="muted" style="font-size:12.5px;margin-bottom:6px"><%= t('donate.send','Kirim') %> <b>tepat</b> sebesar <b id="ewalletAmountText">-</b> a una de estas billeteras:</div>
               <% ewalletAccounts.forEach(function(a){ %>
               <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px">
                 <div>
@@ -162,7 +162,7 @@
         <span class="badge bp"><i class="bi bi-github"></i> <%= t('donate.code_free','KODE AKTIVASI GRATIS') %></span>
         <span style="font-weight:700;font-size:14px"><%= t('donate.status','Status:') %> <span style="color:var(--warning);font-weight:800" id="statusText"><%= t('donate.waiting_donation','Menunggu Donasi Masuk') %></span></span>
       </div>
-      <p class="muted" style="font-size:13.5px;margin:0"><i class="bi bi-info-circle" style="color:var(--info)"></i> <%= t('donate.menu_code','Kode aktivasi menu') %> <strong style="color:var(--primary)"><%= t('donate.free','GRATIS') %></strong> di <a href="https://github.com/oxpoe/open-isp/wiki" target="_blank" rel="noopener" style="color:var(--primary)"><%= t('donate.wiki','Wiki OPEN-ISP') %></a>. Donasi bersifat sukarela; jika berdonasi, kode juga otomatis dikirim ke WhatsApp Anda begitu pembayaran terdeteksi.</p>
+      <p class="muted" style="font-size:13.5px;margin:0"><i class="bi bi-info-circle" style="color:var(--info)"></i> <%= t('donate.menu_code','Kode aktivasi menu') %> <strong style="color:var(--primary)"><%= t('donate.free','GRATIS') %></strong> di <a href="https://github.com/oxpoe/open-isp/wiki" target="_blank" rel="noopener" style="color:var(--primary)"><%= t('donate.wiki','Wiki OPEN-ISP') %></a>. La donación es voluntaria; si donás, el código también se envía a tu WhatsApp apenas se detecta el pago.</p>
     </div>
 
     <!-- AKTIVASI CARD -->
@@ -176,11 +176,11 @@
         <span class="code-text" id="activationCode"><%= settings.activation_code || '' %></span>
         <button type="button" class="iso-btn primary" style="width:auto;padding:8px 14px;font-size:13px" onclick="copyActivationCode()"><i class="bi bi-copy"></i> <%= t('donate.copy_code','Salin Kode') %></button>
       </div>
-      <div class="muted" style="font-size:12px"><i class="bi bi-check2-circle" style="color:var(--success)"></i> <%= t('donate.enter_code','Masukkan kode pada kolom') %> <em><%= t('donate.code','Kode Aktivasi') %></em> di <strong><%= t('donate.sidebar_settings','Pengaturan Sidebar') %></strong>, lalu ubah status menu menjadi <strong><%= t('donate.show','Tampil') %></strong>. Kode aktivasi gratis — tidak perlu donasi untuk membukanya.</div>
+      <div class="muted" style="font-size:12px"><i class="bi bi-check2-circle" style="color:var(--success)"></i> <%= t('donate.enter_code','Masukkan kode pada kolom') %> <em><%= t('donate.code','Kode Aktivasi') %></em> di <strong><%= t('donate.sidebar_settings','Pengaturan Sidebar') %></strong>, y después cambiá el estado del menú a <strong><%= t('donate.show','Tampil') %></strong>. El código de activación es gratis — no hace falta donar para desbloquear.</div>
     </div>
 
     <div class="iso-foot">
-      &copy; <%= new Date().getFullYear() %> • <%= settings.company_header || 'OPEN-ISP' %> • <%= settings.company_header || 'OPEN-ISP' %> v<%= (typeof appVersion !== 'undefined' ? appVersion : '0.5.1') %> (<%= (typeof appVersionName !== 'undefined' ? appVersionName : 'pickle-lime') %>) · ISC · oxpoe — terima kasih atas dukungan Anda.
+      &copy; <%= new Date().getFullYear() %> • <%= settings.company_header || 'OPEN-ISP' %> • <%= settings.company_header || 'OPEN-ISP' %> v<%= (typeof appVersion !== 'undefined' ? appVersion : '0.5.1') %> (<%= (typeof appVersionName !== 'undefined' ? appVersionName : 'pickle-lime') %>) · ISC · oxpoe — gracias por tu apoyo.
       <div style="margin-top:6px">
         <a href="/admin" style="color:var(--muted)"><i class="bi bi-speedometer2"></i> <%= t('donate.admin_panel','Admin Panel') %></a>
         &nbsp;•&nbsp;
@@ -277,7 +277,7 @@
     }
     var ph = document.getElementById('activationPlaceholder'); if (ph) ph.style.display = 'none';
     var card = document.getElementById('activationCard'); if (card) { card.style.display = 'block'; card.scrollIntoView({ behavior:'smooth', block:'center' }); }
-    document.getElementById('modalMsg').innerHTML = 'Alhamdulillah, donasi dari <strong>' + (data.donorName || 'Sahabat') + '</strong> sebesar <strong>' + APP_CUR + ' ' + Number(currentAmount).toLocaleString(APP_LOCALE) + '</strong> telah diverifikasi.<br><span style="color:var(--success);font-weight:700"><i class="bi bi-whatsapp"></i> <%= t('donate.notif_wa','Notifikasi & kode aktivasi dikirim ke WhatsApp Anda!') %></span>';
+    document.getElementById('modalMsg').innerHTML = 'Gracias: la donación de <strong>' + (data.donorName || 'Sahabat') + '</strong> sebesar <strong>' + APP_CUR + ' ' + Number(currentAmount).toLocaleString(APP_LOCALE) + '</strong> telah diverifikasi.<br><span style="color:var(--success);font-weight:700"><i class="bi bi-whatsapp"></i> <%= t('donate.notif_wa','Notifikasi & kode aktivasi dikirim ke WhatsApp Anda!') %></span>';
     document.getElementById('successModal').classList.add('active');
   }
   function handleQrError() { document.getElementById('qrImage').src = '/qris/static.jpg?t=' + Date.now(); }
@@ -299,8 +299,8 @@
   }
   async function copyActivationCode() {
     var code = (document.getElementById('activationCode') ? document.getElementById('activationCode').textContent.trim() : '') || '';
-    try { await navigator.clipboard.writeText(code); alert('Kode aktivasi "' + code + '" disalin!'); }
-    catch (e) { var ta=document.createElement('textarea'); ta.value=code; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('Kode aktivasi "' + code + '" disalin!'); }
+    try { await navigator.clipboard.writeText(code); alert('Código de activación "' + code + '" disalin!'); }
+    catch (e) { var ta=document.createElement('textarea'); ta.value=code; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('Código de activación "' + code + '" disalin!'); }
   }
   function downloadQr() {
     var img = document.getElementById('qrImage');
@@ -311,7 +311,7 @@
     var phone = document.getElementById('inputPhone').value.trim();
     var name = document.getElementById('inputName').value.trim() || 'Hamba Allah';
     var notes = document.getElementById('inputNotes').value.trim();
-    if (!phone || phone.length < 8) { alert('Masukkan nomor WhatsApp yang valid!'); document.getElementById('inputPhone').focus(); return; }
+    if (!phone || phone.length < 8) { alert('¡Ingresá un número de WhatsApp válido!'); document.getElementById('inputPhone').focus(); return; }
     var btn = document.getElementById('btnConfirm');
     var orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Memverifikasi &amp; Mengirim WA…';
     try {
@@ -319,7 +319,7 @@
       var data = await res.json();
       btn.disabled = false; btn.innerHTML = orig;
       if (data.success) { isPaid = true; if (pollInterval) clearInterval(pollInterval); onPaymentDetected(data); }
-      else { alert('Info: ' + (data.message || 'Gagal memproses donasi.')); }
+      else { alert('Info: ' + (data.message || 'No se pudo procesar la donación.')); }
     } catch (err) { btn.disabled = false; btn.innerHTML = orig; alert('Terjadi kesalahan: ' + err.message); }
   }
   document.addEventListener('DOMContentLoaded', function(){ generateQris(); });

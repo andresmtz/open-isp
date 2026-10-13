@@ -286,7 +286,7 @@
       <!-- OID & SNMP Info Section -->
       <div id="oid-info-container" class="onu-main-card" style="margin-top: 15px; display: none;">
         <div class="card-header d-flex justify-content-between align-items-center" style="background:#0f172a; color:white;">
-          <h4 class="fw-bold m-0 small text-uppercase" style="color:#60a5fa;"><i class="bi bi-diagram-3"></i> Informasi OID & Profil SNMP Perangkat</h4>
+          <h4 class="fw-bold m-0 small text-uppercase" style="color:#60a5fa;"><i class="bi bi-diagram-3"></i> Información de OID y perfil SNMP del equipo</h4>
           <span id="oid-brand-badge" class="brand-badge brand-hioso">-</span>
         </div>
         <div class="p-3" style="background:#1e293b; color:#f8fafc; font-size:12px;">
@@ -302,7 +302,7 @@
             </div>
             <div class="col-md-8">
               <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #334155;">
-                <div class="text-muted fw-bold mb-2" style="font-size:11px; text-transform:uppercase; color:#94a3b8;"><i class="bi bi-card-checklist"></i> Daftar OID Utama (SNMP Walk & Get)</div>
+                <div class="text-muted fw-bold mb-2" style="font-size:11px; text-transform:uppercase; color:#94a3b8;"><i class="bi bi-card-checklist"></i> OID principales (SNMP walk y get)</div>
                 <div class="table-responsive">
                   <table class="table table-dark table-sm mb-0" style="font-family:monospace; font-size:11px; border-color:#334155;">
                     <thead>
@@ -505,7 +505,7 @@
             <div class="fg"><label class="fl">Telnet port</label><input type="number" name="telnet_port" class="fc" value="23" min="1" max="65535"></div>
             <div class="fg"><label class="fl">Enable password (ZTE)</label><input type="password" name="enable_password" class="fc" placeholder="<%= t('admin.olt.ph_enable_pw','zxr10 (opsional)') %>"></div>
         </div>
-        <div class="fg"><label class="fl">API Base URL (go-api-c320 ZTE)</label><input type="url" name="api_base_url" class="fc" placeholder="http://127.0.0.1:8081 — kosong jika tidak pakai"></div>
+        <div class="fg"><label class="fl">API Base URL (go-api-c320 ZTE)</label><input type="url" name="api_base_url" class="fc" placeholder="http://127.0.0.1:8081 — vacío si no se usa"></div>
         <div class="fg"><label class="fl"><%= t('admin.olts.form.description', 'Deskripsi / Lokasi') %></label><textarea name="description" class="fc" rows="2"></textarea></div>
         <div id="add-test-result" class="alert alert-i small mt-2" style="display:none; font-size:12px;"></div>
       </div>
@@ -602,7 +602,7 @@
           </select>
         </div>
         <div id="wan_goapi_hint" class="alert alert-i" style="display:none;font-size:12px;padding:10px 12px">
-          <i class="bi bi-info-circle"></i> Isi <strong>API Base URL</strong> di edit OLT (mis. <code>http://10.0.0.5:8081</code>). Layanan <a href="https://github.com/s4lfanet/go-api-c320" target="_blank" rel="noopener">go-api-c320</a> memetakan ke <code>POST /api/v1/vlan/onu</code> (pon_port format <code>1/slot/pon</code>). Hanya mode <strong>Bridge + VLAN</strong>; PPPoE tetap Telnet/TR069.
+          <i class="bi bi-info-circle"></i> Isi <strong>API Base URL</strong> di edit OLT (mis. <code>http://10.0.0.5:8081</code>). Servicio <a href="https://github.com/s4lfanet/go-api-c320" target="_blank" rel="noopener">go-api-c320</a> memetakan ke <code>POST /api/v1/vlan/onu</code> (pon_port format <code>1/slot/pon</code>). Hanya mode <strong>Bridge + VLAN</strong>; PPPoE tetap Telnet/TR069.
         </div>
         
         <div class="fg">
@@ -680,7 +680,7 @@ const I18N = {
   serverConnectFailed: "<%= t('admin.olts.errors.server_connect_failed', 'Gagal menghubungi server') %>",
   noOnuData: "<%= t('admin.olts.empty_no_onu', 'Tidak ada data ONU ditemukan.') %>",
   tryAgain: "<%= t('admin.olts.actions.try_again', 'Coba Lagi') %>",
-  renamePrompt: "<%= t('admin.olts.actions.rename_prompt', 'Masukkan nama baru untuk ONU:') %>",
+  renamePrompt: "<%= t('admin.olts.actions.rename_prompt', 'Nuevo nombre para la ONU:') %>",
   renameTitle: "<%= t('admin.olts.actions.rename', 'Ubah Nama') %>",
   rebootTitle: "<%= t('admin.olts.actions.reboot', 'Reboot ONU') %>",
   confirmReboot: "<%= t('admin.olts.confirm_reboot', 'Yakin ingin reboot ONU ini?') %>",
@@ -781,7 +781,7 @@ async function loadOltDashboard(id) {
     if (stats.is_all && stats.olts_summary && stats.olts_summary.length > 0) {
       oidInfoBox.style.display = 'block';
       oidBrandBadge.innerText = 'MULTI OLT';
-      oidProfileName.innerText = 'Semua OLT (' + stats.olts_summary.length + ' Perangkat)';
+      oidProfileName.innerText = 'Todas las OLT (' + stats.olts_summary.length + ' equipos)';
       oidHost.innerText = 'Multi-Host';
       oidPort.innerText = '161';
       oidCommunity.innerText = 'Various';
@@ -1005,7 +1005,7 @@ async function rebootOnu(oltId, index) {
 }
 
 async function authorizeOnuPrompt(oltId, index, sn) {
-  const name = prompt('Masukkan Nama Pelanggan:', '');
+  const name = prompt('Ingresá el nombre del cliente:', '');
   if (!name) return;
   const vlan = prompt('Masukkan VLAN ID:', '100');
   if (!vlan) return;
@@ -1021,7 +1021,7 @@ async function authorizeOnuPrompt(oltId, index, sn) {
     });
     const data = await res.json();
     if (data.success) {
-      alert('ONU berhasil diotorisasi!');
+      alert('¡ONU autorizada!');
       refreshCurrentOlt();
     } else {
       alert(I18N.failedPrefix + data.error);
@@ -1067,7 +1067,7 @@ async function submitWanConfig(e) {
   const method = document.getElementById('wan_method').value;
   const mode = document.getElementById('wan_mode').value;
   if (method === 'go-api' && mode !== 'Bridge') {
-    alert('Metode go-api-c320 pada integrasi ini hanya untuk mode Bridge + VLAN. Pilih Bridge atau ganti metode.');
+    alert('El método go-api-c320 de esta integración es solo para modo bridge + VLAN. Elegí bridge o cambiá el método.');
     return;
   }
   const lans = Array.from(document.querySelectorAll('input[name="wan_lan"]:checked')).map(cb => cb.value);
@@ -1101,7 +1101,7 @@ async function submitWanConfig(e) {
     });
     const data = await res.json();
     if (data.success) {
-      alert('Konfigurasi WAN berhasil diterapkan!');
+      alert('¡Configuración WAN aplicada!');
       closeModal('wanConfigModal');
       refreshCurrentOlt();
     } else {
@@ -1115,13 +1115,13 @@ async function submitWanConfig(e) {
 }
 
 async function testExistingOlt(id) {
-  if (!confirm('Uji koneksi SNMP & Telnet ke OLT ini?')) return;
+  if (!confirm('¿Probar la conexión SNMP y Telnet con esta OLT?')) return;
   const overlay = document.getElementById('loading-overlay');
   if (overlay) overlay.style.display = 'flex';
   try {
     const res = await fetch(`/admin/olts/${id}/test-connection`, { method: 'POST' });
     const data = await res.json();
-    alert((data.success ? ' ' : ' ') + (data.message || 'Hasil tes koneksi selesai.'));
+    alert((data.success ? ' ' : ' ') + (data.message || 'Prueba de conexión terminada.'));
   } catch (e) {
     alert(' Error: ' + e.message);
   } finally {
@@ -1144,13 +1144,13 @@ async function testFormOlt(type) {
   const enable_password = isEdit ? document.getElementById('e_enable_password').value : form.querySelector('input[name="enable_password"]').value;
 
   if (!host) {
-    alert('Harap isi IP Address / Host OLT terlebih dahulu.');
+    alert('Primero completá la IP / host de la OLT.');
     return;
   }
 
   resultDiv.style.display = 'block';
   resultDiv.className = 'alert alert-i small mt-2';
-  resultDiv.innerHTML = '<i class="bi bi-hourglass-split spin"></i> Menguji koneksi SNMP & Telnet ke ' + host + '...';
+  resultDiv.innerHTML = '<i class="bi bi-hourglass-split spin"></i> Probando la conexión SNMP y Telnet con ' + host + '...';
 
   try {
     const res = await fetch('/admin/olts/test-connection', {

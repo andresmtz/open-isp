@@ -102,11 +102,11 @@
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%">
             <h6 style="margin:0"><i class="bi bi-people"></i> <%= t('admin.disc.pick_customer','Pilih Pelanggan') %> (<%= customers.length %>)</h6>
             <div class="disc-filter">
-              <span class="disc-badge" id="selCount" title="Jumlah pelanggan terpilih">0 <%= t('admin.disc.selected','dipilih') %></span>
+              <span class="disc-badge" id="selCount" title="Clientes seleccionados">0 <%= t('admin.disc.selected','dipilih') %></span>
               <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
-                <input type="checkbox" id="selectAll" style="width:16px;height:16px"> Pilih semua yang tampil
+                <input type="checkbox" id="selectAll" style="width:16px;height:16px"> Seleccionar todo lo visible
               </label>
-              <input class="fc" id="custSearch" placeholder="Cari nama / ID / HP..." style="max-width:220px">
+              <input class="fc" id="custSearch" placeholder="Buscar nombre / ID / teléfono..." style="max-width:220px">
             </div>
           </div>
         </div>
@@ -115,7 +115,7 @@
             <thead>
               <tr>
                 <th style="width:34px"></th>
-                <th style="width:110px">ID Pelanggan</th>
+                <th style="width:110px">ID de cliente</th>
                 <th><%= t('pwa.field.name','Nama') %></th>
                 <th style="width:130px">No. HP</th>
                 <th style="width:110px">Area</th>
@@ -163,7 +163,7 @@
           </thead>
           <tbody>
             <% if (!logs || logs.length===0) { %>
-              <tr><td colspan="8" class="text-center text-muted" style="padding:24px">Belum ada riwayat diskon.</td></tr>
+              <tr><td colspan="8" class="text-center text-muted" style="padding:24px">Todavía no hay historial de descuentos.</td></tr>
             <% } %>
             <% (logs||[]).forEach(function(l){ %>
               <tr>
@@ -202,7 +202,7 @@
     function syncHint(){
       hint.textContent = (type.value === 'percent')
         ? '<%= t('admin.disc.disc_hint','Persen dihitung dari harga dasar (sebelum PPN/USO).') %> Contoh: 10 = potong 10%.'
-        : 'Nominal potongan langsung dalam Rupiah. Contoh: 20000 = potong Rp 20.000.';
+        : 'Descuento directo en la moneda. Ejemplo: 20000 = descuenta 20.000.';
     }
     type.addEventListener('change', syncHint); syncHint();
 
@@ -240,7 +240,7 @@
         if (n === 0) { e.preventDefault(); alert('Pilih minimal 1 pelanggan (atau pilih mode Semua/Satu).'); }
       } else if (m === 'single') {
         var sel = document.querySelector('select[name="customer_id"]');
-        if (!sel || !sel.value) { e.preventDefault(); alert('Pilih pelanggan terlebih dahulu.'); }
+        if (!sel || !sel.value) { e.preventDefault(); alert('Primero elegí un cliente.'); }
       }
     });
     updateSelCount();

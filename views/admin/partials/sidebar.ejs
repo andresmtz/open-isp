@@ -32,7 +32,7 @@ function updateThemeToggleIcons(theme) {
     icon.style.color = isLight ? '#f59e0b' : '#fbbf24';
   });
   document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
-    btn.setAttribute('title', isLight ? 'Ganti ke Mode Gelap (Dark)' : 'Ganti ke Mode Terang (Light)');
+    btn.setAttribute('title', isLight ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro');
   });
 }
 
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div style="margin-top:8px;display:flex;gap:6px;align-items:center">
         <a href="/lang/es" class="btn btn-g btn-sm" style="padding:4px 8px">ES</a>
         <a href="/lang/en" class="btn btn-g btn-sm" style="padding:4px 8px">EN</a>
-        <button type="button" class="btn btn-g btn-sm theme-toggle-btn" onclick="toggleAppTheme()" title="Ganti Tema Dark / Light" style="padding:4px 8px;margin-left:auto">
+        <button type="button" class="btn btn-g btn-sm theme-toggle-btn" onclick="toggleAppTheme()" title="Cambiar tema oscuro / claro" style="padding:4px 8px;margin-left:auto">
           <i class="bi bi-moon-stars-fill theme-toggle-icon" style="color:#fbbf24"></i> <%= t('admin.side.theme','Tema') %>
         </button>
       </div>
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     <div style="padding:18px">
       <div id="lockedMenuModalMessage" style="color:#e2e8f0;line-height:1.6">
-        <%= t('admin.lock.desc','Menu ini sedang terkunci.') %>
+        <%= t('admin.lock.desc','Este menú está bloqueado.') %>
       </div>
       <div style="margin-top:16px;padding:12px 14px;border-radius:14px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.22);color:#bfdbfe;font-size:13px">
         <%= t('admin.lock.code_label','Kode aktivasi menu ini') %> <strong style="color:#86efac">GRATIS</strong> <%= t('admin.lock.wiki_note','— tanpa perlu donasi untuk membukanya.') %>
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('lockedMenuModal');
     const messageBox = document.getElementById('lockedMenuModalMessage');
     if (messageBox) {
-      messageBox.textContent = message || 'Menu ini sedang terkunci.';
+      messageBox.textContent = message || 'Este menú está bloqueado.';
     }
     if (modal) {
       modal.style.display = 'flex';

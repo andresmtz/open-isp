@@ -2,7 +2,7 @@
 <html lang="<%= lang || 'id' %>">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Preview Pesan WhatsApp | <%= company %></title>
+  <title>Vista previa de mensajes de WhatsApp | <%= company %></title>
   <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
   <link rel="stylesheet" href="/css/admin.css">
   <style>
@@ -27,7 +27,7 @@
   <div class="topbar">
     <div class="tb-title">
       <button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
-      <i class="bi bi-eye"></i> Preview Pesan WhatsApp
+      <i class="bi bi-eye"></i> Vista previa de mensajes de WhatsApp
     </div>
     <div class="tb-right">
       <a href="/admin/logout" class="btn btn-g btn-sm"><i class="bi bi-box-arrow-left"></i></a>
@@ -45,7 +45,7 @@
     </div>
 
     <div class="alert alert-s" style="margin-bottom:14px">
-      <i class="bi bi-info-circle"></i> Preview semua <b><%= t('admin.wp.auto','pesan otomatis') %></b><%= t('admin.wp.sample',' dengan data contoh — ') %><b><%= sample.nama %></b> (<%= sample.id %>), paket <%= sample.paket %>. Variabel <span class="mono">{{...}}</span> diisi otomatis saat benar-benar dikirim.
+      <i class="bi bi-info-circle"></i> Vista previa de todos <b><%= t('admin.wp.auto','pesan otomatis') %></b><%= t('admin.wp.sample',' dengan data contoh — ') %><b><%= sample.nama %></b> (<%= sample.id %>), plan <%= sample.paket %>. Variabel <span class="mono">{{...}}</span> se completan automáticamente al enviar.
     </div>
 
     <div class="wp-grid">
@@ -55,7 +55,7 @@
           <div class="wp-title"><i class="bi bi-chat-left-text"></i> <%= m.title %></div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <div class="wp-src"><%= m.key %></div>
-            <button type="button" class="btn btn-g btn-sm wp-send" data-idx="<%= i %>" title="Kirim contoh ke WA admin"><i class="bi bi-send"></i> Kirim contoh</button>
+            <button type="button" class="btn btn-g btn-sm wp-send" data-idx="<%= i %>" title="Enviar ejemplo al WhatsApp del administrador"><i class="bi bi-send"></i> Enviar ejemplo</button>
           </div>
         </div>
         <div class="wp-body">

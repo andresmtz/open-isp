@@ -306,7 +306,7 @@
   </div>
 
   <!-- Pajak & Retribusi -->
-  <div class="section-title">Pajak &amp; Retribusi<% if (filterMonth) { %> — Bulan <%= String(filterMonth).padStart(2, '0') %><% } %></div>
+  <div class="section-title">Pajak &amp; Retribusi<% if (filterMonth) { %> — Mes <%= String(filterMonth).padStart(2, '0') %><% } %></div>
   <table>
     <tbody>
       <tr><td><%= t('admin.fin.gross','Pemasukan (Bruto)') %></td><td class="text-right"><%= APP_CUR %> <%= Math.round(LR.bruto).toLocaleString(APP_LOCALE) %></td></tr>

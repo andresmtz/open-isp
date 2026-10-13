@@ -147,7 +147,7 @@
   %>
   <% if (templateError) { %>
     <div class="no-print" style="padding:10px 12px;background:#fff7ed;border:1px solid #fb923c;margin:8px;border-radius:8px;font-size:12px">
-      <b>Template Print:</b> <%= templateError %>
+      <b>Plantilla de impresión:</b> <%= templateError %>
     </div>
   <% } %>
   <% if (style === 'template' && renderedHtml) { %>
@@ -191,7 +191,7 @@
   <% } %>
 
   <div class="print-controls">
-    <button class="btn-action" onclick="window.print()"><i class="bi bi-printer-fill"></i> Cetak Voucher</button>
+    <button class="btn-action" onclick="window.print()"><i class="bi bi-printer-fill"></i> Imprimir fichas</button>
     <button class="btn-action btn-close" onclick="window.close()"><i class="bi bi-x-lg"></i> <%= t('common.close','Tutup') %></button>
   </div>
 

@@ -68,22 +68,22 @@
     <!-- Stat Cards -->
     <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
       <div class="sc p"><i class="bi bi-people sc-icon"></i><div class="sc-label">Total Karyawan</div><div class="sc-val"><%= employees.length %></div><div class="sc-sub"><%= t('common.active','Aktif') %></div></div>
-      <div class="sc s"><i class="bi bi-wallet2 sc-icon"></i><div class="sc-label">Total Gaji Bersih</div><div class="sc-val"><%= APP_CUR %> <%= summary.total_net.toLocaleString(APP_LOCALE) %></div><div class="sc-sub"><%= selectedMonth %>/<%= selectedYear %></div></div>
-      <div class="sc p"><i class="bi bi-file-earmark-text sc-icon"></i><div class="sc-label">Slip Gaji</div><div class="sc-val"><%= summary.total_slips %></div><div class="sc-sub"><span style="color:#7d8590"><%= summary.draft_count %> draft</span> · <span style="color:#3b82f6"><%= summary.approved_count %> approved</span> · <span style="color:#22c55e"><%= summary.paid_count %> paid</span></div></div>
+      <div class="sc s"><i class="bi bi-wallet2 sc-icon"></i><div class="sc-label">Total de sueldos netos</div><div class="sc-val"><%= APP_CUR %> <%= summary.total_net.toLocaleString(APP_LOCALE) %></div><div class="sc-sub"><%= selectedMonth %>/<%= selectedYear %></div></div>
+      <div class="sc p"><i class="bi bi-file-earmark-text sc-icon"></i><div class="sc-label">Recibo de sueldo</div><div class="sc-val"><%= summary.total_slips %></div><div class="sc-sub"><span style="color:#7d8590"><%= summary.draft_count %> draft</span> · <span style="color:#3b82f6"><%= summary.approved_count %> approved</span> · <span style="color:#22c55e"><%= summary.paid_count %> paid</span></div></div>
       <div class="sc d"><i class="bi bi-cash-stack sc-icon"></i><div class="sc-label">Total Potongan</div><div class="sc-val"><%= APP_CUR %> <%= summary.total_deductions.toLocaleString(APP_LOCALE) %></div><div class="sc-sub"><%= selectedMonth %>/<%= selectedYear %></div></div>
     </div>
 
     <!-- Tab Navigation -->
     <div class="tab-bar" style="margin-top:20px">
-      <button class="tab-btn active" onclick="switchTab('settings')"><i class="bi bi-gear"></i> Pengaturan Gaji</button>
-      <button class="tab-btn" onclick="switchTab('slips')"><i class="bi bi-receipt"></i> Slip Gaji</button>
+      <button class="tab-btn active" onclick="switchTab('settings')"><i class="bi bi-gear"></i> Configuración de sueldos</button>
+      <button class="tab-btn" onclick="switchTab('slips')"><i class="bi bi-receipt"></i> Recibo de sueldo</button>
     </div>
 
     <!-- TAB 1: Pengaturan Gaji -->
     <div class="tab-content active" id="tab-settings">
       <div class="card">
         <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center">
-          <h6><i class="bi bi-gear"></i> Pengaturan Gaji Karyawan</h6>
+          <h6><i class="bi bi-gear"></i> Configuración de sueldos del personal</h6>
         </div>
         <div class="card-bd">
           <% if (employees.length === 0) { %>
@@ -102,10 +102,10 @@
               <% if (emp.payroll) { %>
               <div class="emp-salary"><%= APP_CUR %> <%= emp.payroll.base_salary.toLocaleString(APP_LOCALE) %></div>
               <% } else { %>
-              <span style="color:var(--muted);font-size:12px">Belum diset</span>
+              <span style="color:var(--muted);font-size:12px">Sin configurar</span>
               <% } %>
               <button class="btn btn-p btn-sm" data-type="<%= emp.employee_type %>" data-id="<%= emp.id %>" data-name="<%= emp.name %>" onclick="editPayroll(this.dataset.type, this.dataset.id, this.dataset.name)">
-                <i class="bi bi-pencil"></i> Set Gaji
+                <i class="bi bi-pencil"></i> Configurar sueldo
               </button>
             </div>
           </div>
@@ -119,7 +119,7 @@
     <div class="tab-content" id="tab-slips">
       <div class="card">
         <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-          <h6><i class="bi bi-receipt"></i> Slip Gaji — <%= selectedMonth %>/<%= selectedYear %></h6>
+          <h6><i class="bi bi-receipt"></i> Recibo de sueldo — <%= selectedMonth %>/<%= selectedYear %></h6>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <form method="GET" action="/admin/payroll" style="display:flex;gap:6px;align-items:center">
               <select name="month" class="fc" style="width:auto;padding:6px 10px">
@@ -131,28 +131,28 @@
             <form method="POST" action="/admin/payroll/generate" onsubmit="return confirm('Generate slip gaji untuk semua karyawan?')">
               <input type="hidden" name="month" value="<%= selectedMonth %>">
               <input type="hidden" name="year" value="<%= selectedYear %>">
-              <button type="submit" class="btn btn-s btn-sm"><i class="bi bi-magic"></i> Generate Semua</button>
+              <button type="submit" class="btn btn-s btn-sm"><i class="bi bi-magic"></i> Generar todos</button>
             </form>
           </div>
         </div>
         <div class="card-bd">
           <% if (slips.length === 0) { %>
-          <div style="text-align:center;padding:40px"><div style="font-size:48px;opacity:.3"><i class="bi bi-inbox"></i></div><p style="color:var(--muted)"><%= t('admin.payroll.empty_slip','Belum ada slip gaji untuk periode ini') %></p><p style="color:var(--muted);font-size:12px"><%= t('admin.payroll.gen_hint','Klik "Generate Semua" untuk membuat slip gaji otomatis') %></p></div>
+          <div style="text-align:center;padding:40px"><div style="font-size:48px;opacity:.3"><i class="bi bi-inbox"></i></div><p style="color:var(--muted)"><%= t('admin.payroll.empty_slip','Belum ada slip gaji untuk periode ini') %></p><p style="color:var(--muted);font-size:12px"><%= t('admin.payroll.gen_hint','Klik "Generar todos" untuk membuat slip gaji otomatis') %></p></div>
           <% } else { %>
 
           <!-- Bulk Actions -->
           <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
             <form method="POST" action="/admin/payroll/bulk-approve" style="display:inline" onsubmit="return confirm('Approve semua slip draft?')">
               <input type="hidden" name="month" value="<%= selectedMonth %>"><input type="hidden" name="year" value="<%= selectedYear %>">
-              <button type="submit" class="btn btn-p btn-sm"><i class="bi bi-check-all"></i> Approve Semua Draft</button>
+              <button type="submit" class="btn btn-p btn-sm"><i class="bi bi-check-all"></i> Aprobar todos los borradores</button>
             </form>
             <form method="POST" action="/admin/payroll/bulk-paid" style="display:inline" onsubmit="return confirm('Tandai semua slip approved sebagai paid?')">
               <input type="hidden" name="month" value="<%= selectedMonth %>"><input type="hidden" name="year" value="<%= selectedYear %>">
-              <button type="submit" class="btn btn-s btn-sm"><i class="bi bi-cash-coin"></i> Tandai Semua Paid</button>
+              <button type="submit" class="btn btn-s btn-sm"><i class="bi bi-cash-coin"></i> Marcar todos como pagados</button>
             </form>
             <form method="POST" action="/admin/payroll/delete-drafts" style="display:inline" onsubmit="return confirm('Hapus semua slip draft? Ini tidak bisa dikembalikan.')">
               <input type="hidden" name="month" value="<%= selectedMonth %>"><input type="hidden" name="year" value="<%= selectedYear %>">
-              <button type="submit" class="btn btn-d btn-sm"><i class="bi bi-trash"></i> Hapus Draft</button>
+              <button type="submit" class="btn btn-d btn-sm"><i class="bi bi-trash"></i> Eliminar borradores</button>
             </form>
           </div>
 
@@ -166,22 +166,22 @@
               <span style="color:var(--muted);font-size:12px"><%= slip.employee_type %> · <%= slip.period_month %>/<%= slip.period_year %></span>
             </div>
             <div class="slip-breakdown">
-              <span class="label">Gaji Pokok</span><span class="value"><%= APP_CUR %> <%= slip.base_salary.toLocaleString(APP_LOCALE) %></span>
+              <span class="label">Sueldo base</span><span class="value"><%= APP_CUR %> <%= slip.base_salary.toLocaleString(APP_LOCALE) %></span>
               <% if(slip.transport_allowance){%><span class="label">Tunj. Transport</span><span class="value"><%= APP_CUR %> <%= slip.transport_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
               <% if(slip.meal_allowance){%><span class="label">Tunj. Makan</span><span class="value"><%= APP_CUR %> <%= slip.meal_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
               <% if(slip.phone_allowance){%><span class="label">Tunj. Pulsa</span><span class="value"><%= APP_CUR %> <%= slip.phone_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
               <% if(slip.other_allowance){%><span class="label">Tunj. Lain (<%= slip.other_allowance_note || '-' %>)</span><span class="value"><%= APP_CUR %> <%= slip.other_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
-              <% if(slip.ticket_bonus){%><span class="label">Bonus Tiket (<%= slip.total_tickets_resolved %> tiket)</span><span class="value" style="color:#22c55e">+<%= APP_CUR %> <%= slip.ticket_bonus.toLocaleString(APP_LOCALE) %></span><%}%>
-              <% if(slip.collection_commission){%><span class="label">Komisi Tagihan</span><span class="value" style="color:#22c55e">+<%= APP_CUR %> <%= slip.collection_commission.toLocaleString(APP_LOCALE) %></span><%}%>
-              <% if(slip.overtime_bonus){%><span class="label">Lembur (<%= slip.overtime_hours %> jam)</span><span class="value" style="color:#22c55e">+<%= APP_CUR %> <%= slip.overtime_bonus.toLocaleString(APP_LOCALE) %></span><%}%>
+              <% if(slip.ticket_bonus){%><span class="label">Bono por tickets (<%= slip.total_tickets_resolved %> tickets)</span><span class="value" style="color:#22c55e">+<%= APP_CUR %> <%= slip.ticket_bonus.toLocaleString(APP_LOCALE) %></span><%}%>
+              <% if(slip.collection_commission){%><span class="label">Comisión por cobranza</span><span class="value" style="color:#22c55e">+<%= APP_CUR %> <%= slip.collection_commission.toLocaleString(APP_LOCALE) %></span><%}%>
+              <% if(slip.overtime_bonus){%><span class="label">Lembur (<%= slip.overtime_hours %> horas)</span><span class="value" style="color:#22c55e">+<%= APP_CUR %> <%= slip.overtime_bonus.toLocaleString(APP_LOCALE) %></span><%}%>
               <div class="sep"></div>
               <span class="label"><strong>Total Pendapatan</strong></span><span class="value"><strong><%= APP_CUR %> <%= slip.gross_salary.toLocaleString(APP_LOCALE) %></strong></span>
-              <% if(slip.absence_deduction){%><span class="label">Potongan Absen (<%= slip.absent_days %> hari)</span><span class="value" style="color:#f85149">-<%= APP_CUR %> <%= slip.absence_deduction.toLocaleString(APP_LOCALE) %></span><%}%>
-              <% if(slip.late_deduction){%><span class="label">Potongan Terlambat (<%= slip.late_days %> hari)</span><span class="value" style="color:#f85149">-<%= APP_CUR %> <%= slip.late_deduction.toLocaleString(APP_LOCALE) %></span><%}%>
+              <% if(slip.absence_deduction){%><span class="label">Descuento por ausencias (<%= slip.absent_days %> días)</span><span class="value" style="color:#f85149">-<%= APP_CUR %> <%= slip.absence_deduction.toLocaleString(APP_LOCALE) %></span><%}%>
+              <% if(slip.late_deduction){%><span class="label">Potongan Terlambat (<%= slip.late_days %> días)</span><span class="value" style="color:#f85149">-<%= APP_CUR %> <%= slip.late_deduction.toLocaleString(APP_LOCALE) %></span><%}%>
               <% if(slip.other_deduction){%><span class="label">Potongan Lain (<%= slip.other_deduction_note || '-' %>)</span><span class="value" style="color:#f85149">-<%= APP_CUR %> <%= slip.other_deduction.toLocaleString(APP_LOCALE) %></span><%}%>
               <div class="sep"></div>
-              <span class="label">Hadir: <%= slip.working_days %> hari · Absen: <%= slip.absent_days %> hari</span><span class="value"></span>
-              <span class="label total"><strong>GAJI BERSIH</strong></span><span class="value total" style="color:var(--primary);font-size:18px"><strong><%= APP_CUR %> <%= slip.net_salary.toLocaleString(APP_LOCALE) %></strong></span>
+              <span class="label">Hadir: <%= slip.working_days %> días · Ausencias: <%= slip.absent_days %> hari</span><span class="value"></span>
+              <span class="label total"><strong>SUELDO NETO</strong></span><span class="value total" style="color:var(--primary);font-size:18px"><strong><%= APP_CUR %> <%= slip.net_salary.toLocaleString(APP_LOCALE) %></strong></span>
             </div>
             <div class="action-row">
               <form id="papp-<%= slip.id %>" method="POST" action="/admin/payroll/slip/<%= slip.id %>/approve" style="display:none" onsubmit="return confirm('Approve slip ini?')"></form>
@@ -199,10 +199,10 @@
                   <div class="act-sep"></div>
                   <a class="act-item" href="/admin/payroll/slip/<%= slip.id %>/print" target="_blank"><i class="bi bi-printer"></i> Cetak</a>
                   <a class="act-item" href="/admin/payroll/slip/<%= slip.id %>/pdf" target="_blank"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
-                  <button type="button" class="act-item" data-id="<%= slip.id %>" onclick="sendSlipWA(this.dataset.id)"><i class="bi bi-whatsapp"></i> Kirim WA</button>
+                  <button type="button" class="act-item" data-id="<%= slip.id %>" onclick="sendSlipWA(this.dataset.id)"><i class="bi bi-whatsapp"></i> Enviar WhatsApp</button>
                   <% if(slip.status==='draft'){%>
                   <div class="act-sep"></div>
-                  <button type="submit" form="pdel-<%= slip.id %>" class="act-item danger"><i class="bi bi-trash"></i> Hapus Slip</button>
+                  <button type="submit" form="pdel-<%= slip.id %>" class="act-item danger"><i class="bi bi-trash"></i> Eliminar recibo</button>
                   <%}%>
                 </div>
               </div>
@@ -219,22 +219,22 @@
 <!-- Modal Set Gaji -->
 <div class="mo" id="payrollModal" style="display:none">
   <div class="mb" style="max-width:520px">
-    <div class="mb-hd"><h6 id="modalTitle">Set Gaji Karyawan</h6><button class="mo-close" onclick="closeModal()">&times;</button></div>
+    <div class="mb-hd"><h6 id="modalTitle">Configurar sueldo del empleado</h6><button class="mo-close" onclick="closeModal()">&times;</button></div>
     <form method="POST" action="/admin/payroll/settings" id="payrollForm">
       <input type="hidden" name="employee_type" id="f_type">
       <input type="hidden" name="employee_id" id="f_id">
       <div class="mb-bd" style="max-height:70vh;overflow-y:auto">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div><label class="fl">Gaji Pokok</label><input type="number" name="base_salary" id="f_base" class="fc" required></div>
-          <div><label class="fl">Hari Kerja/Bulan</label><input type="number" name="working_days_per_month" id="f_days" class="fc" value="26"></div>
+          <div><label class="fl">Sueldo base</label><input type="number" name="base_salary" id="f_base" class="fc" required></div>
+          <div><label class="fl">Días de trabajo/mes</label><input type="number" name="working_days_per_month" id="f_days" class="fc" value="26"></div>
           <div><label class="fl">Tunj. Transport</label><input type="number" name="transport_allowance" id="f_transport" class="fc" value="0"></div>
           <div><label class="fl">Tunj. Makan</label><input type="number" name="meal_allowance" id="f_meal" class="fc" value="0"></div>
           <div><label class="fl">Tunj. Pulsa</label><input type="number" name="phone_allowance" id="f_phone" class="fc" value="0"></div>
           <div><label class="fl">Tunj. Lain</label><input type="number" name="other_allowance" id="f_other" class="fc" value="0"></div>
           <div style="grid-column:1/-1"><label class="fl">Ket. Tunj. Lain</label><input type="text" name="other_allowance_note" id="f_other_note" class="fc" placeholder="BPJS, dll"></div>
-          <div><label class="fl">Potongan/Hari Absen</label><input type="number" name="absence_deduction_per_day" id="f_absence" class="fc" value="0"></div>
-          <div><label class="fl">Bonus/Tiket (Teknisi)</label><input type="number" name="bonus_per_ticket" id="f_bonus" class="fc" value="0"></div>
-          <div style="grid-column:1/-1"><label class="fl">Komisi % Tagihan (Kolektor)</label><input type="number" step="0.1" name="commission_percentage" id="f_commission" class="fc" value="0"></div>
+          <div><label class="fl">Descuento por día de ausencia</label><input type="number" name="absence_deduction_per_day" id="f_absence" class="fc" value="0"></div>
+          <div><label class="fl">Bono por ticket (técnico)</label><input type="number" name="bonus_per_ticket" id="f_bonus" class="fc" value="0"></div>
+          <div style="grid-column:1/-1"><label class="fl">Comisión % de cobranza (cobrador)</label><input type="number" step="0.1" name="commission_percentage" id="f_commission" class="fc" value="0"></div>
         </div>
       </div>
       <div class="mb-ft"><button type="button" class="btn btn-g" onclick="closeModal()"><%= t('common.cancel','Batal') %></button><button type="submit" class="btn btn-p"><%= t('common.save','Simpan') %></button></div>
@@ -252,7 +252,7 @@ function switchTab(name){
 }
 
 function editPayroll(type, id, name){
-  document.getElementById('modalTitle').textContent = 'Set Gaji — ' + name;
+  document.getElementById('modalTitle').textContent = 'Configurar sueldo — ' + name;
   document.getElementById('f_type').value = type;
   document.getElementById('f_id').value = id;
   const d = payrollData[type+'_'+id];
@@ -272,7 +272,7 @@ function editPayroll(type, id, name){
 function closeModal(){ document.getElementById('payrollModal').style.display = 'none'; }
 
 function editDeduction(id){
-  const amount = prompt('Jumlah potongan lain (Rp):','0');
+  const amount = prompt('Monto de otros descuentos:','0');
   if(amount===null) return;
   const note = prompt('Keterangan potongan:','');
   fetch('/admin/payroll/slip/'+id+'/deduction',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({other_deduction:amount,other_deduction_note:note||''})})
@@ -280,7 +280,7 @@ function editDeduction(id){
 }
 
 function sendSlipWA(id){
-  if(!confirm('Kirim slip gaji via WhatsApp?')) return;
+  if(!confirm('¿Enviar el recibo de sueldo por WhatsApp?')) return;
   fetch('/admin/payroll/slip/'+id+'/send-wa',{method:'POST'})
     .then(r=>r.json()).then(d=>{alert(d.success?' Terkirim':' '+(d.message||'Gagal'))}).catch(e=>alert('Error: '+e.message));
 }

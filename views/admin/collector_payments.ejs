@@ -34,7 +34,7 @@
         <h6><i class="bi bi-list-ul"></i> <%= t('admin.cpay.list','Daftar Request') %> (<%= (rows || []).length %>)</h6>
       </div>
       <div class="hint" style="padding:12px 16px 0 16px;font-size:12px;color:var(--muted)">
-        Label proses membantu membedakan request yang memang menunggu approval, request yang otomatis langsung lunas oleh kolektor, dan request yang sudah diproses admin atau kasir.
+        La etiqueta del proceso ayuda a distinguir las solicitudes que esperan aprobación, las que el cobrador saldó automáticamente y las que ya procesó el administrador o el cajero.
       </div>
       <div style="padding:12px 16px 0 16px;display:flex;gap:10px;flex-wrap:wrap">
         <select id="processFilter" class="fs" style="max-width:220px">
@@ -44,7 +44,7 @@
           <option value="admin"><%= t('admin.cpay.opt_admin','Disetujui Admin') %></option>
           <option value="cashier"><%= t('admin.cpay.opt_cashier','Disetujui Kasir') %></option>
           <option value="rejected"><%= t('admin.cpay.opt_rejected','Ditolak Manual') %></option>
-          <option value="manual"><%= t('admin.cpay.opt_manual','Diproses Manual') %></option>
+          <option value="manual"><%= t('admin.cpay.opt_manual','Procesado a mano') %></option>
         </select>
       </div>
       <div class="tbl-wrap">
@@ -63,7 +63,7 @@
           </thead>
           <tbody>
             <% if (!rows || rows.length === 0) { %>
-              <tr><td colspan="8" class="text-center text-muted" style="padding:24px">Tidak ada request.</td></tr>
+              <tr><td colspan="8" class="text-center text-muted" style="padding:24px">No hay solicitudes.</td></tr>
             <% } else { %>
               <% rows.forEach(r => { %>
                 <% 
@@ -74,7 +74,7 @@
                     decidedRole === 'cashier' ? 'Disetujui Kasir' :
                     decidedRole === 'admin' ? 'Disetujui Admin' :
                     r.status === 'rejected' ? 'Ditolak Manual' :
-                    'Diproses Manual';
+                    'Procesado a mano';
                   const processBadge =
                     r.status === 'pending' ? 'bm' :
                     decidedRole === 'system' ? 'bs' :
@@ -99,7 +99,7 @@
                   <td>
                     <span class="badge <%= processBadge %>"><%= processLabel %></span>
                     <% if (decidedRole === 'system') { %>
-                      <div style="font-size:10px;color:var(--muted)">Kolektor auto-approve aktif</div>
+                      <div style="font-size:10px;color:var(--muted)">Aprobación automática del cobrador activa</div>
                     <% } else if (r.status === 'pending') { %>
                       <div style="font-size:10px;color:var(--muted)"><%= t('admin.cpay.wait_approval','Menunggu admin atau kasir') %></div>
                     <% } else if (r.decided_by_name) { %>

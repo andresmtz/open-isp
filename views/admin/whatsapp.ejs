@@ -66,8 +66,8 @@
             </select>
           </div>
           <div class="fg">
-            <label class="fl">Nomor WA Pengirim (Business Phone)</label>
-            <input class="fc" name="meta_business_phone" value="<%= metaSettings.meta_business_phone %>" placeholder="Contoh: 628123456789">
+            <label class="fl">Número de WhatsApp emisor (Business Phone)</label>
+            <input class="fc" name="meta_business_phone" value="<%= metaSettings.meta_business_phone %>" placeholder="Ejemplo: 595981123456">
           </div>
         </div>
 
@@ -78,10 +78,10 @@
           <div class="form-row mb12">
             <div class="fg" style="flex: 2;">
               <label class="fl">Fonnte API Token / Device Key *</label>
-              <input class="fc" name="fonnte_token" id="fonnte_token" value="<%= fonnteSettings.fonnte_token %>" placeholder="Paste Token Akun / Device Fonnte di sini...">
+              <input class="fc" name="fonnte_token" id="fonnte_token" value="<%= fonnteSettings.fonnte_token %>" placeholder="Pegá aquí el token de la cuenta / dispositivo de Fonnte...">
             </div>
             <div class="fg" style="flex: 1;">
-              <label class="fl">Country Code (Kode Negara)</label>
+              <label class="fl">Código de país</label>
               <input class="fc" name="fonnte_country_code" value="<%= fonnteSettings.fonnte_country_code %>" placeholder="<%= regional.phoneCountryCode %>">
             </div>
           </div>
@@ -97,7 +97,7 @@
           <!-- BOX COPY-PASTE WEBHOOK URL -->
           <div style="font-size: 11.5px; margin-top: 12px; background: var(--bg2); padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <strong style="color: #2563eb;"><i class="bi bi-link-45deg"></i> Webhook Callback URL (Untuk disalin ke Dashboard Fonnte):</strong>
+              <strong style="color: #2563eb;"><i class="bi bi-link-45deg"></i> URL de callback del webhook (para copiar en el panel de Fonnte):</strong>
               <button type="button" class="btn btn-g btn-sm" onclick="copyWebhookUrl('fonnte_webhook_url')" style="padding: 2px 8px; font-size: 11px;"><i class="bi bi-clipboard"></i> Salin URL</button>
             </div>
             <div style="display: flex; gap: 6px;">
@@ -107,11 +107,11 @@
 
           <!-- LIVE TEST SENDER FONNTE -->
           <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(59, 130, 246, 0.2);">
-            <label class="fl" style="color: #2563eb; font-weight: 600;"><i class="bi bi-lightning-charge"></i> Tes Kirim Pesan Cepat via Fonnte</label>
+            <label class="fl" style="color: #2563eb; font-weight: 600;"><i class="bi bi-lightning-charge"></i> Prueba rápida de envío vía Fonnte</label>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <input type="text" id="test_fonnte_phone" class="fc" placeholder="Nomor WhatsApp (misal: 08123456789)" style="flex: 1; min-width: 180px;">
-              <input type="text" id="test_fonnte_msg" class="fc" placeholder="Pesan uji coba..." value="🔔 Tes Notifikasi Billing via Fonnte Gateway Berhasil!" style="flex: 2; min-width: 240px;">
-              <button type="button" class="btn btn-p" onclick="sendTestFonnte()"><i class="bi bi-send"></i> Tes Kirim</button>
+              <input type="text" id="test_fonnte_phone" class="fc" placeholder="Número de WhatsApp (ej.: 0981123456)" style="flex: 1; min-width: 180px;">
+              <input type="text" id="test_fonnte_msg" class="fc" placeholder="Mensaje de prueba..." value="🔔 ¡Prueba de notificación del sistema vía Fonnte correcta!" style="flex: 2; min-width: 240px;">
+              <button type="button" class="btn btn-p" onclick="sendTestFonnte()"><i class="bi bi-send"></i> Enviar prueba</button>
             </div>
             <div id="test_fonnte_result" style="margin-top: 8px; font-size: 12px; display: none;"></div>
           </div>
@@ -124,11 +124,11 @@
           <div class="form-row mb12">
             <div class="fg">
               <label class="fl">Meta Phone Number ID *</label>
-              <input class="fc" name="meta_phone_number_id" value="<%= metaSettings.meta_phone_number_id %>" placeholder="Contoh: 100654321987654">
+              <input class="fc" name="meta_phone_number_id" value="<%= metaSettings.meta_phone_number_id %>" placeholder="Ejemplo: 100654321987654">
             </div>
             <div class="fg">
               <label class="fl">Meta Business Account ID (WABA ID)</label>
-              <input class="fc" name="meta_waba_id" value="<%= metaSettings.meta_waba_id %>" placeholder="Contoh: 109876543210987">
+              <input class="fc" name="meta_waba_id" value="<%= metaSettings.meta_waba_id %>" placeholder="Ejemplo: 109876543210987">
             </div>
           </div>
 
@@ -178,7 +178,7 @@
           <div style="margin-top:12px;padding:12px;border-radius:10px;background:rgba(173,255,47,.06);border:1px solid var(--primary-glow);">
             <div class="fw6" style="font-size:12.5px;color:var(--primary);margin-bottom:6px;"><i class="bi bi-qr-code"></i> Login WhatsApp (Scan QR)</div>
             <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px"><%- t('admin.wa.qr_hint','Klik tombol, lalu buka WhatsApp &rarr; Perangkat Tertaut &rarr; Tautkan perangkat, scan QR. QR berlaku ~30 detik &amp; diperbarui otomatis.') %></div>
-            <button type="button" class="btn btn-p btn-sm" onclick="showGowaQr()"><i class="bi bi-qr-code-scan"></i> Tampilkan QR</button>
+            <button type="button" class="btn btn-p btn-sm" onclick="showGowaQr()"><i class="bi bi-qr-code-scan"></i> Mostrar QR</button>
             <a href="<%= gowaUiUrl %>" target="_blank" rel="noopener" class="btn btn-g btn-sm" style="margin-left:6px"><i class="bi bi-box-arrow-up-right"></i> Buka UI GOWA</a>
             <div id="gowa_qr_wrap" style="display:none;margin-top:10px;text-align:center">
               <img id="gowa_qr_img" alt="QR GOWA" style="max-width:240px;background:#fff;padding:10px;border-radius:12px">
@@ -186,8 +186,8 @@
             </div>
           </div>
           <div style="margin-top:12px;padding:12px;border-radius:10px;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);">
-            <div class="fw6" style="font-size:12.5px;color:var(--info,#38BDF8);margin-bottom:6px;"><i class="bi bi-broadcast"></i> Webhook Pesan Masuk (Live Chat)</div>
-            <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">Set di GOWA: <code>WHATSAPP_WEBHOOK=&lt;URL di bawah&gt;</code> dan <code>WHATSAPP_WEBHOOK_SECRET=&lt;secret&gt;</code>, lalu restart GOWA. <strong>Catatan:</strong> bot WA <em>tidak</em><%= t('admin.wa.notif_only',' membalas perintah lagi — WhatsApp hanya untuk ') %><strong>notifikasi</strong>. Interaksi cepat (menu admin/teknisi) kini dipindah ke <strong>Telegram</strong>.</div>
+            <div class="fw6" style="font-size:12.5px;color:var(--info,#38BDF8);margin-bottom:6px;"><i class="bi bi-broadcast"></i> Webhook de mensajes entrantes (chat en vivo)</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">Set di GOWA: <code>WHATSAPP_WEBHOOK=&lt;URL di bawah&gt;</code> dan <code>WHATSAPP_WEBHOOK_SECRET=&lt;secret&gt;</code>, lalu restart GOWA. <strong>Catatan:</strong> bot WA <em>tidak</em><%= t('admin.wa.notif_only',' membalas perintah lagi — WhatsApp hanya untuk ') %><strong>notifikasi</strong>. Las interacciones rápidas (menú de administración/técnicos) ahora están en <strong>Telegram</strong>.</div>
             <div class="form-row mb12">
               <div class="fg" style="flex:2;">
                 <label class="fl">Webhook URL (tempel ke GOWA)</label>
@@ -203,17 +203,17 @@
             </div>
           </div>
           <div style="margin-top:6px;padding-top:12px;border-top:1px dashed var(--border);">
-            <label class="fl" style="font-weight:600;"><i class="bi bi-lightning-charge"></i> Tes Kirim Pesan via GOWA</label>
+            <label class="fl" style="font-weight:600;"><i class="bi bi-lightning-charge"></i> Prueba de envío vía GOWA</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <input type="text" id="test_gowa_phone" class="fc" placeholder="Nomor WhatsApp (mis. 08123456789)" style="flex:1;min-width:180px;">
-              <input type="text" id="test_gowa_msg" class="fc" placeholder="Pesan uji coba..." value="Tes Notifikasi Billing via GOWA Gateway Berhasil!" style="flex:2;min-width:240px;">
-              <button type="button" class="btn btn-p" onclick="sendTestGowa()"><i class="bi bi-send"></i> Tes Kirim</button>
+              <input type="text" id="test_gowa_phone" class="fc" placeholder="Número de WhatsApp (ej. 0981123456)" style="flex:1;min-width:180px;">
+              <input type="text" id="test_gowa_msg" class="fc" placeholder="Mensaje de prueba..." value="¡Prueba de notificación del sistema vía GOWA correcta!" style="flex:2;min-width:240px;">
+              <button type="button" class="btn btn-p" onclick="sendTestGowa()"><i class="bi bi-send"></i> Enviar prueba</button>
             </div>
             <div id="test_gowa_result" style="margin-top:8px;font-size:12px;display:none;"></div>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-p"><i class="bi bi-save"></i> Simpan Pengaturan Gateway</button>
+        <button type="submit" class="btn btn-p"><i class="bi bi-save"></i> Guardar configuración del gateway</button>
       </form>
     </div>
 
@@ -232,13 +232,13 @@
         var wrap = document.getElementById('gowa_qr_wrap');
         if (wrap) wrap.style.display = 'block';
         var st = document.getElementById('gowa_qr_status');
-        if (st) st.textContent = 'Memuat QR...';
+        if (st) st.textContent = 'Cargando QR...';
         gowaQrCycle();
       }
       function gowaQrCycle() {
         fetch('/admin/whatsapp/gowa/qr', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
           var st = document.getElementById('gowa_qr_status');
-          if (!d || !d.ok) { if (st) st.textContent = (d && d.message) || 'Gagal memuat QR'; return; }
+          if (!d || !d.ok) { if (st) st.textContent = (d && d.message) || 'No se pudo cargar el QR'; return; }
           var img = document.getElementById('gowa_qr_img');
           if (img) img.src = d.image;
           // durasi (detik) dari GOWA -> qr_duration; fallback 30s
@@ -253,7 +253,7 @@
         var st = document.getElementById('gowa_qr_status');
         if (_gowaQrTick) clearInterval(_gowaQrTick);
         var remaining = dur;
-        function render() { if (st) st.innerHTML = 'Scan QR dengan WhatsApp &mdash; QR baru dalam <b>' + remaining + '</b> detik.'; }
+        function render() { if (st) st.innerHTML = 'Escaneá el QR con WhatsApp &mdash; QR nuevo en <b>' + remaining + '</b> segundos.'; }
         render();
         _gowaQrTick = setInterval(function () { remaining--; if (remaining < 0) remaining = 0; render(); }, 1000);
       }
@@ -281,10 +281,10 @@ async function sendTestGowa() {
         if (el) {
           el.select();
           navigator.clipboard.writeText(el.value).then(() => {
-            alert(' Webhook URL berhasil disalin ke clipboard:\n' + el.value);
+            alert(' URL del webhook copiada al portapapeles:\n' + el.value);
           }).catch(() => {
             document.execCommand('copy');
-            alert(' Webhook URL berhasil disalin ke clipboard:\n' + el.value);
+            alert(' URL del webhook copiada al portapapeles:\n' + el.value);
           });
         }
       }
@@ -295,14 +295,14 @@ async function sendTestGowa() {
         const resDiv = document.getElementById('test_fonnte_result');
 
         if (!phone) {
-          alert('Harap masukkan nomor WhatsApp tujuan tes!');
+          alert('¡Ingresá el número de WhatsApp de destino para la prueba!');
           document.getElementById('test_fonnte_phone').focus();
           return;
         }
 
         resDiv.style.display = 'block';
         resDiv.style.color = 'var(--muted)';
-        resDiv.innerHTML = '<i class="bi bi-hourglass-split"></i> Mengirim pesan tes via Fonnte...';
+        resDiv.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando mensaje de prueba vía Fonnte...';
 
         try {
           const resp = await fetch('/admin/whatsapp/test-fonnte', {
@@ -428,12 +428,12 @@ async function sendTestGowa() {
       } else if (status.connection === 'connecting') {
         icon.classList.add('status-qr');
         text.innerText = 'Menghubungkan...';
-        desc.innerText = status.loadingProgress || 'Autentikasi berhasil, sedang menyinkronkan chat WhatsApp Web... Harap tunggu beberapa detik.';
+        desc.innerText = status.loadingProgress || 'Autenticación correcta; sincronizando el chat de WhatsApp Web... Esperá unos segundos.';
       } else {
         icon.classList.add('status-close');
         if (status.gateway === 'gowa') {
-          text.innerText = 'Belum Terhubung';
-          desc.innerText = 'Klik Tampilkan QR untuk login WhatsApp via GOWA.';
+          text.innerText = 'Sin conectar';
+          desc.innerText = 'Hacé clic en Mostrar QR para vincular WhatsApp vía GOWA.';
         } else {
           text.innerText = I18N.descOffPrefix + ' (' + (status.connection || 'off') + ')';
           desc.innerText = I18N.descOff;

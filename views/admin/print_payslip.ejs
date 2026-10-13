@@ -2,7 +2,7 @@
 <html lang="<%= typeof lang !== "undefined" ? lang : "es" %>">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title><%= t('admin.payslip.title', 'Slip Gaji') %> — <%= slip.employee_name %></title>
+  <title><%= t('admin.payslip.title', 'Recibo de sueldo') %> — <%= slip.employee_name %></title>
   <link rel="stylesheet" href="/css/admin.css">
   <!-- no-admin-theme -->
   <style>
@@ -81,13 +81,13 @@
 
   <table>
     <tr class="section-header"><td colspan="2"><%= t('admin.payslip.income', 'PENDAPATAN') %></td></tr>
-    <tr><td><%= t('admin.payslip.base_salary', 'Gaji Pokok') %></td><td class="amount"><%= APP_CUR %> <%= slip.base_salary.toLocaleString(APP_LOCALE) %></td></tr>
+    <tr><td><%= t('admin.payslip.base_salary', 'Sueldo base') %></td><td class="amount"><%= APP_CUR %> <%= slip.base_salary.toLocaleString(APP_LOCALE) %></td></tr>
     <% if(slip.transport_allowance) { %><tr><td><%= t('admin.payslip.allow_transport', 'Tunjangan Transport') %></td><td class="amount"><%= APP_CUR %> <%= slip.transport_allowance.toLocaleString(APP_LOCALE) %></td></tr><% } %>
     <% if(slip.meal_allowance) { %><tr><td><%= t('admin.payslip.allow_meal', 'Tunjangan Makan') %></td><td class="amount"><%= APP_CUR %> <%= slip.meal_allowance.toLocaleString(APP_LOCALE) %></td></tr><% } %>
     <% if(slip.phone_allowance) { %><tr><td><%= t('admin.payslip.allow_phone', 'Tunjangan Pulsa') %></td><td class="amount"><%= APP_CUR %> <%= slip.phone_allowance.toLocaleString(APP_LOCALE) %></td></tr><% } %>
     <% if(slip.other_allowance) { %><tr><td><%= t('admin.payslip.allow_other', 'Tunjangan Lain') %> (<%= slip.other_allowance_note || '-' %>)</td><td class="amount"><%= APP_CUR %> <%= slip.other_allowance.toLocaleString(APP_LOCALE) %></td></tr><% } %>
     <% if(slip.ticket_bonus) { %><tr><td><%= t('admin.payslip.ticket_bonus', 'Bonus Tiket') %> (<%= slip.total_tickets_resolved %> <%= t('admin.payslip.tickets_done', 'tiket selesai') %>)</td><td class="amount" style="color:#16a34a">+<%= APP_CUR %> <%= slip.ticket_bonus.toLocaleString(APP_LOCALE) %></td></tr><% } %>
-    <% if(slip.collection_commission) { %><tr><td><%= t('admin.payslip.collection_commission', 'Komisi Tagihan') %> (<%= APP_CUR %> <%= slip.total_collection_amount.toLocaleString(APP_LOCALE) %>)</td><td class="amount" style="color:#16a34a">+<%= APP_CUR %> <%= slip.collection_commission.toLocaleString(APP_LOCALE) %></td></tr><% } %>
+    <% if(slip.collection_commission) { %><tr><td><%= t('admin.payslip.collection_commission', 'Comisión por cobranza') %> (<%= APP_CUR %> <%= slip.total_collection_amount.toLocaleString(APP_LOCALE) %>)</td><td class="amount" style="color:#16a34a">+<%= APP_CUR %> <%= slip.collection_commission.toLocaleString(APP_LOCALE) %></td></tr><% } %>
     <% if(slip.overtime_bonus) { %><tr><td><%= t('admin.payslip.overtime', 'Lembur') %> (<%= slip.overtime_hours %> <%= t('common.hours', 'jam') %>)</td><td class="amount" style="color:#16a34a">+<%= APP_CUR %> <%= slip.overtime_bonus.toLocaleString(APP_LOCALE) %></td></tr><% } %>
     <tr style="font-weight:600;background:#f9f9f9"><td><%= t('admin.payslip.total_income', 'Total Pendapatan') %></td><td class="amount"><%= APP_CUR %> <%= slip.gross_salary.toLocaleString(APP_LOCALE) %></td></tr>
 
@@ -99,7 +99,7 @@
     <tr style="font-weight:600;background:#f9f9f9"><td><%= t('admin.payslip.total_deductions', 'Total Potongan') %></td><td class="amount" style="color:#dc2626">-<%= APP_CUR %> <%= slip.total_deductions.toLocaleString(APP_LOCALE) %></td></tr>
     <% } %>
 
-    <tr class="total-row"><td><%= t('admin.payslip.net', 'GAJI BERSIH') %></td><td class="amount net-salary"><%= APP_CUR %> <%= slip.net_salary.toLocaleString(APP_LOCALE) %></td></tr>
+    <tr class="total-row"><td><%= t('admin.payslip.net', 'SUELDO NETO') %></td><td class="amount net-salary"><%= APP_CUR %> <%= slip.net_salary.toLocaleString(APP_LOCALE) %></td></tr>
   </table>
 
   <% if(slip.notes) { %>

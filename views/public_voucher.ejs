@@ -23,7 +23,7 @@
       <img class="bmark" src="<%= brandLogo %>" alt="<%= brandName %>"><span class="bname"><%= brandName %></span>
     </a>
     <div class="header-actions" style="margin-left:auto;display:flex;align-items:center;gap:6px">
-      <button class="icon-btn" onclick="toggleTheme()" aria-label="<%= t('customer.aria_theme', 'Ganti tema') %>"><i class="bi bi-moon-stars-fill"></i></button>
+      <button class="icon-btn" onclick="toggleTheme()" aria-label="<%= t('customer.aria_theme', 'Cambiar tema') %>"><i class="bi bi-moon-stars-fill"></i></button>
       <% (typeof availableLangs !== 'undefined' && availableLangs ? availableLangs : ['es','en','id']).forEach(function(L){ %>
         <a href="/lang/<%= L %>" class="lbtn lbtn-ghost lbtn-sm" style="padding:4px 8px;<%= (lang === L) ? 'font-weight:800;color:var(--primary);opacity:1' : 'opacity:.65' %>"><%= String(L).toUpperCase() %></a>
       <% }); %>
@@ -114,7 +114,7 @@
           </div>
 
           <div>
-            <span class="label-cap"><%= t('customer.public_voucher.pay_method', 'Metode Pembayaran') %></span>
+            <span class="label-cap"><%= t('customer.public_voucher.pay_method', 'Forma de pago') %></span>
             <% const hasStaticQris = (String(settings.qris_static_qr_url || '').trim() || String(settings.qris_static_payload || '').trim()) && (settings.qris_static_enabled !== false && settings.qris_static_enabled !== 'false' && settings.qris_static_enabled !== 0 && settings.qris_static_enabled !== '0'); %>
             <% if (true) { %>
               <input type="hidden" name="method" value="QRIS_STATIC">

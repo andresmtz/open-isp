@@ -132,7 +132,7 @@
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
           <h2 style="font-size:16pt;font-weight:800;text-transform:uppercase;margin:0"><%= company %></h2>
-          <div style="font-size:10pt;color:#334155"><%= t('admin.customers.manage_title', 'Daftar Data Pelanggan') %> &bull; Status: <%= filterStatus ? filterStatus.toUpperCase() : 'SEMUA' %></div>
+          <div style="font-size:10pt;color:#334155"><%= t('admin.customers.manage_title', 'Daftar Data Pelanggan') %> &bull; Estado: <%= filterStatus ? filterStatus.toUpperCase() : 'SEMUA' %></div>
         </div>
         <div style="text-align:right;font-size:8.5pt;color:#475569">
           <div><%= t('admin.cust.printed_at','Dicetak:') %> <%= getNowLocal() %></div>
@@ -147,7 +147,7 @@
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <h6 style="margin:0;"><i class="bi bi-people"></i> <%= t('admin.customers.list', 'Daftar Pelanggan') %> (<%= customers.length %>)</h6>
           <span id="bulkCustCount" class="badge" style="display:none;background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);font-size:11px;padding:4px 8px;"></span>
-          <button type="button" class="btn btn-d btn-sm" id="bulkCustDeleteBtn" style="display:none;"><i class="bi bi-trash"></i> <%= t('admin.cust.bulk_delete','Hapus Terpilih') %></button>
+          <button type="button" class="btn btn-d btn-sm" id="bulkCustDeleteBtn" style="display:none;"><i class="bi bi-trash"></i> <%= t('admin.cust.bulk_delete','Eliminar seleccionados') %></button>
         </div>
         <div style="display:flex;gap:8px">
           <button type="button" class="btn btn-g btn-sm" onclick="window.print()" title="<%= t('admin.cust.tt_print_data','Cetak Data Pelanggan') %>"><i class="bi bi-printer"></i> <%= t('admin.cust.btn_print','Cetak') %></button>
@@ -250,7 +250,7 @@
                   <%= c.name %><% var _miss=[]; if(!c.phone)_miss.push('HP'); if(!c.lat||!c.lng)_miss.push('koordinat'); if(!c.genieacs_tag)_miss.push('ACS'); %><% if(_miss.length===0){ %><i class="bi bi-check-circle-fill" style="font-size:12px;color:#22c55e;vertical-align:middle;" title="<%= t('admin.customers.data_ok','Data lengkap') %>"></i><% } else { %><i class="bi bi-x-circle-fill" style="font-size:12px;color:#ef4444;vertical-align:middle;" title="<%= t('admin.customers.data_incomplete','Belum lengkap') %>: <%- _miss.join(', ') %>"></i><% } %>
                   <i class="bi bi-info-circle-fill" style="font-size:12px;opacity:0.75;"></i>
                 </a>
-                <% if (c.customer_code) { %><div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px;" title="ID Pelanggan"><i class="bi bi-person-badge"></i> <%= c.customer_code %></div><% } %>
+                <% if (c.customer_code) { %><div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px;" title="ID de cliente"><i class="bi bi-person-badge"></i> <%= c.customer_code %></div><% } %>
               </td>
               <td>
                 <div><%= c.phone || '-' %></div>
@@ -305,7 +305,7 @@
                   <span class="badge" style="background:rgba(148,163,184,0.12);color:#94a3b8;border:1px solid rgba(148,163,184,0.25)">
                     <i class="bi bi-circle-fill" style="font-size:7px;margin-right:4px"></i>OFFLINE
                   </span>
-                  <div style="font-size:10px;color:var(--muted);margin-top:3px">Tidak Terhubung</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:3px">Desconectado</div>
                 <% } %>
                 <div style="font-size:11px;margin-top:4px;display:flex;gap:6px;font-family:monospace;flex-wrap:wrap">
                   <span style="color:#38bdf8" title="Download (Receive)"><i class="bi bi-arrow-down"></i>RX: <strong class="conn-rx"><%= fmtB(rxBytes) %></strong></span>
@@ -368,9 +368,9 @@
                     <button type="button" class="act-item" onclick="copyCustId(<%= i %>)"><i class="bi bi-person-badge"></i> <%= t('admin.cust.copy_id','Salin ID Pelanggan') %></button>
                     <button type="button" class="act-item" onclick="copyCustIp(<%= i %>)"><i class="bi bi-hdd-network"></i> <%= t('admin.cust.copy_ip','Salin IP Pelanggan') %></button>
                     <button type="button" class="act-item success" onclick="openCustIp(<%= i %>)"><i class="bi bi-box-arrow-up-right"></i> <%= t('admin.cust.open_ip','Masuk ke IP Pelanggan') %></button>
-                    <a class="act-item" href="/admin/customers/<%= c.id %>/sticker-onu" target="_blank"><i class="bi bi-qr-code"></i> Cetak Stiker ONU</a>
-                    <button type="button" class="act-item success" data-idx="<%= i %>" onclick="openGenInvoice(+this.dataset.idx)"><i class="bi bi-lightning-charge"></i> Generate Tagihan</button>
-                    <button type="button" class="act-item primary" data-idx="<%= i %>" onclick="openPayInvoice(+this.dataset.idx)"><i class="bi bi-cash-coin"></i> Bayar Tagihan</button>
+                    <a class="act-item" href="/admin/customers/<%= c.id %>/sticker-onu" target="_blank"><i class="bi bi-qr-code"></i> Imprimir etiquetas ONU</a>
+                    <button type="button" class="act-item success" data-idx="<%= i %>" onclick="openGenInvoice(+this.dataset.idx)"><i class="bi bi-lightning-charge"></i> Generar factura</button>
+                    <button type="button" class="act-item primary" data-idx="<%= i %>" onclick="openPayInvoice(+this.dataset.idx)"><i class="bi bi-cash-coin"></i> Registrar pago</button>
                     <% if (typeof session !== 'undefined' && session && !session.isCashier) { %>
                       <% if (c.package_id && (c.package_promo_cycles || 0) > 0) { %>
                       <button type="submit" form="rpc-<%= c.id %>" class="act-item"><i class="bi bi-arrow-counterclockwise"></i> <%= t('admin.cust.reset_promo','Reset Siklus Promo') %></button>
@@ -466,7 +466,7 @@
 
         <!-- SECTION 3: PAKET & PENGATURAN KONEKSI -->
         <div style="background: rgba(255, 255, 255, 0.02); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px;">
-          <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-router text-warning me-1"></i> Paket & Akses Jaringan (MikroTik / RADIUS)</div>
+          <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-router text-warning me-1"></i> Plan y acceso a la red (MikroTik / RADIUS)</div>
           <div class="form-row">
             <div class="fg">
               <label class="fl"><%= t('admin.cust.pkg_req','Paket Internet *') %></label>
@@ -574,10 +574,10 @@
 
         <!-- SECTION 4: BILLING & OTOMASI -->
         <div style="background: rgba(255, 255, 255, 0.02); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px;">
-          <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-cash-stack text-success me-1"></i> Penagihan, Kolektor, & <%= t('admin.cust.status','Status Akun') %></div>
+          <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-cash-stack text-success me-1"></i> Facturación, cobradores y <%= t('admin.cust.status','Estado de la cuenta') %></div>
           <div class="form-row">
             <div class="fg">
-              <label class="fl"><%= t('admin.cust.status','Status Akun') %></label>
+              <label class="fl"><%= t('admin.cust.status','Estado de la cuenta') %></label>
               <select class="fs" name="status">
                 <option value="active" selected><%= t('common.active','Aktif') %></option>
                 <option value="suspended"><%= t('admin.cust.suspended','Suspend / Isolir') %></option>
@@ -685,9 +685,9 @@
     <form method="POST" action="/admin/customers/import" enctype="multipart/form-data">
       <div class="mbody">
         <p style="font-size:13px;color:var(--muted);margin-bottom:16px">
-          Unggah file Excel (.xlsx). Pastikan format kolom sesuai dengan hasil Export.
+          Subí un archivo Excel (.xlsx). Verificá que las columnas coincidan con el formato de exportación.
           <br><br>
-          <a href="/admin/customers/export" style="color:var(--primary);text-decoration:none"><i class="bi bi-download"></i> Unduh format excel</a>
+          <a href="/admin/customers/export" style="color:var(--primary);text-decoration:none"><i class="bi bi-download"></i> Descargar formato Excel</a>
         </p>
         <div class="fg">
           <label class="fl"><%= t('admin.cust.pick_excel','Pilih File Excel') %></label>
@@ -768,7 +768,7 @@
 
         <!-- SECTION 3: PAKET & PENGATURAN KONEKSI -->
         <div style="background: rgba(255, 255, 255, 0.02); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px;">
-          <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-router text-warning me-1"></i> Paket & Akses Jaringan (MikroTik / RADIUS)</div>
+          <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-router text-warning me-1"></i> Plan y acceso a la red (MikroTik / RADIUS)</div>
           <div class="form-row">
             <div class="fg">
               <label class="fl"><%= t('admin.cust.pkg_req','Paket Internet *') %></label>
@@ -857,10 +857,10 @@
 
         <!-- SECTION 4: BILLING & OTOMASI -->
         <div style="background: rgba(255, 255, 255, 0.02); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px;">
-          <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-cash-stack text-success me-1"></i> Penagihan, Kolektor, & <%= t('admin.cust.status','Status Akun') %></div>
+          <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-cash-stack text-success me-1"></i> Facturación, cobradores y <%= t('admin.cust.status','Estado de la cuenta') %></div>
           <div class="form-row">
             <div class="fg">
-              <label class="fl"><%= t('admin.cust.status','Status Akun') %></label>
+              <label class="fl"><%= t('admin.cust.status','Estado de la cuenta') %></label>
               <select class="fs" name="status" id="e_status">
                 <option value="active"><%= t('common.active','Aktif') %></option>
                 <option value="suspended"><%= t('admin.cust.suspended','Suspend / Isolir') %></option>
@@ -1050,7 +1050,7 @@
         </div>
         <div class="form-row">
           <div class="fg">
-            <label class="fl"><%= t('admin.cust.pay_method','Metode Bayar') %></label>
+            <label class="fl"><%= t('admin.cust.pay_method','Forma de pago') %></label>
             <select class="fs" name="payment_method"><option value="Tunai"><%= t('admin.cust.pay_cash','Tunai (Cash)') %></option><option value="<%= t('admin.cust.pay_transfer','Transfer Bank') %>"><%= t('admin.cust.pay_transfer','Transfer Bank') %></option><option value="QRIS">QRIS</option><option value="E-Wallet">E-Wallet</option><option value="<%= t('admin.cust.pay_other','Lainnya') %>"><%= t('admin.cust.pay_other','Lainnya') %></option></select>
           </div>
           <div class="fg">
@@ -1103,7 +1103,7 @@
         <div>
           <div class="vd-name" id="v_cust_name">-</div>
           <div class="vd-sub">
-            <span><%= t('admin.cust.lbl_cust_id','ID Pelanggan:') %> <strong id="v_cust_id">-</strong></span>
+            <span><%= t('admin.cust.lbl_cust_id','ID de cliente:') %> <strong id="v_cust_id">-</strong></span>
             <button type="button" class="btn btn-g btn-sm vd-copy" onclick="copyCustCode()" title="<%= t('admin.cust.copy_id','Salin ID Pelanggan') %>"><i class="bi bi-clipboard"></i> Salin</button>
           </div>
         </div>
@@ -1151,7 +1151,7 @@
           <div class="vd-row"><span class="k"><%= t('admin.cust.nik','No. Identitas (KTP/SIM/Paspor)') %></span><span class="v"><code id="v_nik" class="vd-code">-</code><button class="btn btn-g btn-sm vd-copy" onclick="copyToClipboard('v_nik','NIK')"><i class="bi bi-copy"></i></button></span></div>
           <div class="vd-row"><span class="k"><%= t('admin.cust.phone','No. Telepon / WhatsApp') %></span><span class="v"><code id="v_phone" class="vd-code">-</code><button class="btn btn-g btn-sm vd-copy" onclick="copyToClipboard('v_phone','No HP')"><i class="bi bi-copy"></i></button></span></div>
           <div class="vd-row"><span class="k"><%= t('admin.cust.sec_addr_area','Alamat & Area') %></span><span class="v" id="v_address_area">-</span></div>
-          <div class="vd-row"><span class="k"><%= t('admin.cust.pkg','Paket Internet') %></span><span class="v" id="v_package">-</span></div>
+          <div class="vd-row"><span class="k"><%= t('admin.cust.pkg','Plan de internet') %></span><span class="v" id="v_package">-</span></div>
           <div class="vd-row"><span class="k"><%= t('admin.cust.validity','Masa Aktif (Prabayar)') %></span><span class="v" id="v_expired_at">-</span></div>
           <div class="vd-row"><span class="k"><%= t('admin.cust.onu_tag','Tag ONU (GenieACS)') %></span><span class="v"><code id="v_genieacs" class="vd-code">-</code><button class="btn btn-g btn-sm vd-copy" onclick="copyToClipboard('v_genieacs','GenieACS Tag')"><i class="bi bi-copy"></i></button></span></div>
           <div class="vd-row"><span class="k"><%- t('admin.cust.status_auto','Status Akun &amp; Auto-Isolir') %></span><span class="v" id="v_status_account">-</span></div>
@@ -1187,10 +1187,10 @@
           <div class="fg"><label class="fl"><%= t('admin.cust.f_days','Jumlah Hari') %></label><input class="fc" id="rc_days" readonly></div>
         </div>
         <div style="background:rgba(173,255,47,.08);border:1px solid var(--primary-glow);border-radius:12px;padding:12px;margin-top:6px">
-          <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span>Prorata Paket</span><span id="rc_prorata"><%= APP_CUR %> 0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span>Prorrateo del plan</span><span id="rc_prorata"><%= APP_CUR %> 0</span></div>
           <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span><%= t('admin.cust.f_install_fee','Biaya Pasang') %></span><span id="rc_install_out"><%= APP_CUR %> 0</span></div>
           <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;color:var(--danger)"><span><%= t('admin.cust.f_voucher_disc','Diskon Voucher') %></span><span id="rc_disc_out">- <%= APP_CUR %> 0</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;padding:8px 0 2px;border-top:1px solid var(--border);margin-top:6px"><span>Total Bayar Awal</span><span id="rc_total" style="color:var(--primary)"><%= APP_CUR %> 0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;padding:8px 0 2px;border-top:1px solid var(--border);margin-top:6px"><span>Total del pago inicial</span><span id="rc_total" style="color:var(--primary)"><%= APP_CUR %> 0</span></div>
         </div>
         <div class="hint" id="rc_hint" style="margin-top:8px"></div>
         <input type="hidden" name="final_total" id="rc_final">
@@ -1262,11 +1262,11 @@ function copyToClipboard(elementId, label) {
   const el = document.getElementById(elementId);
   const text = el ? (el.innerText || el.textContent || '').trim() : '';
   if (!text || text === '-') {
-    alert('Tidak ada data ' + label + ' untuk disalin.');
+    alert('No hay datos ' + label + ' para copiar.');
     return;
   }
   navigator.clipboard.writeText(text).then(() => {
-    alert(' ' + label + ' berhasil disalin: ' + text);
+    alert(' ' + label + ' copiado: ' + text);
   }).catch(() => {
     const input = document.createElement('textarea');
     input.value = text;
@@ -1274,7 +1274,7 @@ function copyToClipboard(elementId, label) {
     input.select();
     document.execCommand('copy');
     document.body.removeChild(input);
-    alert(' ' + label + ' berhasil disalin: ' + text);
+    alert(' ' + label + ' copiado: ' + text);
   });
 }
 
@@ -1282,7 +1282,7 @@ function copyCustCode(){
   var el = document.getElementById('v_cust_id'); if(!el) return;
   var val = (el.textContent || '').trim();
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(val).then(function(){ alert('ID Pelanggan disalin: ' + val); }).catch(function(){ prompt('<%= t('admin.cust.copy_id','Salin ID Pelanggan') %>:', val); });
+    navigator.clipboard.writeText(val).then(function(){ alert('ID de cliente copiado: ' + val); }).catch(function(){ prompt('<%= t('admin.cust.copy_id','Salin ID Pelanggan') %>:', val); });
   } else { prompt('<%= t('admin.cust.copy_id','Salin ID Pelanggan') %>:', val); }
 }
 
@@ -1297,21 +1297,21 @@ function _custToast(ok, msg) { if (window.toast) { toast(ok ? 'success' : 'warni
 function copyCustId(idx) {
   var c = (typeof customersData !== 'undefined' && customersData[idx]) ? customersData[idx] : {};
   var code = c.customer_code || (c.id ? String(c.id) : '');
-  if (!code) { _custToast(false, 'ID Pelanggan tidak tersedia.'); return; }
+  if (!code) { _custToast(false, 'El ID de cliente no está disponible.'); return; }
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(code).then(function () { _custToast(true, 'ID Pelanggan disalin: ' + code); }).catch(function () { prompt('<%= t('admin.cust.copy_id','Salin ID Pelanggan') %>:', code); });
+    navigator.clipboard.writeText(code).then(function () { _custToast(true, 'ID de cliente copiado: ' + code); }).catch(function () { prompt('<%= t('admin.cust.copy_id','Salin ID Pelanggan') %>:', code); });
   } else { prompt('<%= t('admin.cust.copy_id','Salin ID Pelanggan') %>:', code); }
 }
 function copyCustIp(idx) {
   var ip = _custSessionIp(idx);
-  if (!ip) { _custToast(false, 'IP pelanggan tidak tersedia (offline / belum ada IP).'); return; }
+  if (!ip) { _custToast(false, 'La IP del cliente no está disponible (desconectado / sin IP).'); return; }
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(ip).then(function () { _custToast(true, 'IP pelanggan disalin: ' + ip); }).catch(function () { prompt('<%= t('admin.cust.copy_ip','Salin IP Pelanggan') %>:', ip); });
+    navigator.clipboard.writeText(ip).then(function () { _custToast(true, 'IP del cliente copiada: ' + ip); }).catch(function () { prompt('<%= t('admin.cust.copy_ip','Salin IP Pelanggan') %>:', ip); });
   } else { prompt('<%= t('admin.cust.copy_ip','Salin IP Pelanggan') %>:', ip); }
 }
 function openCustIp(idx) {
   var ip = _custSessionIp(idx);
-  if (!ip) { _custToast(false, 'IP pelanggan tidak tersedia (offline / belum ada IP).'); return; }
+  if (!ip) { _custToast(false, 'La IP del cliente no está disponible (desconectado / sin IP).'); return; }
   window.open('http://' + ip, '_blank', 'noopener');
 }
 
@@ -1319,7 +1319,7 @@ function viewCustDetail(idx) {
   try {
     const c = customersData[idx];
     if (!c) {
-      alert('Data pelanggan tidak ditemukan.');
+      alert('Cliente no encontrado.');
       return;
     }
 
@@ -1355,7 +1355,7 @@ function viewCustDetail(idx) {
     const routerObj = (routersData || []).find(r => Number(r.id) === Number(c.router_id));
     if (document.getElementById('v_router_name')) document.getElementById('v_router_name').textContent = routerObj ? routerObj.name : (c.router_id ? ('Router #' + c.router_id) : '-');
     if (document.getElementById('v_conn_type')) document.getElementById('v_conn_type').textContent = (c.connection_type || 'pppoe').toUpperCase();
-    if (document.getElementById('v_uptime')) document.getElementById('v_uptime').textContent = session ? (session.uptime || 'Active') : 'Tidak Terhubung (Offline)';
+    if (document.getElementById('v_uptime')) document.getElementById('v_uptime').textContent = session ? (session.uptime || 'Active') : 'Desconectado (offline)';
 
     const rxBytes = session && session.bytesIn ? session.bytesIn : (c.bytes_in || 0);
     const txBytes = session && session.bytesOut ? session.bytesOut : (c.bytes_out || 0);
@@ -1381,7 +1381,7 @@ function viewCustDetail(idx) {
         const isExp = c.expired_at ? (new Date(c.expired_at) < new Date()) : false;
         document.getElementById('v_expired_at').innerHTML = `
           <span class="badge ${isExp ? 'bd' : 'bs'}" style="font-weight:700;">
-            <i class="bi bi-clock-history"></i> ${expStr} ${isExp ? '(Expired / Terisolir)' : '(Aktif)'}
+            <i class="bi bi-clock-history"></i> ${expStr} ${isExp ? '(Expired / Terisolir)' : '(Activo)'}
           </span>
         `;
       } else {
@@ -1400,7 +1400,7 @@ function viewCustDetail(idx) {
     fetchLiveSessions();
   } catch (err) {
     console.error('Error in viewCustDetail:', err);
-    alert('Terjadi kesalahan saat memuat detail pelanggan: ' + err.message);
+    alert('Ocurrió un error al cargar el detalle del cliente: ' + err.message);
   }
 }
 
@@ -1691,9 +1691,9 @@ function rcCompute(){
   var s = document.getElementById('rc_start').value;
   var d = document.getElementById('rc_due').value;
   var hint = document.getElementById('rc_hint');
-  if(!s || !d){ hint.textContent='Isi tanggal mulai & jatuh tempo.'; return; }
+  if(!s || !d){ hint.textContent='Completá la fecha de inicio y de vencimiento.'; return; }
   var sd = new Date(s), dd = new Date(d);
-  if(dd <= sd){ hint.textContent='Jatuh tempo harus setelah tanggal mulai.'; return; }
+  if(dd <= sd){ hint.textContent='El vencimiento debe ser posterior a la fecha de inicio.'; return; }
   var diffDays = Math.max(1, Math.round((dd - sd)/86400000));
   var daysInMonth = new Date(dd.getFullYear(), dd.getMonth()+1, 0).getDate();
   var perDay = fee / daysInMonth;
@@ -1706,7 +1706,7 @@ function rcCompute(){
   document.getElementById('rc_install_out').textContent = rcFmt(install);
   document.getElementById('rc_disc_out').textContent = '- ' + rcFmt(dcap);
   document.getElementById('rc_total').textContent = rcFmt(total);
-  hint.textContent = 'Rumus: (' + rcFmt(fee) + ' / ' + daysInMonth + ' hari) × ' + diffDays + ' hari = ' + rcFmt(prorata);
+  hint.textContent = 'Rumus: (' + rcFmt(fee) + ' / ' + daysInMonth + ' días) × ' + diffDays + ' días = ' + rcFmt(prorata);
   document.getElementById('rc_final').value = total;
   document.getElementById('rc_h_prorata').value = prorata;
   document.getElementById('rc_h_install').value = install;
@@ -1721,7 +1721,7 @@ function openRegCalc(idx){
   document.getElementById('rc_start').value = String(c.created_at||'').slice(0,10) || new Date().toISOString().slice(0,10);
   document.getElementById('rc_due').value = c.reg_due_date || '';
   document.getElementById('regCalcForm').action = '/admin/registrations/' + c.id + '/approve';
-  document.getElementById('regCalcWho').innerHTML = 'Pelanggan: <b>' + (c.name||'') + '</b> &bull; ' + (c.phone||'-') + (c.reg_voucher_code? (' &bull; Voucher <b>'+c.reg_voucher_code+'</b>'):'');
+  document.getElementById('regCalcWho').innerHTML = 'Cliente: <b>' + (c.name||'') + '</b> &bull; ' + (c.phone||'-') + (c.reg_voucher_code? (' &bull; Voucher <b>'+c.reg_voucher_code+'</b>'):'');
   rcCompute();
   openModal('regCalcModal');
 }
@@ -1854,7 +1854,7 @@ async function loadPppoeAdd(routerId = '') {
     const users = await res.json();
     buildPppoeList(document.getElementById('add_pppoe_list'), Array.isArray(users) ? users : []);
     const hint = document.getElementById('add_pppoe_hint');
-    if (hint) hint.innerText = Array.isArray(users) && users.length ? `Tersedia ${users.length} user PPPoE (yang belum dipakai).` : 'Tidak ada user PPPoE yang tersedia.';
+    if (hint) hint.innerText = Array.isArray(users) && users.length ? `Hay ${users.length} usuarios PPPoE disponibles (sin usar).` : 'No hay usuarios PPPoE disponibles.';
   } catch (e) {
     console.error('Failed to load MikroTik users', e);
   }
@@ -1872,7 +1872,7 @@ async function loadPppoeEdit(routerId = '', excludeCustomerId = '') {
     const users = await res.json();
     buildPppoeList(document.getElementById('e_pppoe_list'), Array.isArray(users) ? users : []);
     const hint = document.getElementById('e_pppoe_hint');
-    if (hint) hint.innerText = Array.isArray(users) && users.length ? `Tersedia ${users.length} user PPPoE (yang belum dipakai).` : 'Tidak ada user PPPoE yang tersedia.';
+    if (hint) hint.innerText = Array.isArray(users) && users.length ? `Hay ${users.length} usuarios PPPoE disponibles (sin usar).` : 'No hay usuarios PPPoE disponibles.';
   } catch (e) {
     console.error('Failed to load MikroTik users', e);
   }
@@ -1900,11 +1900,11 @@ async function loadHotspotProfiles(type, routerId = '') {
     if (type === 'add') {
       buildHotspotProfileList(document.getElementById('add_hotspot_profile_list'), list);
       const hint = document.getElementById('add_hotspot_profile_hint');
-      if (hint) hint.innerText = list.length ? `Tersedia ${list.length} profile hotspot.` : 'Tidak ada profile hotspot.';
+      if (hint) hint.innerText = list.length ? `Hay ${list.length} perfiles hotspot disponibles.` : 'No hay perfiles hotspot.';
     } else {
       buildHotspotProfileList(document.getElementById('e_hotspot_profile_list'), list);
       const hint = document.getElementById('e_hotspot_profile_hint');
-      if (hint) hint.innerText = list.length ? `Tersedia ${list.length} profile hotspot.` : 'Tidak ada profile hotspot.';
+      if (hint) hint.innerText = list.length ? `Hay ${list.length} perfiles hotspot disponibles.` : 'No hay perfiles hotspot.';
     }
   } catch (e) {
     console.error('Failed to load MikroTik hotspot user profiles', e);
@@ -1957,22 +1957,22 @@ function syncCust(btn) {
   btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
   fetch('/admin/customers/' + id + '/sync-mikrotik', { method: 'POST' })
     .then(function (r) { return r.json(); })
-    .then(function (d) { alert(d.message || (d.ok ? 'Sinkron berhasil' : 'Sinkron gagal')); })
-    .catch(function (e) { alert('Gagal sync: ' + e.message); })
+    .then(function (d) { alert(d.message || (d.ok ? 'Sincronización correcta' : 'Falló la sincronización')); })
+    .catch(function (e) { alert('No se pudo sincronizar: ' + e.message); })
     .then(function () { btn.disabled = false; btn.innerHTML = old; });
 }
 function syncCustFromModal() {
   var f = document.getElementById('editForm');
   if (!f) return;
   var m = /\/customers\/(\d+)\//.exec(f.action || '');
-  if (!m) { alert('ID pelanggan tidak ditemukan'); return; }
+  if (!m) { alert('ID de cliente no encontrado'); return; }
   fetch('/admin/customers/' + m[1] + '/sync-mikrotik', { method: 'POST' })
     .then(function (r) { return r.json(); })
-    .then(function (d) { alert(d.message || (d.ok ? 'Sinkron berhasil' : 'Sinkron gagal')); })
-    .catch(function (e) { alert('Gagal sync: ' + e.message); });
+    .then(function (d) { alert(d.message || (d.ok ? 'Sincronización correcta' : 'Falló la sincronización')); })
+    .catch(function (e) { alert('No se pudo sincronizar: ' + e.message); });
 }
 function syncAllCust() {
-  if (!confirm('Terapkan perubahan ke SEMUA pelanggan sekarang?\n\n• Mode MikroTik: push secret/profil ke router.\n• Mode RADIUS: kick sesi agar redial & muat perubahan.\n\nProses berjalan di latar belakang.')) return;
+  if (!confirm('¿Aplicar los cambios a TODOS los clientes ahora?\n\n• Modo MikroTik: envía secrets/perfiles al router.\n• Modo RADIUS: desconecta las sesiones para que reconecten con los cambios.\n\nEl proceso corre en segundo plano.')) return;
   fetch('/admin/customers/sync-all-mikrotik', { method: 'POST' })
     .then(function (r) { return r.json(); })
     .then(function (d) { alert(d.message || 'Dimulai'); })

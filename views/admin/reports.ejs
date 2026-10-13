@@ -37,12 +37,12 @@
       <div class="sc i"><i class="bi bi-cash-stack sc-icon"></i>
         <div class="sc-label"><%= t('admin.fin.gross','Pemasukan (Bruto)') %> <%= filterYear %></div>
         <div class="sc-val" style="font-size:20px"><%= APP_CUR %> <%= (cashInYear||0).toLocaleString(APP_LOCALE) %></div>
-        <div class="sc-sub">Bulan ini: <%= APP_CUR %> <%= (cashInThisMonth||0).toLocaleString(APP_LOCALE) %></div>
+        <div class="sc-sub">Este mes: <%= APP_CUR %> <%= (cashInThisMonth||0).toLocaleString(APP_LOCALE) %></div>
       </div>
       <div class="sc d"><i class="bi bi-wallet2 sc-icon"></i>
         <div class="sc-label">Pengeluaran <%= filterYear %></div>
         <div class="sc-val" style="font-size:20px">- <%= APP_CUR %> <%= (expensesYear||0).toLocaleString(APP_LOCALE) %></div>
-        <div class="sc-sub">Bulan ini: <%= APP_CUR %> <%= (expensesMonth||0).toLocaleString(APP_LOCALE) %></div>
+        <div class="sc-sub">Este mes: <%= APP_CUR %> <%= (expensesMonth||0).toLocaleString(APP_LOCALE) %></div>
       </div>
       <div class="sc w"><i class="bi bi-receipt sc-icon"></i>
         <div class="sc-label">PPh Badan (<%= finance.pph %>%)</div>
@@ -53,19 +53,19 @@
         <div class="sc-label" style="color:#10b981"><%= t('admin.fin.net','Laba Bersih') %> <%= filterYear %></div>
         <div style="font-size:11.5px;color:var(--muted);margin-bottom:2px">Sebelum Pajak: <b style="color:var(--text)"><%= APP_CUR %> <%= Math.round(ply.sebelumPph).toLocaleString(APP_LOCALE) %></b></div>
         <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">Sesudah Pajak: <b style="color:#10b981"><%= APP_CUR %> <%= Math.round(ply.bersih).toLocaleString(APP_LOCALE) %></b></div>
-        <div class="sc-sub" style="color:#10b981">Bulan ini (sstlh): <%= APP_CUR %> <%= Math.round(pm.bersih).toLocaleString(APP_LOCALE) %></div>
+        <div class="sc-sub" style="color:#10b981">Este mes (desp. imp.): <%= APP_CUR %> <%= Math.round(pm.bersih).toLocaleString(APP_LOCALE) %></div>
       </div>
       <div class="sc p"><i class="bi bi-hourglass sc-icon"></i>
-        <div class="sc-label">Piutang Belum Bayar</div>
+        <div class="sc-label">Pendiente de cobro</div>
         <div class="sc-val" style="font-size:20px"><%= APP_CUR %> <%= (pendingAmount||0).toLocaleString(APP_LOCALE) %></div>
-        <div class="sc-sub">Pelanggan aktif: <%= activeCustomers %></div>
+        <div class="sc-sub">Clientes activos: <%= activeCustomers %></div>
       </div>
     </div>
 
     <!-- ═══ B. LAPORAN LABA / RUGI ═══ -->
     <div class="card mb16">
       <div class="card-hd">
-        <h6><i class="bi bi-receipt-cutoff"></i> Laporan Laba / Rugi — Pajak &amp; Retribusi <%= filterYear %></h6>
+        <h6><i class="bi bi-receipt-cutoff"></i> Estado de resultados — impuestos <%= filterYear %></h6>
       </div>
       <div class="card-bd" style="padding:0">
         <table class="dtbl">
@@ -84,15 +84,15 @@
       </div>
       <div class="card-bd" style="padding-top:10px">
         <div class="hint">
-          <i class="bi bi-info-circle"></i> Tagihan hangus (void) tahun ini: <b><%= voidedYearCount||0 %></b> tagihan · <%= APP_CUR %> <%= (voidedYearAmount||0).toLocaleString(APP_LOCALE) %>
-          — <span class="text-muted">dikecualikan dari pendapatan (audit).</span>
+          <i class="bi bi-info-circle"></i> Facturas anuladas este año: <b><%= voidedYearCount||0 %></b> facturas · <%= APP_CUR %> <%= (voidedYearAmount||0).toLocaleString(APP_LOCALE) %>
+          — <span class="text-muted">excluidas de los ingresos (auditoría).</span>
         </div>
       </div>
     </div>
 
     <!-- ═══ C. REKAP PER BULAN (AUDIT) ═══ -->
     <div class="card mb16">
-      <div class="card-hd"><h6><i class="bi bi-calendar3"></i> Rekap Laba / Rugi per Bulan <%= filterYear %> <span class="text-muted" style="font-weight:400;font-size:11.5px"><%- t('admin.rep.export_hint','— export &amp; cetak tiap bulan') %></span></h6></div>
+      <div class="card-hd"><h6><i class="bi bi-calendar3"></i> Resultado mensual <%= filterYear %> <span class="text-muted" style="font-weight:400;font-size:11.5px"><%- t('admin.rep.export_hint','— export &amp; cetak tiap bulan') %></span></h6></div>
       <div class="tbl-wrap">
         <table class="dtbl">
           <thead>
@@ -128,7 +128,7 @@
                   <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
                     <a class="act-item" href="/admin/reports/export-csv?year=<%= filterYear %>&amp;month=<%= r.month %>"><i class="bi bi-file-earmark-excel"></i> Export Excel (CSV)</a>
-                    <a class="act-item" target="_blank" href="/admin/reports/pdf?year=<%= filterYear %>&amp;month=<%= r.month %>&amp;mode=after"><i class="bi bi-file-earmark-pdf"></i> PDF Bulan Ini</a>
+                    <a class="act-item" target="_blank" href="/admin/reports/pdf?year=<%= filterYear %>&amp;month=<%= r.month %>&amp;mode=after"><i class="bi bi-file-earmark-pdf"></i> PDF de este mes</a>
                   </div>
                 </div>
               </td>
@@ -150,7 +150,7 @@
         </table>
       </div>
       <div class="card-bd" style="padding-top:0">
-        <div class="hint"><i class="bi bi-info-circle"></i> Baris <b>TOTAL</b><%= t('admin.rep.sum_hint',' = penjumlahan tiap bulan; cocokkan dengan ') %><b>Laporan Laba / Rugi</b><%= t('admin.rep.audit_hint',' (tahun) di atas untuk audit.') %></div>
+        <div class="hint"><i class="bi bi-info-circle"></i> Baris <b>TOTAL</b><%= t('admin.rep.sum_hint',' = penjumlahan tiap bulan; cocokkan dengan ') %><b>Estado de resultados</b><%= t('admin.rep.audit_hint',' (tahun) di atas untuk audit.') %></div>
       </div>
     </div>
 
@@ -163,10 +163,10 @@
     <!-- ═══ E. DETAIL AUDIT ═══ -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px">
       <div class="card">
-        <div class="card-hd"><h6><i class="bi bi-pie-chart"></i> Rincian Pengeluaran (<%= filterYear %>)</h6></div>
+        <div class="card-hd"><h6><i class="bi bi-pie-chart"></i> Detalle de gastos (<%= filterYear %>)</h6></div>
         <div class="card-bd" style="padding:0">
           <% if (typeof expensesByCategory === 'undefined' || expensesByCategory.length===0) { %>
-            <div class="text-center text-muted" style="padding:24px;font-size:13px">Belum ada pengeluaran dicatat</div>
+            <div class="text-center text-muted" style="padding:24px;font-size:13px">Todavía no hay gastos registrados</div>
           <% } %>
           <% if(typeof expensesByCategory !== 'undefined') expensesByCategory.forEach(c=>{ %>
           <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -215,7 +215,7 @@
 
     <!-- ═══ G. PENGATURAN PAJAK & RETRIBUSI (collapsible) ═══ -->
     <details class="card">
-      <summary class="card-hd"><h6 style="margin:0"><i class="bi bi-percent"></i> Pengaturan Pajak &amp; Retribusi <span class="text-muted" style="font-weight:400;font-size:11.5px"><%= t('admin.rep.calc_hint','— dihitung otomatis') %></span></h6></summary>
+      <summary class="card-hd"><h6 style="margin:0"><i class="bi bi-percent"></i> Configuración de impuestos <span class="text-muted" style="font-weight:400;font-size:11.5px"><%= t('admin.rep.calc_hint','— dihitung otomatis') %></span></h6></summary>
       <div class="card-bd">
         <form method="POST" action="/admin/reports/finance">
           <div class="form-row" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
@@ -225,12 +225,12 @@
             <div class="fg"><label class="fl">BHP (%)</label><input class="fc" type="number" step="0.01" min="0" name="finance_bhp_pct" value="<%= finance.bhp %>"></div>
             <div class="fg"><label class="fl">PPN di dalam harga?</label>
               <select class="fs" name="finance_revenue_includes_ppn">
-                <option value="0" <%= finance.inclPpn ? '' : 'selected' %>>Tidak — PPN ditambahkan</option>
+                <option value="0" <%= finance.inclPpn ? '' : 'selected' %>>No — se suma el IVA</option>
                 <option value="1" <%= finance.inclPpn ? 'selected' : '' %>><%= t('admin.rep.ppn_incl','Ya — PPN sudah termasuk') %></option>
               </select>
             </div>
           </div>
-          <button type="submit" class="btn btn-p btn-sm"><i class="bi bi-save"></i> Simpan Pengaturan</button>
+          <button type="submit" class="btn btn-p btn-sm"><i class="bi bi-save"></i> Guardar configuración</button>
           <span class="hint" style="margin-left:10px"><%- t('admin.rep.tax_hint','PPh Badan, PPN, USO &amp; BHP dihitung otomatis dari nilai ini.') %></span>
         </form>
       </div>

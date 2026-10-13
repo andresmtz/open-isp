@@ -291,19 +291,19 @@
     <div class="search-row">
       <div class="search-wrap">
         <i class="bi bi-search"></i>
-        <input type="text" id="searchInput" class="search-input" placeholder="Cari nama, PPPoE, ODP, atau alamat...">
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar nombre, PPPoE, NAP o dirección...">
       </div>
     </div>
 
     <div class="filter-pills">
       <button class="pill-btn active" data-filter="all"><%= t('collector.filter_all','Semua') %></button>
-      <button class="pill-btn" data-filter="active"><i class="bi bi-circle-fill" style="color:#22c55e"></i> Aktif (<%= customers.filter(c => c.status === 'active').length %>)</button>
-      <button class="pill-btn" data-filter="isolated"><i class="bi bi-circle-fill" style="color:#ef4444"></i> Isolir (<%= customers.filter(c => c.status !== 'active').length %>)</button>
+      <button class="pill-btn" data-filter="active"><i class="bi bi-circle-fill" style="color:#22c55e"></i> Activo (<%= customers.filter(c => c.status === 'active').length %>)</button>
+      <button class="pill-btn" data-filter="isolated"><i class="bi bi-circle-fill" style="color:#ef4444"></i> Suspendidos (<%= customers.filter(c => c.status !== 'active').length %>)</button>
       <button class="pill-btn" data-filter="odp"><i class="bi bi-archive-fill"></i> ODP Saja (<%= odps.length %>)</button>
     </div>
   </div>
 
-  <button class="btn-gps" id="btnGps" title="Lokasi Saya">
+  <button class="btn-gps" id="btnGps" title="Mi ubicación">
     <i class="bi bi-crosshair"></i>
   </button>
 
@@ -439,12 +439,12 @@
 
         const marker = L.marker([lat, lng], { icon });
         const cleanPhone = String(cust.phone || '').replace(/\D/g, '').replace(new RegExp('^' + (APP_CFG.phoneTrunkPrefix || '0')), APP_CFG.phoneCountryCode);
-        const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent('Halo ' + cust.name + ', info dari admin jaringan:')}` : '#';
+        const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent('Hola ' + cust.name + ', le escribimos de la administración de la red:')}` : '#';
         const dirUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 
         marker.bindPopup(`
           <div class="pop-title"><i class="bi bi-person-circle"></i> ${escapeHtml(cust.name)}</div>
-          <span class="pop-badge ${isActive ? 'active' : 'iso'}">${isActive ? '<i class="bi bi-circle-fill" style="color:#22c55e"></i> AKTIF' : '<i class="bi bi-circle-fill" style="color:#ef4444"></i> TERISOLIR'}</span>
+          <span class="pop-badge ${isActive ? 'active' : 'iso'}">${isActive ? '<i class="bi bi-circle-fill" style="color:#22c55e"></i> ACTIVO' : '<i class="bi bi-circle-fill" style="color:#ef4444"></i> TERISOLIR'}</span>
           <div class="pop-row"><span class="lbl">PPPoE User:</span><span class="val">${escapeHtml(cust.pppoe_username || '-')}</span></div>
           <div class="pop-row"><span class="lbl">No. WA / HP:</span><span class="val">${escapeHtml(cust.phone || '-')}</span></div>
           <div class="pop-row"><span class="lbl">Paket:</span><span class="val">${escapeHtml(cust.package_name || '-')}</span></div>
@@ -535,7 +535,7 @@
     let userLocMarker = null;
     document.getElementById('btnGps').addEventListener('click', () => {
       if (!navigator.geolocation) {
-        alert("Perangkat tidak mendukung geolokasi.");
+        alert("El dispositivo no admite geolocalización.");
         return;
       }
       navigator.geolocation.getCurrentPosition(
@@ -550,11 +550,11 @@
             fillColor: '#ADFF2F',
             fillOpacity: 1
           }).addTo(map);
-          userLocMarker.bindPopup("<b><i class='bi bi-geo-alt-fill'></i> Lokasi Anda Saat Ini</b>").openPopup();
+          userLocMarker.bindPopup("<b><i class='bi bi-geo-alt-fill'></i> Su ubicación actual</b>").openPopup();
           map.setView([lat, lng], 17);
         },
         err => {
-          alert("Gagal membaca sinyal GPS: " + err.message);
+          alert("No se pudo leer la señal GPS: " + err.message);
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );

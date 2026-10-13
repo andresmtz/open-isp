@@ -208,7 +208,7 @@
             <div class="fg" id="asStatic"><label class="fl"><%= t('admin.automation.delay_short', 'Jeda (detik)') %></label>
               <input class="fc" type="number" id="as_val" value="15" min="3" max="600">
             </div>
-            <div class="fg" id="asRandom" style="display:none"><label class="fl"><%= t('admin.automation.delay_random', 'Jeda acak (min–max detik)') %></label>
+            <div class="fg" id="asRandom" style="display:none"><label class="fl"><%= t('admin.automation.delay_random', 'Pausa aleatoria (mín–máx segundos)') %></label>
               <div style="display:flex;gap:6px">
                 <input class="fc" type="number" id="as_min" value="15" min="3" max="600">
                 <input class="fc" type="number" id="as_max" value="40" min="3" max="900">
@@ -336,7 +336,7 @@
     document.querySelectorAll('.au-tab').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-tab') === name); });
   }
   async function runReminderNow(btn){
-    if (!confirm('Jalankan pengingat tagihan sekarang?')) return;
+    if (!confirm('¿Ejecutar ahora el recordatorio de pago?')) return;
     var old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Menjalankan...';
     try {
       var r = await fetch('/admin/whatsapp/run-reminder-now', { method: 'POST' });
@@ -373,11 +373,11 @@
     auTplPrev = sel.value;
   }
   window.runAutoDeactivate = function () {
-    if (!confirm('Jalankan auto-nonaktif sekarang? Pelanggan yang menunggak sesuai batas akan diisolir.')) return;
+    if (!confirm('¿Ejecutar ahora la desactivación automática? Los clientes que superen el límite de deuda serán suspendidos.')) return;
     fetch('/admin/customers/auto-deactivate-now', { method: 'POST' })
       .then(function (r) { return r.json(); })
       .then(function (d) { alert(d.message || 'Selesai'); if (d.processed > 0) location.reload(); })
-      .catch(function () { alert('Gagal menjalankan auto-nonaktif'); });
+      .catch(function () { alert('No se pudo ejecutar la desactivación automática'); });
   };
 
   function asToggle(){
@@ -386,7 +386,7 @@
     document.getElementById('asRandom').style.display = m === 'random' ? '' : 'none';
   }
   async function asStart(btn){
-    if (!confirm('Kirim tagihan sekarang ke pelanggan belum bayar pada tanggal isolir terpilih?')) return;
+    if (!confirm('¿Enviar ahora la factura a los clientes con deuda del día de corte elegido?')) return;
     var res = document.getElementById('as_result');
     var old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Memulai...';
     if (res) { res.textContent = 'Memulai pengiriman…'; res.style.color = 'var(--muted)'; }
@@ -401,10 +401,10 @@
       });
       var r = await fetch('/admin/automation/send-now', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       var j = await r.json().catch(function(){ return {}; });
-      if (res) { res.textContent = j.ok ? (j.message || 'Berhasil.') : ('Gagal — ' + (j.message || 'Terjadi kesalahan.')); res.style.color = j.ok ? 'var(--success)' : 'var(--danger)'; }
+      if (res) { res.textContent = j.ok ? (j.message || 'Berhasil.') : ('Falló — ' + (j.message || 'Terjadi kesalahan.')); res.style.color = j.ok ? 'var(--success)' : 'var(--danger)'; }
       if (j.ok) { document.getElementById('as_progress').style.display = 'block'; asPoll(); }
     } catch (e) {
-      if (res) { res.textContent = 'Gagal — ' + e.message; res.style.color = 'var(--danger)'; }
+      if (res) { res.textContent = 'Falló — ' + e.message; res.style.color = 'var(--danger)'; }
     } finally { btn.disabled = false; btn.innerHTML = old; }
   }
   async function asStop(){ try { await fetch('/admin/api/whatsapp/billing-send-stop', { method: 'POST' }); } catch (e) {} }
@@ -416,7 +416,7 @@
       document.getElementById('as_progress').style.display = 'block';
       var pct = s.total ? Math.round(((s.sent + s.failed) / s.total) * 100) : 0;
       document.getElementById('as_bar').style.width = pct + '%';
-      document.getElementById('as_progress_text').textContent = (s.running ? 'Mengirim…' : 'Selesai') + ' ' + s.sent + '/' + s.total + ' terkirim, ' + s.failed + ' gagal' + (s.last ? (' • terakhir: ' + s.last) : '') + (s.label ? (' • ' + s.label) : '');
+      document.getElementById('as_progress_text').textContent = (s.running ? 'Mengirim…' : 'Selesai') + ' ' + s.sent + '/' + s.total + ' enviados, ' + s.failed + ' gagal' + (s.last ? (' • terakhir: ' + s.last) : '') + (s.label ? (' • ' + s.label) : '');
     } catch (e) {}
   }
   setInterval(function(){ if (document.getElementById('au-manual') && document.getElementById('au-manual').classList.contains('active')) asPoll(); }, 3000);

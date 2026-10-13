@@ -732,10 +732,10 @@
           <i class="bi bi-grid-fill"></i> <%= t('collector.filter_all','Semua') %>
         </button>
         <button type="button" class="map-pill-btn" id="pillActive" onclick="applyStatusFilter('active')" title="<%= t('admin.map.tip_active','Hanya ONU aktif') %>">
-          <i class="bi bi-check-circle-fill text-success"></i> Aktif (<%= customers.filter(c => c.status === 'active' && c.lat && c.lng).length %>)
+          <i class="bi bi-check-circle-fill text-success"></i> Activo (<%= customers.filter(c => c.status === 'active' && c.lat && c.lng).length %>)
         </button>
         <button type="button" class="map-pill-btn" id="pillSuspended" onclick="applyStatusFilter('suspended')" title="<%= t('admin.map.tip_isolir','Hanya ONU isolir') %>">
-          <i class="bi bi-x-circle-fill text-danger"></i> Isolir (<%= customers.filter(c => c.status !== 'active' && c.lat && c.lng).length %>)
+          <i class="bi bi-x-circle-fill text-danger"></i> Suspendidos (<%= customers.filter(c => c.status !== 'active' && c.lat && c.lng).length %>)
         </button>
         <button type="button" class="map-pill-btn active" id="pillLabels" onclick="toggleMarkerLabels()" title="<%= t('admin.map.tip_labels','Sembunyikan/Tampilkan label nama di marker') %>">
           <i class="bi bi-tag-fill text-primary"></i> <span id="labelToggleText"><%= t('admin.map.label_on','Label: ON') %></span>
@@ -743,7 +743,7 @@
         <button type="button" class="map-pill-btn" onclick="fitAllMarkers()" title="<%= t('admin.map.tip_fit','Pusatkan peta ke semua titik') %>">
           <i class="bi bi-arrows-fullscreen"></i> Fit Peta
         </button>
-        <select id="baseMapSelect" class="map-pill-btn" style="padding:6px 8px" onchange="switchBaseMap(this.value)" title="Pilih peta dasar">
+        <select id="baseMapSelect" class="map-pill-btn" style="padding:6px 8px" onchange="switchBaseMap(this.value)" title="Elegir mapa base">
           <option value="hybrid" selected><%= t('admin.map.opt_hybrid','Satelit (Hybrid)') %></option>
           <option value="sat"><%= t('admin.map.opt_sat','Satelit (Bersih)') %></option>
           <option value="osm">OpenStreetMap</option>
@@ -814,13 +814,13 @@
       <div id="odp-tab" class="tab-content">
         <div class="panel-filter-bar">
           <input id="odpSearch" class="table-search-input" type="text" placeholder="<%= t('admin.map.ph_odp','Cari ODP (nama / deskripsi)...') %>">
-          <button type="button" class="btn btn-p btn-sm" onclick="openModal('addOdpModal')"><i class="bi bi-plus-circle"></i> Tambah ODP</button>
+          <button type="button" class="btn btn-p btn-sm" onclick="openModal('addOdpModal')"><i class="bi bi-plus-circle"></i> Agregar NAP</button>
         </div>
         <div class="table-wrap">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Nama ODP</th>
+                <th>Nombre de la NAP</th>
                 <th><%= t('common.description','Deskripsi') %></th>
                 <th>Port</th>
                 <th>Koordinat</th>
@@ -843,11 +843,11 @@
     <form action="/admin/odps" method="POST">
       <div class="mh"><span class="mt"><%= t('admin.map.add_modal.title', 'Tambah ODP Baru') %></span><button type="button" class="mc" onclick="closeModal('addOdpModal')">&times;</button></div>
       <div class="mbody">
-        <div class="fg"><label class="fl"><%= t('admin.map.form.name', 'Nama ODP') %></label><input type="text" name="name" class="fc" placeholder="<%= t('admin.map.form.name_placeholder', 'Contoh: ODP-A-01') %>" required></div>
+        <div class="fg"><label class="fl"><%= t('admin.map.form.name', 'Nombre de la NAP') %></label><input type="text" name="name" class="fc" placeholder="<%= t('admin.map.form.name_placeholder', 'Contoh: ODP-A-01') %>" required></div>
 
         <div class="form-row">
-          <div class="fg"><label class="fl">Jumlah Port (Kapasitas)</label><input type="number" name="port_capacity" class="fc" min="1" step="1" value="16" required></div>
-          <div class="fg"><label class="fl"><%= t('admin.map.pon_port','PON Port (opsional)') %></label><input type="text" name="pon_port" class="fc" placeholder="Contoh: 1/2/7"></div>
+          <div class="fg"><label class="fl">Cantidad de puertos (capacidad)</label><input type="number" name="port_capacity" class="fc" min="1" step="1" value="16" required></div>
+          <div class="fg"><label class="fl"><%= t('admin.map.pon_port','PON Port (opsional)') %></label><input type="text" name="pon_port" class="fc" placeholder="Ejemplo: 1/2/7"></div>
         </div>
 
         <label class="fl"><%= t('admin.map.form.pick_location', 'Pilih Lokasi di Peta') %></label>
@@ -874,11 +874,11 @@
     <form id="editOdpForm" method="POST">
       <div class="mh"><span class="mt"><%= t('admin.map.edit_modal.title', 'Edit Data ODP') %></span><button type="button" class="mc" onclick="closeModal('editOdpModal')">&times;</button></div>
       <div class="mbody">
-        <div class="fg"><label class="fl"><%= t('admin.map.form.name', 'Nama ODP') %></label><input type="text" name="name" id="e_odp_name" class="fc" required></div>
+        <div class="fg"><label class="fl"><%= t('admin.map.form.name', 'Nombre de la NAP') %></label><input type="text" name="name" id="e_odp_name" class="fc" required></div>
 
         <div class="form-row">
-          <div class="fg"><label class="fl">Jumlah Port (Kapasitas)</label><input type="number" name="port_capacity" id="e_odp_capacity" class="fc" min="1" step="1" required></div>
-          <div class="fg"><label class="fl"><%= t('admin.map.pon_port','PON Port (opsional)') %></label><input type="text" name="pon_port" id="e_odp_pon" class="fc" placeholder="Contoh: 1/2/7"></div>
+          <div class="fg"><label class="fl">Cantidad de puertos (capacidad)</label><input type="number" name="port_capacity" id="e_odp_capacity" class="fc" min="1" step="1" required></div>
+          <div class="fg"><label class="fl"><%= t('admin.map.pon_port','PON Port (opsional)') %></label><input type="text" name="pon_port" id="e_odp_pon" class="fc" placeholder="Ejemplo: 1/2/7"></div>
         </div>
 
         <label class="fl"><%= t('admin.map.form.adjust_location', 'Sesuaikan Lokasi di Peta') %></label>
@@ -910,9 +910,9 @@
       <p class="text-muted mt-2 small"><i class="bi bi-info-circle"></i> <%= t('admin.map.route_hint','Tarik titik oranye untuk mengubah jalur. Klik tombol di bawah untuk menambah titik lekukan.') %></p>
     </div>
     <div class="mf">
-      <button type="button" class="btn btn-sm btn-outline-primary" onclick="addMorePoints()"><i class="bi bi-plus-circle"></i> Tambah Titik Lekukan</button>
+      <button type="button" class="btn btn-sm btn-outline-primary" onclick="addMorePoints()"><i class="bi bi-plus-circle"></i> Agregar punto de quiebre</button>
       <button type="button" class="btn btn-g" onclick="closeModal('cablePathModal')"><%= t('common.cancel','Batal') %></button>
-      <button type="button" class="btn btn-p" onclick="saveCablePath()">Simpan Jalur Kabel</button>
+      <button type="button" class="btn btn-p" onclick="saveCablePath()">Guardar recorrido del cable</button>
     </div>
   </div>
 </div>
@@ -1131,16 +1131,16 @@
         '<div style="font-size:11px;color:#64748b;"><i class="bi bi-telephone"></i> ' + escapeHtml(c.phone || '-') + '</div></td>' +
         '<td><div style="font-weight:700;font-family:monospace;font-size:12px;color:#2563eb;">' + escapeHtml(c.pppoe_username || '-') + '</div>' +
         (c.genieacs_tag ? '<div style="font-size:11px;color:#64748b;"><i class="bi bi-tag"></i> ' + escapeHtml(c.genieacs_tag) + '</div>' : '') + '</td>' +
-        '<td>' + (isActive ? '<span class="cp-chip cp-chip-active"><i class="bi bi-check-circle-fill"></i> <%= t('common.active','Aktif') %></span>' : '<span class="cp-chip cp-chip-suspended"><i class="bi bi-x-circle-fill"></i> Isolir</span>') + '</td>' +
+        '<td>' + (isActive ? '<span class="cp-chip cp-chip-active"><i class="bi bi-check-circle-fill"></i> <%= t('common.active','Aktif') %></span>' : '<span class="cp-chip cp-chip-suspended"><i class="bi bi-x-circle-fill"></i> Suspendido</span>') + '</td>' +
         '<td><div style="font-weight:700;font-size:12px;">' + escapeHtml(c.package_name || '-') + '</div>' +
         '<div style="font-size:11px;color:#d97706;font-weight:700;"><i class="bi bi-box-seam"></i> ' + escapeHtml(c.odp_name || 'Tanpa ODP') + '</div></td>' +
-        '<td>' + (hasGps ? '<span style="font-size:11.5px;font-family:monospace;color:var(--text);font-weight:700;">' + Number(c.lat).toFixed(5) + ', ' + Number(c.lng).toFixed(5) + '</span>' : '<span style="font-size:11px;color:#ef4444;font-weight:700;"><i class="bi bi-exclamation-circle"></i> Belum ada GPS</span>') + '</td>' +
+        '<td>' + (hasGps ? '<span style="font-size:11.5px;font-family:monospace;color:var(--text);font-weight:700;">' + Number(c.lat).toFixed(5) + ', ' + Number(c.lng).toFixed(5) + '</span>' : '<span style="font-size:11px;color:#ef4444;font-weight:700;"><i class="bi bi-exclamation-circle"></i> Sin GPS</span>') + '</td>' +
         '<td style="text-align:right;white-space:nowrap;"><div class="act">' +
           '<button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>' +
           '<div class="act-menu">' +
             (hasGps ? '<button type="button" class="act-item primary" onclick="focusCustomer(' + c.id + ')"><i class="bi bi-geo-alt"></i> Fokus ke Peta</button>' : '') +
-            '<a class="act-item" href="/admin/customers?search=' + encodeURIComponent(c.name || '') + '"><i class="bi bi-eye"></i> Detail Pelanggan</a>' +
-            (wa ? '<a class="act-item success" href="https://wa.me/' + wa + '" target="_blank"><i class="bi bi-whatsapp"></i> Kirim WA</a>' : '') +
+            '<a class="act-item" href="/admin/customers?search=' + encodeURIComponent(c.name || '') + '"><i class="bi bi-eye"></i> Detalle del cliente</a>' +
+            (wa ? '<a class="act-item success" href="https://wa.me/' + wa + '" target="_blank"><i class="bi bi-whatsapp"></i> Enviar WhatsApp</a>' : '') +
           '</div>' +
         '</div></td></tr>';
     }).join('');
@@ -1156,7 +1156,7 @@
         '<td><div style="font-weight:800;color:var(--text);"><i class="bi bi-box-seam-fill text-warning me-1"></i> ' + escapeHtml(o.name) + '</div></td>' +
         '<td><div style="font-size:12px;color:#64748b;">' + escapeHtml(o.description || '-') + '</div></td>' +
         '<td><div style="font-weight:800;font-size:12px;">' +
-          '<button type="button" class="btn btn-sm btn-g" style="font-weight:800;padding:2px 8px" onclick="showOdpPorts(' + Number(o.id) + ')" title="Lihat visual port terpakai"><i class="bi bi-diagram-2"></i> ' + pu.usedCount + '/' + pu.capacity + '</button>' +
+          '<button type="button" class="btn btn-sm btn-g" style="font-weight:800;padding:2px 8px" onclick="showOdpPorts(' + Number(o.id) + ')" title="Ver puertos usados"><i class="bi bi-diagram-2"></i> ' + pu.usedCount + '/' + pu.capacity + '</button>' +
           (pu.remaining === 0 ? ' <span class="cp-chip" style="background:#fee2e2;color:#991b1b;border-color:#fecaca"><i class="bi bi-exclamation-triangle-fill"></i> PENUH</span>' : ' <span style="font-size:11px;color:var(--muted)">sisa ' + pu.remaining + '</span>') +
         '</div><div style="font-size:11px;color:var(--muted);margin-top:2px"><%= t('admin.map.view_port','Klik untuk lihat visual port') %></div></td>' +
         '<td><div style="font-size:11.5px;font-family:monospace;color:#334155;font-weight:700;">' + (Number(o.lat) || 0).toFixed(6) + ', ' + (Number(o.lng) || 0).toFixed(6) + '</div></td>' +
@@ -1166,7 +1166,7 @@
             '<button type="button" class="act-item primary" data-odp-id="' + Number(o.id) + '" onclick="editOdpFromBtn(this)"><i class="bi bi-pencil"></i> Edit ODP</button>' +
             '<button type="button" class="act-item" data-odp-id="' + Number(o.id) + '" onclick="focusOdpFromBtn(this)"><i class="bi bi-geo-alt"></i> Fokus Peta</button>' +
             '<div class="act-sep"></div>' +
-            '<button type="button" class="act-item danger" data-odp-id="' + Number(o.id) + '" onclick="deleteOdpFromBtn(this)"><i class="bi bi-trash"></i> Hapus ODP</button>' +
+            '<button type="button" class="act-item danger" data-odp-id="' + Number(o.id) + '" onclick="deleteOdpFromBtn(this)"><i class="bi bi-trash"></i> Eliminar NAP</button>' +
           '</div>' +
         '</div></td></tr>';
     }).join('');
@@ -1348,7 +1348,7 @@
     ];
 
     selectedSearchIndex = -1;
-    resultsCount.textContent = `${currentSearchResults.length} Ditemukan`;
+    resultsCount.textContent = `${currentSearchResults.length} encontrados`;
 
     if (currentSearchResults.length === 0) {
       resultsList.innerHTML = `
@@ -1489,7 +1489,7 @@
     if (!entry) {
       const c = customers.find(x => x.id === id);
       if (c && (!c.lat || !c.lng)) {
-        alert(`Pelanggan "${c.name}" belum memiliki koordinat GPS.`);
+        alert(`El cliente "${c.name}" no tiene coordenadas GPS.`);
       }
       return;
     }
@@ -1537,7 +1537,7 @@
   function deleteOdpFromBtn(btn) {
     if (!btn || !btn.dataset) return;
     const odpId = btn.dataset.odpId;
-    if (confirm('Apakah Anda yakin ingin menghapus ODP ini?')) {
+    if (confirm('¿Seguro que querés eliminar esta NAP?')) {
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = `/admin/odps/${odpId}/delete`;
@@ -1725,7 +1725,7 @@
 
   function startCableDrawing(customerId, lat, lng, odpId) {
     const odp = odpMap[odpId];
-    if (!odp) return alert('Data ODP tidak ditemukan atau belum dipilih');
+    if (!odp) return alert('NAP no encontrada o no seleccionada');
 
     currentEditingCustomer = customerId;
     openModal('cablePathModal');
@@ -1796,13 +1796,13 @@
       if (contentType && contentType.indexOf("application/json") !== -1) {
         const data = await res.json();
         if (data.ok) {
-          alert('Jalur kabel berhasil disimpan!');
+          alert('¡Recorrido del cable guardado!');
           location.reload();
         } else {
-          alert('Gagal menyimpan: ' + data.error);
+          alert('No se pudo guardar: ' + data.error);
         }
       } else {
-        alert('Gagal menyimpan jalur kabel.');
+        alert('No se pudo guardar el recorrido del cable.');
       }
     } catch (e) {
       alert('Error: ' + e.message);
@@ -1907,7 +1907,7 @@
   function deleteOdpFromBtn(btn) {
     if (!btn || !btn.dataset) return;
     const odpId = btn.dataset.odpId;
-    if (confirm('Apakah Anda yakin ingin menghapus ODP ini?')) {
+    if (confirm('¿Seguro que querés eliminar esta NAP?')) {
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = `/admin/odps/${odpId}/delete`;
@@ -2139,7 +2139,7 @@
       className: 'custom-onu-icon',
       html: `
         <div class="onu-marker-node ${connClass} ${statusClass}" id="onu-node-${cust.id}">
-          <div class="onu-marker-pin" title="${escapeHtml(cust.name)} (${is_active ? 'Aktif' : (isInactive ? 'Nonaktif' : 'Isolir')})">
+          <div class="onu-marker-pin" title="${escapeHtml(cust.name)} (${is_active ? 'Activo' : (isInactive ? 'Inactivo' : 'Suspendido')})">
             <i class="bi bi-router-fill"></i>
             <span class="onu-marker-badge"><i class="bi ${badgeIcon}"></i></span>
           </div>
@@ -2221,13 +2221,13 @@
     if (!el) return;
     const entry = odpMap[odpId];
     const usage = entry && entry.data ? entry.data.port_usage : null;
-    if (!usage) { el.innerHTML = '<span style="font-size:11px;color:var(--muted)">Data port tidak tersedia.</span>'; return; }
+    if (!usage) { el.innerHTML = '<span style="font-size:11px;color:var(--muted)">Datos de puertos no disponibles.</span>'; return; }
     const cap = Number(usage.capacity || 0);
     const usedBy = usage.usedBy || {};
     let html = '';
     for (let i = 1; i <= cap; i++) {
       const u = usedBy[String(i)];
-      let bg = 'transparent', bd = 'var(--muted)', title = 'Port ' + i + ' — belum terhubung';
+      let bg = 'transparent', bd = 'var(--muted)', title = 'Port ' + i + ' — sin conectar';
       if (u) {
         const nm = (typeof u === 'string') ? u : (u.name || '');
         const pppoe = (typeof u === 'string') ? '' : String(u.pppoe || '').toLowerCase();
@@ -2246,7 +2246,7 @@
     var title = document.getElementById('odpPortsTitle');
     var legend = document.getElementById('odpPortsLegend');
     if (!grid) return;
-    grid.innerHTML = '<span class="text-muted">Memuat…</span>';
+    grid.innerHTML = '<span class="text-muted">Cargando…</span>';
     if (legend) legend.textContent = '';
     if (title) title.textContent = 'Port ODP';
     openModal('odpPortsModal');
@@ -2263,10 +2263,10 @@
           var on = !!pppoe && liveSessionKeys.has(pppoe);
           var bg = 'transparent', col = 'var(--muted)', bd = 'var(--muted)', lbl = 'belum';
           if (uu) { bg = on ? '#22c55e' : '#ef4444'; bd = bg; col = '#ffffff'; lbl = on ? 'online' : 'offline'; }
-          html += '<span title="Port ' + i + (uu ? (' — ' + escapeHtml(nm) + ' (' + lbl + ')') : ' (belum terhubung)') + '" style="width:42px;height:42px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;background:' + bg + ';color:' + col + ';border:1.5px solid ' + bd + '">' + i + '</span>';
+          html += '<span title="Port ' + i + (uu ? (' — ' + escapeHtml(nm) + ' (' + lbl + ')') : ' (sin conectar)') + '" style="width:42px;height:42px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;background:' + bg + ';color:' + col + ';border:1.5px solid ' + bd + '">' + i + '</span>';
         }
         grid.innerHTML = html;
-        if (legend) legend.textContent = 'Hijau = terhubung (online), Merah = offline, tanpa warna = belum terhubung. Terpakai ' + (u.usedCount || 0) + '/' + cap + '.';
+        if (legend) legend.textContent = 'Verde = conectado (en línea), rojo = desconectado, sin color = sin conectar. Usados ' + (u.usedCount || 0) + '/' + cap + '.';
         if (title) title.textContent = 'Port ODP (' + (u.usedCount || 0) + '/' + cap + ')';
       })
       .catch(function () { grid.innerHTML = '<span class="text-muted"><%= t('admin.map.port_err','Gagal memuat data port.') %></span>'; });
@@ -2274,7 +2274,7 @@
 
   function buildWaLink(phone, name) {
     const to = normalizePhone(phone);
-    const msg = `Halo ${String(name || '').trim()}`;
+    const msg = `Hola, ${String(name || '').trim()}`;
     if (!to) return 'javascript:void(0)';
     return `https://wa.me/${to}?text=${encodeURIComponent(msg)}`;
   }

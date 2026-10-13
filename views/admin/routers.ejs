@@ -420,7 +420,7 @@
 
           <div class="rc-actions">
             <button type="button" class="btn-detail-live flex-fill" title="<%= t('admin.rt.live_detail','Detail Live Status') %>" onclick="openLiveDetailModal(<%= r.id %>)">
-              <i class="bi bi-cpu-fill me-1"></i> Detail Live
+              <i class="bi bi-cpu-fill me-1"></i> Detalle en vivo
             </button>
             <button type="button" class="btn btn-g btn-sm" title="<%= t('admin.routers.actions.test', 'Test Koneksi') %>" onclick="testConn(<%= r.id %>)">
               <i class="bi bi-plug"></i>
@@ -501,7 +501,7 @@
     <div class="mbody" id="modal-router-body" style="min-height:360px;">
       <div class="text-center py-5 text-muted">
         <i class="bi bi-arrow-repeat spin fs-2 mb-2 d-block text-primary"></i>
-        <span>Memuat metrik sistem & data live router...</span>
+        <span>Cargando métricas del sistema y datos en vivo del router...</span>
       </div>
     </div>
     <div class="mf">
@@ -515,7 +515,7 @@
 <div class="mo" id="isolirScriptModal">
   <div class="mb" style="max-width:740px">
     <div class="mh">
-      <span class="mt"><i class="bi bi-shield-lock text-warning me-2"></i> Setup Firewall & Halaman Isolir Pelanggan</span>
+      <span class="mt"><i class="bi bi-shield-lock text-warning me-2"></i> Configurar firewall y página de corte</span>
       <button class="mc" onclick="closeModal('isolirScriptModal')">&times;</button>
     </div>
     <div class="mbody">
@@ -532,14 +532,14 @@
       <!-- TAB 1: Auto Setup via API -->
       <div id="isolir-tab-auto">
         <div class="alert alert-info p-3 small mb-3" style="background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); color:#e0e7ff;">
-          <h6 class="fw-bold mb-1"><i class="bi bi-info-circle me-1 text-info"></i> Otomatisasi Redirect Halaman Isolir</h6>
+          <h6 class="fw-bold mb-1"><i class="bi bi-info-circle me-1 text-info"></i> Redirección automática a la página de corte</h6>
           <p class="mb-0 small" style="opacity:0.9;">
-            Sistem akan mengirimkan perintah API ke MikroTik untuk membuat <strong>Rule NAT Redirect (Port 80/443)</strong>, <strong>Firewall Rule (LIST_ISOLIR)</strong>, serta memasang <strong>Hook Script on-up di Profil PPPoE Isolir</strong> secara otomatis.
+            El sistema enviará órdenes por API al MikroTik para crear <strong>Rule NAT Redirect (Port 80/443)</strong>, <strong>Firewall Rule (LIST_ISOLIR)</strong>, serta memasang <strong>el script on-up en el perfil PPPoE de corte</strong> automáticamente.
           </p>
         </div>
 
         <div class="form-group mb-3">
-          <label class="fl fw-bold text-white mb-2">Pilih Router MikroTik Target *</label>
+          <label class="fl fw-bold text-white mb-2">Elegí el router MikroTik de destino *</label>
           <select class="fs w-100" id="isolir-modal-router-select">
             <% routers.forEach(r => { %>
               <option value="<%= r.id %>"><%= r.name %> (<%= r.host %>:<%= r.port %>)</option>
@@ -548,7 +548,7 @@
         </div>
 
         <button type="button" class="btn btn-primary fw-bold w-100 py-2 shadow-sm" onclick="runAutoSetupFirewallFromModal()">
-          <i class="bi bi-play-circle-fill me-1"></i> Jalankan Setup Firewall & Hook Isolir Sekarang
+          <i class="bi bi-play-circle-fill me-1"></i> Configurar ahora el firewall y el script de corte
         </button>
 
         <div id="isolir-auto-setup-result" style="display:none;"></div>
@@ -694,10 +694,10 @@ async function loadRouterLiveSummary(r) {
     if (pill) {
       if (live.connected) {
         pill.className = 'rc-status-pill online';
-        pill.innerHTML = '<span class="rc-status-dot"></span> Online';
+        pill.innerHTML = '<span class="rc-status-dot"></span> En línea';
       } else {
         pill.className = 'rc-status-pill offline';
-        pill.innerHTML = '<span class="rc-status-dot"></span> Offline';
+        pill.innerHTML = '<span class="rc-status-dot"></span> Desconectado';
       }
     }
 
@@ -742,7 +742,7 @@ async function openLiveDetailModal(id) {
   const nameEl = document.getElementById('modal-router-name');
   const bodyEl = document.getElementById('modal-router-body');
 
-  if (nameEl) nameEl.textContent = 'Detail Router: ' + (router ? router.name : '#' + id);
+  if (nameEl) nameEl.textContent = 'Detalle del router: ' + (router ? router.name : '#' + id);
   bodyEl.innerHTML = `
     <div class="text-center py-5 text-muted">
       <i class="bi bi-arrow-repeat spin fs-2 mb-2 d-block text-primary"></i>
@@ -755,7 +755,7 @@ async function openLiveDetailModal(id) {
     const res = await fetch('/admin/api/routers/' + id + '/details');
     const data = await res.json();
 
-    if (!data.success) throw new Error(data.error || 'Gagal mengambil data router');
+    if (!data.success) throw new Error(data.error || 'No se pudieron leer los datos del router');
     currentModalData = data;
     const l = data.live;
     const r = data.router;
@@ -845,7 +845,7 @@ async function openLiveDetailModal(id) {
         <div class="mt-tablewrap">
           <table class="mt-tbl">
             <thead><tr><th>#</th><th>Username</th><th>IP Address</th><th><%= t('admin.common.uptime','Uptime') %></th><th>Caller ID / MAC</th></tr></thead>
-            <tbody>${pppoeRows || '<tr><td colspan="5" class="mt-empty">Tidak ada sesi PPPoE aktif di router ini</td></tr>'}</tbody>
+            <tbody>${pppoeRows || '<tr><td colspan="5" class="mt-empty">No hay sesiones PPPoE activas en este router</td></tr>'}</tbody>
           </table>
         </div>
       </div>
@@ -854,7 +854,7 @@ async function openLiveDetailModal(id) {
         <div class="mt-tablewrap">
           <table class="mt-tbl">
             <thead><tr><th>#</th><th>User / Voucher</th><th>IP Address</th><th>MAC Address</th><th><%= t('admin.common.uptime','Uptime') %></th></tr></thead>
-            <tbody>${hsRows || '<tr><td colspan="5" class="mt-empty">Tidak ada pengguna Hotspot aktif di router ini</td></tr>'}</tbody>
+            <tbody>${hsRows || '<tr><td colspan="5" class="mt-empty">No hay usuarios hotspot activos en este router</td></tr>'}</tbody>
           </table>
         </div>
       </div>
@@ -949,23 +949,23 @@ async function runAutoSetupFirewallFromModal() {
   const routerId = routerSel ? routerSel.value : null;
   const statusBox = document.getElementById('isolir-auto-setup-result');
   if (!routerId) {
-    alert('Pilih router terlebih dahulu!');
+    alert('¡Primero elegí un router!');
     return;
   }
   
   statusBox.style.display = 'block';
   statusBox.className = 'alert alert-info p-3 small mt-3';
-  statusBox.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i> Sedang menghubungkan dan memasang rule Firewall/NAT isolir di MikroTik...';
+  statusBox.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i> Conectando e instalando las reglas de firewall/NAT de corte en el MikroTik...';
 
   try {
     const res = await fetch('/admin/api/routers/' + routerId + '/setup-firewall', { method: 'POST' });
     const data = await res.json();
     if (data.success) {
       statusBox.className = 'alert alert-success p-3 small mt-3';
-      statusBox.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> <strong>BERHASIL:</strong> ' + data.message;
+      statusBox.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> <strong>LISTO:</strong> ' + data.message;
     } else {
       statusBox.className = 'alert alert-danger p-3 small mt-3';
-      statusBox.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>GAGAL:</strong> ' + (data.error || data.message || 'Terjadi kesalahan');
+      statusBox.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>ERROR:</strong> ' + (data.error || data.message || 'Terjadi kesalahan');
     }
   } catch (e) {
     statusBox.className = 'alert alert-danger p-3 small mt-3';

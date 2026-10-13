@@ -3,18 +3,18 @@
   var _lang = (typeof lang !== 'undefined') ? lang : 'id';
   function _tt(id, en) { return _lang === 'en' ? en : id; }
   var MAP = {
-    400: { t: _tt('Permintaan Tidak Valid','Bad Request'), d: _tt('Permintaan tidak dapat diproses. Coba muat ulang halaman.','The request could not be processed. Try reloading the page.'), i: 'bi-exclamation-triangle' },
-    401: { t: _tt('Belum Masuk','Not Signed In'), d: _tt('Anda perlu masuk terlebih dahulu untuk membuka halaman ini.','You need to sign in first to open this page.'), i: 'bi-shield-lock' },
-    403: { t: _tt('Akses Ditolak','Access Denied'), d: _tt('Anda tidak memiliki izin untuk membuka halaman ini.','You do not have permission to open this page.'), i: 'bi-shield-exclamation' },
-    404: { t: _tt('Halaman Tidak Ditemukan','Page Not Found'), d: _tt('Alamat yang Anda tuju tidak ada atau sudah dipindahkan.','The address you are looking for does not exist or has been moved.'), i: 'bi-compass' },
-    408: { t: _tt('Waktu Habis','Request Timeout'), d: _tt('Permintaan melebihi batas waktu. Periksa koneksi lalu coba lagi.','The request timed out. Check your connection and try again.'), i: 'bi-hourglass-split' },
-    429: { t: _tt('Terlalu Banyak Permintaan','Too Many Requests'), d: _tt('Silakan tunggu sebentar, lalu coba lagi.','Please wait a moment, then try again.'), i: 'bi-speedometer' },
-    500: { t: _tt('Kesalahan Server','Server Error'), d: _tt('Terjadi kesalahan di server kami. Tim teknis sudah menerima laporannya.','An error occurred on our server. The technical team has been notified.'), i: 'bi-tools' },
-    502: { t: _tt('Gerbang Bermasalah','Bad Gateway'), d: _tt('Layanan tujuan sedang tidak dapat dijangkau. Coba beberapa saat lagi.','The destination service is unreachable. Please try again later.'), i: 'bi-hdd-network' },
-    503: { t: _tt('Layanan Tidak Tersedia','Service Unavailable'), d: _tt('Layanan sedang pemeliharaan atau sibuk. Silakan coba beberapa saat lagi.','The service is under maintenance or busy. Please try again later.'), i: 'bi-cone-striped' },
-    504: { t: _tt('Server Tidak Merespons','Server Not Responding'), d: _tt('Server tidak merespons tepat waktu. Silakan coba beberapa saat lagi.','The server did not respond in time. Please try again later.'), i: 'bi-clock-history' }
+    400: { t: _tt('Solicitud inválida','Bad Request'), d: _tt('No se pudo procesar la solicitud. Pruebe recargando la página.','The request could not be processed. Try reloading the page.'), i: 'bi-exclamation-triangle' },
+    401: { t: _tt('Sesión no iniciada','Not Signed In'), d: _tt('Debe ingresar primero para abrir esta página.','You need to sign in first to open this page.'), i: 'bi-shield-lock' },
+    403: { t: _tt('Acceso denegado','Access Denied'), d: _tt('No tiene permiso para abrir esta página.','You do not have permission to open this page.'), i: 'bi-shield-exclamation' },
+    404: { t: _tt('Página no encontrada','Page Not Found'), d: _tt('La dirección que busca no existe o fue movida.','The address you are looking for does not exist or has been moved.'), i: 'bi-compass' },
+    408: { t: _tt('Tiempo agotado','Request Timeout'), d: _tt('La solicitud tardó demasiado. Revise su conexión e intente de nuevo.','The request timed out. Check your connection and try again.'), i: 'bi-hourglass-split' },
+    429: { t: _tt('Terlalu Banyak Permintaan','Too Many Requests'), d: _tt('Espere un momento e intente de nuevo.','Please wait a moment, then try again.'), i: 'bi-speedometer' },
+    500: { t: _tt('Kesalahan Server','Server Error'), d: _tt('Ocurrió un error en nuestro servidor. El equipo técnico ya recibió el reporte.','An error occurred on our server. The technical team has been notified.'), i: 'bi-tools' },
+    502: { t: _tt('Gerbang Bermasalah','Bad Gateway'), d: _tt('El servicio de destino no está disponible en este momento. Intente más tarde.','The destination service is unreachable. Please try again later.'), i: 'bi-hdd-network' },
+    503: { t: _tt('Servicio no disponible','Service Unavailable'), d: _tt('El servicio está en mantenimiento o saturado. Intente más tarde.','The service is under maintenance or busy. Please try again later.'), i: 'bi-cone-striped' },
+    504: { t: _tt('El servidor no responde','Server Not Responding'), d: _tt('El servidor no respondió a tiempo. Intente más tarde.','The server did not respond in time. Please try again later.'), i: 'bi-clock-history' }
   };
-  var _m = MAP[_code] || { t: _tt('Terjadi Kesalahan','Something Went Wrong'), d: (typeof error !== 'undefined' && error) ? error : _tt('Terjadi kesalahan. Silakan coba lagi.','An error occurred. Please try again.'), i: 'bi-exclamation-octagon' };
+  var _m = MAP[_code] || { t: _tt('Terjadi Kesalahan','Something Went Wrong'), d: (typeof error !== 'undefined' && error) ? error : _tt('Ocurrió un error. Intente de nuevo.','An error occurred. Please try again.'), i: 'bi-exclamation-octagon' };
   var _path = (typeof path !== 'undefined' && path) ? String(path) : '';
   var _isAdmin = _path.indexOf('/admin') === 0;
   var _home = _isAdmin ? '/admin' : '/';
@@ -66,11 +66,11 @@
       <p class="d"><%= (typeof error !== 'undefined' && error && _code !== 404) ? error : _m.d %></p>
       <div class="btns">
         <a class="btn btn-main" href="<%= _home %>"><i class="bi bi-house-door"></i> <%= _homeLabel %></a>
-        <button class="btn btn-ghost" type="button" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i> <%= _tt('Muat Ulang','Reload') %></button>
+        <button class="btn btn-ghost" type="button" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i> <%= _tt('Recargar','Reload') %></button>
       </div>
       <% if (_statusUrl) { %>
       <div class="btns" style="margin-top:10px;">
-        <a class="btn btn-ghost" style="flex:1" href="<%= _statusUrl %>" target="_blank" rel="noopener"><i class="bi bi-activity"></i> <%= _tt('Cek Status Layanan','Check Service Status') %></a>
+        <a class="btn btn-ghost" style="flex:1" href="<%= _statusUrl %>" target="_blank" rel="noopener"><i class="bi bi-activity"></i> <%= _tt('Ver estado del servicio','Check Service Status') %></a>
       </div>
       <% } %>
       <div class="meta"><%= _name %> · v<%= (typeof appVersion !== 'undefined') ? appVersion : '0.5' %><% if (_path) { %> · <span><%= _path %></span><% } %></div>

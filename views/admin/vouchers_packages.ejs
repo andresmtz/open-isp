@@ -21,7 +21,7 @@
   <div class="topbar">
     <div class="tb-title">
       <button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
-      <i class="bi bi-ticket-detailed"></i> Paket Voucher Hotspot (Real-Time)
+      <i class="bi bi-ticket-detailed"></i> Planes de fichas hotspot (tiempo real)
     </div>
     <div class="tb-right" style="display:flex;align-items:center;gap:15px">
       <span class="adm-badge"><i class="bi bi-person-fill"></i> <%= (typeof session !== 'undefined' && session && session.isCashier) ? t('admin.role.cashier', 'Kasir') : t('admin.role.admin', 'Admin') %></span>
@@ -140,14 +140,14 @@
             <select class="fc" id="form_charset" required>
               <option value="numbers">Hanya Angka (0-9)</option>
               <option value="letters">Hanya Huruf Kecil (a-z)</option>
-              <option value="mixed" selected>Kombinasi Huruf Besar & Angka (Acak)</option>
+              <option value="mixed" selected>Mayúsculas y números (al azar)</option>
             </select>
           </div>
           <div class="fg">
-            <label class="fl">Status Paket *</label>
+            <label class="fl">Estado del plan *</label>
             <select class="fc" id="form_is_active" required>
               <option value="1"><%= t('admin.vp.opt_active','Aktif (Tampil di portal pelanggan)') %></option>
-              <option value="0">Nonaktif (Sembunyikan)</option>
+              <option value="0">Inactivo (oculto)</option>
             </select>
           </div>
         </div>
@@ -155,7 +155,7 @@
       </div>
       <div class="mf">
         <button type="button" class="btn btn-g" onclick="closeModal('packageModal')"><%= t('common.cancel','Batal') %></button>
-        <button type="submit" class="btn btn-p" id="btnSave"><i class="bi bi-check-lg"></i> Simpan Paket</button>
+        <button type="submit" class="btn btn-p" id="btnSave">&lt;i class="bi bi-check-lg">&lt;/i> Guardar plan</button>
       </div>
     </form>
   </div>
@@ -211,7 +211,7 @@
       }).join('');
 
     } catch (e) {
-      alert('Gagal memuat paket voucher: ' + e.message);
+      alert('No se pudieron cargar los planes de fichas: ' + e.message);
     }
   }
 
@@ -236,7 +236,7 @@
         profileSelect.insertAdjacentHTML('beforeend', `<option value="${p.name}">${p.name}</option>`);
       });
     } catch (e) {
-      profileSelect.innerHTML = `<option value="">Gagal memuat: ${e.message}</option>`;
+      profileSelect.innerHTML = `<option value="">No se pudo cargar: ${e.message}</option>`;
     }
   }
 
@@ -277,7 +277,7 @@
   }
 
   function openAddModal() {
-    document.getElementById('modalTitle').innerText = 'Tambah Paket Voucher Hotspot';
+    document.getElementById('modalTitle').innerText = 'Agregar plan de ficha hotspot';
     document.getElementById('packageId').value = '';
     document.getElementById('packageForm').reset();
     document.getElementById('profileHint').innerText = '';
@@ -338,7 +338,7 @@
       });
       const data = await res.json();
       
-      if (!res.ok) throw new Error(data.error || 'Gagal menyimpan konfigurasi');
+      if (!res.ok) throw new Error(data.error || 'No se pudo guardar la configuración');
       
       closeModal('packageModal');
       loadPackages();
@@ -346,20 +346,20 @@
       alert(e.message);
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '<i class="bi bi-check-lg"></i> Simpan Paket';
+      btn.innerHTML = '<i class="bi bi-check-lg"></i> Guardar plan';
     }
   }
 
   // Delete package config
   async function deletePackage(id) {
-    if (!confirm('Apakah Anda yakin ingin menghapus konfigurasi paket ini? Pelanggan tidak akan bisa lagi membeli paket ini secara real-time.')) return;
+    if (!confirm('¿Seguro que querés eliminar la configuración de este plan? Los clientes ya no podrán comprarlo en línea.')) return;
     
     try {
       const res = await fetch(`/admin/api/vouchers/packages/${id}/delete`, {
         method: 'POST'
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal menghapus');
+      if (!res.ok) throw new Error(data.error || 'No se pudo eliminar');
       loadPackages();
     } catch (e) {
       alert(e.message);

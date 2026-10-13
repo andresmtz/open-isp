@@ -121,7 +121,7 @@ function mapStatus(estado) {
 function mapInvoiceStatus(estado) {
   const e = str(estado).toLowerCase();
   if (e === '2' || e.startsWith('pagad')) return 'paid';
-  if (e === '3' || e.startsWith('cancel')) return 'void';
+  if (e === '3' || e.startsWith('cancel') || e === '5' || e.startsWith('se transfi')) return 'void';
   if (e === '1' || e.startsWith('pendiente') || e === '4' || e.startsWith('en revis')) return 'unpaid';
   return 'unpaid';
 }
@@ -136,7 +136,7 @@ function speedFromPlanName(name) {
 }
 
 // ── Sincronización ──────────────────────────────────────────────────────────────
-async function run({ dryRun = true, invoicesMonths = 12 } = {}) {
+async function run({ dryRun = true, invoicesMonths = 12, source = null } = {}) {
   const started = new Date().toISOString();
   const report = {
     dryRun, plans: { created: 0, updated: 0 }, customers: { created: 0, updated: 0, unchanged: 0, skippedCancelled: 0 },
@@ -145,7 +145,8 @@ async function run({ dryRun = true, invoicesMonths = 12 } = {}) {
   const warn = (m) => { if (report.warnings.length < 200) report.warnings.push(m); };
 
   // 1) Clientes y planes
-  const clients = await apiGetAll('/api/clientes/');
+  // source: datos exportados desde la web de WispHub ({ clients, invoices }); si no, se usa la API
+  const clients = source ? (source.clients || []) : await apiGetAll('/api/clientes/');
   report.sample.customerKeys = clients[0] ? Object.keys(clients[0]) : [];
   const routerRow = db.prepare('SELECT id FROM routers ORDER BY id LIMIT 1').get();
   const routerId = routerRow ? routerRow.id : null;
@@ -243,14 +244,14 @@ async function run({ dryRun = true, invoicesMonths = 12 } = {}) {
   const from = new Date(); from.setMonth(from.getMonth() - Number(invoicesMonths || 12));
   const to = new Date(); to.setDate(to.getDate() + 40);
   const fmt = (d) => d.toISOString().slice(0, 10);
-  const invoices = await apiGetAll('/api/facturas/', { fecha_emision__range_0: fmt(from), fecha_emision__range_1: fmt(to) });
+  const invoices = source ? (source.invoices || []) : await apiGetAll('/api/facturas/', { fecha_emision__range_0: fmt(from), fecha_emision__range_1: fmt(to) });
   report.sample.invoiceKeys = invoices[0] ? Object.keys(invoices[0]) : [];
 
   const txInv = db.transaction(() => {
     for (const f of invoices) {
       const fid = num(pick(f, 'id_factura', 'id', 'folio'));
       if (!fid) continue;
-      const wid = num(pick(f, 'cliente.id_servicio', 'servicio.id_servicio', 'id_servicio', 'cliente.servicio', 'servicio'));
+      const wid = num(pick(f, 'cliente__user_cliente__id_servicio', 'cliente.id_servicio', 'servicio.id_servicio', 'id_servicio', 'cliente.servicio', 'servicio'));
       const cust = wid ? db.prepare('SELECT id FROM customers WHERE wisphub_id = ?').get(wid) : null;
       if (!cust) { report.invoices.skippedNoCustomer++; continue; }
       const issued = parseDate(pick(f, 'fecha_emision'));

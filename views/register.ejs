@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="dark">
+<html lang="<%= typeof lang !== "undefined" ? lang : "es" %>" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -27,7 +27,7 @@
     </a>
     <div class="header-actions" style="margin-left:auto;display:flex;align-items:center;gap:6px">
       <button class="icon-btn" onclick="toggleTheme()" aria-label="<%= t('customer.register.aria_theme', 'Ganti tema') %>"><i class="bi bi-moon-stars-fill"></i></button>
-      <% (typeof availableLangs !== 'undefined' && availableLangs ? availableLangs : ['id','en']).forEach(function(L){ %>
+      <% (typeof availableLangs !== 'undefined' && availableLangs ? availableLangs : ['es','en','id']).forEach(function(L){ %>
         <a href="/lang/<%= L %>" class="lbtn lbtn-ghost lbtn-sm" style="padding:4px 8px;<%= (lang === L) ? 'font-weight:800;color:var(--primary);opacity:1' : 'opacity:.65' %>"><%= String(L).toUpperCase() %></a>
       <% }); %>
       <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/login"><i class="bi bi-box-arrow-in-right"></i> <%= t('customer.register.header_login', 'Masuk') %></a>

@@ -192,7 +192,7 @@ app.use((req, res, next) => {
   const lang = normalizeLang(saved);
   const tz = getSetting('timezone', 'America/Asuncion');
   res.locals.lang = lang;
-  res.locals.availableLangs = Array.from(SUPPORTED_LANGS);
+  res.locals.availableLangs = ['es', 'en'];
   res.locals.t = (key, fallback = '') => t(lang, key, fallback);
   res.locals.tz = tz;
   res.locals.brandName = getSetting('company_header', 'OPEN-ISP');

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="dark">
+<html lang="<%= typeof lang !== "undefined" ? lang : "es" %>" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -43,7 +43,7 @@
       <a href="#area"><%= t('landing.nav.area','Area') %></a>
       <a href="#faq"><%= t('landing.nav.faq','FAQ') %></a>
       <% var _upt = (typeof settings !== 'undefined' && settings && settings.uptime_url) ? settings.uptime_url : ''; %>
-      <a href="/lang/id" style="<%= (typeof lang !== 'undefined' && lang === 'id') ? 'color:var(--primary);font-weight:700' : '' %>">ID</a>
+      <a href="/lang/es" style="<%= (typeof lang !== 'undefined' && lang === 'es') ? 'color:var(--primary);font-weight:700' : '' %>">ES</a>
       <a href="/lang/en" style="<%= (typeof lang !== 'undefined' && lang === 'en') ? 'color:var(--primary);font-weight:700' : '' %>">EN</a>
       <% if (_upt) { %><a href="<%= _upt %>" target="_blank" rel="noopener"><i class="bi bi-activity"></i> <%= t('landing.nav.status','Status') %></a><% } %>
       <% if (projectUrl) { %><a href="<%= projectUrl %>" target="_blank" rel="noopener" title="Repositori Open Source"><i class="bi bi-github"></i> <%= t('landing.footer.github','GitHub') %></a><% } %>
@@ -68,7 +68,7 @@
       <% if (projectUrl) { %><a href="<%= projectUrl %>/wiki" target="_blank" rel="noopener" onclick="toggleMenu()"><i class="bi bi-journal-text"></i> <%= t('landing.footer.wiki2','Wiki / Dokumentasi') %></a><% } %>
       <a href="/customer/login"><i class="bi bi-box-arrow-in-right"></i> <%= t('landing.nav.cust_login','Masuk Pelanggan') %></a>
       <a href="/customer/check-billing"><i class="bi bi-receipt"></i> <%= t('landing.hero.check','Cek Tagihan') %></a>
-      <a href="/lang/id" onclick="toggleMenu()"><i class="bi bi-translate"></i> Bahasa: Indonesia</a>
+      <a href="/lang/es" onclick="toggleMenu()"><i class="bi bi-translate"></i> Idioma: Español</a>
       <a href="/lang/en" onclick="toggleMenu()"><i class="bi bi-translate"></i> Language: English</a>
     </div>
   </div>

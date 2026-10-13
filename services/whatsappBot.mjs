@@ -4,7 +4,16 @@ import path from 'path';
 import fs from 'fs';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
-import makeWASocket, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers } from '@whiskeysockets/baileys';
+// Baileys es opcional (ya no está en package.json): se carga solo si se usa el gateway 'baileys'.
+// Importarlo estáticamente hacía fallar a todos los que usan este módulo (parseSpintax, whatsappStatus...),
+// incluidos los recordatorios automáticos y el aviso de corte.
+let makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers;
+async function loadBaileys() {
+  if (makeWASocket) return;
+  const mod = await import('@whiskeysockets/baileys');
+  makeWASocket = mod.default;
+  ({ useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers } = mod);
+}
 
 const require = createRequire(import.meta.url);
 const regional = require('../config/regional.js');
@@ -2387,6 +2396,12 @@ export async function processIncomingCommand({
 }
 
 export async function startWhatsAppBot() {
+  try {
+    await loadBaileys();
+  } catch (e) {
+    logger.warn('[WA] Baileys no está instalado; el gateway "baileys" no está disponible. Use GoWA.');
+    return;
+  }
   if (isStarting) {
     logger.info('WhatsApp: startWhatsAppBot sedang berjalan, melewati panggilan duplikat.');
     return;

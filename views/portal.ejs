@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="<%= typeof lang !== "undefined" ? lang : "es" %>" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
@@ -1492,7 +1492,7 @@
                 </div>
                 <span class="ios-label"><%= t('common.language','Bahasa') %></span>
                 <span style="display:flex;gap:6px;">
-                  <a href="/lang/id" class="press" style="padding:5px 10px;border-radius:9px;font-size:12px;font-weight:700;text-decoration:none;<%= lang === 'id' ? 'background:var(--lime);color:#0A0D14;' : 'background:var(--surface-2);color:var(--muted);' %>">ID</a>
+                  <a href="/lang/es" class="press" style="padding:5px 10px;border-radius:9px;font-size:12px;font-weight:700;text-decoration:none;<%= lang === 'es' ? 'background:var(--lime);color:#0A0D14;' : 'background:var(--surface-2);color:var(--muted);' %>">ES</a>
                   <a href="/lang/en" class="press" style="padding:5px 10px;border-radius:9px;font-size:12px;font-weight:700;text-decoration:none;<%= lang === 'en' ? 'background:var(--lime);color:#0A0D14;' : 'background:var(--surface-2);color:var(--muted);' %>">EN</a>
                 </span>
               </div>

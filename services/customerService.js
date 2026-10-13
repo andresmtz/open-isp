@@ -716,8 +716,7 @@ async function suspendCustomer(id) {
     try {
       const { getSetting } = require('../config/settingsManager');
       if (getSetting('whatsapp_enabled', false)) {
-        const { sendWA, whatsappStatus } = await import('./whatsappBot.mjs');
-        if (true) {
+        {
           const defaultIsolir = `Yth. Pelanggan {{nama}},\n\nLayanan internet Anda (Paket {{paket}}) saat ini ditangguhkan (Terisolir) karena belum melunasi tagihan sebesar *{{moneda}} {{tagihan}}*.\n\nSilakan lakukan pembayaran segera melalui portal pelanggan: {{link}}\n\nTerima kasih.`;
           const template = db.getAppSetting('whatsapp_isolir_message', defaultIsolir);
 

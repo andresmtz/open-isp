@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="dark">
+<html lang="<%= typeof lang !== "undefined" ? lang : "es" %>" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -19,7 +19,7 @@
 <main class="iso-wrap">
   <div class="iso-card" style="max-width:460px;text-align:center">
     <div style="display:flex;justify-content:center;gap:8px;margin-bottom:8px">
-      <% (typeof availableLangs !== 'undefined' && availableLangs ? availableLangs : ['id','en']).forEach(function(L){ %>
+      <% (typeof availableLangs !== 'undefined' && availableLangs ? availableLangs : ['es','en','id']).forEach(function(L){ %>
         <a href="/lang/<%= L %>" style="font-size:11px;font-weight:800;text-decoration:none;<%= (lang===L)?'color:var(--primary)':'color:var(--muted);opacity:.7' %>"><%= String(L).toUpperCase() %></a>
       <% }); %>
     </div>

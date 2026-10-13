@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const SUPPORTED_LANGS = new Set(['id', 'en']);
-const FALLBACK_LANG = 'id';
+const SUPPORTED_LANGS = new Set(['es', 'en', 'id']);
+const FALLBACK_LANG = 'es';
+// Si falta una clave en el idioma elegido: se busca en este orden
+const FALLBACK_CHAIN = ['es', 'en', 'id'];
 
 function loadLocale(lang) {
   try {
@@ -14,8 +16,9 @@ function loadLocale(lang) {
 }
 
 const dictionaries = {
-  id: loadLocale('id'),
-  en: loadLocale('en')
+  es: loadLocale('es'),
+  en: loadLocale('en'),
+  id: loadLocale('id')
 };
 
 function normalizeLang(input) {
@@ -37,8 +40,11 @@ function t(lang, key, fallback = '') {
   const useLang = normalizeLang(lang);
   const fromLang = getNestedValue(dictionaries[useLang], key);
   if (fromLang !== undefined) return fromLang;
-  const fromFallback = getNestedValue(dictionaries[FALLBACK_LANG], key);
-  if (fromFallback !== undefined) return fromFallback;
+  for (const fb of FALLBACK_CHAIN) {
+    if (fb === useLang) continue;
+    const v = getNestedValue(dictionaries[fb], key);
+    if (v !== undefined) return v;
+  }
   return fallback || key;
 }
 

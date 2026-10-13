@@ -156,6 +156,7 @@ async function run({ dryRun = true, invoicesMonths = 12, source = null } = {}) {
   const plans = new Map();
   for (const c of clients) { const n = planOf(c); if (n && !plans.has(n)) plans.set(n, priceOf(c)); }
 
+  const plannedCustomers = new Set(); // id_servicio que la simulación crearía
   const tx = db.transaction(() => {
     const pkgIdByName = new Map(db.prepare('SELECT id, name FROM packages').all().map(p => [p.name, p.id]));
     for (const [name, price] of plans) {
@@ -216,6 +217,7 @@ async function run({ dryRun = true, invoicesMonths = 12, source = null } = {}) {
         || (data.pppoe_username ? db.prepare('SELECT * FROM customers WHERE pppoe_username = ? AND wisphub_id IS NULL').get(data.pppoe_username) : null);
       if (!existing) {
         report.customers.created++;
+        plannedCustomers.add(wid);
         if (!dryRun) {
           db.prepare(`INSERT INTO customers (customer_code, wisphub_id, name, phone, nik, email, address, lat, lng, package_id, router_id,
               connection_type, pppoe_username, pppoe_password, pppoe_remote_address, mac_address, isolir_profile, status, install_date,
@@ -252,7 +254,8 @@ async function run({ dryRun = true, invoicesMonths = 12, source = null } = {}) {
       const fid = num(pick(f, 'id_factura', 'id', 'folio'));
       if (!fid) continue;
       const wid = num(pick(f, 'cliente__user_cliente__id_servicio', 'cliente.id_servicio', 'servicio.id_servicio', 'id_servicio', 'cliente.servicio', 'servicio'));
-      const cust = wid ? db.prepare('SELECT id FROM customers WHERE wisphub_id = ?').get(wid) : null;
+      let cust = wid ? db.prepare('SELECT id FROM customers WHERE wisphub_id = ?').get(wid) : null;
+      if (!cust && dryRun && plannedCustomers.has(wid)) cust = { id: -wid }; // cliente que se crearía
       if (!cust) { report.invoices.skippedNoCustomer++; continue; }
       const issued = parseDate(pick(f, 'fecha_emision'));
       const period = periodFromIssue(issued);

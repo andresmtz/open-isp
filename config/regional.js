@@ -15,7 +15,10 @@
  *   phone_max_digits    9
  *   timezone            'America/Asuncion'
  */
-const { getSetting } = require('./settingsManager');
+// Carga diferida: settingsManager también usa este módulo (evita dependencia circular)
+function getSetting(key, def) {
+  return require('./settingsManager').getSetting(key, def);
+}
 
 const DEFAULTS = Object.freeze({
   locale: 'es-PY',

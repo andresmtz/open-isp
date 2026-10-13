@@ -2334,6 +2334,29 @@ router.get('/customers/export', requireAdminSession, (req, res) => {
   }
 });
 
+// ─── Cancelar servicio (manual) ───
+router.get('/customers/:id/cancel-preview', requireAdminSession, (req, res) => {
+  if (req.session.isCashier) return res.status(403).json({ ok: false, message: 'Solo el administrador puede cancelar clientes.' });
+  try { return res.json({ ok: true, ...customerSvc.cancellationPreview(Number(req.params.id)) }); }
+  catch (e) { return res.status(400).json({ ok: false, message: e.message }); }
+});
+
+router.post('/customers/:id/cancel', requireAdminSession, express.json(), async (req, res) => {
+  if (req.session.isCashier) return res.status(403).json({ ok: false, message: 'Solo el administrador puede cancelar clientes.' });
+  try {
+    const r = await customerSvc.cancelCustomer(Number(req.params.id), {
+      reason: req.body && req.body.reason,
+      actor: { type: 'admin', name: req.session.adminUser || 'admin', ip: req.ip }
+    });
+    const net = r.network.readOnly
+      ? ' MikroTik en SOLO LECTURA: el router no se modificó (borrá el usuario PPPoE en WispHub/MikroTik).'
+      : ` Router: usuario PPPoE borrado (${r.network.secretRemoved}), IP liberada (${r.network.ipReleased}).`;
+    return res.json({ ok: true, message: `Servicio cancelado. Facturas anuladas: ${r.voidedInvoices}.` + net, ...r });
+  } catch (e) {
+    return res.status(400).json({ ok: false, message: e.message });
+  }
+});
+
 router.post('/customers/import', requireAdminSession, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) throw new Error('Archivo no encontrado');

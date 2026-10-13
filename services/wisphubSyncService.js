@@ -184,9 +184,9 @@ async function run({ dryRun = true, invoicesMonths = 12, source = null } = {}) {
       if (!wid) { warn('Cliente sin id_servicio: omitido'); continue; }
       const status = mapStatus(pick(c, 'estado', 'estado_servicio'));
       if (status === 'cancelled') {
-        // Cancelado en WispHub: no se importa; si ya estaba importado, queda inactivo
+        // Cancelado en WispHub: no se importa; si ya estaba importado, pasa a "Cancelado"
         const prev = db.prepare('SELECT id, status FROM customers WHERE wisphub_id = ?').get(wid);
-        if (prev && prev.status !== 'inactive') { report.customers.updated++; if (!dryRun) db.prepare("UPDATE customers SET status = 'inactive' WHERE id = ?").run(prev.id); }
+        if (prev && prev.status !== 'cancelled') { report.customers.updated++; if (!dryRun) db.prepare("UPDATE customers SET status = 'cancelled', cancelled_at = COALESCE(cancelled_at, NOW_LOCAL()), cancel_reason = COALESCE(NULLIF(cancel_reason, ''), 'Cancelado en WispHub'), auto_isolate = 0 WHERE id = ?").run(prev.id); }
         else report.customers.skippedCancelled++;
         continue;
       }

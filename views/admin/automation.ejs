@@ -108,27 +108,15 @@
         <div class="card mb16">
           <div class="card-hd"><h6><i class="bi bi-person-x"></i> <%= t('admin.automation.arrears_title', 'Tunggakan &amp; Isolir Otomatis') %></h6></div>
           <div class="card-bd">
+            <div class="hint" style="padding:10px 12px;border:1px dashed var(--border);border-radius:10px;margin-bottom:12px">
+              <i class="bi bi-shield-check"></i> <b>Bajas siempre manuales.</b> La baja y la eliminación automáticas por deuda están deshabilitadas:
+              los clientes con deuda quedan <b>suspendidos</b> (control para recuperar el equipo) y se cancelan a mano con
+              <b>Clientes → Acciones → Cancelar servicio</b>, que anula las facturas pendientes y conserva todo el historial.
+            </div>
             <div class="form-row">
-              <div class="fg">
-                <label class="fl"><i class="bi bi-person-x"></i> <%= t('admin.automation.auto_deactivate', 'Auto-Nonaktif Pelanggan Menunggak') %></label>
-                <select class="fs" name="auto_deactivate_enabled">
-                  <option value="true" <%= (settings.auto_deactivate_enabled === undefined ? true : settings.auto_deactivate_enabled) ? 'selected' : '' %>><%= t('common.active', 'Aktif') %></option>
-                  <option value="false" <%= (settings.auto_deactivate_enabled === undefined ? true : settings.auto_deactivate_enabled) ? '' : 'selected' %>><%= t('common.inactive', 'Nonaktif') %></option>
-                </select>
-              </div>
-              <div class="fg">
-                <label class="fl"><%= t('admin.automation.deactivate_months', 'Batas Tunggakan (bulan)') %></label>
-                <input class="fc" type="number" min="1" max="24" name="auto_deactivate_months" value="<%= settings.auto_deactivate_months || 3 %>">
-                <div class="hint"><%= t('admin.automation.deactivate_months_hint', 'Pelanggan dinonaktif (isolir) bila menunggak sebanyak ini (3 = 3x tagihan baru belum lunas).') %></div>
-              </div>
-              <div class="fg">
-                <label class="fl"><i class="bi bi-trash3"></i> <%= t('admin.automation.auto_delete', 'Auto-Hapus Pelanggan (lewat batas)') %></label>
-                <select class="fs" name="auto_delete_overdue_enabled">
-                  <option value="true" <%= (settings.auto_delete_overdue_enabled === undefined ? true : settings.auto_delete_overdue_enabled) ? 'selected' : '' %>><%= t('common.active', 'Aktif') %></option>
-                  <option value="false" <%= (settings.auto_delete_overdue_enabled === undefined ? true : settings.auto_delete_overdue_enabled) ? '' : 'selected' %>><%= t('common.inactive', 'Nonaktif') %></option>
-                </select>
-                <div class="hint"><%= t('admin.automation.auto_delete_hint', 'Jika Aktif: pelanggan menunggak lebih dari batas (mis. bulan ke-4) dihapus otomatis — harus daftar ulang.') %></div>
-              </div>
+              
+              
+              
               <div class="fg">
                 <label class="fl"><i class="bi bi-exclamation-triangle"></i> <%= t('admin.automation.arrears_notice', 'Auto-Peringatan Tunggakan') %></label>
                 <select class="fs" name="arrears_notice_enabled">
@@ -137,10 +125,7 @@
                 </select>
                 <div class="hint"><%= t('admin.automation.arrears_notice_hint', 'Kirim WA peringatan saat menunggak mendekati batas. Template di tab Template &amp; Preview.') %></div>
               </div>
-              <div class="fg">
-                <label class="fl"><%= t('admin.automation.manual_action', 'Aksi Manual') %></label>
-                <button type="button" class="btn btn-w btn-sm" onclick="runAutoDeactivate()"><i class="bi bi-play-fill"></i> <%= t('admin.automation.run_now', 'Jalankan sekarang') %></button>
-              </div>
+              
             </div>
           </div>
         </div>

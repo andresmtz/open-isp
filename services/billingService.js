@@ -99,7 +99,8 @@ function computeInvoiceAmountAndMeta(customer, pkg, periodMonth, periodYear) {
 
 function generateMonthlyInvoices(month, year) {
   // Hanya generate untuk pelanggan aktif dan ditangguhkan. Pelanggan isolir (suspended) TIDAK di-generate tagihan baru.
-  const customers = db.prepare("SELECT * FROM customers WHERE status IN ('active','ditangguhkan','suspended') AND package_id IS NOT NULL").all();
+  // Solo activos (y habilitados sin corte). Suspendidos y cancelados no generan facturas nuevas (igual que WispHub).
+  const customers = db.prepare("SELECT * FROM customers WHERE status IN ('active','ditangguhkan') AND package_id IS NOT NULL").all();
   const existing  = db.prepare('SELECT customer_id FROM invoices WHERE period_month=? AND period_year=?').all(month, year);
   const existingIds = new Set(existing.map(e => e.customer_id));
   const insert = db.prepare(`INSERT INTO invoices (customer_id, period_month, period_year, amount, notes) VALUES (?, ?, ?, ?, ?)`);

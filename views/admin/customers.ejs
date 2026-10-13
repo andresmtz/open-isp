@@ -170,6 +170,7 @@
             <option value="suspended" <%= filterStatus==='suspended' ? 'selected':'' %>><%= t('admin.customers.filter.suspended', 'Suspend') %></option>
             <option value="inactive" <%= filterStatus==='inactive' ? 'selected':'' %>><%= t('admin.customers.filter.inactive', 'Pendaftar Baru / Nonaktif') %></option>
             <option value="ditangguhkan" <%= filterStatus==='ditangguhkan' ? 'selected':'' %>><%= t('admin.cust.st_suspended','Ditangguhkan') %></option>
+            <option value="cancelled" <%= filterStatus==='cancelled' ? 'selected':'' %>>Cancelados</option>
           </select>
           <select class="fs" name="area" style="width:160px" onchange="this.form.submit()">
             <option value=""><%= t('admin.cust.all_area','Semua Area') %></option>
@@ -319,6 +320,7 @@
               <td>
                 <% if (c.status==='active') { %><span class="badge bs"><i class="bi bi-circle-fill" style="font-size:7px"></i><%= t('admin.customers.filter.active', 'Aktif') %></span>
                 <% } else if (c.status==='suspended') { %><% if (c.deactivate_cause==='auto_unpaid') { %><span class="badge bd" title="<%= t('admin.cust.inactive','Nonaktif') %><%= t('admin.cust.reg_auto',' otomatis: menunggak ') %><%= c.unpaid_streak %> bulan"><i class="bi bi-person-x"></i> <%= t('admin.cust.inactive','Nonaktif') %> (auto)</span><% } else { %><span class="badge bw"><%= t('admin.customers.filter.suspended', 'Suspend') %></span><% } %>
+                <% } else if (c.status==='cancelled') { %><span class="badge bd" title="<%= (c.cancelled_at ? ('Cancelado el ' + String(c.cancelled_at).slice(0,10)) : '') + (c.cancel_reason ? (' — ' + c.cancel_reason) : '') %>"><i class="bi bi-x-octagon"></i> Cancelado</span>
                 <% } else { %><span class="badge bm"><%= t('admin.customers.filter.inactive', 'Nonaktif') %></span><% } %>
                 <% if (c.status === 'inactive' && (c.reg_total || c.reg_due_date || c.reg_voucher_code)) { %>
                   <div style="font-size:10px;margin-top:4px;color:var(--muted)">
@@ -385,7 +387,12 @@
                     <button type="button" class="act-item" data-id="<%= c.id %>" onclick="syncCust(this)"><i class="bi bi-arrow-repeat"></i> Sincronizar con la red</button>
                     <div class="act-sep"></div>
                     <button type="button" class="act-item" data-idx="<%= i %>" onclick="editCust(+this.dataset.idx)"><i class="bi bi-pencil"></i> <%= t('admin.cust.btn_edit','Edit Pelanggan') %></button>
+                    <% if (typeof session !== 'undefined' && session && !session.isCashier && c.status !== 'cancelled') { %>
+                    <button type="button" class="act-item danger" data-id="<%= c.id %>" onclick="cancelCustService(+this.dataset.id)"><i class="bi bi-x-octagon"></i> Cancelar servicio</button>
+                    <% } %>
+                    <% if (c.status === 'inactive') { %>
                     <button type="submit" form="del-<%= c.id %>" class="act-item danger"><i class="bi bi-trash"></i> <%= t('admin.cust.btn_delete','Hapus Pelanggan') %></button>
+                    <% } %>
                   </div>
                 </div>
               </td>
@@ -2053,6 +2060,31 @@ document.getElementById('bulkCustDeleteBtn')?.addEventListener('click', function
 });
 
 setTimeout(()=>document.querySelectorAll('.alert').forEach(a=>a.style.display='none'),4000);
+</script>
+<script>
+// Cancelar servicio: muestra lo que va a pasar, pide el motivo y confirma
+async function cancelCustService(id) {
+  try {
+    const pr = await (await fetch('/admin/customers/' + id + '/cancel-preview', { headers: { Accept: 'application/json' } })).json();
+    if (!pr.ok) { alert(pr.message || 'No se pudo preparar la cancelación.'); return; }
+    const c = pr.customer;
+    const inv = pr.pendingInvoices.length
+      ? pr.pendingInvoices.map(i => '   • ' + String(i.period_month).padStart(2, '0') + '/' + i.period_year + ': ' + fmtMoney(i.amount)).join('\n') + '\n   Total: ' + fmtMoney(pr.pendingTotal)
+      : '   (no tiene facturas pendientes)';
+    const msg = 'CANCELAR SERVICIO de ' + c.name + (c.code ? ' (' + c.code + ')' : '') + '\n\n'
+      + 'En el MikroTik:\n   • Se borra el usuario PPPoE "' + (c.pppoe || '-') + '"\n   • Se libera la IP ' + (c.ip || '-') + ' (sale de la lista de corte)\n\n'
+      + 'Facturas pendientes que se ANULAN (quedan en el historial, fuera de estadísticas):\n' + inv + '\n\n'
+      + 'El cliente y todo su historial se conservan.\n\nEscribí el motivo para confirmar:';
+    const reason = prompt(msg, 'Equipo no recuperado / cliente no ubicable');
+    if (reason === null) return;
+    if (reason.trim().length < 3) { alert('El motivo es obligatorio.'); return; }
+    const r = await fetch('/admin/customers/' + id + '/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ reason: reason.trim() }) });
+    const j = await r.json();
+    if (!j.ok) { alert('No se canceló: ' + (j.message || 'error')); return; }
+    alert(j.message);
+    location.reload();
+  } catch (e) { alert('Error: ' + e.message); }
+}
 </script>
 </body>
 </html>

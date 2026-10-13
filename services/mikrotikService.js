@@ -2159,6 +2159,22 @@ async function getBackup(routerId = null) {
   }
 }
 
+/** Borra el secret PPPoE por nombre de usuario (si no existe, no hace nada). */
+async function removePppoeSecretByName(username, routerId = null) {
+  const name = String(username || '').trim();
+  if (!name) return { removed: 0 };
+  const conn = await getConnection(routerId);
+  try {
+    const rows = await conn.client.menu('/ppp/secret').where('name', name).get();
+    for (const r of rows || []) await conn.client.menu('/ppp/secret').remove(r['.id'] || r.id);
+    listCache.delete(cacheKey(routerId, 'pppoeSecrets'));
+    listCache.delete(cacheKey(routerId, 'pppoeActive'));
+    return { removed: (rows || []).length };
+  } finally {
+    try { await conn.api.close(); } catch (_) {}
+  }
+}
+
 // ─── Corte por address-list (compatible con WispHub: lista "Moroso") ─────────
 function isolationAddressList() {
   return String(getSettingsWithCache().isolation_address_list || 'Moroso').trim() || 'Moroso';
@@ -2210,6 +2226,7 @@ async function getIsolationListAddresses(routerId = null) {
 
 module.exports = {
   isMikrotikReadOnly,
+  removePppoeSecretByName,
   isolationAddressList,
   addToIsolationList,
   removeFromIsolationList,

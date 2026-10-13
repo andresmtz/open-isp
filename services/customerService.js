@@ -358,6 +358,9 @@ function updateCustomerCablePath(id, path) {
 
 async function deleteCustomer(id) {
   const customer = getCustomerById(id);
+  // Nunca se borra un cliente con historial: se cancela (el historial sirve para evaluar si vuelve).
+  const _hasHistory = db.prepare('SELECT 1 FROM invoices WHERE customer_id = ? LIMIT 1').get(id);
+  if (_hasHistory) throw new Error(`"${customer ? customer.name : id}" tiene facturas: no se puede eliminar. Usá "Cancelar servicio".`);
   const mikrotikSvc = require('./mikrotikService');
   
   // WARNING: Check if customer has MikroTik connections without router_id
@@ -892,7 +895,78 @@ async function activateCustomer(id, targetStatus = 'active') {
  * @param {'add'|'deduct'} actionType - 'add' or 'deduct'
  * @param {boolean} sendWhatsApp - whether to send WA notification
  */
+// ─── Cancelación del servicio (siempre manual) ────────────────────────────────
+(function ensureCancelColumns() {
+  const cols = db.prepare("SELECT name FROM pragma_table_info('customers')").all().map(r => r.name);
+  if (!cols.includes('cancelled_at')) db.exec('ALTER TABLE customers ADD COLUMN cancelled_at DATETIME');
+  if (!cols.includes('cancel_reason')) db.exec("ALTER TABLE customers ADD COLUMN cancel_reason TEXT DEFAULT ''");
+  if (!cols.includes('cancelled_by')) db.exec("ALTER TABLE customers ADD COLUMN cancelled_by TEXT DEFAULT ''");
+})();
+
+/** Lo que haría la cancelación (para mostrar antes de confirmar). */
+function cancellationPreview(id) {
+  const c = getCustomerById(id);
+  if (!c) throw new Error('Cliente no encontrado');
+  const pending = db.prepare("SELECT id, period_month, period_year, amount FROM invoices WHERE customer_id = ? AND status = 'unpaid' ORDER BY period_year, period_month").all(id);
+  return {
+    customer: { id: c.id, name: c.name, code: c.customer_code, status: c.status, pppoe: c.pppoe_username, ip: customerIsolationIp(c) },
+    pendingInvoices: pending,
+    pendingTotal: pending.reduce((a, i) => a + Number(i.amount || 0), 0)
+  };
+}
+
+/**
+ * Cancela el servicio: borra el secret PPPoE y libera la IP (lista de corte) en el MikroTik,
+ * corta la sesión, pasa el estado a 'cancelled' y ANULA las facturas pendientes (quedan en el
+ * historial como anuladas, fuera de estadísticas y cuentas por cobrar). Nunca borra el cliente
+ * ni su historial. Si el router falla, no se cambia nada en la base (se puede reintentar).
+ */
+async function cancelCustomer(id, { reason, actor } = {}) {
+  const c = getCustomerById(id);
+  if (!c) throw new Error('Cliente no encontrado');
+  if (c.status === 'cancelled') throw new Error('El cliente ya está cancelado.');
+  const why = String(reason || '').trim();
+  if (why.length < 3) throw new Error('Indicá el motivo de la cancelación.');
+
+  const mikrotikSvc = require('./mikrotikService');
+  const routerId = getEffectiveRouterId(c.router_id);
+  const network = { readOnly: mikrotikSvc.isMikrotikReadOnly(), secretRemoved: 0, ipReleased: 0, kicked: false };
+  if (routerId && !network.readOnly) {
+    // 1) Router primero: si falla, la base queda como estaba
+    const ip = customerIsolationIp(c);
+    if (ip) network.ipReleased = (await mikrotikSvc.removeFromIsolationList(ip, routerId)).removed || 0;
+    if (c.connection_type === 'pppoe' && c.pppoe_username) {
+      try { network.kicked = !!(await mikrotikSvc.kickPppoeUser(c.pppoe_username, routerId)); } catch (_) {}
+      network.secretRemoved = (await mikrotikSvc.removePppoeSecretByName(c.pppoe_username, routerId)).removed || 0;
+    }
+  }
+
+  // 2) Base de datos (en una transacción)
+  const by = String((actor && (actor.name || actor.username)) || 'admin');
+  const voided = db.transaction(() => {
+    const r = db.prepare("UPDATE invoices SET status = 'void', voided_at = NOW_LOCAL(), void_reason = ? WHERE customer_id = ? AND status = 'unpaid'")
+      .run(`Cancelación del servicio: ${why}`, id);
+    db.prepare("UPDATE customers SET status = 'cancelled', cancelled_at = NOW_LOCAL(), cancel_reason = ?, cancelled_by = ?, auto_isolate = 0 WHERE id = ?").run(why, by, id);
+    return r.changes;
+  })();
+
+  try {
+    require('./auditTrailService').logAuditTrail({
+      action: 'CANCEL_CUSTOMER', entity_type: 'customer', entity_id: String(id),
+      actor_type: (actor && actor.type) || 'admin', actor_id: (actor && actor.id) || null, actor_name: by,
+      details: { name: c.name, pppoe: c.pppoe_username, reason: why, voidedInvoices: voided, network },
+      ip_address: (actor && actor.ip) || null
+    });
+  } catch (_) {}
+  logger.info(`[cancelCustomer] "${c.name}" (ID ${id}) cancelado. Facturas anuladas: ${voided}. Router: ${JSON.stringify(network)}`);
+  return { ok: true, voidedInvoices: voided, network };
+}
+
 async function autoDeactivateOverdueCustomers(months = 3, actor = null) {
+  // Deshabilitado a propósito: la baja de clientes es siempre manual (Cancelar servicio).
+  logger.info('[AutoDeactivate] Deshabilitado: las bajas de clientes son manuales.');
+  return { disabled: true, processed: 0, removed: [], names: [] };
+
   const m = Math.max(1, parseInt(months, 10) || 3);
   const waNotify = require('./waNotifyService');
   const waOn = getSetting('whatsapp_enabled', false);
@@ -972,6 +1046,6 @@ Dihapus: ${removed.join(', ') || '-'}`);
 module.exports = {
   getAllCustomers, getAllCustomerAreas, getCustomerById, createCustomer, updateCustomer, deleteCustomer, bulkDeleteCustomers, getCustomerStats,
   getAllPackages, getPackageById, createPackage, updatePackage, deletePackage,
-  suspendCustomer, activateCustomer, autoDeactivateOverdueCustomers, generatePppoeAccount, findCustomerByAny, findCustomerForLogin, updateCustomerCablePath,
+  suspendCustomer, activateCustomer, cancelCustomer, cancellationPreview, autoDeactivateOverdueCustomers, generatePppoeAccount, findCustomerByAny, findCustomerForLogin, updateCustomerCablePath,
   resetPromoCyclesUsed, getEffectiveRouterId
 };

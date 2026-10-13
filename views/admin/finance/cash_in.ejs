@@ -90,7 +90,7 @@
               <td style="font-size:12px"><%= item.recorded_by_name || 'Admin' %></td>
               <td>
                 <form method="POST" action="/admin/finance/cash-in/<%= item.id %>/delete" style="display:inline" onsubmit="return confirm('Hapus data kas masuk ini?')">
-                  <button class="btn btn-d btn-icon btn-sm" title="Hapus"><i class="bi bi-trash"></i></button>
+                  <button class="btn btn-d btn-icon btn-sm" title="Eliminar"><i class="bi bi-trash"></i></button>
                 </form>
               </td>
             </tr>
@@ -116,9 +116,9 @@
           <div class="fg">
             <label class="fl"><%= t('admin.cashin.source','Sumber / Kategori') %> <span class="text-danger">*</span></label>
             <select class="fc" name="category" required>
-              <option value="Modal Usaha"><%= t('admin.cashin.opt_modal','Modal Usaha / Suntikan Dana') %></option>
+              <option value="Capital"><%= t('admin.cashin.opt_modal','Modal Usaha / Suntikan Dana') %></option>
               <option value="Penjualan Aset"><%= t('admin.cashin.opt_asset','Penjualan Aset/Barang Bekas') %></option>
-              <option value="Jasa Lainnya"><%= t('admin.cashin.opt_service','Pendapatan Jasa Lainnya') %></option>
+              <option value="Otros servicios"><%= t('admin.cashin.opt_service','Pendapatan Jasa Lainnya') %></option>
               <option value="<%= t('admin.cashin.opt_other','Lain-lain') %>"><%= t('admin.cashin.opt_other','Lain-lain') %></option>
             </select>
           </div>
@@ -135,8 +135,8 @@
           <div class="fg">
             <label class="fl"><%= t('admin.cashin.method','Metode Penerimaan') %></label>
             <select class="fc" name="payment_method">
-              <option value="cash"><%= t('admin.cashin.pay_cash','Tunai (Cash)') %></option>
-              <option value="transfer"><%= t('admin.cashin.pay_transfer','Transfer Bank') %></option>
+              <option value="cash"><%= t('admin.cashin.pay_cash','Efectivo') %></option>
+              <option value="transfer"><%= t('admin.cashin.pay_transfer','Transferencia bancaria') %></option>
               <option value="ewallet"><%= t('admin.cashin.pay_ewallet','E-Wallet (OVO/Dana/Gopay)') %></option>
             </select>
           </div>

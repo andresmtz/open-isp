@@ -67,10 +67,10 @@
 
     <!-- Stat Cards -->
     <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
-      <div class="sc p"><i class="bi bi-people sc-icon"></i><div class="sc-label">Total Karyawan</div><div class="sc-val"><%= employees.length %></div><div class="sc-sub"><%= t('common.active','Aktif') %></div></div>
+      <div class="sc p"><i class="bi bi-people sc-icon"></i><div class="sc-label">Total de empleados</div><div class="sc-val"><%= employees.length %></div><div class="sc-sub"><%= t('common.active','Aktif') %></div></div>
       <div class="sc s"><i class="bi bi-wallet2 sc-icon"></i><div class="sc-label">Total de sueldos netos</div><div class="sc-val"><%= APP_CUR %> <%= summary.total_net.toLocaleString(APP_LOCALE) %></div><div class="sc-sub"><%= selectedMonth %>/<%= selectedYear %></div></div>
       <div class="sc p"><i class="bi bi-file-earmark-text sc-icon"></i><div class="sc-label">Recibo de sueldo</div><div class="sc-val"><%= summary.total_slips %></div><div class="sc-sub"><span style="color:#7d8590"><%= summary.draft_count %> draft</span> · <span style="color:#3b82f6"><%= summary.approved_count %> approved</span> · <span style="color:#22c55e"><%= summary.paid_count %> paid</span></div></div>
-      <div class="sc d"><i class="bi bi-cash-stack sc-icon"></i><div class="sc-label">Total Potongan</div><div class="sc-val"><%= APP_CUR %> <%= summary.total_deductions.toLocaleString(APP_LOCALE) %></div><div class="sc-sub"><%= selectedMonth %>/<%= selectedYear %></div></div>
+      <div class="sc d"><i class="bi bi-cash-stack sc-icon"></i><div class="sc-label">Total de descuentos</div><div class="sc-val"><%= APP_CUR %> <%= summary.total_deductions.toLocaleString(APP_LOCALE) %></div><div class="sc-sub"><%= selectedMonth %>/<%= selectedYear %></div></div>
     </div>
 
     <!-- Tab Navigation -->
@@ -170,15 +170,15 @@
               <% if(slip.transport_allowance){%><span class="label">Tunj. Transport</span><span class="value"><%= APP_CUR %> <%= slip.transport_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
               <% if(slip.meal_allowance){%><span class="label">Tunj. Makan</span><span class="value"><%= APP_CUR %> <%= slip.meal_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
               <% if(slip.phone_allowance){%><span class="label">Tunj. Pulsa</span><span class="value"><%= APP_CUR %> <%= slip.phone_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
-              <% if(slip.other_allowance){%><span class="label">Tunj. Lain (<%= slip.other_allowance_note || '-' %>)</span><span class="value"><%= APP_CUR %> <%= slip.other_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
+              <% if(slip.other_allowance){%><span class="label">Otras bonif. (<%= slip.other_allowance_note || '-' %>)</span><span class="value"><%= APP_CUR %> <%= slip.other_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
               <% if(slip.ticket_bonus){%><span class="label">Bono por tickets (<%= slip.total_tickets_resolved %> tickets)</span><span class="value" style="color:#22c55e">+<%= APP_CUR %> <%= slip.ticket_bonus.toLocaleString(APP_LOCALE) %></span><%}%>
               <% if(slip.collection_commission){%><span class="label">Comisión por cobranza</span><span class="value" style="color:#22c55e">+<%= APP_CUR %> <%= slip.collection_commission.toLocaleString(APP_LOCALE) %></span><%}%>
-              <% if(slip.overtime_bonus){%><span class="label">Lembur (<%= slip.overtime_hours %> horas)</span><span class="value" style="color:#22c55e">+<%= APP_CUR %> <%= slip.overtime_bonus.toLocaleString(APP_LOCALE) %></span><%}%>
+              <% if(slip.overtime_bonus){%><span class="label">Horas extra (<%= slip.overtime_hours %> horas)</span><span class="value" style="color:#22c55e">+<%= APP_CUR %> <%= slip.overtime_bonus.toLocaleString(APP_LOCALE) %></span><%}%>
               <div class="sep"></div>
-              <span class="label"><strong>Total Pendapatan</strong></span><span class="value"><strong><%= APP_CUR %> <%= slip.gross_salary.toLocaleString(APP_LOCALE) %></strong></span>
+              <span class="label"><strong>Total de haberes</strong></span><span class="value"><strong><%= APP_CUR %> <%= slip.gross_salary.toLocaleString(APP_LOCALE) %></strong></span>
               <% if(slip.absence_deduction){%><span class="label">Descuento por ausencias (<%= slip.absent_days %> días)</span><span class="value" style="color:#f85149">-<%= APP_CUR %> <%= slip.absence_deduction.toLocaleString(APP_LOCALE) %></span><%}%>
-              <% if(slip.late_deduction){%><span class="label">Potongan Terlambat (<%= slip.late_days %> días)</span><span class="value" style="color:#f85149">-<%= APP_CUR %> <%= slip.late_deduction.toLocaleString(APP_LOCALE) %></span><%}%>
-              <% if(slip.other_deduction){%><span class="label">Potongan Lain (<%= slip.other_deduction_note || '-' %>)</span><span class="value" style="color:#f85149">-<%= APP_CUR %> <%= slip.other_deduction.toLocaleString(APP_LOCALE) %></span><%}%>
+              <% if(slip.late_deduction){%><span class="label">Descuento por llegadas tarde (<%= slip.late_days %> días)</span><span class="value" style="color:#f85149">-<%= APP_CUR %> <%= slip.late_deduction.toLocaleString(APP_LOCALE) %></span><%}%>
+              <% if(slip.other_deduction){%><span class="label">Otros descuentos (<%= slip.other_deduction_note || '-' %>)</span><span class="value" style="color:#f85149">-<%= APP_CUR %> <%= slip.other_deduction.toLocaleString(APP_LOCALE) %></span><%}%>
               <div class="sep"></div>
               <span class="label">Hadir: <%= slip.working_days %> días · Ausencias: <%= slip.absent_days %> hari</span><span class="value"></span>
               <span class="label total"><strong>SUELDO NETO</strong></span><span class="value total" style="color:var(--primary);font-size:18px"><strong><%= APP_CUR %> <%= slip.net_salary.toLocaleString(APP_LOCALE) %></strong></span>
@@ -191,13 +191,13 @@
                 <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                 <div class="act-menu">
                   <% if(slip.status==='draft'){%>
-                  <button type="button" class="act-item" data-id="<%= slip.id %>" onclick="editDeduction(this.dataset.id)"><i class="bi bi-pencil"></i> Potongan Lain</button>
+                  <button type="button" class="act-item" data-id="<%= slip.id %>" onclick="editDeduction(this.dataset.id)"><i class="bi bi-pencil"></i> Otros descuentos</button>
                   <button type="submit" form="papp-<%= slip.id %>" class="act-item success"><i class="bi bi-check-lg"></i> <%= t('admin.common.approve','Approve') %></button>
                   <%}else if(slip.status==='approved'){%>
-                  <button type="submit" form="ppaid-<%= slip.id %>" class="act-item success"><i class="bi bi-cash-coin"></i> Tandai Paid</button>
+                  <button type="submit" form="ppaid-<%= slip.id %>" class="act-item success"><i class="bi bi-cash-coin"></i> Marcar como pagado</button>
                   <%}%>
                   <div class="act-sep"></div>
-                  <a class="act-item" href="/admin/payroll/slip/<%= slip.id %>/print" target="_blank"><i class="bi bi-printer"></i> Cetak</a>
+                  <a class="act-item" href="/admin/payroll/slip/<%= slip.id %>/print" target="_blank"><i class="bi bi-printer"></i> Imprimir</a>
                   <a class="act-item" href="/admin/payroll/slip/<%= slip.id %>/pdf" target="_blank"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
                   <button type="button" class="act-item" data-id="<%= slip.id %>" onclick="sendSlipWA(this.dataset.id)"><i class="bi bi-whatsapp"></i> Enviar WhatsApp</button>
                   <% if(slip.status==='draft'){%>
@@ -230,8 +230,8 @@
           <div><label class="fl">Tunj. Transport</label><input type="number" name="transport_allowance" id="f_transport" class="fc" value="0"></div>
           <div><label class="fl">Tunj. Makan</label><input type="number" name="meal_allowance" id="f_meal" class="fc" value="0"></div>
           <div><label class="fl">Tunj. Pulsa</label><input type="number" name="phone_allowance" id="f_phone" class="fc" value="0"></div>
-          <div><label class="fl">Tunj. Lain</label><input type="number" name="other_allowance" id="f_other" class="fc" value="0"></div>
-          <div style="grid-column:1/-1"><label class="fl">Ket. Tunj. Lain</label><input type="text" name="other_allowance_note" id="f_other_note" class="fc" placeholder="BPJS, dll"></div>
+          <div><label class="fl">Otras bonif.</label><input type="number" name="other_allowance" id="f_other" class="fc" value="0"></div>
+          <div style="grid-column:1/-1"><label class="fl">Detalle de otras bonif.</label><input type="text" name="other_allowance_note" id="f_other_note" class="fc" placeholder="BPJS, dll"></div>
           <div><label class="fl">Descuento por día de ausencia</label><input type="number" name="absence_deduction_per_day" id="f_absence" class="fc" value="0"></div>
           <div><label class="fl">Bono por ticket (técnico)</label><input type="number" name="bonus_per_ticket" id="f_bonus" class="fc" value="0"></div>
           <div style="grid-column:1/-1"><label class="fl">Comisión % de cobranza (cobrador)</label><input type="number" step="0.1" name="commission_percentage" id="f_commission" class="fc" value="0"></div>
@@ -274,7 +274,7 @@ function closeModal(){ document.getElementById('payrollModal').style.display = '
 function editDeduction(id){
   const amount = prompt('Monto de otros descuentos:','0');
   if(amount===null) return;
-  const note = prompt('Keterangan potongan:','');
+  const note = prompt('Detalle del descuento:','');
   fetch('/admin/payroll/slip/'+id+'/deduction',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({other_deduction:amount,other_deduction_note:note||''})})
     .then(r=>r.json()).then(d=>{if(d.success){alert(' Berhasil');location.reload()}else alert(' '+d.message)}).catch(e=>alert('Error: '+e.message));
 }

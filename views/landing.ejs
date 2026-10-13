@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title><%= brand %> — Internet Fiber Optic Cepat & Stabil</title>
+  <title><%= brand %> — Internet por fibra óptica rápido y estable</title>
   <meta name="description" content="<%= brand %> menyediakan internet fiber optic cepat, stabil, dan tanpa batas untuk rumah & bisnis. Cek paket, area layanan, dan daftar online.">
   <meta name="theme-color" content="#0A0D14">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,7 +36,7 @@
     <a class="brand" href="/" aria-label="<%= brand %> beranda">
       <img class="bmark" src="<%= brandLogo %>" alt="<%= brandName %>"><span class="bname"><%= brandName %></span>
     </a>
-    <nav class="nav" aria-label="Navigasi utama">
+    <nav class="nav" aria-label="Navegación principal">
       <a href="#keunggulan"><%= t('landing.nav.features','Keunggulan') %></a>
       <a href="#paket"><%= t('landing.nav.packages','Paket') %></a>
       <a href="#cara-daftar"><%= t('landing.nav.how','Cara Daftar') %></a>
@@ -269,7 +269,7 @@
   <div class="container">
     <div class="section-head reveal">
       <span class="eyebrow"><i class="bi bi-megaphone"></i> <%= t('landing.ads.eyebrow','Iklan & Sponsor') %></span>
-      <h2><%= (promos && promos.length) ? 'Promo & penawaran' : 'Ruang promosi mitra' %></h2>
+      <h2><%= (promos && promos.length) ? 'Promo & penawaran' : 'Espacio para publicidad de aliados' %></h2>
     </div>
     <% if (promos && promos.length) { %>
       <div class="promo-grid">
@@ -351,7 +351,7 @@
       </div>
     </div>
     <div class="foot-bottom">
-      <span>&copy; <span id="year"></span> <%= brand %>. Seluruh hak cipta dilindungi.</span>
+      <span>&copy; <span id="year"></span> <%= brand %>. Todos los derechos reservados.</span>
       <span class="mono"><%= (typeof settings !== 'undefined' && settings && settings.company_header) ? settings.company_header : 'OPEN-ISP' %> v<%= (typeof appVersion !== 'undefined' ? appVersion : '0.5.1') %> (<%= (typeof appVersionName !== 'undefined' ? appVersionName : 'pickle-lime') %>) · ISC · oxpoe</span>
     </div>
   </div>

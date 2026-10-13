@@ -39,7 +39,7 @@
       <img class="bmark" src="<%= brandLogo %>" alt="<%= brandName %>"><span class="bname"><%= brandName %></span>
     </a>
     <nav class="nav" aria-label="Navigasi">
-      <a href="#packages">Paket</a>
+      <a href="#packages">Plan</a>
       <a href="#features"><%= t('landing.nav.features','Keunggulan') %></a>
       <a href="/customer/check-billing"><%= t('landing.hero.check','Consultar deuda') %></a>
       <% if (voucherOn) { %><a href="/customer/voucher"><%= t('login.voucher_nav','Voucher') %></a><% } %>
@@ -162,7 +162,7 @@
             </div>
             <div class="price"><b><%= APP_CUR %> <%= Number(p.price||0).toLocaleString(APP_LOCALE) %></b> / mes</div>
             <ul>
-              <li><i class="bi bi-check-circle-fill"></i> Unlimited tanpa FUP</li>
+              <li><i class="bi bi-check-circle-fill"></i> Ilimitado, sin FUP</li>
               <li><i class="bi bi-check-circle-fill"></i> <%= t('login.f1d','Fiber optic dedicated') %></li>
               <li><i class="bi bi-check-circle-fill"></i> Gratis sewa modem WiFi</li>
               <li><i class="bi bi-check-circle-fill"></i> <%= t('login.support247','Dukungan teknisi 24/7') %></li>
@@ -228,7 +228,7 @@
       </div>
     </div>
     <div class="foot-bottom">
-      <span>&copy; <span id="year"></span> <%= settings.company_header || 'OPEN-ISP' %>. Seluruh hak cipta dilindungi. <span style="opacity:.6">· v<%= appVersion %> (<%= appVersionName %>)</span></span>
+      <span>&copy; <span id="year"></span> <%= settings.company_header || 'OPEN-ISP' %>. Todos los derechos reservados. <span style="opacity:.6">· v<%= appVersion %> (<%= appVersionName %>)</span></span>
       <span class="mono">Fiber Optic Internet Service &middot; <a href="/blackhole" style="opacity:.32;color:inherit;text-decoration:none" title="Staff access">blackhole</a> &middot; <a href="#" onclick="hardResetApp();return false" style="opacity:.32;color:inherit;text-decoration:none" title="Bersihkan cache aplikasi">recargar la aplicación</a></span>
     </div>
   </div>
@@ -239,7 +239,7 @@
   <img src="<%= brandLogo %>" alt="icon" style="width:40px;height:40px;border-radius:10px">
   <div class="txt"><b><%= t('login.install_app','Pasang aplikasi') %> <%= brandName %></b><span><%= t('login.pwa_desc','Akses lebih cepat dari layar utama') %></span></div>
   <button class="lbtn lbtn-primary lbtn-sm" onclick="triggerPwaInstall()"><%= t('login.install','Pasang') %></button>
-  <button class="icon-btn" onclick="dismissPwaBanner()" aria-label="Tutup"><i class="bi bi-x-lg"></i></button>
+  <button class="icon-btn" onclick="dismissPwaBanner()" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
 </div>
 
 <script>

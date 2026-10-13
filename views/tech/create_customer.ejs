@@ -43,12 +43,12 @@
     <div class="p-grid2">
       <div class="p-field"><label><%= t('tech.cc.isolir_profile','Profile Isolir') %></label><select id="isolir_profile" name="isolir_profile" class="p-input"></select></div>
       <div class="p-field"><label>Status</label>
-        <select name="status" class="p-input"><option value="active">Aktif</option><option value="suspended">Suspend</option><option value="inactive">Nonaktif</option></select>
+        <select name="status" class="p-input"><option value="active">Activo</option><option value="suspended">Suspend</option><option value="inactive">Inactivo</option></select>
       </div>
     </div>
 
     <div class="p-grid2">
-      <div class="p-field"><label><%= t('tech.cc.auto_isolate','Isolir Otomatis') %></label><select name="auto_isolate" class="p-input"><option value="1">Aktif</option><option value="0"><%= t('tech.cc.inactive2','Tidak Aktif') %></option></select></div>
+      <div class="p-field"><label><%= t('tech.cc.auto_isolate','Isolir Otomatis') %></label><select name="auto_isolate" class="p-input"><option value="1">Activo</option><option value="0"><%= t('tech.cc.inactive2','Tidak Aktif') %></option></select></div>
       <div class="p-field"><label><%= t('tech.cc.isolir_date','Tanggal Isolir (1-31)') %></label><input name="isolate_day" type="number" min="1" max="31" value="10" class="p-input"></div>
     </div>
 
@@ -118,7 +118,7 @@
       var data = await res.json();
       if (!res.ok) throw new Error(data.error || 'No se pudo obtener la información de la NAP');
       var used = Array.isArray(data.usedPorts) ? data.usedPorts.join(', ') : '';
-      infoEl.innerText = 'Port terpakai: ' + data.usedCount + '/' + data.capacity + ' • Sisa: ' + data.remaining + (used ? ' • (' + used + ')' : '');
+      infoEl.innerText = 'Puertos usados: ' + data.usedCount + '/' + data.capacity + ' • Libres: ' + data.remaining + (used ? ' • (' + used + ')' : '');
     } catch (e) { infoEl.innerText = e.message; }
   }
   async function loadPppoeUsers() {

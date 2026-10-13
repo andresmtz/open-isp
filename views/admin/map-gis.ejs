@@ -235,7 +235,7 @@
   <!-- TOPBAR -->
   <%- include('partials/topbar', {
     pageIcon: 'ti-map-2',
-    pageTitle: 'Peta Geografis (Real GIS Map)',
+    pageTitle: 'Mapa geográfico (GIS)',
     pageDesc: 'Mapa geográfico de la red de fibra óptica, ODC, NAP, HTB P2P y clientes',
     showRouterSelector: false
   }) %>
@@ -621,7 +621,7 @@
     });
 
     // 2. OLT DEVICES
-    const oltList = rawOlts.length > 0 ? rawOlts : [{ id: 1, name: 'OLT Utama (EPON/GPON)', host: '192.168.8.100', router_id: 1, is_active: 1 }];
+    const oltList = rawOlts.length > 0 ? rawOlts : [{ id: 1, name: 'OLT principal (EPON/GPON)', host: '192.168.8.100', router_id: 1, is_active: 1 }];
     oltList.forEach(olt => {
       const lat = parseFloat(olt.lat) || (DEFAULT_MAP_CENTER[0] + 0.0003);
       const lng = parseFloat(olt.lng) || (DEFAULT_MAP_CENTER[1] + 0.0003);

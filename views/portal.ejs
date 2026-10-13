@@ -1691,13 +1691,13 @@
         <input type="hidden" name="gps_lat" id="bt-lat" value="">
         <input type="hidden" name="gps_lng" id="bt-lng" value="">
         <div class="field">
-          <label class="field-label" for="bt-subject"><%= t('pwa.help.issue_type','Jenis Kendala') %></label>
+          <label class="field-label" for="bt-subject"><%= t('pwa.help.issue_type','Tipo de problema') %></label>
           <select class="field-box" id="bt-subject" name="subject" required>
             <option value="" disabled selected><%= t('pwa.help.pick_issue','-- Pilih jenis kendala --') %></option>
             <option><%= t('pwa.help.i_disconnected','Sin conexión / no puedo conectarme') %></option>
             <option><%= t('pwa.help.i_slow','Conexión lenta') %></option>
             <option><%= t('pwa.help.i_pon','Lampu PON Merah / Los Sinyal') %></option>
-            <option><%= t('pwa.help.i_pwd','Kendala Lupa Password WiFi') %></option>
+            <option><%= t('pwa.help.i_pwd','Olvidé la contraseña del WiFi') %></option>
             <option><%= t('pwa.help.topic_billing','Consultas de facturación y pagos') %></option>
             <option><%= t('pwa.help.i_other','Lainnya') %></option>
           </select>
@@ -2071,7 +2071,7 @@
       const d = new Date(r.t || Date.now());
       const when = d.toLocaleDateString(APP_LOCALE, { day: '2-digit', month: 'short', year: 'numeric' }) + ' · ' + d.toLocaleTimeString(APP_LOCALE, { hour: '2-digit', minute: '2-digit' });
       const val = Number(r.d) || 0;
-      const label = val >= 40 ? 'SANGAT BAIK' : val >= 15 ? 'BAIK' : 'CUKUP';
+      const label = val >= 40 ? 'MUY BUENA' : val >= 15 ? 'BAIK' : 'CUKUP';
       return '<div class="list-row"' + (i < h.length - 1 ? ' style="border-bottom:1px solid var(--border);"' : '') + '>'
         + '<div class="flex items-center gap-3"><div class="w-9 h-9 rounded-[11px] flex items-center justify-center" style="background:var(--surface-2);"><i class="ph-fill ph-gauge" style="color:var(--lime);font-size:16px;"></i></div>'
         + '<div><p class="text-sm font-semibold" style="color:var(--text);">' + val.toFixed(1) + ' Mbps</p><p class="text-[11px]" style="color:var(--muted);">' + when + ' · ↓' + val.toFixed(1) + ' ↑' + (Number(r.u) || 0).toFixed(1) + ' · ' + (r.p || '-') + 'ms</p></div></div>'
@@ -2564,7 +2564,7 @@ window.__PORTAL__ = <%- portalJson %>;
     var m = document.getElementById('gangguan-msg');
     var e = document.getElementById('gangguan-eta');
     var _act = n.active !== false;
-    if (t) t.textContent = _act ? (n.label || 'Info Jaringan') : '<%= t('pwa.js.net_ok','Jaringan Normal') %>';
+    if (t) t.textContent = _act ? (n.label || 'Información de red') : '<%= t('pwa.js.net_ok','Jaringan Normal') %>';
     if (m) m.textContent = _act ? (n.text || '<%= t('pwa.js.net_issue','Sedang terjadi gangguan pada jaringan.') %>') : '<%= t('pwa.js.net_fine','Tidak ada gangguan pada jaringan saat ini. Layanan berjalan normal.') %>';
     if (e) e.textContent = (_act && n.estimateText) ? ('<%= t('pwa.js.estimate','Estimasi selesai:') %>' + n.estimateText) : '';
     document.getElementById('gangguan-modal').classList.add('open');

@@ -93,7 +93,7 @@
               <td style="font-size:12px"><%= item.recorded_by_name || 'Admin' %></td>
               <td>
                 <form method="POST" action="/admin/finance/expenses/<%= item.id %>/delete" style="display:inline" onsubmit="return confirm('Hapus data pengeluaran ini?')">
-                  <button class="btn btn-d btn-icon btn-sm" title="Hapus"><i class="bi bi-trash"></i></button>
+                  <button class="btn btn-d btn-icon btn-sm" title="Eliminar"><i class="bi bi-trash"></i></button>
                 </form>
               </td>
             </tr>
@@ -147,8 +147,8 @@
         <div class="fg">
           <label class="fl"><%= t('admin.exp.method','Forma de pago') %></label>
           <select class="fc" name="payment_method">
-            <option value="cash"><%= t('admin.exp.pay_cash','Tunai (Cash)') %></option>
-            <option value="transfer"><%= t('admin.exp.pay_transfer','Transfer Bank') %></option>
+            <option value="cash"><%= t('admin.exp.pay_cash','Efectivo') %></option>
+            <option value="transfer"><%= t('admin.exp.pay_transfer','Transferencia bancaria') %></option>
             <option value="ewallet"><%= t('admin.exp.pay_ewallet','E-Wallet (OVO/Dana/Gopay)') %></option>
             <option value="credit"><%= t('admin.exp.pay_credit','Kredit / Paylater') %></option>
           </select>

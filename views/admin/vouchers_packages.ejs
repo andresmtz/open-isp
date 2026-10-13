@@ -138,8 +138,8 @@
           <div class="fg">
             <label class="fl"><%= t('admin.vp.char_type','Tipe Karakter Kode *') %></label>
             <select class="fc" id="form_charset" required>
-              <option value="numbers">Hanya Angka (0-9)</option>
-              <option value="letters">Hanya Huruf Kecil (a-z)</option>
+              <option value="numbers">Solo números (0-9)</option>
+              <option value="letters">Solo minúsculas (a-z)</option>
               <option value="mixed" selected>Mayúsculas y números (al azar)</option>
             </select>
           </div>
@@ -270,7 +270,7 @@
     if (meta) {
       document.getElementById('form_price').value = meta.price;
       document.getElementById('form_validity').value = meta.validity;
-      hintEl.innerHTML = `<span style="color:var(--success)"><b>Terdeteksi:</b> Harga ${APP_CUR} ${meta.price.toLocaleString(APP_LOCALE)} • Durasi ${meta.validity}</span>`;
+      hintEl.innerHTML = `<span style="color:var(--success)"><b>Detectado:</b> Precio ${APP_CUR} ${meta.price.toLocaleString(APP_LOCALE)} • Duración ${meta.validity}</span>`;
     } else {
       hintEl.innerHTML = '<span class="text-muted"><%= t('admin.vp.no_meta','Profil tidak memiliki metadata Mikhmon. Isi harga dan masa aktif manual.') %></span>';
     }

@@ -29,7 +29,7 @@
         </div>
         <div class="tb-right">
             <span class="adm-badge" style="font-size:12px;opacity:0.7;"><%= company %></span>
-            <a href="/admin/acs?acs=<%= encodeURIComponent(acsId || 'all') %>" class="btn btn-g btn-sm" title="Kembali">
+            <a href="/admin/acs?acs=<%= encodeURIComponent(acsId || 'all') %>" class="btn btn-g btn-sm" title="Volver">
                 <i class="bi bi-arrow-left"></i>
             </a>
             <span class="adm-badge"><i class="bi bi-person-fill"></i> <%= (typeof session !== 'undefined' && session && session.isCashier) ? 'Kasir' : 'Admin' %></span>
@@ -52,7 +52,7 @@
                 <div class="info-row"><span><%= t('admin.acsdev.swver', 'Versi Software') %></span><span><%= device.softwareVersion || '-' %></span></div>
             </div>
             <div class="card">
-                <div class="card-header"><i class="bi bi-diagram-3"></i> <%= t('admin.acsdev.net_info', 'Info Jaringan') %></div>
+                <div class="card-header"><i class="bi bi-diagram-3"></i> <%= t('admin.acsdev.net_info', 'Información de red') %></div>
                 <div class="info-row"><span><%= t('admin.acsdev.pppoe_user', 'PPPoE User') %></span><span><%= device.pppoeUsername || device.pppoeUser || '-' %></span></div>
                 <div class="info-row"><span><%= t('admin.acsdev.ip', 'IP Address') %></span><code><%= device.pppoeIP || device.ip || '-' %></code></div>
                 <div class="info-row"><span><%= t('admin.acsdev.rxpower', 'RX Power') %></span><span class="badge" style="background:var(--primary); color:white;"><%= device.rxPower || '-' %> dBm</span></div>

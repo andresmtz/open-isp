@@ -32,13 +32,13 @@
         <h6><i class="bi bi-list-ul"></i> <%= t('admin.col.list','Daftar Kolektor') %></h6>
       </div>
       <div class="hint" style="padding:12px 16px 0 16px;font-size:12px;color:var(--muted)">
-        La aprobación de cobros se configura por cada cobrador. `<%= t('admin.col.direct','Pago directo') %><%= t('admin.col.mode_hint','` berarti pembayaran dari kolektor langsung melunasi invoice, sedangkan `') %><%= t('admin.col.approval','Perlu Approval') %>` significa que primero debe aprobarlo el administrador o el cajero.
+        La aprobación de cobros se configura por cada cobrador. `<%= t('admin.col.direct','Pago directo') %><%= t('admin.col.mode_hint','` berarti pembayaran dari kolektor langsung melunasi invoice, sedangkan `') %><%= t('admin.col.approval','Requiere aprobación') %>` significa que primero debe aprobarlo el administrador o el cajero.
       </div>
       <div style="padding:12px 16px 0 16px;display:flex;gap:10px;flex-wrap:wrap">
         <select id="collectorModeFilter" class="fs" style="max-width:220px">
           <option value="all"><%= t('admin.col.all_paymode','Semua Mode Pembayaran') %></option>
           <option value="direct"><%= t('admin.col.direct','Pago directo') %></option>
-          <option value="approval"><%= t('admin.col.approval','Perlu Approval') %></option>
+          <option value="approval"><%= t('admin.col.approval','Requiere aprobación') %></option>
         </select>
         <select id="collectorStatusFilter" class="fs" style="max-width:180px">
           <option value="all"><%= t('admin.col.all_status','Semua Status Akun') %></option>
@@ -76,7 +76,7 @@
                   </td>
                   <td>
                     <span class="badge <%= c.auto_approve ? 'bs' : 'bm' %>">
-                      <%= c.auto_approve ? 'Pago directo' : 'Perlu Approval' %>
+                      <%= c.auto_approve ? 'Pago directo' : 'Requiere aprobación' %>
                     </span>
                   </td>
                   <td style="white-space:nowrap">
@@ -125,7 +125,7 @@
             <i class="bi bi-check-circle"></i> Aprobación automática de cobros
           </label>
           <select name="auto_approve" id="add-auto-approve" class="fs" onchange="updateCollectorModeBadge('add')">
-            <option value="0">Inactivo (<%= t('admin.col.approval','Perlu Approval') %> Admin)</option>
+            <option value="0">Inactivo (<%= t('admin.col.approval','Requiere aprobación') %> Admin)</option>
             <option value="1">Activo (<%= t('admin.col.direct','Pago directo') %>)</option>
           </select>
           <div id="add-mode-badge" class="hint" style="margin-top:8px;font-size:12px;color:#fbbf24">
@@ -176,7 +176,7 @@
             <i class="bi bi-check-circle"></i> Aprobación automática de cobros
           </label>
           <select name="auto_approve" id="e-auto-approve" class="fs" onchange="updateCollectorModeBadge('edit')">
-            <option value="0">Inactivo (<%= t('admin.col.approval','Perlu Approval') %> Admin)</option>
+            <option value="0">Inactivo (<%= t('admin.col.approval','Requiere aprobación') %> Admin)</option>
             <option value="1">Activo (<%= t('admin.col.direct','Pago directo') %>)</option>
           </select>
           <div id="edit-mode-badge" class="hint" style="margin-top:8px;font-size:12px;color:#fbbf24">

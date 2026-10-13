@@ -569,7 +569,7 @@
     <div class="billing-grid">
       <!-- Client Details -->
       <div class="info-card">
-        <div class="card-heading">Ditagihkan Kepada</div>
+        <div class="card-heading">Facturado a</div>
         <div class="client-name"><%= customer.name %></div>
         <% if (customer.customer_code) { %>
         <div class="meta-item"><span><i class="bi bi-person-badge"></i></span> ID de cliente: <strong><%= customer.customer_code %></strong></div>
@@ -605,7 +605,7 @@
           </div>
           <div class="summary-item" style="margin-top:6px;">
             <span class="label">Forma de pago</span>
-            <span class="value"><%= invoice.payment_gateway ? invoice.payment_gateway.toUpperCase() : 'Tunai / Transfer' %></span>
+            <span class="value"><%= invoice.payment_gateway ? invoice.payment_gateway.toUpperCase() : 'Efectivo / transferencia' %></span>
           </div>
         </div>
       </div>
@@ -658,7 +658,7 @@
           <span class="val"><%= APP_CUR %> <%= Number(invoice.amount_before_discount || invoice.amount || 0).toLocaleString(APP_LOCALE) %></span>
         </div>
         <div class="total-line">
-          <span class="lbl">Diskon / Potongan<% if (Number(invoice.discount_amount||0) > 0 && invoice.discount_type==='percent') { %> (<%= invoice.discount_value %>%)<% } %></span>
+          <span class="lbl">Descuento<% if (Number(invoice.discount_amount||0) > 0 && invoice.discount_type==='percent') { %> (<%= invoice.discount_value %>%)<% } %></span>
           <span class="val"><%= Number(invoice.discount_amount||0) > 0 ? ('- ' + APP_CUR + ' ' + Number(invoice.discount_amount).toLocaleString(APP_LOCALE)) : (APP_CUR + ' 0') %></span>
         </div>
         <div class="total-line grand-total">
@@ -677,9 +677,9 @@
       </div>
 
       <div class="signature-area">
-        <div class="sig-title">Hormat Kami,</div>
+        <div class="sig-title">Atentamente,</div>
         <div class="sig-line"></div>
-        <div class="sig-name"><%= settings.company_manager || 'Admin Pengelola' %></div>
+        <div class="sig-name"><%= settings.company_manager || 'Administración' %></div>
         <div class="sig-role">Manajer Operasional</div>
       </div>
     </div>

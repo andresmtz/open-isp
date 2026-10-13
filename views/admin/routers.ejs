@@ -340,7 +340,7 @@
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <div class="d-flex gap-1 bg-dark p-1 rounded-3 border border-secondary border-opacity-25">
             <button type="button" class="view-toggle-btn active" id="btn-view-grid" onclick="switchView('grid')"><i class="bi bi-grid-fill me-1"></i> <%= t('admin.rt.view_grid','Grid Kartu') %></button>
-            <button type="button" class="view-toggle-btn" id="btn-view-table" onclick="switchView('table')"><i class="bi bi-table me-1"></i> Tabel</button>
+            <button type="button" class="view-toggle-btn" id="btn-view-table" onclick="switchView('table')"><i class="bi bi-table me-1"></i> Tabla</button>
           </div>
           <button type="button" class="btn btn-outline-light btn-sm" onclick="openIsolirScriptModal()"><i class="bi bi-filetype-txt me-1"></i> <%= t('admin.rt.script_isolir','Script Isolir') %></button>
           <button class="btn btn-p btn-sm" onclick="openModal('addModal')"><i class="bi bi-plus-lg me-1"></i> <%= t('admin.rt.add','Tambah Router') %></button>
@@ -534,7 +534,7 @@
         <div class="alert alert-info p-3 small mb-3" style="background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); color:#e0e7ff;">
           <h6 class="fw-bold mb-1"><i class="bi bi-info-circle me-1 text-info"></i> Redirección automática a la página de corte</h6>
           <p class="mb-0 small" style="opacity:0.9;">
-            El sistema enviará órdenes por API al MikroTik para crear <strong>Rule NAT Redirect (Port 80/443)</strong>, <strong>Firewall Rule (LIST_ISOLIR)</strong>, serta memasang <strong>el script on-up en el perfil PPPoE de corte</strong> automáticamente.
+            El sistema enviará órdenes por API al MikroTik para crear <strong>Rule NAT Redirect (Port 80/443)</strong>, <strong>Firewall Rule (LIST_ISOLIR)</strong>, y además instalar <strong>el script on-up en el perfil PPPoE de corte</strong> automáticamente.
           </p>
         </div>
 

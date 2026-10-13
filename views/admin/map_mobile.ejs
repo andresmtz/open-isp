@@ -284,7 +284,7 @@
       </div>
       <div class="stat-chip sc-iso">
         <span class="val" id="cntIso"><%= customers.filter(c => c.status !== 'active').length %></span>
-        <span class="lbl">Isolir</span>
+        <span class="lbl">Suspendido</span>
       </div>
     </div>
 
@@ -299,7 +299,7 @@
       <button class="pill-btn active" data-filter="all"><%= t('collector.filter_all','Semua') %></button>
       <button class="pill-btn" data-filter="active"><i class="bi bi-circle-fill" style="color:#22c55e"></i> Activo (<%= customers.filter(c => c.status === 'active').length %>)</button>
       <button class="pill-btn" data-filter="isolated"><i class="bi bi-circle-fill" style="color:#ef4444"></i> Suspendidos (<%= customers.filter(c => c.status !== 'active').length %>)</button>
-      <button class="pill-btn" data-filter="odp"><i class="bi bi-archive-fill"></i> ODP Saja (<%= odps.length %>)</button>
+      <button class="pill-btn" data-filter="odp"><i class="bi bi-archive-fill"></i> Solo NAP (<%= odps.length %>)</button>
     </div>
   </div>
 

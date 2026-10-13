@@ -359,7 +359,7 @@
                   <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
                     <% if (c.status === 'inactive') { %>
-                      <button type="button" class="act-item success" data-idx="<%= i %>" onclick="openRegCalc(+this.dataset.idx)"><i class="bi bi-calculator"></i> Kalkulator &amp; Setujui</button>
+                      <button type="button" class="act-item success" data-idx="<%= i %>" onclick="openRegCalc(+this.dataset.idx)"><i class="bi bi-calculator"></i> Calcular y aprobar</button>
                       <button type="submit" form="rej-<%= c.id %>" class="act-item danger"><i class="bi bi-x-lg"></i> <%= t('admin.cust.reject_reg','Tolak Pendaftar') %></button>
                       <div class="act-sep"></div>
                     <% } %>
@@ -382,7 +382,7 @@
                     <% if (!c.pppoe_username) { %>
                       <button type="submit" form="gpp-<%= c.id %>" class="act-item primary"><i class="bi bi-key"></i> <%= t('admin.cust.gen_pppoe','Generate Akun PPPoE') %></button>
                     <% } %>
-                    <button type="button" class="act-item" data-id="<%= c.id %>" onclick="syncCust(this)"><i class="bi bi-arrow-repeat"></i> Sync ke Jaringan</button>
+                    <button type="button" class="act-item" data-id="<%= c.id %>" onclick="syncCust(this)"><i class="bi bi-arrow-repeat"></i> Sincronizar con la red</button>
                     <div class="act-sep"></div>
                     <button type="button" class="act-item" data-idx="<%= i %>" onclick="editCust(+this.dataset.idx)"><i class="bi bi-pencil"></i> <%= t('admin.cust.btn_edit','Edit Pelanggan') %></button>
                     <button type="submit" form="del-<%= c.id %>" class="act-item danger"><i class="bi bi-trash"></i> <%= t('admin.cust.btn_delete','Hapus Pelanggan') %></button>
@@ -421,7 +421,7 @@
                 <option value="1"> <%= t('admin.cust.opt_radius','RADIUS Server (Billing Database Only)') %></option>
               </select>
               <small class="text-muted" style="font-size:11px; display:block; margin-top:4px;">
-                Mode MikroTik API mengelola kredensial PPP langsung di menu /ppp secret RouterOS MikroTik.
+                El modo API de MikroTik gestiona las credenciales PPP directamente en /ppp secret del RouterOS.
               </small>
             </div>
           </div>
@@ -622,7 +622,7 @@
 
         <!-- SECTION 5: OPSEK & INFRASTRUKTUR (OLT, ODP, KOORDINAT) -->
         <div style="background: rgba(255, 255, 255, 0.02); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px;">
-          <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-diagram-3 text-secondary me-1"></i> Infrastruktur (OLT, ODP, & Peta)</div>
+          <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-diagram-3 text-secondary me-1"></i> Infraestructura (OLT, NAP y mapa)</div>
           <div class="form-row">
             <div class="fg">
               <label class="fl"><%= t('admin.cust.olt_device','Perangkat OLT') %></label>
@@ -723,7 +723,7 @@
                 <option value="1"> <%= t('admin.cust.opt_radius','RADIUS Server (Billing Database Only)') %></option>
               </select>
               <small class="text-muted" style="font-size:11px; display:block; margin-top:4px;">
-                Mode MikroTik API mengelola kredensial PPP langsung di menu /ppp secret RouterOS MikroTik.
+                El modo API de MikroTik gestiona las credenciales PPP directamente en /ppp secret del RouterOS.
               </small>
             </div>
           </div>
@@ -912,7 +912,7 @@
 
         <!-- SECTION 5: OPSEK & INFRASTRUKTUR (OLT, ODP, KOORDINAT) -->
         <div style="background: rgba(255, 255, 255, 0.02); padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px;">
-          <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-diagram-3 text-secondary me-1"></i> Infrastruktur (OLT, ODP, & Peta)</div>
+          <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-diagram-3 text-secondary me-1"></i> Infraestructura (OLT, NAP y mapa)</div>
           <div class="form-row">
             <div class="fg">
               <label class="fl"><%= t('admin.cust.olt_device','Perangkat OLT') %></label>
@@ -1051,7 +1051,7 @@
         <div class="form-row">
           <div class="fg">
             <label class="fl"><%= t('admin.cust.pay_method','Forma de pago') %></label>
-            <select class="fs" name="payment_method"><option value="Tunai"><%= t('admin.cust.pay_cash','Tunai (Cash)') %></option><option value="<%= t('admin.cust.pay_transfer','Transfer Bank') %>"><%= t('admin.cust.pay_transfer','Transfer Bank') %></option><option value="QRIS">QRIS</option><option value="E-Wallet">E-Wallet</option><option value="<%= t('admin.cust.pay_other','Lainnya') %>"><%= t('admin.cust.pay_other','Lainnya') %></option></select>
+            <select class="fs" name="payment_method"><option value="Tunai"><%= t('admin.cust.pay_cash','Efectivo') %></option><option value="<%= t('admin.cust.pay_transfer','Transferencia bancaria') %>"><%= t('admin.cust.pay_transfer','Transferencia bancaria') %></option><option value="QRIS">QRIS</option><option value="E-Wallet">E-Wallet</option><option value="<%= t('admin.cust.pay_other','Lainnya') %>"><%= t('admin.cust.pay_other','Lainnya') %></option></select>
           </div>
           <div class="fg">
             <label class="fl"><%= t('admin.billing.received_by', 'Diterima Oleh') %></label>
@@ -1062,7 +1062,7 @@
           </div>
         </div>
         <div class="fg">
-          <label class="fl"><%= t('admin.billing.notes_optional', 'Catatan (opsional)') %></label>
+          <label class="fl"><%= t('admin.billing.notes_optional', 'Nota (opcional)') %></label>
           <textarea class="fc" name="notes" placeholder="<%= t('admin.customers.pay_invoice_notes_placeholder', 'Contoh: Bayar di muka') %>"></textarea>
         </div>
       </div>
@@ -1104,7 +1104,7 @@
           <div class="vd-name" id="v_cust_name">-</div>
           <div class="vd-sub">
             <span><%= t('admin.cust.lbl_cust_id','ID de cliente:') %> <strong id="v_cust_id">-</strong></span>
-            <button type="button" class="btn btn-g btn-sm vd-copy" onclick="copyCustCode()" title="<%= t('admin.cust.copy_id','Salin ID Pelanggan') %>"><i class="bi bi-clipboard"></i> Salin</button>
+            <button type="button" class="btn btn-g btn-sm vd-copy" onclick="copyCustCode()" title="<%= t('admin.cust.copy_id','Salin ID Pelanggan') %>"><i class="bi bi-clipboard"></i> Copiar</button>
           </div>
         </div>
         <div id="v_online_badge"></div>
@@ -1998,7 +1998,7 @@ function loadOdpPorts(scope){
         var opt=document.createElement('option');
         opt.value=String(i);
         var isUsed = !!used[String(i)];
-        opt.textContent = 'Port ' + i + (isUsed ? ' (terpakai)' : '');
+        opt.textContent = 'Port ' + i + (isUsed ? ' (en uso)' : '');
         if(isUsed && String(i)!==String(current)) opt.disabled = true;
         portSel.appendChild(opt);
       }

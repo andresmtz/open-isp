@@ -54,7 +54,7 @@
               </select>
             </div>
             <div class="fg">
-              <label class="fl"><%= t('admin.disc.disc_type','Tipe Diskon') %></label>
+              <label class="fl"><%= t('admin.disc.disc_type','Tipo de descuento') %></label>
               <select class="fs" name="discount_type" id="discType">
                 <option value="percent"><%= t('admin.disc.opt_percent','Persen (%)') %></option>
                 <option value="amount"><%= t('admin.disc.opt_amount','Nominal (Rp)') %></option>
@@ -85,13 +85,13 @@
               </select>
             </div>
             <div class="fg" style="flex:2">
-              <label class="fl"><%= t('admin.disc.note_opt','Catatan (opsional)') %></label>
+              <label class="fl"><%= t('admin.disc.note_opt','Nota (opcional)') %></label>
               <input class="fc" name="note" placeholder="<%= t('admin.disc.ph_note','mis. promo bulan kemerdekaan') %>">
             </div>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px">
             <div class="hint"><i class="bi bi-info-circle"></i> <%- t('admin.disc.apply_hint','Diskon berlaku ke tagihan <b>belum bayar</b> pada periode terpilih. Tagihan lunas/hangus tidak diubah. Kode unik QRIS akan digenerate ulang dari nominal baru.') %></div>
-            <button type="submit" class="btn btn-p" id="applyBtn"><i class="bi bi-percent"></i> <%= t('admin.disc.apply','Terapkan Diskon') %></button>
+            <button type="submit" class="btn btn-p" id="applyBtn"><i class="bi bi-percent"></i> <%= t('admin.disc.apply','Aplicar descuento') %></button>
           </div>
         </div>
       </div>
@@ -120,7 +120,7 @@
                 <th style="width:130px">No. HP</th>
                 <th style="width:110px">Area</th>
                 <th style="width:90px"><%= t('common.status','Status') %></th>
-                <th style="width:70px">Tunggakan</th>
+                <th style="width:70px">Deuda</th>
               </tr>
             </thead>
             <tbody>
@@ -155,9 +155,9 @@
               <th><%= t('common.customer','Pelanggan') %></th>
               <th style="width:110px"><%= t('pwa.field.period','Periode') %></th>
               <th style="width:100px"><%= t('common.type','Tipe') %></th>
-              <th class="num" style="width:120px">Potongan</th>
-              <th class="num" style="width:120px">Awal → Akhir</th>
-              <th style="width:110px">Oleh</th>
+              <th class="num" style="width:120px">Descuento</th>
+              <th class="num" style="width:120px">Inicio → fin</th>
+              <th style="width:110px">Por</th>
               <th><%= t('admin.disc.th_note','Catatan') %></th>
             </tr>
           </thead>
@@ -218,7 +218,7 @@
     function updateSelCount(){
       var n = document.querySelectorAll('#custTable .cust-sel:checked').length;
       if (selCount) selCount.textContent = n + ' <%= t('admin.disc.selected','dipilih') %>';
-      if (applyBtn) applyBtn.innerHTML = '<i class="bi bi-percent"></i> <%= t('admin.disc.apply','Terapkan Diskon') %>' + ((mode.value === 'selected' && n) ? ' (' + n + ')' : '');
+      if (applyBtn) applyBtn.innerHTML = '<i class="bi bi-percent"></i> <%= t('admin.disc.apply','Aplicar descuento') %>' + ((mode.value === 'selected' && n) ? ' (' + n + ')' : '');
     }
     all.addEventListener('change', function(){ visibleBoxes().forEach(function(b){ b.checked = all.checked; }); updateSelCount(); });
     document.getElementById('custTable').addEventListener('change', function(e){ if (e.target && e.target.classList.contains('cust-sel')) updateSelCount(); });

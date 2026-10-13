@@ -76,7 +76,7 @@
         </div>
       </div>
       <div class="modal-footer border-secondary">
-        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
         <button type="button" id="btn-submit-action" class="btn btn-primary btn-sm"><%= t('tech.mon.save','Guardar cambios') %></button>
       </div>
     </div>
@@ -129,7 +129,7 @@
 
           <!-- PPPoE Credentials Block -->
           <div id="pppoeFields" class="p-3 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded mb-3">
-              <h6 class="mb-2 text-primary"><i class="bi bi-key-fill me-1"></i> <%= t('tech.mon.pppoe_cred','Kredensial PPPoE') %></h6>
+              <h6 class="mb-2 text-primary"><i class="bi bi-key-fill me-1"></i> <%= t('tech.mon.pppoe_cred','Credenciales PPPoE') %></h6>
               <div class="row g-3 mb-2">
                   <div class="col-6">
                     <label class="form-label small text-secondary"><%= t('tech.mon.pppoe_username','Username PPPoE') %></label>
@@ -172,7 +172,7 @@
               </div>
               <div id="wifiFields" style="display: none;" class="p-3 bg-dark">
                   <div id="wifiLoading" class="text-center py-2 text-secondary small">
-                      <div class="spinner-border spinner-border-sm text-primary me-1" role="status"></div> <%= t('tech.mon.loading_ssid','Mengunduh SSID lama...') %>
+                      <div class="spinner-border spinner-border-sm text-primary me-1" role="status"></div> <%= t('tech.mon.loading_ssid','Leyendo el SSID actual...') %>
                   </div>
                   <div id="wifiBandsContainer" class="d-grid gap-3">
                       <!-- 2.4GHz Band -->
@@ -185,7 +185,7 @@
                               </div>
                               <div class="col-6">
                                 <label class="form-label small text-secondary"><%= t('tech.mon.wifi_pass','Sandi Wi-Fi (WPA2)') %></label>
-                                <input type="password" id="wifiPass24" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Isi jika diganti">
+                                <input type="password" id="wifiPass24" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Completar solo si se cambia">
                               </div>
                           </div>
                       </div>
@@ -199,7 +199,7 @@
                               </div>
                               <div class="col-6">
                                 <label class="form-label small text-secondary"><%= t('tech.mon.wifi_pass','Sandi Wi-Fi (WPA2)') %></label>
-                                <input type="password" id="wifiPass5" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Isi jika diganti">
+                                <input type="password" id="wifiPass5" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Completar solo si se cambia">
                               </div>
                           </div>
                       </div>
@@ -263,8 +263,8 @@
         </form>
       </div>
       <div class="modal-footer border-secondary">
-        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-        <button type="submit" form="addWanForm" class="btn btn-success btn-sm" id="btn-save-add-wan"><%= t('tech.mon.run_prov','Jalankan Provisioning') %></button>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" form="addWanForm" class="btn btn-success btn-sm" id="btn-save-add-wan"><%= t('tech.mon.run_prov','Ejecutar aprovisionamiento') %></button>
       </div>
     </div>
   </div>
@@ -297,8 +297,8 @@ function renderDevices(devices) {
 
   container.innerHTML = devices.map(d => {
     const isOn = d.status === 'online';
-    const title = d.customerName ? d.customerName : (d.tags.join(', ') || 'Tanpa Tag');
-    const sub = d.customerName ? `${d.tags.join(', ') || 'Tanpa Tag'} | SN: ${d.serialNumber}` : `${d.model || 'ONU'} | SN: ${d.serialNumber}`;
+    const title = d.customerName ? d.customerName : (d.tags.join(', ') || 'Sin etiqueta');
+    const sub = d.customerName ? `${d.tags.join(', ') || 'Sin etiqueta'} | SN: ${d.serialNumber}` : `${d.model || 'ONU'} | SN: ${d.serialNumber}`;
     return `
       <div class="t-card mb-3 p-3" style="border-left: 4px solid ${isOn ? '#10b981' : '#ef4444'}">
         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -425,7 +425,7 @@ document.getElementById('btn-submit-action').addEventListener('click', async fun
   }
   
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Proses...';
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
   
   try {
     const res = await fetch(url, {
@@ -597,7 +597,7 @@ async function submitAddWanForm(e) {
     const btn = document.getElementById('btn-save-add-wan');
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memproses...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
     
     const deviceId = document.getElementById('wanDeviceId').value;
     const acsId = document.getElementById('wanAcsId').value;
@@ -642,10 +642,10 @@ async function submitAddWanForm(e) {
             alert(data.message || 'No se pudo ejecutar el aprovisionamiento');
         }
     } catch (err) {
-        alert('Terjadi kesalahan: ' + err.message);
+        alert('Ocurrió un error: ' + err.message);
     } finally {
         btn.disabled = false;
-        btn.innerText = 'Jalankan Provisioning';
+        btn.innerText = 'Ejecutar aprovisionamiento';
     }
 }
 

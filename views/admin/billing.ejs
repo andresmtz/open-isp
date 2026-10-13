@@ -167,13 +167,13 @@
                 <% } %>
                 <div><%= APP_CUR %> <%= inv.amount.toLocaleString(APP_LOCALE) %></div>
                 <% if (Number(inv.discount_amount||0) > 0) { %>
-                  <div style="font-size:10px;color:var(--danger);font-weight:700">Diskon <%= inv.discount_type==='percent' ? (inv.discount_value+'%') : '' %> -<%= APP_CUR %> <%= Number(inv.discount_amount).toLocaleString(APP_LOCALE) %></div>
+                  <div style="font-size:10px;color:var(--danger);font-weight:700">Descuento <%= inv.discount_type==='percent' ? (inv.discount_value+'%') : '' %> -<%= APP_CUR %> <%= Number(inv.discount_amount).toLocaleString(APP_LOCALE) %></div>
                 <% } %>
                 <% if (inv.status === 'unpaid' && inv.qris_amount_unique) { %>
                   <div style="font-size:11px;color:var(--muted);margin-top:4px">
                     Monto único: <span class="mono" style="font-weight:600;color:var(--primary)"><%= APP_CUR %> <%= Number(inv.qris_amount_unique || inv.amount || 0).toLocaleString(APP_LOCALE) %></span>
                     <% if (inv.qris_unique_code) { %>
-                      <span class="badge bm" style="margin-left:4px">Kode <%= String(inv.qris_unique_code).padStart(3, "0") %></span>
+                      <span class="badge bm" style="margin-left:4px">Código <%= String(inv.qris_unique_code).padStart(3, "0") %></span>
                     <% } %>
                   </div>
                 <% } %>
@@ -291,7 +291,7 @@
         <p class="text-muted" id="discModalDesc" style="margin-bottom:14px;font-size:13px"></p>
         <div class="form-row">
           <div class="fg">
-            <label class="fl">Tipe Diskon</label>
+            <label class="fl">Tipo de descuento</label>
             <select class="fs" name="discount_type" id="dmType">
               <option value="percent"><%= t('admin.bill.opt_percent','Persen (%)') %></option>
               <option value="amount"><%= t('admin.bill.opt_amount','Nominal (Rp)') %></option>
@@ -302,12 +302,12 @@
             <input class="fc" type="number" name="discount_value" id="dmValue" min="1" step="1" required>
           </div>
         </div>
-        <div class="fg"><label class="fl"><%= t('admin.bill.note_optional','Catatan (opsional)') %></label><input class="fc" name="note" placeholder="<%= t('admin.bill.ph_note','mis. kompensasi gangguan') %>"></div>
+        <div class="fg"><label class="fl"><%= t('admin.bill.note_optional','Nota (opcional)') %></label><input class="fc" name="note" placeholder="<%= t('admin.bill.ph_note','mis. kompensasi gangguan') %>"></div>
         <div class="hint"><i class="bi bi-info-circle"></i><%= t('admin.bill.pct_hint',' Persen dihitung dari harga dasar (sebelum PPN/USO). Kode unik QRIS akan digenerate ulang.') %></div>
       </div>
       <div class="mf">
-        <button type="button" class="btn btn-g" onclick="closeModal('discModal')">Batal</button>
-        <button type="submit" class="btn btn-w"><i class="bi bi-percent"></i> Terapkan Diskon</button>
+        <button type="button" class="btn btn-g" onclick="closeModal('discModal')">Cancelar</button>
+        <button type="submit" class="btn btn-w"><i class="bi bi-percent"></i> Aplicar descuento</button>
       </div>
     </form>
   </div>
@@ -331,9 +331,9 @@
         <% const payByDefault = (typeof session !== 'undefined' && session.isCashier)
           ? (`Kasir ${(session.cashierName || '').trim()}` + ((session.cashierUsername || '').trim() ? ` (@${String(session.cashierUsername).trim()})` : '')).trim()
           : 'Admin'; %>
-        <div class="fg"><label class="fl">Forma de pago</label><select class="fs" name="payment_method"><option value="Tunai">Tunai (Cash)</option><option value="Transfer Bank">Transfer Bank</option><option value="QRIS">QRIS</option><option value="E-Wallet">E-Wallet</option><option value="Lainnya">Lainnya</option></select></div>
+        <div class="fg"><label class="fl">Forma de pago</label><select class="fs" name="payment_method"><option value="Tunai">Efectivo</option><option value="Transferencia bancaria">Transferencia bancaria</option><option value="QRIS">QRIS</option><option value="E-Wallet">E-Wallet</option><option value="Lainnya">Otros</option></select></div>
                 <div class="fg"><label class="fl"><%= t('admin.billing.received_by', 'Diterima Oleh') %></label><input class="fc" name="paid_by_name" placeholder="<%= t('admin.billing.received_by_placeholder', 'Nama petugas / teknisi') %>" value="<%= payByDefault || 'Admin' %>"></div>
-        <div class="fg"><label class="fl"><%= t('admin.billing.notes_optional', 'Catatan (opsional)') %></label><textarea class="fc" name="notes" placeholder="<%= t('admin.billing.notes_placeholder', 'Transfer BRI, tunai, dll...') %>"></textarea></div>
+        <div class="fg"><label class="fl"><%= t('admin.billing.notes_optional', 'Nota (opcional)') %></label><textarea class="fc" name="notes" placeholder="<%= t('admin.billing.notes_placeholder', 'Transfer BRI, tunai, dll...') %>"></textarea></div>
       </div>
       <div class="mf">
         <button type="button" class="btn btn-g" onclick="closeModal('payModal')"><%= t('common.cancel', 'Batal') %></button>

@@ -31,7 +31,7 @@
         <div class="muted" style="font-size:12.5px"><%= settings.company_header || 'OPEN-ISP' %></div>
       </div>
       <% if (backUrl) { %>
-        <a class="iso-btn ghost" style="width:auto;padding:8px 14px;font-size:13px" href="<%= backUrl %>"><i class="bi bi-arrow-left"></i> Kembali</a>
+        <a class="iso-btn ghost" style="width:auto;padding:8px 14px;font-size:13px" href="<%= backUrl %>"><i class="bi bi-arrow-left"></i> Volver</a>
       <% } %>
     </div>
 
@@ -62,14 +62,14 @@
       <% } %>
 
       <div style="margin-bottom:14px">
-        <div style="font-weight:700"><%= customerName || (isVoucher ? 'Pembeli Voucher' : 'Pelanggan') %></div>
+        <div style="font-weight:700"><%= customerName || (isVoucher ? 'Comprador de ficha' : 'Pelanggan') %></div>
         <div class="muted mono" style="font-size:12.5px;margin-top:2px"><%= refPrefix %>-<%= invoiceId %><% if (periodText) { %> • <%= periodText %><% } %></div>
       </div>
 
       <!-- Tab metode pembayaran -->
       <div class="pay-tabs" id="payTabs">
         <button type="button" class="pay-tab <%= defaultMethod === 'qris' ? 'active' : '' %>" data-method="qris"><i class="bi bi-qr-code-scan"></i> QRIS</button>
-        <% if (bankAccounts.length) { %><button type="button" class="pay-tab <%= defaultMethod === 'bank' ? 'active' : '' %>" data-method="bank"><i class="bi bi-bank"></i> Transfer Bank</button><% } %>
+        <% if (bankAccounts.length) { %><button type="button" class="pay-tab <%= defaultMethod === 'bank' ? 'active' : '' %>" data-method="bank"><i class="bi bi-bank"></i> Transferencia bancaria</button><% } %>
         <% if (ewalletAccounts.length) { %><button type="button" class="pay-tab <%= defaultMethod === 'ewallet' ? 'active' : '' %>" data-method="ewallet"><i class="bi bi-phone"></i> E-Wallet</button><% } %>
       </div>
 
@@ -104,7 +104,7 @@
       <% if (bankAccounts.length) { %>
       <div class="pay-panel <%= defaultMethod === 'bank' ? 'active' : '' %>" data-panel="bank">
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px">
-          <div style="font-weight:700"><i class="bi bi-bank" style="color:var(--primary)"></i> Transfer Bank</div>
+          <div style="font-weight:700"><i class="bi bi-bank" style="color:var(--primary)"></i> Transferencia bancaria</div>
           <div class="muted" style="font-size:12.5px;margin-top:3px">Transfer <b>tepat</b> sebesar <b><%= APP_CUR %> <%= Number(amountUnique || 0).toLocaleString(APP_LOCALE) %></b> (ya incluye el código único) a una de estas cuentas:</div>
           <% bankAccounts.forEach(function(a){ %>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px">
@@ -113,7 +113,7 @@
               <div class="mono" style="font-size:15px"><%= a.number %></div>
               <% if (a.holder) { %><div class="muted" style="font-size:11.5px">a.n. <%= a.holder %></div><% } %>
             </div>
-            <button class="iso-btn ghost" style="width:auto;padding:8px 12px;font-size:12px" type="button" onclick="copyText('<%= String(a.number).replace(/'/g,'') %>')"><i class="bi bi-clipboard"></i> Salin</button>
+            <button class="iso-btn ghost" style="width:auto;padding:8px 12px;font-size:12px" type="button" onclick="copyText('<%= String(a.number).replace(/'/g,'') %>')"><i class="bi bi-clipboard"></i> Copiar</button>
           </div>
           <% }); %>
         </div>
@@ -125,7 +125,7 @@
       <div class="pay-panel <%= defaultMethod === 'ewallet' ? 'active' : '' %>" data-panel="ewallet">
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px">
           <div style="font-weight:700"><i class="bi bi-phone" style="color:var(--primary)"></i> E-Wallet</div>
-          <div class="muted" style="font-size:12.5px;margin-top:3px">Kirim <b>tepat</b> sebesar <b><%= APP_CUR %> <%= Number(amountUnique || 0).toLocaleString(APP_LOCALE) %></b> a una de estas billeteras:</div>
+          <div class="muted" style="font-size:12.5px;margin-top:3px">Enviar <b>tepat</b> sebesar <b><%= APP_CUR %> <%= Number(amountUnique || 0).toLocaleString(APP_LOCALE) %></b> a una de estas billeteras:</div>
           <% ewalletAccounts.forEach(function(a){ %>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px">
             <div>
@@ -133,7 +133,7 @@
               <div class="mono" style="font-size:15px"><%= a.number %></div>
               <% if (a.holder) { %><div class="muted" style="font-size:11.5px">a.n. <%= a.holder %></div><% } %>
             </div>
-            <button class="iso-btn ghost" style="width:auto;padding:8px 12px;font-size:12px" type="button" onclick="copyText('<%= String(a.number).replace(/'/g,'') %>')"><i class="bi bi-clipboard"></i> Salin</button>
+            <button class="iso-btn ghost" style="width:auto;padding:8px 12px;font-size:12px" type="button" onclick="copyText('<%= String(a.number).replace(/'/g,'') %>')"><i class="bi bi-clipboard"></i> Copiar</button>
           </div>
           <% }); %>
         </div>
@@ -150,7 +150,7 @@
         <form method="POST" action="<%= proofAction %>" enctype="multipart/form-data" style="margin-top:12px">
           <% if (publicToken) { %><input type="hidden" name="token" value="<%= publicToken %>"><% } %>
           <div class="field" style="margin-top:0">
-            <label for="proof"><i class="bi bi-cloud-upload"></i> Bukti Transfer</label>
+            <label for="proof"><i class="bi bi-cloud-upload"></i> Comprobante de transferencia</label>
             <input class="inp inp-plain" id="proof" type="file" name="proof" accept="image/png,image/jpeg,image/jpg,image/webp" required style="padding:11px">
           </div>
           <button class="iso-btn primary" type="submit"><i class="bi bi-cloud-upload"></i> Upload Bukti</button>

@@ -255,7 +255,7 @@ async function runReminderNow(btn) {
   try {
     const r = await fetch('/admin/whatsapp/run-reminder-now', { method: 'POST' });
     const j = await r.json().catch(function () { return {}; });
-    if (out) { out.textContent = j.ok ? (j.message || 'Berhasil.') : ('Falló — ' + (j.message || 'Terjadi kesalahan.')); out.style.color = j.ok ? 'var(--success)' : 'var(--danger)'; }
+    if (out) { out.textContent = j.ok ? (j.message || 'Berhasil.') : ('Falló — ' + (j.message || 'Ocurrió un error.')); out.style.color = j.ok ? 'var(--success)' : 'var(--danger)'; }
   } catch (e) {
     if (out) { out.textContent = 'Falló — ' + e.message; out.style.color = 'var(--danger)'; }
   } finally {
@@ -269,7 +269,7 @@ checkBroadcastStatus();
 
 function bsToggle(){ var m=(document.getElementById('bsMode')||{}).value; document.getElementById('bsStatic').style.display = m==='static'?'':'none'; document.getElementById('bsRandom').style.display = m==='random'?'':'none'; }
 async function bsStop(){ try{ await fetch('/admin/api/whatsapp/billing-send-stop',{method:'POST'}); }catch(e){} }
-async function bsPoll(){ try{ const r=await fetch('/admin/api/whatsapp/billing-send-status'); const s=await r.json(); const box=document.getElementById('bsProgress'); if(!s||(!s.running&&!s.total)) return; box.style.display='block'; const pct = s.total? Math.round(((s.sent+s.failed)/s.total)*100):0; document.getElementById('bsBar').style.width=pct+'%'; document.getElementById('bsProgressText').textContent=(s.running?'Mengirim…':'Selesai')+' '+s.sent+'/'+s.total+' enviados, '+s.failed+' gagal'+(s.last?(' • terakhir: '+s.last):'')+(s.label?(' • '+s.label):''); }catch(e){} }
+async function bsPoll(){ try{ const r=await fetch('/admin/api/whatsapp/billing-send-status'); const s=await r.json(); const box=document.getElementById('bsProgress'); if(!s||(!s.running&&!s.total)) return; box.style.display='block'; const pct = s.total? Math.round(((s.sent+s.failed)/s.total)*100):0; document.getElementById('bsBar').style.width=pct+'%'; document.getElementById('bsProgressText').textContent=(s.running?'Mengirim…':'Selesai')+' '+s.sent+'/'+s.total+' enviados, '+s.failed+' gagal'+(s.last?(' • último: '+s.last):'')+(s.label?(' • '+s.label):''); }catch(e){} }
 setInterval(bsPoll, 3000); bsPoll();
 
 </script>

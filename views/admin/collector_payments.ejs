@@ -118,12 +118,12 @@
                         <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                         <div class="act-menu" style="min-width:270px">
                           <form method="POST" action="/admin/collector-payments/<%= r.id %>/approve" style="display:flex;gap:6px;padding:4px 4px 6px">
-                            <input class="fc" name="decided_note" placeholder="Catatan (opsional)" style="font-size:12px">
+                            <input class="fc" name="decided_note" placeholder="Nota (opcional)" style="font-size:12px">
                             <button class="btn btn-s btn-sm" type="submit" title="Approve"><i class="bi bi-check-lg"></i> <%= t('admin.cpay.approve','Setujui') %></button>
                           </form>
                           <div class="act-sep"></div>
                           <form method="POST" action="/admin/collector-payments/<%= r.id %>/reject" style="display:flex;gap:6px;padding:4px">
-                            <input class="fc" name="decided_note" placeholder="Alasan (opsional)" style="font-size:12px">
+                            <input class="fc" name="decided_note" placeholder="Motivo (opcional)" style="font-size:12px">
                             <button class="btn btn-d btn-sm" type="submit" title="Reject"><i class="bi bi-x-lg"></i> <%= t('admin.cpay.reject','Tolak') %></button>
                           </form>
                         </div>

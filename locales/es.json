@@ -1104,7 +1104,9 @@
       "billing": "FACTURACIÓN",
       "service": "SERVICIO",
       "user_management": "USUARIOS",
-      "system": "SISTEMA"
+      "system": "SISTEMA",
+      "finance": "FINANZAS",
+      "cashier": "CAJA"
     },
     "nav": {
       "dashboard": "Panel",
@@ -1138,7 +1140,28 @@
       "radius_server": "Servidor RADIUS",
       "acs_pro": "GenieACS Pro",
       "onu_provision": "Alta de ONU",
-      "monitoring": "Monitoreo del sistema"
+      "monitoring": "Monitoreo del sistema",
+      "whatsapp": "WhatsApp",
+      "onu_stickers": "Etiquetas de ONU",
+      "voucher_packages": "Planes de fichas",
+      "vouchers_discounts": "Costo de instalación",
+      "discounts": "Descuentos",
+      "promo_slides": "Diapositivas de promoción",
+      "collector_payments": "Aprobación de cobradores",
+      "cashiers_reports": "Reporte de cajeros",
+      "cash_in": "Otros ingresos",
+      "expenses": "Gastos",
+      "expense_categories": "Categorías de gastos",
+      "payroll": "Sueldos",
+      "inventory": "Inventario (stock)",
+      "attendance": "Asistencia del personal",
+      "cashier_attendance": "Mi asistencia",
+      "collectors": "Cobradores",
+      "areas": "Zonas",
+      "service_notice": "Estado del servicio",
+      "log_rekap": "Registros y resúmenes",
+      "backup": "Respaldo y recuperación",
+      "audit_logs": "Registro de actividad"
     },
     "update": {
       "title": "Actualizar desde GitHub",

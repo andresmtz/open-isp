@@ -261,7 +261,7 @@
                         <% }); %>
                     </select>
                     <label style="display:flex; gap:6px; align-items:center; font-size:13px; color:var(--muted);">
-                        <input type="checkbox" id="logOnlyError" onchange="loadAcsLogs()"> Hanya error / fault
+                        <input type="checkbox" id="logOnlyError" onchange="loadAcsLogs()"> Solo errores / fallas
                     </label>
                     <button class="btn btn-p btn-sm" onclick="loadAcsLogs()"><i class="bi bi-arrow-clockwise"></i> <%= t('admin.acs.reload','Recargar') %></button>
                     <span style="font-size:12px; color:var(--muted);">Registros tomados de cada ACS (incorporado: historial de tareas; GenieACS: <code>/faults</code>).</span>
@@ -318,7 +318,7 @@
 
         <!-- PPPoE Credentials Block -->
         <div id="pppoeFields" style="background: rgba(59,130,246,0.03); border: 1px solid rgba(59,130,246,0.1); padding: 18px; border-radius: 16px; margin-bottom: 15px;">
-            <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--primary);"><i class="bi bi-key"></i> Kredensial PPPoE</h4>
+            <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--primary);"><i class="bi bi-key"></i> Credenciales PPPoE</h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 12px;">
                 <div class="fg" style="margin: 0;">
                   <label class="fl">Username PPPoE</label>
@@ -357,7 +357,7 @@
             </div>
             <div id="wifiFields" style="display: none; padding: 20px; background: rgba(16,185,129,0.01);">
                 <div id="wifiLoading" style="text-align: center; padding: 15px; color: var(--muted);">
-                    <i class="bi bi-arrow-clockwise spin" style="font-size: 20px;"></i> Mengunduh SSID lama...
+                    <i class="bi bi-arrow-clockwise spin" style="font-size: 20px;"></i> Leyendo el SSID actual...
                 </div>
                 <div id="wifiBandsContainer" style="display: grid; gap: 15px;">
                     <!-- 2.4GHz Band -->
@@ -443,7 +443,7 @@
     <div class="mf">
       <button type="button" class="btn btn-g" onclick="closeModal('addWanModal')"><%= t('admin.acs.cancel','Batal') %></button>
       <button type="submit" form="addWanForm" class="btn btn-p" id="btn-save-add-wan">
-        <span class="btn-text"><i class="bi bi-save"></i> <%= t('admin.acs.run_prov','Jalankan Provisioning') %></span>
+        <span class="btn-text"><i class="bi bi-save"></i> <%= t('admin.acs.run_prov','Ejecutar aprovisionamiento') %></span>
         <span class="btn-loader" style="display:none"><i class="bi bi-arrow-clockwise spin"></i> Memproses...</span>
       </button>
     </div>
@@ -976,7 +976,7 @@ async function submitAddWanForm(e) {
             alert(data.message || 'No se pudo ejecutar el aprovisionamiento');
         }
     } catch (err) {
-        alert('Terjadi kesalahan: ' + err.message);
+        alert('Ocurrió un error: ' + err.message);
     } finally {
         btn.disabled = false;
         txt.style.display = 'inline-block';

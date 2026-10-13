@@ -44,7 +44,7 @@
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <span class="badge <%= isolirSource === 'radius' ? 'bp' : 'bm' %>"><%= isolirSource === 'radius' ? 'Sumber: RADIUS' : 'Sumber: MikroTik' %></span>
           <% if (isolirSource !== 'radius') { %><span class="badge <%= isolirExists ? 'bs' : 'bd' %>"><%= isolirExists ? 'Existe en el MikroTik' : 'No existe' %></span><% } %>
-          <% if (isolirSource !== 'radius') { %><a class="btn btn-g btn-sm" href="/admin/mikrotik"><i class="bi bi-pencil"></i> Kelola di PPPoE Profiles</a><% } %>
+          <% if (isolirSource !== 'radius') { %><a class="btn btn-g btn-sm" href="/admin/mikrotik"><i class="bi bi-pencil"></i> Gestionar en Perfiles PPPoE</a><% } %>
           <a class="btn btn-g btn-sm" href="/admin/radius-settings"><i class="bi bi-broadcast"></i> RADIUS Settings</a>
         </div>
       </div>
@@ -237,7 +237,7 @@
 
         <!-- Kecepatan UpTo / Maximum Burst Rate (Opsional Manual) -->
         <div style="background:rgba(16,185,129,0.04);padding:12px 14px;border-radius:10px;margin-top:10px;border:1px dashed rgba(16,185,129,0.25);">
-          <div class="fw6" style="font-size:12px;margin-bottom:8px;color:var(--success)"><i class="bi bi-speedometer2"></i> Fitur Kecepatan UpTo / Max Rate (Opsional)</div>
+          <div class="fw6" style="font-size:12px;margin-bottom:8px;color:var(--success)"><i class="bi bi-speedometer2"></i> Velocidad "hasta" / máxima (opcional)</div>
           <div class="form-row">
             <div class="fg">
               <label class="fl">Download UpTo (Mbps)</label>
@@ -296,14 +296,14 @@
         
         <!-- IP Pool & Profil MikroTik -->
         <div style="background:rgba(59,130,246,0.05);padding:12px 14px;border-radius:10px;margin-top:10px;border:1px solid rgba(59,130,246,0.15);">
-          <div class="fw6" style="font-size:12px;margin-bottom:8px;color:var(--info)"><i class="bi bi-hdd-network"></i> IP Pool &amp; Profil MikroTik <span class="text-muted" style="font-weight:400">(comment: "manage by cloud")</span></div>
+          <div class="fw6" style="font-size:12px;margin-bottom:8px;color:var(--info)"><i class="bi bi-hdd-network"></i> Pool de IP y perfil MikroTik <span class="text-muted" style="font-weight:400">(comment: "manage by cloud")</span></div>
           <div class="form-row">
             <div class="fg"><label class="fl"><%= t('admin.pkg.pool_name','Nama IP Pool') %></label><input class="fc" name="pool_name" id="add_pool_name" placeholder="mis. HOME10"></div>
             <div class="fg"><label class="fl"><%= t('admin.pkg.pool_ranges','Rentang IP (ranges)') %></label><input class="fc" name="pool_ranges" id="add_pool_ranges" placeholder="10.20.0.10-10.20.0.254"></div>
           </div>
           <div class="form-row">
             <div class="fg"><label class="fl">Local Address (gateway)</label><input class="fc" name="local_address" id="add_local_address" placeholder="10.20.0.1/24"></div>
-            <div class="fg"><label class="fl">Only One</label><select class="fs" name="only_one" id="add_only_one"><option value="1" selected>Ya</option><option value="0">Tidak</option></select></div>
+            <div class="fg"><label class="fl">Only One</label><select class="fs" name="only_one" id="add_only_one"><option value="1" selected>Ya</option><option value="0">No</option></select></div>
           </div>
           <div class="form-row">
             <div class="fg"><label class="fl">Parent Queue</label><select class="fs" name="parent_queue" id="add_parent_queue"><option value="">— none —</option></select></div>
@@ -337,7 +337,7 @@
           </div>
           <div id="add_night_fields" style="display:none">
             <div class="fg">
-              <label class="fl"><%= t('admin.pkg.prof_name','Nama Profil') %>e Malam (MikroTik)</label>
+              <label class="fl"><%= t('admin.pkg.prof_name','Nama Profil') %> nocturno (MikroTik)</label>
               <div style="display:flex;gap:8px">
                 <select class="fs" id="add_night_profile_select" style="max-width:200px" onchange="document.getElementById('add_night_profile_input').value=this.value">
                   <option value=""><%= t('admin.pkg.ph_night_profile','-- Pilih Profile --') %></option>
@@ -347,7 +347,7 @@
             </div>
             <div class="form-row">
               <div class="fg"><label class="fl"><%= t('admin.pkg.night_down','Download Malam (Mbps)') %></label><input class="fc" name="night_speed_down" type="number" step="any" min="0" placeholder="20"></div>
-              <div class="fg"><label class="fl">Upload Malam (Mbps)</label><input class="fc" name="night_speed_up" type="number" step="any" min="0" placeholder="10"></div>
+              <div class="fg"><label class="fl">Subida nocturna (Mbps)</label><input class="fc" name="night_speed_up" type="number" step="any" min="0" placeholder="10"></div>
             </div>
             <div style="font-size: 10px; color: var(--muted); margin-top: 4px;"><%= t('admin.pkg.night_hint','Sistem akan ganti profile ppp pelanggan ke profile ini pada jam 00:00 - 06:00.') %></div>
           </div>
@@ -369,8 +369,8 @@
               </div>
             </div>
             <div class="form-row">
-              <div class="fg"><label class="fl">Batas Kuota (GB)</label><input class="fc" name="fup_limit_gb" type="number" step="any" min="0" placeholder="300"></div>
-              <div class="fg"><label class="fl">Speed Setelah FUP (Mbps)</label><input class="fc" name="fup_speed_down" type="number" step="any" min="0" placeholder="2"></div>
+              <div class="fg"><label class="fl">Límite de datos (GB)</label><input class="fc" name="fup_limit_gb" type="number" step="any" min="0" placeholder="300"></div>
+              <div class="fg"><label class="fl">Velocidad después del FUP (Mbps)</label><input class="fc" name="fup_speed_down" type="number" step="any" min="0" placeholder="2"></div>
             </div>
           </div>
         </div>
@@ -437,7 +437,7 @@
 
         <!-- Kecepatan UpTo (Batas Maksimum - Edit) -->
         <div style="background:rgba(16,185,129,0.04);padding:12px 14px;border-radius:10px;margin-top:10px;border:1px dashed rgba(16,185,129,0.25);">
-          <div class="fw6" style="font-size:12px;margin-bottom:8px;color:var(--success)"><i class="bi bi-speedometer2"></i> Fitur Kecepatan UpTo / Max Rate (Opsional)</div>
+          <div class="fw6" style="font-size:12px;margin-bottom:8px;color:var(--success)"><i class="bi bi-speedometer2"></i> Velocidad "hasta" / máxima (opcional)</div>
           <div class="form-row">
             <div class="fg">
               <label class="fl">Download UpTo (Mbps)</label>
@@ -497,14 +497,14 @@
 
         <!-- IP Pool & Profil MikroTik -->
         <div style="background:rgba(59,130,246,0.05);padding:12px 14px;border-radius:10px;margin-top:10px;border:1px solid rgba(59,130,246,0.15);">
-          <div class="fw6" style="font-size:12px;margin-bottom:8px;color:var(--info)"><i class="bi bi-hdd-network"></i> IP Pool &amp; Profil MikroTik <span class="text-muted" style="font-weight:400">(comment: "manage by cloud")</span></div>
+          <div class="fw6" style="font-size:12px;margin-bottom:8px;color:var(--info)"><i class="bi bi-hdd-network"></i> Pool de IP y perfil MikroTik <span class="text-muted" style="font-weight:400">(comment: "manage by cloud")</span></div>
           <div class="form-row">
             <div class="fg"><label class="fl"><%= t('admin.pkg.pool_name','Nama IP Pool') %></label><input class="fc" name="pool_name" id="e_pool_name" placeholder="mis. HOME10"></div>
             <div class="fg"><label class="fl"><%= t('admin.pkg.pool_ranges','Rentang IP (ranges)') %></label><input class="fc" name="pool_ranges" id="e_pool_ranges" placeholder="10.20.0.10-10.20.0.254"></div>
           </div>
           <div class="form-row">
             <div class="fg"><label class="fl">Local Address (gateway)</label><input class="fc" name="local_address" id="e_local_address" placeholder="10.20.0.1/24"></div>
-            <div class="fg"><label class="fl">Only One</label><select class="fs" name="only_one" id="e_only_one"><option value="1">Ya</option><option value="0">Tidak</option></select></div>
+            <div class="fg"><label class="fl">Only One</label><select class="fs" name="only_one" id="e_only_one"><option value="1">Ya</option><option value="0">No</option></select></div>
           </div>
           <div class="form-row">
             <div class="fg"><label class="fl">Parent Queue</label><select class="fs" name="parent_queue" id="e_parent_queue"><option value="">— none —</option></select></div>
@@ -539,7 +539,7 @@
           <small class="text-muted" style="font-size:11px;display:block;margin:-6px 0 8px 26px"><%= t('admin.pkg.kalong_hint','Centang untuk mengatur (kolom terbuka otomatis bila paket ini memakai Jam Kalong).') %></small>
           <div id="e_night_fields" style="display:none">
             <div class="fg">
-              <label class="fl"><%= t('admin.pkg.prof_name','Nama Profil') %>e Malam (MikroTik)</label>
+              <label class="fl"><%= t('admin.pkg.prof_name','Nama Profil') %> nocturno (MikroTik)</label>
               <div style="display:flex;gap:8px">
                 <select class="fs" id="e_night_profile_select" style="max-width:200px" onchange="document.getElementById('e_night_profile').value=this.value">
                   <option value=""><%= t('admin.pkg.ph_night_profile','-- Pilih Profile --') %></option>
@@ -549,7 +549,7 @@
             </div>
             <div class="form-row">
               <div class="fg"><label class="fl"><%= t('admin.pkg.night_down','Download Malam (Mbps)') %></label><input class="fc" name="night_speed_down" id="e_night_down" type="number" step="any" min="0"></div>
-              <div class="fg"><label class="fl">Upload Malam (Mbps)</label><input class="fc" name="night_speed_up" id="e_night_up" type="number" step="any" min="0"></div>
+              <div class="fg"><label class="fl">Subida nocturna (Mbps)</label><input class="fc" name="night_speed_up" id="e_night_up" type="number" step="any" min="0"></div>
             </div>
           </div>
           
@@ -571,8 +571,8 @@
               </div>
             </div>
             <div class="form-row">
-              <div class="fg"><label class="fl">Batas Kuota (GB)</label><input class="fc" name="fup_limit_gb" id="e_fup_limit" type="number" step="any" min="0"></div>
-              <div class="fg"><label class="fl">Speed Setelah FUP (Mbps)</label><input class="fc" name="fup_speed_down" id="e_fup_speed" type="number" step="any" min="0"></div>
+              <div class="fg"><label class="fl">Límite de datos (GB)</label><input class="fc" name="fup_limit_gb" id="e_fup_limit" type="number" step="any" min="0"></div>
+              <div class="fg"><label class="fl">Velocidad después del FUP (Mbps)</label><input class="fc" name="fup_speed_down" id="e_fup_speed" type="number" step="any" min="0"></div>
             </div>
           </div>
         </div>

@@ -116,7 +116,7 @@
 <!-- MODAL QRIS CEPAT -->
 <div class="iso-mo" id="qrisModalOverlay" onclick="if(event.target===this)closeQuickQris()">
   <div class="iso-mc" id="qrisModalCard">
-    <button type="button" class="iso-mc-close" onclick="closeQuickQris()" aria-label="Tutup">&times;</button>
+    <button type="button" class="iso-mc-close" onclick="closeQuickQris()" aria-label="Cerrar">&times;</button>
 
     <!-- Loading -->
     <div id="qrisLoadingState" style="padding:34px 0">
@@ -141,10 +141,10 @@
       <div class="iso-poll"><div class="spin-pulse"></div><span><%= t('iso.waiting','Menunggu Pembayaran… (Auto-Check)') %></span></div>
 
       <div class="iso-actions">
-        <button type="button" class="iso-btn ghost" onclick="downloadQrImage()"><i class="bi bi-download"></i> Simpan</button>
+        <button type="button" class="iso-btn ghost" onclick="downloadQrImage()"><i class="bi bi-download"></i> Guardar</button>
         <button type="button" class="iso-btn ghost" onclick="copyAmount()"><i class="bi bi-clipboard-check"></i> <%= t('iso.copy_amount','Copiar monto') %></button>
       </div>
-      <button type="button" class="iso-btn ghost iso-space" onclick="closeQuickQris()"><i class="bi bi-x-lg"></i> Tutup</button>
+      <button type="button" class="iso-btn ghost iso-space" onclick="closeQuickQris()"><i class="bi bi-x-lg"></i> Cerrar</button>
 
       <div id="qrisExternalCheckout" style="margin-top:10px;display:none">
         <a id="qrisCheckoutLink" href="#" target="_blank" class="iso-btn ghost"><i class="bi bi-box-arrow-up-right"></i> <%= t('iso.open_gateway','Buka Halaman Gateway') %></a>

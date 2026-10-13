@@ -192,14 +192,14 @@
 
           <% if (todayAttendance.check_in_note) { %>
             <div style="padding: 8px 0; border-top: 1px solid var(--border); margin-top: 8px;">
-              <span style="color: var(--muted); font-size: 12px;"><%= t('collector.note_checkin','Catatan Check-in:') %></span>
+              <span style="color: var(--muted); font-size: 12px;"><%= t('collector.note_checkin','Nota de entrada:') %></span>
               <div style="color: white; font-size: 13px; margin-top: 4px;"><%= todayAttendance.check_in_note %></div>
             </div>
           <% } %>
 
           <% if (todayAttendance.check_out_note) { %>
             <div style="padding: 8px 0; border-top: 1px solid var(--border); margin-top: 8px;">
-              <span style="color: var(--muted); font-size: 12px;"><%= t('collector.note_checkout','Catatan Check-out:') %></span>
+              <span style="color: var(--muted); font-size: 12px;"><%= t('collector.note_checkout','Nota de salida:') %></span>
               <div style="color: white; font-size: 13px; margin-top: 4px;"><%= todayAttendance.check_out_note %></div>
             </div>
           <% } %>
@@ -226,7 +226,7 @@
         </div>
 
         <% if (todayAttendance.status === 'checked_in') { %>
-          <textarea id="checkoutNote" class="form-control mt-3" placeholder="Catatan check-out (opsional)" rows="2" style="background: var(--panel2); border: 1px solid var(--border); color: var(--text); font-size: 13px;"></textarea>
+          <textarea id="checkoutNote" class="form-control mt-3" placeholder="Nota de salida (opcional)" rows="2" style="background: var(--panel2); border: 1px solid var(--border); color: var(--text); font-size: 13px;"></textarea>
           
           <div class="mt-3 text-center">
             <label style="display: block; color: var(--text); font-size: 12px; margin-bottom: 8px;"><%= t('collector.selfie_checkout','Foto selfie check-out (wajib)') %></label>
@@ -252,7 +252,7 @@
             </div>
           </div>
           <button id="checkoutSubmitBtn" class="btn btn-danger btn-action mt-2 w-100" onclick="checkout(event)" disabled style="opacity: 0.55; cursor: not-allowed; border-radius: 12px; padding: 10px; font-weight: 600;">
-            <i class="bi bi-box-arrow-right me-2"></i><%= t('collector.checkout_now','Check-out Sekarang') %>
+            <i class="bi bi-box-arrow-right me-2"></i><%= t('collector.checkout_now','Registrar salida') %>
           </button>
         <% } %>
 
@@ -264,7 +264,7 @@
           <%= t('collector.start_day','Silakan lakukan check-in untuk memulai hari kerja Anda.') %>
         </p>
         
-        <textarea id="checkinNote" class="form-control mt-3" placeholder="Catatan check-in (opsional)" rows="2" style="background: var(--panel2); border: 1px solid var(--border); color: var(--text); font-size: 13px;"></textarea>
+        <textarea id="checkinNote" class="form-control mt-3" placeholder="Nota de entrada (opcional)" rows="2" style="background: var(--panel2); border: 1px solid var(--border); color: var(--text); font-size: 13px;"></textarea>
         
         <div class="mt-3 text-center">
           <label style="display: block; color: var(--text); font-size: 12px; margin-bottom: 8px;"><%= t('collector.selfie_checkin','Foto selfie check-in (wajib)') %></label>
@@ -290,7 +290,7 @@
           </div>
         </div>
         <button id="checkinSubmitBtn" class="btn btn-success btn-action mt-2 w-100" onclick="checkin(event)" disabled style="opacity: 0.55; cursor: not-allowed; border-radius: 12px; padding: 10px; font-weight: 600;">
-          <i class="bi bi-box-arrow-in-right me-2"></i><%= t('collector.checkin_now','Check-in Sekarang') %>
+          <i class="bi bi-box-arrow-in-right me-2"></i><%= t('collector.checkin_now','Registrar entrada') %>
         </button>
       <% } %>
 
@@ -374,22 +374,22 @@
   <div class="bn">
     <div class="bnw">
       <a class="bni" href="/collector">
-        <i class="bi bi-grid-3x3-gap"></i><span>Semua</span>
+        <i class="bi bi-grid-3x3-gap"></i><span>Todos</span>
       </a>
       <a class="bni" href="/collector?scope=today#data-tagihan">
         <i class="bi bi-calendar-check"></i><span>Hoy</span>
       </a>
       <a class="bni" href="/collector?scope=unpaid#data-tagihan">
-        <i class="bi bi-exclamation-circle"></i><span>Belum</span>
+        <i class="bi bi-exclamation-circle"></i><span>Pendiente</span>
       </a>
       <a class="bni" href="/collector?scope=isolir#data-tagihan">
-        <i class="bi bi-shield-exclamation"></i><span>Isolir</span>
+        <i class="bi bi-shield-exclamation"></i><span>Suspendido</span>
       </a>
       <a class="bni" href="/collector?scope=multi#data-tagihan">
         <i class="bi bi-layers"></i><span>&gt;1 Bln</span>
       </a>
       <a class="bni active" href="/collector/attendance">
-        <i class="bi bi-calendar-check-fill"></i><span>Absensi</span>
+        <i class="bi bi-calendar-check-fill"></i><span>Asistencia</span>
       </a>
     </div>
   </div>
@@ -751,7 +751,7 @@
       }
       try {
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
 
         const location = await getLocation();
         const note = document.getElementById('checkinNote').value.trim();
@@ -769,12 +769,12 @@
         } else {
           alert(' ' + result.message);
           btn.disabled = false;
-          btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Check-in Sekarang';
+          btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Registrar entrada';
         }
       } catch (error) {
         alert('No se pudo registrar la entrada: ' + error.message);
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Check-in Sekarang';
+        btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Registrar entrada';
       }
     }
 
@@ -786,7 +786,7 @@
       }
       try {
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
 
         const location = await getLocation();
         const note = document.getElementById('checkoutNote').value.trim();
@@ -804,12 +804,12 @@
         } else {
           alert(' ' + result.message);
           btn.disabled = false;
-          btn.innerHTML = '<i class="bi bi-box-arrow-right me-2"></i>Check-out Sekarang';
+          btn.innerHTML = '<i class="bi bi-box-arrow-right me-2"></i>Registrar salida';
         }
       } catch (error) {
         alert('No se pudo registrar la salida: ' + error.message);
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-box-arrow-right me-2"></i>Check-out Sekarang';
+        btn.innerHTML = '<i class="bi bi-box-arrow-right me-2"></i>Registrar salida';
       }
     }
 

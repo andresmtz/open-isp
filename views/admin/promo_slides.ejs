@@ -2,7 +2,7 @@
 <html lang="<%= typeof lang !== "undefined" ? lang : "es" %>">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Manajemen Promo Slides | <%= company %></title>
+  <title>Diapositivas de promoción | <%= company %></title>
   <meta name="theme-color" content="#0A0D14">
   <link rel="manifest" href="/admin/manifest.webmanifest">
   <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
@@ -12,7 +12,7 @@
 <%- include('partials/sidebar', { activePage: 'promo_slides', company }) %>
 <div class="mw">
   <div class="topbar">
-    <div class="tb-title"><button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><i class="bi bi-image"></i> Manajemen Promo Slides</div>
+    <div class="tb-title"><button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><i class="bi bi-image"></i> Diapositivas de promoción</div>
     <div class="tb-right">
       <span class="adm-badge"><i class="bi bi-person-fill"></i> Admin</span>
       <a href="/admin/logout" class="btn btn-g btn-sm"><i class="bi bi-box-arrow-left"></i> Logout</a>
@@ -35,7 +35,7 @@
         <form method="POST" action="/admin/promo-slides" enctype="multipart/form-data">
           <div class="form-row">
             <div class="fg">
-              <label class="fl">Judul *</label>
+              <label class="fl">Título *</label>
               <input class="fc" name="title" placeholder="Ejemplo: 50% de descuento en el plan de internet" required>
             </div>
             <div class="fg">
@@ -45,7 +45,7 @@
           </div>
           <div class="form-row">
             <div class="fg">
-              <label class="fl">Gambar *</label>
+              <label class="fl">Imagen *</label>
               <input class="fc" type="file" name="image" accept="image/*" required>
               <div class="hint" style="margin-top:6px">Ukuran optimal: 800x300 px (rasio 8:3)</div>
             </div>
@@ -99,8 +99,8 @@
             <thead>
               <tr>
                 <th style="width:60px">ID</th>
-                <th style="width:120px">Gambar</th>
-                <th>Judul</th>
+                <th style="width:120px">Imagen</th>
+                <th>Título</th>
                 <th style="width:80px"><%= t('common.order','Urutan') %></th>
                 <th style="width:100px"><%= t('admin.fin.start_date','Tanggal Mulai') %></th>
                 <th style="width:100px"><%= t('admin.fin.end_date','Tanggal Akhir') %></th>
@@ -114,7 +114,7 @@
                 <td><strong><%= s.id %></strong></td>
                 <td><img src="<%= s.image_path %>" style="max-width:100px; height:auto; border-radius:6px; object-fit:cover;" alt="<%= s.title %>"></td>
                 <td>
-                  <div style="font-weight:600;"><%= s.title || '(Tanpa Judul)' %></div>
+                  <div style="font-weight:600;"><%= s.title || '(Sin título)' %></div>
                   <div style="font-size:12px; color:#888; margin-top:4px;"><%= s.description || '-' %></div>
                   <% if (s.url) { %>
                   <div style="font-size:11px; color:#6366f1; margin-top:4px;"><i class="bi bi-link-45deg"></i> <%= s.url %></div>
@@ -187,7 +187,7 @@
         
         <div class="form-row">
           <div class="fg">
-            <label class="fl">Judul *</label>
+            <label class="fl">Título *</label>
             <input class="fc" id="editTitle" name="title" placeholder="Ejemplo: 50% de descuento en el plan de internet" required>
           </div>
         </div>

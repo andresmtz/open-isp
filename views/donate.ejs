@@ -121,7 +121,7 @@
 
         <div id="altMethods" style="display:none;margin-top:16px">
           <% if (bankAccounts.length) { %>
-            <div class="iso-sec" style="margin-top:0"><i class="bi bi-bank"></i> Transfer Bank</div>
+            <div class="iso-sec" style="margin-top:0"><i class="bi bi-bank"></i> Transferencia bancaria</div>
             <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:14px">
               <div class="muted" style="font-size:12.5px;margin-bottom:6px">Transfer <b>tepat</b> sebesar <b id="bankAmountText">-</b> (ya incluye el código único) a una de estas cuentas:</div>
               <% bankAccounts.forEach(function(a){ %>
@@ -205,7 +205,7 @@
       </div>
     </div>
     <a href="/admin/sidebar-settings" target="_blank" class="iso-btn primary"><i class="bi bi-layout-sidebar-inset"></i> <%= t('donate.goto_settings','Ke Pengaturan Sidebar Admin') %></a>
-    <button type="button" class="iso-btn ghost iso-space" onclick="closeSuccess()">Tutup</button>
+    <button type="button" class="iso-btn ghost iso-space" onclick="closeSuccess()">Cerrar</button>
   </div>
 </div>
 
@@ -320,7 +320,7 @@
       btn.disabled = false; btn.innerHTML = orig;
       if (data.success) { isPaid = true; if (pollInterval) clearInterval(pollInterval); onPaymentDetected(data); }
       else { alert('Info: ' + (data.message || 'No se pudo procesar la donación.')); }
-    } catch (err) { btn.disabled = false; btn.innerHTML = orig; alert('Terjadi kesalahan: ' + err.message); }
+    } catch (err) { btn.disabled = false; btn.innerHTML = orig; alert('Ocurrió un error: ' + err.message); }
   }
   document.addEventListener('DOMContentLoaded', function(){ generateQris(); });
 </script>

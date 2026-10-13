@@ -25,7 +25,7 @@
     }
   </style>
 </head>
-<body data-connected-label="<%= t('admin.whatsapp.connected', 'Terhubung') %>" data-need-scan-label="<%= t('admin.whatsapp.need_scan', 'Perlu Pemindaian') %>">
+<body data-connected-label="<%= t('admin.whatsapp.connected', 'Terhubung') %>" data-need-scan-label="<%= t('admin.whatsapp.need_scan', 'Requiere escanear') %>">
 <%- include('partials/sidebar', { activePage: 'whatsapp', company }) %>
 <div class="mw">
   <div class="topbar">
@@ -53,16 +53,16 @@
 
     <!-- PENGATURAN GATEWAY (GOWA / FONNTE / META API) -->
     <div class="card mb16" style="padding: 20px;">
-      <h6 style="margin-bottom: 15px; font-weight: 700; color: var(--primary);"><i class="bi bi-sliders"></i> Mode WhatsApp Gateway (GoWA / Fonnte / Meta API)</h6>
+      <h6 style="margin-bottom: 15px; font-weight: 700; color: var(--primary);"><i class="bi bi-sliders"></i> Gateway de WhatsApp (GoWA / Fonnte / Meta API)</h6>
       
       <form method="POST" action="/admin/whatsapp/gateway-settings">
         <div class="form-row mb16">
           <div class="fg">
-            <label class="fl">Pilihan Provider / Gateway WhatsApp</label>
+            <label class="fl">Proveedor / gateway de WhatsApp</label>
             <select class="fs" name="wa_gateway_type" id="wa_gateway_type" onchange="toggleGatewayFields()">
-              <option value="fonnte" <%= waGatewayType === 'fonnte' ? 'selected' : '' %>> Fonnte API Gateway (Cloud Resmi & Self-Hosted Ready)</option>
-              <option value="meta" <%= waGatewayType === 'meta' ? 'selected' : '' %>> Meta Cloud API (Official - Resmi Meta & Anti-Banned)</option>
-              <option value="gowa" <%= waGatewayType === 'gowa' ? 'selected' : '' %>> GOWA (go-whatsapp-web-multidevice) — Ringan / Self-Hosted</option>
+              <option value="fonnte" <%= waGatewayType === 'fonnte' ? 'selected' : '' %>> Fonnte API Gateway (nube oficial y autoalojado)</option>
+              <option value="meta" <%= waGatewayType === 'meta' ? 'selected' : '' %>> Meta Cloud API (oficial de Meta, sin bloqueos)</option>
+              <option value="gowa" <%= waGatewayType === 'gowa' ? 'selected' : '' %>> GOWA (go-whatsapp-web-multidevice) — liviano / autoalojado</option>
             </select>
           </div>
           <div class="fg">
@@ -73,7 +73,7 @@
 
         <!-- 1. FONNTE GATEWAY FIELDS -->
         <div id="fonnte_fields_container" style="<%= waGatewayType === 'fonnte' ? '' : 'display:none;' %> background: rgba(59, 130, 246, 0.04); padding: 16px; border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 16px;">
-          <div class="fw6 mb12" style="color: #2563eb; font-size: 13px;"><i class="bi bi-send-check"></i> Konfigurasi Fonnte WhatsApp Gateway</div>
+          <div class="fw6 mb12" style="color: #2563eb; font-size: 13px;"><i class="bi bi-send-check"></i> Configuración de Fonnte</div>
           
           <div class="form-row mb12">
             <div class="fg" style="flex: 2;">
@@ -90,7 +90,7 @@
             <label class="fl">API Endpoint URL (Default: <code>https://api.fonnte.com/send</code><%= t('admin.wa.selfhost',' atau URL Server Self-Hosted)') %></label>
             <input class="fc" name="fonnte_api_url" value="<%= fonnteSettings.fonnte_api_url %>" placeholder="https://api.fonnte.com/send">
             <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
-              <i class="bi bi-info-circle"></i> Gunakan <code>https://api.fonnte.com/send</code><%= t('admin.wa.fonnte_hint',' untuk Fonnte Cloud, atau ubah ke domain/IP server mandiri jika menggunakan ') %><b>Fonnte Self-Hosted</b> (misal: <code>http://192.168.1.100:8000/send</code>).
+              <i class="bi bi-info-circle"></i> Usá <code>https://api.fonnte.com/send</code><%= t('admin.wa.fonnte_hint',' para Fonnte Cloud, o cambiá a tu propio dominio/IP si usás ') %><b>Fonnte Self-Hosted</b> (ej.: <code>http://192.168.1.100:8000/send</code>).
             </div>
           </div>
 
@@ -98,7 +98,7 @@
           <div style="font-size: 11.5px; margin-top: 12px; background: var(--bg2); padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
               <strong style="color: #2563eb;"><i class="bi bi-link-45deg"></i> URL de callback del webhook (para copiar en el panel de Fonnte):</strong>
-              <button type="button" class="btn btn-g btn-sm" onclick="copyWebhookUrl('fonnte_webhook_url')" style="padding: 2px 8px; font-size: 11px;"><i class="bi bi-clipboard"></i> Salin URL</button>
+              <button type="button" class="btn btn-g btn-sm" onclick="copyWebhookUrl('fonnte_webhook_url')" style="padding: 2px 8px; font-size: 11px;"><i class="bi bi-clipboard"></i> Copiar URL</button>
             </div>
             <div style="display: flex; gap: 6px;">
               <input type="text" id="fonnte_webhook_url" class="fc" readonly value="http://<%= host %>/api/webhook/fonnte" style="font-family: monospace; font-size: 12px; background: var(--bg3); cursor: pointer;" onclick="this.select();">
@@ -119,7 +119,7 @@
 
         <!-- 2. META CLOUD API FIELDS -->
         <div id="meta_fields_container" style="<%= waGatewayType === 'meta' ? '' : 'display:none;' %> background: rgba(16, 185, 129, 0.04); padding: 16px; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.2); margin-bottom: 16px;">
-          <div class="fw6 mb12" style="color: var(--success); font-size: 13px;"><i class="bi bi-shield-check"></i> Kredensial Meta WhatsApp Cloud API</div>
+          <div class="fw6 mb12" style="color: var(--success); font-size: 13px;"><i class="bi bi-shield-check"></i> Credenciales de Meta WhatsApp Cloud API</div>
           
           <div class="form-row mb12">
             <div class="fg">
@@ -134,18 +134,18 @@
 
           <div class="fg mb12">
             <label class="fl">Meta Permanent Access Token *</label>
-            <textarea class="fc" name="meta_access_token" rows="2" placeholder="Paste Permanent Access Token Meta Graph API di sini..."><%= metaSettings.meta_access_token %></textarea>
+            <textarea class="fc" name="meta_access_token" rows="2" placeholder="Pegá aquí el Permanent Access Token de Meta Graph API..."><%= metaSettings.meta_access_token %></textarea>
           </div>
 
           <div class="fg">
             <label class="fl">Webhook Verification Token (Verify Token)</label>
-            <input class="fc" name="meta_verify_token" value="<%= metaSettings.meta_verify_token %>" placeholder="Token Rahasia Webhook">
+            <input class="fc" name="meta_verify_token" value="<%= metaSettings.meta_verify_token %>" placeholder="Token secreto del webhook">
           </div>
 
           <div style="font-size: 11.5px; margin-top: 10px; background: var(--bg2); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
               <strong style="color: var(--primary);"><i class="bi bi-link-45deg"></i> Callback Webhook URL Meta Developer Portal:</strong>
-              <button type="button" class="btn btn-g btn-sm" onclick="copyWebhookUrl('meta_webhook_url')" style="padding: 2px 8px; font-size: 11px;"><i class="bi bi-clipboard"></i> Salin URL</button>
+              <button type="button" class="btn btn-g btn-sm" onclick="copyWebhookUrl('meta_webhook_url')" style="padding: 2px 8px; font-size: 11px;"><i class="bi bi-clipboard"></i> Copiar URL</button>
             </div>
             <input type="text" id="meta_webhook_url" class="fc" readonly value="http://<%= host %>/api/meta-webhook" style="font-family: monospace; font-size: 12px; background: var(--bg3); cursor: pointer;" onclick="this.select();">
           </div>
@@ -153,12 +153,12 @@
 
         <!-- 3. GOWA (go-whatsapp-web-multidevice) FIELDS -->
         <div id="gowa_fields_container" style="<%= waGatewayType === 'gowa' ? '' : 'display:none;' %> background: rgba(173,255,47,0.05); padding: 16px; border-radius: 10px; border: 1px solid var(--primary-glow); margin-bottom: 16px;">
-          <div class="fw6 mb12" style="color: var(--primary); font-size: 13px;"><i class="bi bi-lightning-charge-fill"></i> Konfigurasi GOWA (go-whatsapp-web-multidevice) — Ringan / Self-Hosted</div>
+          <div class="fw6 mb12" style="color: var(--primary); font-size: 13px;"><i class="bi bi-lightning-charge-fill"></i> Configuración de GOWA (go-whatsapp-web-multidevice) — liviano / autoalojado</div>
           <div class="form-row mb12">
             <div class="fg" style="flex:2;">
               <label class="fl">Base URL GOWA *</label>
               <input class="fc" name="gowa_base_url" value="<%= gowaSettings.gowa_base_url %>" placeholder="http://127.0.0.1:3000">
-              <div style="font-size:11px;color:var(--muted);margin-top:4px">Default REST GOWA port <code>3000</code>. Jalankan: <code>whatsapp rest</code>.</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">Puerto REST predeterminado de GOWA: <code>3000</code>. Ejecutar: <code>whatsapp rest</code>.</div>
             </div>
             <div class="fg" style="flex:1;">
               <label class="fl"><%= t('admin.wa.ph_deviceid','Device ID (opsional)') %></label>
@@ -179,7 +179,7 @@
             <div class="fw6" style="font-size:12.5px;color:var(--primary);margin-bottom:6px;"><i class="bi bi-qr-code"></i> Login WhatsApp (Scan QR)</div>
             <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px"><%- t('admin.wa.qr_hint','Klik tombol, lalu buka WhatsApp &rarr; Perangkat Tertaut &rarr; Tautkan perangkat, scan QR. QR berlaku ~30 detik &amp; diperbarui otomatis.') %></div>
             <button type="button" class="btn btn-p btn-sm" onclick="showGowaQr()"><i class="bi bi-qr-code-scan"></i> Mostrar QR</button>
-            <a href="<%= gowaUiUrl %>" target="_blank" rel="noopener" class="btn btn-g btn-sm" style="margin-left:6px"><i class="bi bi-box-arrow-up-right"></i> Buka UI GOWA</a>
+            <a href="<%= gowaUiUrl %>" target="_blank" rel="noopener" class="btn btn-g btn-sm" style="margin-left:6px"><i class="bi bi-box-arrow-up-right"></i> Abrir panel de GOWA</a>
             <div id="gowa_qr_wrap" style="display:none;margin-top:10px;text-align:center">
               <img id="gowa_qr_img" alt="QR GOWA" style="max-width:240px;background:#fff;padding:10px;border-radius:12px">
               <div id="gowa_qr_status" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
@@ -187,10 +187,10 @@
           </div>
           <div style="margin-top:12px;padding:12px;border-radius:10px;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.25);">
             <div class="fw6" style="font-size:12.5px;color:var(--info,#38BDF8);margin-bottom:6px;"><i class="bi bi-broadcast"></i> Webhook de mensajes entrantes (chat en vivo)</div>
-            <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">Set di GOWA: <code>WHATSAPP_WEBHOOK=&lt;URL di bawah&gt;</code> dan <code>WHATSAPP_WEBHOOK_SECRET=&lt;secret&gt;</code>, lalu restart GOWA. <strong>Catatan:</strong> bot WA <em>tidak</em><%= t('admin.wa.notif_only',' membalas perintah lagi — WhatsApp hanya untuk ') %><strong>notifikasi</strong>. Las interacciones rápidas (menú de administración/técnicos) ahora están en <strong>Telegram</strong>.</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">Configurar en GOWA: <code>WHATSAPP_WEBHOOK=&lt;URL de abajo&gt;</code> y <code>WHATSAPP_WEBHOOK_SECRET=&lt;secret&gt;</code>, y reiniciá GOWA. <strong>Nota:</strong> WhatsApp <em>no</em> responde comandos: se usa solo para <strong>notificaciones</strong>. Las interacciones rápidas (menú de administración/técnicos) ahora están en <strong>Telegram</strong>.</div>
             <div class="form-row mb12">
               <div class="fg" style="flex:2;">
-                <label class="fl">Webhook URL (tempel ke GOWA)</label>
+                <label class="fl">URL del webhook (pegar en GOWA)</label>
                 <div style="display:flex;gap:8px;">
                   <input class="fc" id="gowa_webhook_url" readonly value="<%= gowaWebhookUrl %>">
                   <button type="button" class="btn btn-g" onclick="copyGowaWebhook()"><i class="bi bi-copy"></i></button>
@@ -317,7 +317,7 @@ async function sendTestGowa() {
             resDiv.innerHTML = '<i class="bi bi-check-circle-fill"></i> <b><%= t('common.success_excl','Berhasil!') %></b> Pesan tes telah dikirim via Fonnte. Silakan cek WhatsApp penerima.';
           } else {
             resDiv.style.color = 'var(--danger)';
-            resDiv.innerHTML = '<i class="bi bi-x-circle-fill"></i> <b><%= t('common.failed_colon','Gagal:') %></b> ' + (data.error || 'Terjadi kesalahan saat menghubungi API Fonnte.');
+            resDiv.innerHTML = '<i class="bi bi-x-circle-fill"></i> <b><%= t('common.failed_colon','Gagal:') %></b> ' + (data.error || 'Ocurrió un error al contactar la API de Fonnte.');
           }
         } catch (err) {
           resDiv.style.color = 'var(--danger)';
@@ -387,7 +387,7 @@ async function sendTestGowa() {
       if (infoSection) infoSection.style.display = 'none';
 
       const connectedLabel = document.body.dataset.connectedLabel || 'Terhubung';
-      const needScanLabel = document.body.dataset.needScanLabel || 'Perlu Pemindaian';
+      const needScanLabel = document.body.dataset.needScanLabel || 'Requiere escanear';
 
       if (status.connection === 'open') {
         icon.classList.add('status-open');

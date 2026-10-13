@@ -293,8 +293,8 @@
           <div class="row g-3">
             <div class="col-md-4">
               <div style="background:#0f172a; padding:12px; border-radius:8px; border:1px solid #334155;">
-                <div class="text-muted fw-bold mb-2" style="font-size:11px; text-transform:uppercase; color:#94a3b8;"><i class="bi bi-hdd-rack"></i> Profil & Parameter Connection</div>
-                <div class="mb-1">Profil SNMP: <strong id="oid-profile-name" style="color:#38bdf8;">-</strong></div>
+                <div class="text-muted fw-bold mb-2" style="font-size:11px; text-transform:uppercase; color:#94a3b8;"><i class="bi bi-hdd-rack"></i> Perfil y parámetros de conexión</div>
+                <div class="mb-1">Perfil SNMP: <strong id="oid-profile-name" style="color:#38bdf8;">-</strong></div>
                 <div class="mb-1"><%= t('admin.olt.host','Host OLT:') %> <strong id="oid-host">-</strong></div>
                 <div class="mb-1"><%= t('admin.olt.snmp_port','Port SNMP:') %> <strong id="oid-port">161</strong></div>
                 <div>Community: <strong id="oid-community" style="color:#4ade80;">public</strong></div>
@@ -307,7 +307,7 @@
                   <table class="table table-dark table-sm mb-0" style="font-family:monospace; font-size:11px; border-color:#334155;">
                     <thead>
                       <tr>
-                        <th style="color:#94a3b8">Deskripsi Metrik</th>
+                        <th style="color:#94a3b8">Descripción de la métrica</th>
                         <th style="color:#94a3b8">OID Object Identifier</th>
                       </tr>
                     </thead>
@@ -602,7 +602,7 @@
           </select>
         </div>
         <div id="wan_goapi_hint" class="alert alert-i" style="display:none;font-size:12px;padding:10px 12px">
-          <i class="bi bi-info-circle"></i> Isi <strong>API Base URL</strong> di edit OLT (mis. <code>http://10.0.0.5:8081</code>). Servicio <a href="https://github.com/s4lfanet/go-api-c320" target="_blank" rel="noopener">go-api-c320</a> memetakan ke <code>POST /api/v1/vlan/onu</code> (pon_port format <code>1/slot/pon</code>). Hanya mode <strong>Bridge + VLAN</strong>; PPPoE tetap Telnet/TR069.
+          <i class="bi bi-info-circle"></i> Contenido <strong>API Base URL</strong> di edit OLT (mis. <code>http://10.0.0.5:8081</code>). Servicio <a href="https://github.com/s4lfanet/go-api-c320" target="_blank" rel="noopener">go-api-c320</a> memetakan ke <code>POST /api/v1/vlan/onu</code> (pon_port format <code>1/slot/pon</code>). Solo modo <strong>Bridge + VLAN</strong>; PPPoE sigue por Telnet/TR069.
         </div>
         
         <div class="fg">

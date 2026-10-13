@@ -57,7 +57,7 @@
     <div class="tb-right">
       <%
         var GW = {
-          meta:    { cls: 'bs', icon: 'meta',       label: 'Meta Cloud API (Resmi)' },
+          meta:    { cls: 'bs', icon: 'meta',       label: 'Meta Cloud API (oficial)' },
           gowa:    { cls: 'bp', icon: 'whatsapp',   label: 'GoWA (WhatsApp Multidevice)' },
           fonnte:  { cls: 'bp', icon: 'send-check', label: 'Fonnte API Gateway' },
           baileys: { cls: 'bp', icon: 'whatsapp',   label: 'Baileys Web (Gratis)' }
@@ -90,7 +90,7 @@
       <!-- INBOX LEFT PANEL -->
       <div class="chat-inbox">
         <div class="chat-inbox-header">
-          <span><i class="bi bi-inbox-fill"></i> Percakapan</span>
+          <span><i class="bi bi-inbox-fill"></i> Conversaciones</span>
           <div style="display:flex;gap:6px">
             <button class="btn btn-p btn-sm" onclick="openNewChatModal()" title="Iniciar chat"><i class="bi bi-plus-lg"></i> Nuevo chat</button>
             <button class="btn btn-g btn-sm" onclick="loadConversations()" title="Refresh Chat"><i class="bi bi-arrow-clockwise"></i></button>
@@ -124,7 +124,7 @@
           <input type="hidden" id="activePhone" value="">
           <textarea id="chatInput" class="fc" placeholder="Escribí un mensaje de WhatsApp... (Enter para enviar, Shift+Enter para nueva línea)" disabled required onkeydown="handleKeyDown(event)"></textarea>
           <button type="submit" class="btn btn-p" id="sendBtn" disabled>
-            <i class="bi bi-send-fill"></i> Kirim
+            <i class="bi bi-send-fill"></i> Enviar
           </button>
         </form>
       </div>
@@ -160,7 +160,7 @@
     </div>
     <div class="mf">
       <button type="button" class="btn btn-g" onclick="closeModal('newChatModal')"><%= t('common.cancel','Batal') %></button>
-      <button type="button" class="btn btn-p" onclick="startNewChatFromModal()"><i class="bi bi-chat-dots-fill"></i> Buka Chat</button>
+      <button type="button" class="btn btn-p" onclick="startNewChatFromModal()"><i class="bi bi-chat-dots-fill"></i> Abrir chat</button>
     </div>
   </div>
 </div>

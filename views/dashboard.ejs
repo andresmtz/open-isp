@@ -30,7 +30,7 @@
     </a>
     <div class="app-actions">
 
-      <div class="notif-bell-btn" onclick="openNotifDrawer()" title="Notifikasi">
+      <div class="notif-bell-btn" onclick="openNotifDrawer()" title="Notificaciones">
         <i class="bi bi-bell-fill"></i>
         <span class="notif-badge-count" id="notifCountBadge" style="display:none">0</span>
       </div>
@@ -45,7 +45,7 @@
         <button type="submit" class="chip-btn ok" title="Reconnect internet"><i class="bi bi-arrow-repeat"></i> Re-Connect</button>
       </form>
       <form method="POST" action="/customer/logout" style="margin:0">
-        <button type="submit" class="chip-btn danger" title="Keluar"><i class="bi bi-box-arrow-right"></i></button>
+        <button type="submit" class="chip-btn danger" title="Salir"><i class="bi bi-box-arrow-right"></i></button>
       </form>
     </div>
   </div>
@@ -152,7 +152,7 @@
         <% if (hasUnpaid) { %>
           <span class="badge bw" style="font-size:10px"><i class="bi bi-exclamation-circle"></i> FACTURA PENDIENTE <%= unpaidCount > 1 ? '('+unpaidCount+' MESES)' : '' %></span>
           <h5 style="margin-top:6px;color:var(--warning)"><%= APP_CUR %> <%= parseInt(totalUnpaidAmount || 0).toLocaleString(APP_LOCALE) %></h5>
-          <div class="muted" style="font-size:12.5px;margin-top:2px">Periode <%= unpaidPeriods %></div>
+          <div class="muted" style="font-size:12.5px;margin-top:2px">Período <%= unpaidPeriods %></div>
           <div style="font-size:13px;margin-top:6px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">
             <i class="bi bi-calendar-event" style="color:var(--warning)"></i>
             <span>Jatuh tempo: <strong style="color:var(--text)"><%= dueText %></strong></span>
@@ -190,7 +190,7 @@
     <div class="svc-card">
       <div class="svc-ic"><i class="bi bi-person-check"></i></div>
       <div class="svc-tx"><span>Estado de la cuenta</span>
-        <% if (profile && profile.status === 'active') { %><b class="ok">Aktif</b><% } else { %><b class="warn">Isolir</b><% } %>
+        <% if (profile && profile.status === 'active') { %><b class="ok">Activo</b><% } else { %><b class="warn">Suspendido</b><% } %>
         <small><%= profile ? profile.name : '—' %></small>
       </div>
     </div>
@@ -204,7 +204,7 @@
     <div class="svc-card">
       <div class="svc-ic"><i class="bi bi-router"></i></div>
       <div class="svc-tx"><span>Equipo (ONU)</span>
-        <% if (onuMissing) { %><b class="warn">No encontrado</b><% } else { %><b class="ok">Terhubung</b><% } %>
+        <% if (onuMissing) { %><b class="warn">No encontrado</b><% } else { %><b class="ok">Conectado</b><% } %>
         <small><%= customer.rxPower || '-' %> • <%= customer.model || 'ONU' %></small>
       </div>
     </div>
@@ -225,7 +225,7 @@
     <div class="action-item" onclick="rebootDevice('<%= (customer.tags && customer.tags[0]) || customer.id %>')">
       <div class="action-icon ai-reboot"><i class="bi bi-arrow-clockwise"></i></div><div class="action-label">Restart Modem</div>
     </div>
-    <div class="action-item" onclick="openNotifDrawer()"><div class="action-icon ai-ppob"><i class="bi bi-bell-fill"></i></div><div class="action-label">Notifikasi</div></div>
+    <div class="action-item" onclick="openNotifDrawer()"><div class="action-icon ai-ppob"><i class="bi bi-bell-fill"></i></div><div class="action-label">Notificaciones</div></div>
     <div class="action-item" onclick="showModal('ticketModal')"><div class="action-icon ai-ticket"><i class="bi bi-headset"></i></div><div class="action-label">Ayuda / reclamos</div></div>
   </div>
 
@@ -250,10 +250,10 @@
 
         <div class="wifi-box" style="margin-bottom:14px">
           <div class="wifi-row"><span class="wifi-label" style="color:var(--info)"><i class="bi bi-wifi"></i> Nombre del WiFi (SSID)</span>
-            <button class="link-btn" data-ssid-change onclick="editSsid('<%= (customer.tags && customer.tags[0]) || customer.id %>', '<%= customer.ssid %>')">Ubah <i class="bi bi-pencil"></i></button></div>
+            <button class="link-btn" data-ssid-change onclick="editSsid('<%= (customer.tags && customer.tags[0]) || customer.id %>', '<%= customer.ssid %>')">Cambiar <i class="bi bi-pencil"></i></button></div>
           <div class="wifi-val" style="margin-bottom:12px"><%= customer.ssid || '-' %></div>
           <div class="wifi-row"><span class="wifi-label" style="color:var(--success)"><i class="bi bi-shield-lock"></i> Password WiFi</span>
-            <button class="link-btn" onclick="editPassword('<%= (customer.tags && customer.tags[0]) || customer.id %>')">Ubah <i class="bi bi-pencil"></i></button></div>
+            <button class="link-btn" onclick="editPassword('<%= (customer.tags && customer.tags[0]) || customer.id %>')">Cambiar <i class="bi bi-pencil"></i></button></div>
           <div style="display:flex;gap:8px">
             <input type="password" id="wifiPassInput" class="inp inp-plain" value="••••••••" readonly style="padding-left:14px">
             <button class="chip-btn" type="button" onclick="togglePassVisibility()"><i class="bi bi-eye" id="eyeIcon"></i></button>
@@ -322,14 +322,14 @@
           <div class="inv-card">
             <div class="inv-top">
               <% if (inv.status === 'paid') { %><span class="badge bs" style="font-size:10px">LUNAS</span><% } else { %><span class="badge bd" style="font-size:10px">PENDIENTE</span><% } %>
-              <span class="muted" style="font-size:12px"><i class="bi bi-calendar-event"></i> Periode <%= inv.period_month %>/<%= inv.period_year %></span>
+              <span class="muted" style="font-size:12px"><i class="bi bi-calendar-event"></i> Período <%= inv.period_month %>/<%= inv.period_year %></span>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap">
               <div><div class="inv-name"><%= inv.package_name || 'Plan de internet' %></div><div class="inv-amt"><%= APP_CUR %> <%= parseInt(itemAmt || 0).toLocaleString(APP_LOCALE) %></div></div>
             </div>
             <div class="inv-actions">
               <% if (inv.status !== 'paid') { %>
-                <button class="lbtn lbtn-primary lbtn-sm" onclick="openPaymentModal('<%= inv.id %>', '<%= itemAmt %>')"><i class="bi bi-wallet2"></i> Bayar</button>
+                <button class="lbtn lbtn-primary lbtn-sm" onclick="openPaymentModal('<%= inv.id %>', '<%= itemAmt %>')"><i class="bi bi-wallet2"></i> Pagar</button>
                 <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/invoice/<%= inv.id %>/pdf" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf-fill"></i> Factura PDF</a>
                 <button class="lbtn lbtn-ghost lbtn-sm" onclick="sendInvoiceWa(<%= inv.id %>, this)"><i class="bi bi-whatsapp"></i> Enviar por WhatsApp</button>
               <% } else { %>
@@ -358,7 +358,7 @@
       <% if (tickets && tickets.length > 0) { %>
         <div class="srch-wrap">
           <table class="btbl">
-            <thead><tr><th>ID</th><th>Jenis Kendala</th><th>Tanggal</th><th>Status</th></tr></thead>
+            <thead><tr><th>ID</th><th>Tipo de problema</th><th>Fecha</th><th>Status</th></tr></thead>
             <tbody>
               <% tickets.forEach(function(t){ %>
                 <tr>
@@ -382,7 +382,7 @@
 <!-- ═══ MODAL PEMBAYARAN ═══ -->
 <div class="mo" id="paymentModal" onclick="if(event.target===this)hideModal('paymentModal')">
   <div class="mb">
-    <div class="mh"><h3><i class="bi bi-credit-card-2-front" style="color:var(--warning)"></i> Pembayaran</h3>
+    <div class="mh"><h3><i class="bi bi-credit-card-2-front" style="color:var(--warning)"></i> Pago</h3>
       <button class="mc" onclick="hideModal('paymentModal')"><i class="bi bi-x-lg"></i></button></div>
     <div class="mbody">
       <div style="text-align:center;padding:14px;border-radius:14px;background:var(--bg);border:1px solid var(--warning-glow);margin-bottom:16px">
@@ -406,7 +406,7 @@
         <% } else { %>
           <button class="pay-item" style="text-align:left;width:100%" onclick="submitPayment('<%= _gwActive ? 'gateway' : 'qris' %>')">
             <div class="pay-icon"><i class="bi <%= _gwActive ? 'bi-credit-card-2-front' : 'bi-wallet2' %>"></i></div>
-            <div class="pay-info"><span class="pay-name">Pagar ahora</span><span class="pay-sub"><span class="pay-chip"><%= _gwActive ? 'Gateway Mayar' : 'QRIS / Transfer Bank / E-Wallet' %></span></span></div>
+            <div class="pay-info"><span class="pay-name">Pagar ahora</span><span class="pay-sub"><span class="pay-chip"><%= _gwActive ? 'Gateway Mayar' : 'Transferencia / billetera' %></span></span></div>
             <i class="bi bi-chevron-right" style="color:var(--primary)"></i>
           </button>
         <% } %>
@@ -418,7 +418,7 @@
 <!-- ═══ MODAL NOTIFIKASI ═══ -->
 <div class="mo" id="notifDrawerModal" onclick="if(event.target===this)hideModal('notifDrawerModal')">
   <div class="mb" style="max-width:460px">
-    <div class="mh"><h3><i class="bi bi-bell-fill" style="color:var(--warning)"></i> Pusat Notifikasi</h3>
+    <div class="mh"><h3><i class="bi bi-bell-fill" style="color:var(--warning)"></i> Centro de notificaciones</h3>
       <button class="mc" onclick="hideModal('notifDrawerModal')"><i class="bi bi-x-lg"></i></button></div>
     <div class="mbody" id="notifListContainer"></div>
   </div>
@@ -437,7 +437,7 @@
           <div class="form-note">Los dispositivos se desconectarán un momento después del cambio.</div>
         </div>
       </div>
-      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('editSsidModal')">Batal</button><button type="submit" class="lbtn lbtn-primary">Guardar nombre del WiFi</button></div>
+      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('editSsidModal')">Cancelar</button><button type="submit" class="lbtn lbtn-primary">Guardar nombre del WiFi</button></div>
     </form>
   </div>
 </div>
@@ -455,7 +455,7 @@
           <div class="form-note">Use al menos 8 caracteres combinando letras y números. Guarde bien esta contraseña.</div>
         </div>
       </div>
-      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('editPasswordModal')">Batal</button><button type="submit" class="lbtn lbtn-primary">Guardar contraseña</button></div>
+      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('editPasswordModal')">Cancelar</button><button type="submit" class="lbtn lbtn-primary">Guardar contraseña</button></div>
     </form>
   </div>
 </div>
@@ -471,7 +471,7 @@
         <h4 style="font-size:15px">Yakin ingin menyalakan ulang modem?</h4>
         <p class="muted" style="font-size:13px;margin-top:8px">El reinicio tarda ±1–2 minutos. La conexión a internet se cortará momentáneamente.</p>
       </div>
-      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('rebootModal')">Batal</button><button type="submit" class="lbtn lbtn-primary">Ya, Reboot Sekarang</button></div>
+      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('rebootModal')">Cancelar</button><button type="submit" class="lbtn lbtn-primary">Sí, reiniciar ahora</button></div>
     </form>
   </div>
 </div>
@@ -485,15 +485,15 @@
       <input type="hidden" name="customerId" value="<%= profile ? profile.id : '' %>">
       <div class="mbody">
         <div class="field" style="margin-top:0">
-          <label for="tk_subject">Jenis Kendala / Subjek</label>
+          <label for="tk_subject">Tipo de problema / asunto</label>
           <select name="subject" id="tk_subject" class="inp inp-plain" required>
             <option value="" disabled selected>-- Elegir tipo de problema --</option>
             <option>Sin conexión / no puedo conectarme</option>
             <option>Conexión lenta</option>
             <option>Lampu PON Merah / Los Sinyal</option>
-            <option>Kendala Lupa Password WiFi</option>
+            <option>Olvidé la contraseña del WiFi</option>
             <option>Consultas de facturación y pagos</option>
-            <option>Lainnya</option>
+            <option>Otros</option>
           </select>
         </div>
         <div class="field">
@@ -505,7 +505,7 @@
           <input type="file" name="photos" id="tk_photo" class="inp inp-plain" accept="image/*" multiple style="padding:10px">
         </div>
       </div>
-      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('ticketModal')">Batal</button><button type="submit" class="lbtn lbtn-primary">Enviar reclamo</button></div>
+      <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('ticketModal')">Cancelar</button><button type="submit" class="lbtn lbtn-primary">Enviar reclamo</button></div>
     </form>
   </div>
 </div>
@@ -520,7 +520,7 @@
       <p style="font-size:13.5px;text-align:center">Su equipo ONU/ONT todavía no se lee en el sistema, así que los datos de señal, WiFi y tráfico pueden no ser exactos.</p>
       <div class="auth-alert warn" style="margin-top:14px"><i class="bi bi-info-circle"></i> Pruebe con "Consultar ONU" en la tarjeta Control del router, o cargue un reclamo si tiene problemas de conexión.</div>
     </div>
-    <div class="mf"><button class="lbtn lbtn-ghost" onclick="hideModal('onuMissingModal')">Nanti</button><button class="lbtn lbtn-primary" onclick="hideModal('onuMissingModal');showModal('ticketModal')"><i class="bi bi-headset"></i> Nuevo reclamo</button></div>
+    <div class="mf"><button class="lbtn lbtn-ghost" onclick="hideModal('onuMissingModal')">Después</button><button class="lbtn lbtn-primary" onclick="hideModal('onuMissingModal');showModal('ticketModal')"><i class="bi bi-headset"></i> Nuevo reclamo</button></div>
   </div>
 </div>
 
@@ -529,9 +529,9 @@
   <div class="mb" style="max-width:400px">
     <div class="mbody" style="text-align:center">
       <div class="wifi-status-ic" id="wifiStatusIc"><i class="bi bi-arrow-repeat spin"></i></div>
-      <h4 id="wifiStatusTitle" style="font-size:16px">Memproses…</h4>
+      <h4 id="wifiStatusTitle" style="font-size:16px">Procesando…</h4>
       <p class="muted" id="wifiStatusMsg" style="font-size:13px;margin-top:6px">Espere un momento.</p>
-      <div id="wifiStatusActions" style="margin-top:16px;display:none"><button class="lbtn lbtn-primary" onclick="hideModal('wifiStatusModal')">Tutup</button></div>
+      <div id="wifiStatusActions" style="margin-top:16px;display:none"><button class="lbtn lbtn-primary" onclick="hideModal('wifiStatusModal')">Cerrar</button></div>
     </div>
   </div>
 </div>
@@ -540,7 +540,7 @@
 <div class="toast-wrap" id="toastWrap"></div>
 
 <!-- FLOATING TEMA -->
-<button class="theme-fab" onclick="toggleDashTheme()" aria-label="Cambiar tema" title="Mode Gelap / Terang">
+<button class="theme-fab" onclick="toggleDashTheme()" aria-label="Cambiar tema" title="Modo oscuro / claro">
   <i class="bi bi-circle-half"></i>
 </button>
 
@@ -595,7 +595,7 @@
   async function submitWifiForm(form, kind){
     var fd = new FormData(form);
     hideModal(kind==='ssid' ? 'editSsidModal' : 'editPasswordModal');
-    wifiStatus('loading','Memproses…','Espere un momento, no cierre la página.');
+    wifiStatus('loading','Procesando…','Espere un momento, no cierre la página.');
     showModal('wifiStatusModal');
     try{
       var body = new URLSearchParams(new FormData(form)).toString();

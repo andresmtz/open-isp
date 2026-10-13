@@ -131,7 +131,7 @@
     <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
       <div class="sc p">
         <i class="bi bi-people sc-icon"></i>
-        <div class="sc-label"><%= t('admin.att.total_staff','Total Karyawan') %></div>
+        <div class="sc-label"><%= t('admin.att.total_staff','Total de empleados') %></div>
         <div class="sc-val"><%= totalAll %></div>
         <div class="sc-sub"><%= t('admin.att.today','Hari ini') %></div>
       </div>
@@ -318,7 +318,7 @@
                 <% if (att.status === 'checked_in') { %>
                   <span class="badge badge-s"><%= t('common.active','Aktif') %></span>
                 <% } else { %>
-                  <span class="badge badge-p">Selesai</span>
+                  <span class="badge badge-p">Terminado</span>
                 <% } %>
               </td>
               <td>
@@ -406,8 +406,8 @@
     if (!checkIn) return;
     
     const checkOut = prompt('Hora de salida (AAAA-MM-DD HH:MM:SS) - dejar vacío si todavía no salió:');
-    const checkInNote = prompt('Catatan Check-in:') || '';
-    const checkOutNote = prompt('Catatan Check-out:') || '';
+    const checkInNote = prompt('Nota de entrada:') || '';
+    const checkOutNote = prompt('Nota de salida:') || '';
     
     fetch(`/admin/attendance/${id}/update`, {
       method: 'POST',

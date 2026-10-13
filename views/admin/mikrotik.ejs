@@ -500,8 +500,8 @@
       <div class="mbody">
         <div class="fg"><label class="fl">Name</label><input class="fc" id="hp_name" required></div>
         <div class="form-row">
-          <div class="fg"><label class="fl">Harga Beli (Rp)</label><input class="fc" id="hp_cost" type="number" min="0" step="500" value="0" oninput="syncMikhmonOnLogin()"></div>
-          <div class="fg"><label class="fl">Harga Jual (Rp)</label><input class="fc" id="hp_price" type="number" min="0" step="500" value="0" oninput="syncMikhmonOnLogin()"></div>
+          <div class="fg"><label class="fl">Precio de compra</label><input class="fc" id="hp_cost" type="number" min="0" step="500" value="0" oninput="syncMikhmonOnLogin()"></div>
+          <div class="fg"><label class="fl">Precio de venta</label><input class="fc" id="hp_price" type="number" min="0" step="500" value="0" oninput="syncMikhmonOnLogin()"></div>
           <div class="fg"><label class="fl">Durasi Voucher (mis. 1h / 1d / 7d)</label><input class="fc" id="hp_validity" value="1d" oninput="syncMikhmonOnLogin()"></div>
         </div>
         <div class="form-row">
@@ -1435,7 +1435,7 @@
   function submitHotspotProfile() {
     const formEl = document.getElementById('hotspotProfileForm');
     const statusEl = document.getElementById('hotspotProfileStatus');
-    if (statusEl) statusEl.textContent = 'Klik diterima...';
+    if (statusEl) statusEl.textContent = 'Clic recibido...';
     if (!formEl) {
       if (statusEl) statusEl.textContent = 'Formulario no encontrado';
       return;

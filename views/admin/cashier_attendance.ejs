@@ -87,7 +87,7 @@
     </div>
     <div class="tb-right">
       <span class="adm-badge">
-        <i class="bi bi-person-fill"></i> Kasir
+        <i class="bi bi-person-fill"></i> Cajero
       </span>
       <a href="/admin/logout" class="btn btn-g btn-sm"><i class="bi bi-box-arrow-left"></i></a>
     </div>
@@ -167,7 +167,7 @@
           <% } %>
 
           <% if (todayAttendance.status === 'checked_in') { %>
-            <textarea id="checkoutNote" class="note-input" placeholder="<%= t('admin.ca.ph_note_out','Catatan check-out (opsional)') %>"></textarea>
+            <textarea id="checkoutNote" class="note-input" placeholder="<%= t('admin.ca.ph_note_out','Nota de salida (opcional)') %>"></textarea>
             <input id="checkoutPhoto" type="file" accept="image/*" capture="user" style="display: none;" onchange="updatePhotoInfo('checkoutPhoto', 'checkoutPhotoInfo', 'checkoutPhotoPreviewWrap', 'checkoutPhotoPreview')">
             
             <div style="text-align: center; margin: 16px 0;">
@@ -190,7 +190,7 @@
               <img id="checkoutPhotoPreview" alt="Vista previa de la foto de salida" style="width:100%;max-width:240px;border-radius:12px;border:1px solid var(--border);object-fit:cover">
             </div>
             <button id="checkoutSubmitBtn" class="btn btn-d btn-sm" style="width:100%;margin-top:12px;opacity:0.55;cursor:not-allowed" onclick="checkout(event)" disabled>
-              <i class="bi bi-door-open"></i> Check-out Sekarang
+              <i class="bi bi-door-open"></i> Registrar salida
             </button>
           <% } %>
 
@@ -198,7 +198,7 @@
           <span class="status-badge status-not-checked-in"><i class="bi bi-x-lg"></i> <%= t('admin.ca.not_checked_in','Belum Check-in') %></span>
           <p style="color: var(--muted); margin: 16px 0;"><%= t('admin.ca.checkin_hint','Silakan lakukan check-in untuk memulai hari kerja Anda.') %></p>
           
-          <textarea id="checkinNote" class="note-input" placeholder="<%= t('admin.ca.ph_note_in','Catatan check-in (opsional)') %>"></textarea>
+          <textarea id="checkinNote" class="note-input" placeholder="<%= t('admin.ca.ph_note_in','Nota de entrada (opcional)') %>"></textarea>
           <input id="checkinPhoto" type="file" accept="image/*" capture="user" style="display: none;" onchange="updatePhotoInfo('checkinPhoto', 'checkinPhotoInfo', 'checkinPhotoPreviewWrap', 'checkinPhotoPreview')">
           
           <div style="text-align: center; margin: 16px 0;">
@@ -221,7 +221,7 @@
             <img id="checkinPhotoPreview" alt="Vista previa de la foto de entrada" style="width:100%;max-width:240px;border-radius:12px;border:1px solid var(--border);object-fit:cover">
           </div>
           <button id="checkinSubmitBtn" class="btn btn-s btn-sm" style="width:100%;margin-top:12px;opacity:0.55;cursor:not-allowed" onclick="checkin(event)" disabled>
-            <i class="bi bi-check-circle"></i> Check-in Sekarang
+            <i class="bi bi-check-circle"></i> Registrar entrada
           </button>
         <% } %>
 
@@ -308,7 +308,7 @@
                   <% if (item.status === 'checked_in') { %>
                     <span class="badge badge-w">Sin terminar</span>
                   <% } else { %>
-                    <span class="badge badge-s">Selesai</span>
+                    <span class="badge badge-s">Terminado</span>
                   <% } %>
                 </td>
               </tr>
@@ -552,7 +552,7 @@
       '<%= settings.companyName %>'.toUpperCase(),
       'PORTAL DE CAJA - ASISTENCIA',
       `HORA: ${timestamp}`,
-      `KOORDINAT: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`
+      `COORDENADAS: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`
     ];
   }
 

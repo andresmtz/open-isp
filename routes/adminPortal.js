@@ -6651,7 +6651,7 @@ function buildWaPreviewMessages() {
   const comp = company();
   const base = (getSetting('app_url', '') || getSetting('public_base_url', '') || 'http://localhost:3001').replace(/\/+$/, '');
   const nowTxt = new Date().toLocaleString(regional.locale(), { timeZone: getSetting('timezone', 'America/Asuncion') });
-  const sample = { nama: 'Budi Santoso', id: 'SKY-12345', paket: 'Home 20 Mbps', tagihan: '250.000', periode: '10/2026', link: base + '/customer', otp: '482913', ssid: 'OPEN-ISP-BUDI', password: 'wifi-ku-2026', waktu: nowTxt, bulan: '3', batas: '3' };
+  const sample = { nama: 'Juan Pérez', id: 'ISP-12345', paket: 'PLAN180MB', tagihan: '250.000', periode: '10/2026', link: base + '/customer', otp: '482913', ssid: 'WiFi-JuanPerez', password: 'clave-wifi-2026', waktu: nowTxt, bulan: '3', batas: '3' };
   const rv = (t) => String(t || '')
     .replace(/{{nama}}/gi, sample.nama).replace(/{{id_pelanggan}}/gi, sample.id).replace(/{{paket}}/gi, sample.paket)
     .replace(/{{tagihan}}/gi, sample.tagihan).replace(/{{total}}/gi, sample.tagihan).replace(/{{qris_nominal}}/gi, sample.tagihan)

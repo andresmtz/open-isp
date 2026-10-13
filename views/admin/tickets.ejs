@@ -51,7 +51,7 @@
       <div class="card-hd" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <h6><i class="bi bi-list-ul"></i> <%= t('admin.tickets.list_title', 'Daftar Keluhan & Tugas') %> (<%= tickets.length %>)</h6>
         <div style="display:flex;gap:8px">
-          <button type="button" class="btn btn-g btn-sm" onclick="window.print()" title="Imprimir resumen de tickets"><i class="bi bi-printer"></i> Cetak</button>
+          <button type="button" class="btn btn-g btn-sm" onclick="window.print()" title="Imprimir resumen de tickets"><i class="bi bi-printer"></i> Imprimir</button>
           <button class="btn btn-p btn-sm" onclick="openModal('createTicketModal')">
             <i class="bi bi-plus-circle me-1"></i> + Crear ticket / tarea
           </button>
@@ -73,7 +73,7 @@
             <option value="in_progress" <%= filterStatus==='in_progress'?'selected':'' %>><%= t('admin.tickets.status.in_progress', 'Sedang Dikerjakan') %></option>
             <option value="resolved" <%= filterStatus==='resolved'?'selected':'' %>><%= t('admin.tickets.status.resolved', 'Selesai') %></option>
           </select>
-          <button class="btn btn-g btn-sm" type="submit"><i class="bi bi-search"></i> Cari</button>
+          <button class="btn btn-g btn-sm" type="submit"><i class="bi bi-search"></i> Buscar</button>
           <% if ((typeof filterSearch!=='undefined' && filterSearch) || (typeof filterTech!=='undefined' && filterTech) || (filterStatus && filterStatus!=='all')) { %><a href="/admin/tickets" class="btn btn-g btn-sm"><i class="bi bi-x"></i> Reset</a><% } %>
         </form>
       </div>
@@ -169,7 +169,7 @@
           </select>
         </div>
         <div class="fg">
-          <label class="fl">Judul / Subjek Kendala</label>
+          <label class="fl">Título / asunto del problema</label>
           <input class="fc" name="subject" placeholder="Ejemplo: reparación NAP 02, tendido de cable nuevo, señal muy baja" required>
         </div>
         <div class="fg">

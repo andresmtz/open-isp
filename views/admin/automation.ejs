@@ -401,7 +401,7 @@
       });
       var r = await fetch('/admin/automation/send-now', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       var j = await r.json().catch(function(){ return {}; });
-      if (res) { res.textContent = j.ok ? (j.message || 'Berhasil.') : ('Falló — ' + (j.message || 'Terjadi kesalahan.')); res.style.color = j.ok ? 'var(--success)' : 'var(--danger)'; }
+      if (res) { res.textContent = j.ok ? (j.message || 'Berhasil.') : ('Falló — ' + (j.message || 'Ocurrió un error.')); res.style.color = j.ok ? 'var(--success)' : 'var(--danger)'; }
       if (j.ok) { document.getElementById('as_progress').style.display = 'block'; asPoll(); }
     } catch (e) {
       if (res) { res.textContent = 'Falló — ' + e.message; res.style.color = 'var(--danger)'; }
@@ -416,7 +416,7 @@
       document.getElementById('as_progress').style.display = 'block';
       var pct = s.total ? Math.round(((s.sent + s.failed) / s.total) * 100) : 0;
       document.getElementById('as_bar').style.width = pct + '%';
-      document.getElementById('as_progress_text').textContent = (s.running ? 'Mengirim…' : 'Selesai') + ' ' + s.sent + '/' + s.total + ' enviados, ' + s.failed + ' gagal' + (s.last ? (' • terakhir: ' + s.last) : '') + (s.label ? (' • ' + s.label) : '');
+      document.getElementById('as_progress_text').textContent = (s.running ? 'Mengirim…' : 'Selesai') + ' ' + s.sent + '/' + s.total + ' enviados, ' + s.failed + ' gagal' + (s.last ? (' • último: ' + s.last) : '') + (s.label ? (' • ' + s.label) : '');
     } catch (e) {}
   }
   setInterval(function(){ if (document.getElementById('au-manual') && document.getElementById('au-manual').classList.contains('active')) asPoll(); }, 3000);

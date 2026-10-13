@@ -151,7 +151,7 @@
         </div>
         <div class="mf">
           <button type="button" class="btn btn-g" onclick="closeModal('metaConverterModal')"><%= t('common.close','Tutup') %></button>
-          <button type="button" class="btn btn-p" onclick="copyMetaTemplateResult()"><i class="bi bi-clipboard-check"></i> Salin Teks Meta</button>
+          <button type="button" class="btn btn-p" onclick="copyMetaTemplateResult()"><i class="bi bi-clipboard-check"></i> Copiar texto para Meta</button>
         </div>
       </div>
     </div>
@@ -215,7 +215,7 @@ function fillOfficialReceiptPreset() {
     ['whatsapp_autolunas_message', TMPL_AL_LENGKAP, 'Auto-Lunas'],
     ['whatsapp_deactivated_message', TMPL_DE_LENGKAP, 'Auto-Nonaktif'],
     ['whatsapp_deleted_message', TMPL_DL_LENGKAP, 'Auto-Hapus']
-  ], 'Versi: LENGKAP (profesional).');
+  ], 'Versión: COMPLETA (profesional).');
 }
 function fillSpintaxPreset() {
   applyPreset([
@@ -226,7 +226,7 @@ function fillSpintaxPreset() {
     ['whatsapp_autolunas_message', TMPL_AL_SPINTAX, 'Auto-Lunas'],
     ['whatsapp_deactivated_message', TMPL_DE_SPINTAX, 'Auto-Nonaktif'],
     ['whatsapp_deleted_message', TMPL_DL_SPINTAX, 'Auto-Hapus']
-  ], 'Versi: SPINTAX ANTI-BAN.');
+  ], 'Versión: SPINTAX ANTI-BLOQUEO.');
 }
 function showMetaConverter() { openModal('metaConverterModal'); convertCurrentTemplate(); }
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal('metaConverterModal'); });

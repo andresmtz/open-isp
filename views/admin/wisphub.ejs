@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Migración WispHub | <%= company %></title>
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .wh-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+    .wh-stat{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border);font-size:13px}
+    .wh-pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+    .wh-on{background:rgba(16,185,129,.15);color:#10b981}.wh-off{background:rgba(239,68,68,.15);color:#ef4444}
+    pre.wh-pre{white-space:pre-wrap;font-size:12px;max-height:420px;overflow:auto;background:var(--bg2);padding:12px;border-radius:10px;border:1px solid var(--border)}
+  </style>
+</head>
+<body>
+<%- include('partials/sidebar', { activePage: 'wisphub', company }) %>
+<div class="mw">
+  <div class="topbar">
+    <div class="tb-title">
+      <button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+      <i class="bi bi-arrow-left-right"></i><span>Migración WispHub</span>
+    </div>
+  </div>
+  <div class="page">
+    <% if (msg) { %><div class="alert alert-<%= msg.type==='error'?'d':'s' %>" data-flash="1"><%= msg.text %></div><% } %>
+
+    <div class="wh-grid">
+      <div class="card">
+        <div class="card-hd"><h6><i class="bi bi-shield-check"></i> Estado de la migración</h6></div>
+        <div style="padding:14px">
+          <div class="wh-stat"><span>Modo migración (sin facturación, cortes ni recordatorios automáticos)</span><span class="wh-pill <%= cfg.migration_mode ? 'wh-on' : 'wh-off' %>"><%= cfg.migration_mode ? 'ACTIVO' : 'APAGADO' %></span></div>
+          <div class="wh-stat"><span>MikroTik en solo lectura</span><span class="wh-pill <%= cfg.mikrotik_readonly ? 'wh-on' : 'wh-off' %>"><%= cfg.mikrotik_readonly ? 'SÍ' : 'NO' %></span></div>
+          <div class="wh-stat"><span>Método de corte</span><b><%= cfg.isolation_method === 'profile' ? 'Perfil PPPoE' : ('Address-list "' + cfg.isolation_address_list + '"') %></b></div>
+          <div class="wh-stat"><span>Sincronización automática (cada hora)</span><span class="wh-pill <%= cfg.wisphub_sync_enabled ? 'wh-on' : 'wh-off' %>"><%= cfg.wisphub_sync_enabled ? 'ACTIVA' : 'APAGADA' %></span></div>
+          <div class="wh-stat"><span>Clientes vinculados a WispHub</span><b><%= stats.customers %></b></div>
+          <div class="wh-stat"><span>Facturas importadas (pendientes / pagadas)</span><b><%= stats.unpaid %> / <%= stats.paid %></b></div>
+          <div class="wh-stat"><span>Meses de consumo importados</span><b><%= stats.usage %></b></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><h6><i class="bi bi-key"></i> Conexión y opciones</h6></div>
+        <form method="POST" action="/admin/wisphub/settings" style="padding:14px">
+          <div class="fg"><label class="fl">API key de WispHub</label>
+            <input class="fc" type="password" name="wisphub_api_key" placeholder="<%= cfg.has_key ? '•••••••• (guardada — dejar vacío para mantener)' : 'Pegá aquí la API key' %>" autocomplete="off">
+            <div class="hint" style="font-size:11px;margin-top:4px">Se genera en WispHub → Staff → Generar Mi APIKey. El usuario necesita permisos de "Lista de Clientes" y "Lista de Facturas".</div>
+          </div>
+          <div class="fg"><label class="fl">URL de la API</label><input class="fc" name="wisphub_api_url" value="<%= cfg.wisphub_api_url %>"></div>
+          <div class="form-row">
+            <div class="fg"><label class="fl">Modo migración</label><select class="fs" name="migration_mode"><option value="true" <%= cfg.migration_mode ? 'selected' : '' %>>Activo</option><option value="false" <%= !cfg.migration_mode ? 'selected' : '' %>>Apagado</option></select></div>
+            <div class="fg"><label class="fl">MikroTik solo lectura</label><select class="fs" name="mikrotik_readonly"><option value="true" <%= cfg.mikrotik_readonly ? 'selected' : '' %>>Sí</option><option value="false" <%= !cfg.mikrotik_readonly ? 'selected' : '' %>>No</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label class="fl">Método de corte</label><select class="fs" name="isolation_method"><option value="address_list" <%= cfg.isolation_method !== 'profile' ? 'selected' : '' %>>Address-list (como WispHub)</option><option value="profile" <%= cfg.isolation_method === 'profile' ? 'selected' : '' %>>Cambiar perfil PPPoE</option></select></div>
+            <div class="fg"><label class="fl">Lista de corte</label><input class="fc" name="isolation_address_list" value="<%= cfg.isolation_address_list %>"></div>
+          </div>
+          <div class="fg"><label class="fl">Sincronización automática cada hora</label><select class="fs" name="wisphub_sync_enabled"><option value="false" <%= !cfg.wisphub_sync_enabled ? 'selected' : '' %>>Apagada</option><option value="true" <%= cfg.wisphub_sync_enabled ? 'selected' : '' %>>Activa</option></select></div>
+          <button class="btn btn-p" type="submit"><i class="bi bi-save"></i> Guardar</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-hd"><h6><i class="bi bi-arrow-repeat"></i> Sincronizar</h6></div>
+      <div style="padding:14px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-g" onclick="call('test')"><i class="bi bi-plug"></i> Probar conexión</button>
+        <button class="btn btn-g" onclick="call('simulate')"><i class="bi bi-eye"></i> Simular (no escribe nada)</button>
+        <button class="btn btn-p" onclick="if(confirm('¿Sincronizar ahora? Se escriben clientes y facturas en Open-ISP. El MikroTik no se toca.')) call('sync')"><i class="bi bi-cloud-download"></i> Sincronizar ahora</button>
+      </div>
+      <div style="padding:0 14px 14px"><pre class="wh-pre" id="out">Elegí una acción.</pre></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-hd"><h6><i class="bi bi-clock-history"></i> Últimas sincronizaciones</h6></div>
+      <div class="tbl-wrap"><table class="dtbl"><thead><tr><th>Inicio</th><th>Resultado</th></tr></thead><tbody>
+        <% if (!runs.length) { %><tr><td colspan="2" class="text-muted" style="text-align:center;padding:16px">Todavía no hay sincronizaciones.</td></tr><% } %>
+        <% runs.forEach(function (r) { %><tr><td style="white-space:nowrap"><%= new Date(r.started_at).toLocaleString(APP_LOCALE) %></td><td><%= r.summary %></td></tr><% }) %>
+      </tbody></table></div>
+    </div>
+  </div>
+</div>
+<script>
+async function call(action) {
+  const out = document.getElementById('out');
+  out.textContent = 'Procesando… (puede tardar un minuto)';
+  try {
+    const r = await fetch('/admin/wisphub/' + action, { method: 'POST', headers: { 'Accept': 'application/json' } });
+    const j = await r.json();
+    out.textContent = JSON.stringify(j, null, 2);
+    if (action === 'sync' && j.ok) setTimeout(() => location.reload(), 2500);
+  } catch (e) { out.textContent = 'Error: ' + e.message; }
+}
+</script>
+</body>
+</html>

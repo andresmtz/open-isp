@@ -1161,7 +1161,8 @@
       "service_notice": "Estado del servicio",
       "log_rekap": "Registros y resúmenes",
       "backup": "Respaldo y recuperación",
-      "audit_logs": "Registro de actividad"
+      "audit_logs": "Registro de actividad",
+      "wisphub": "Migración WispHub"
     },
     "update": {
       "title": "Actualizar desde GitHub",

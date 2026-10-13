@@ -74,6 +74,7 @@ const MENU_DEFINITIONS = [
   ] },
 
   { key: 'grp_system', section: 'system', href: '/admin/settings', icon: 'bi bi-gear', labelKey: 'admin.nav.grp_system', labelDefault: 'Sistema', roles: ['admin'], activePages: ['update', 'service_notice', 'settings', 'ewallet_logs', 'backup', 'audit_logs'], children: [
+    { key: 'wisphub', section: 'system', href: '/admin/wisphub', icon: 'bi bi-arrow-left-right', labelKey: 'admin.nav.wisphub', labelDefault: 'Migración WispHub', roles: ['admin'] },
     { key: 'update', section: 'system', href: '/admin/update', icon: 'bi bi-cloud-arrow-down', labelKey: 'admin.nav.update', labelDefault: 'Actualizar desde GitHub', roles: ['admin'], activePages: ['update'] },
     { key: 'service_notice', section: 'system', href: '/admin/service-notice', icon: 'bi bi-megaphone-fill', labelKey: 'admin.nav.service_notice', labelDefault: 'Estado del servicio', roles: ['admin'], activePages: ['service_notice'] },
     { key: 'settings', section: 'system', href: '/admin/settings', icon: 'bi bi-gear', labelKey: 'admin.nav.settings', labelDefault: 'Configuración', roles: ['admin'], activePages: ['settings'] },

@@ -27,7 +27,8 @@ const SENSITIVE_FIELDS = [
   'admin_api_key',
   'mikrotik_password',
   'telegram_bot_token',
-  'session_secret'
+  'session_secret',
+  'wisphub_api_key'
 ];
 
 /**

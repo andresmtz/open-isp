@@ -255,6 +255,36 @@ class ClientAdapter {
   }
 }
 
+// ─── Modo solo lectura ───────────────────────────────────────────────────────
+// Con la configuración `mikrotik_readonly` = true, Open-ISP solo CONSULTA el router:
+// se bloquea cualquier orden que modifique (add/set/remove/enable/disable/...).
+// Se usa durante la migración, mientras WispHub sigue administrando el MikroTik.
+const RO_WRITE_ACTIONS = new Set(['add', 'set', 'remove', 'enable', 'disable', 'unset', 'move', 'reset-counters', 'reset', 'comment', 'reboot', 'shutdown', 'run', 'import', 'export-to-file', 'make-static', 'release']);
+
+function isMikrotikReadOnly() {
+  const v = getSettingsWithCache().mikrotik_readonly;
+  return v === true || v === 'true';
+}
+
+function guardReadOnly(api, host) {
+  const raw = api && api.rosApi;
+  if (!raw || typeof raw.write !== 'function' || raw.__roGuard) return;
+  const originalWrite = raw.write.bind(raw);
+  raw.write = function (...args) {
+    const first = Array.isArray(args[0]) ? args[0][0] : args[0];
+    const cmd = String(first || '');
+    const action = cmd.split('/').filter(Boolean).pop() || '';
+    if (isMikrotikReadOnly() && RO_WRITE_ACTIONS.has(action)) {
+      logger.warn(`[MikroTik] SOLO LECTURA: se bloqueó "${cmd}" en ${host}`);
+      const e = new Error(`Modo solo lectura activo: no se modificó el MikroTik (${cmd}).`);
+      e.code = 'MIKROTIK_READONLY';
+      return Promise.reject(e);
+    }
+    return originalWrite(...args);
+  };
+  raw.__roGuard = true;
+}
+
 async function getConnection(routerId = null) {
   let host, port, user, password;
 
@@ -355,6 +385,7 @@ async function getConnection(routerId = null) {
 
     await api.connect();
     connectionProbeCache.set(cacheKey, { port: selectedPort, okUntil: Date.now() + 30000, failUntil: 0, failMessage: '' });
+    guardReadOnly(api, host);
     
     // Adapt api so that it exposes the expected .send method and correct close logic
     api.send = async (words) => {
@@ -2128,7 +2159,61 @@ async function getBackup(routerId = null) {
   }
 }
 
+// ─── Corte por address-list (compatible con WispHub: lista "Moroso") ─────────
+function isolationAddressList() {
+  return String(getSettingsWithCache().isolation_address_list || 'Moroso').trim() || 'Moroso';
+}
+
+/** Agrega la IP a la lista de corte (si ya está, no duplica). */
+async function addToIsolationList(address, comment, routerId = null) {
+  const ip = String(address || '').trim();
+  if (!ip) throw new Error('El cliente no tiene IP asignada: no se puede cortar por address-list.');
+  const list = isolationAddressList();
+  const conn = await getConnection(routerId);
+  try {
+    const existing = await conn.client.menu('/ip/firewall/address-list').where({ list, address: ip }).get();
+    if (existing && existing.length) return { already: true, list, address: ip };
+    await conn.client.menu('/ip/firewall/address-list').add({ list, address: ip, comment: String(comment || '').slice(0, 120) });
+    return { added: true, list, address: ip };
+  } finally {
+    try { await conn.api.close(); } catch (_) {}
+  }
+}
+
+/** Quita la IP de la lista de corte. */
+async function removeFromIsolationList(address, routerId = null) {
+  const ip = String(address || '').trim();
+  if (!ip) return { removed: 0 };
+  const list = isolationAddressList();
+  const conn = await getConnection(routerId);
+  try {
+    const rows = await conn.client.menu('/ip/firewall/address-list').where({ list, address: ip }).get();
+    for (const r of rows || []) {
+      await conn.client.menu('/ip/firewall/address-list').remove(r['.id'] || r.id);
+    }
+    return { removed: (rows || []).length, list, address: ip };
+  } finally {
+    try { await conn.api.close(); } catch (_) {}
+  }
+}
+
+/** IPs que hoy están en la lista de corte (para conciliar con el estado de los clientes). */
+async function getIsolationListAddresses(routerId = null) {
+  const conn = await getConnection(routerId);
+  try {
+    const rows = await conn.client.menu('/ip/firewall/address-list').where('list', isolationAddressList()).get();
+    return (rows || []).map(r => r.address);
+  } finally {
+    try { await conn.api.close(); } catch (_) {}
+  }
+}
+
 module.exports = {
+  isMikrotikReadOnly,
+  isolationAddressList,
+  addToIsolationList,
+  removeFromIsolationList,
+  getIsolationListAddresses,
   checkConnection,
   getConnection,
   getPppoeProfiles,

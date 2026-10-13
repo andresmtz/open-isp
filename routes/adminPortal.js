@@ -1046,6 +1046,68 @@ router.post('/collectors/:id/delete', requireAdminSession, restrictToAdmin, (req
 });
 
 // --- AREA MANAGEMENT ---
+// ─── Migración WispHub ───────────────────────────────────────────────────────
+function requireMainAdmin(req, res, next) {
+  if (req.session && req.session.isAdmin && !req.session.isCashier) return next();
+  if (req.accepts('json') && !req.accepts('html')) return res.status(403).json({ ok: false, message: 'Solo el administrador.' });
+  return res.status(403).send('Solo el administrador puede acceder a esta página.');
+}
+const _bool = (v, d = false) => (v === undefined ? d : v === true || v === 'true');
+
+router.get('/wisphub', requireAdminSession, requireMainAdmin, (req, res) => {
+  const cfg = {
+    has_key: !!String(getSetting('wisphub_api_key', '') || '').trim(),
+    wisphub_api_url: getSetting('wisphub_api_url', 'https://api.wisphub.net'),
+    migration_mode: _bool(getSetting('migration_mode', false)),
+    mikrotik_readonly: _bool(getSetting('mikrotik_readonly', false)),
+    isolation_method: getSetting('isolation_method', 'address_list'),
+    isolation_address_list: getSetting('isolation_address_list', 'Moroso'),
+    wisphub_sync_enabled: _bool(getSetting('wisphub_sync_enabled', false))
+  };
+  let stats = { customers: 0, unpaid: 0, paid: 0, usage: 0 };
+  try {
+    const wh = require('../services/wisphubSyncService');
+    stats.customers = db.prepare('SELECT COUNT(*) c FROM customers WHERE wisphub_id IS NOT NULL').get().c;
+    stats.unpaid = db.prepare("SELECT COUNT(*) c FROM invoices WHERE wisphub_invoice_id IS NOT NULL AND status = 'unpaid'").get().c;
+    stats.paid = db.prepare("SELECT COUNT(*) c FROM invoices WHERE wisphub_invoice_id IS NOT NULL AND status = 'paid'").get().c;
+    stats.usage = db.prepare('SELECT COUNT(*) c FROM customer_usage u JOIN customers c ON c.id = u.customer_id WHERE c.wisphub_id IS NOT NULL').get().c;
+    var runs = wh.lastRuns(15);
+  } catch (e) { var runs = []; }
+  res.render('admin/wisphub', { title: 'Migración WispHub', company: company(), activePage: 'wisphub', msg: flashMsg(req), cfg, stats, runs });
+});
+
+router.post('/wisphub/settings', requireAdminSession, requireMainAdmin, express.urlencoded({ extended: true }), (req, res) => {
+  try {
+    const b = req.body || {};
+    const next = {
+      wisphub_api_url: String(b.wisphub_api_url || 'https://api.wisphub.net').trim(),
+      migration_mode: b.migration_mode === 'true',
+      mikrotik_readonly: b.mikrotik_readonly === 'true',
+      isolation_method: b.isolation_method === 'profile' ? 'profile' : 'address_list',
+      isolation_address_list: String(b.isolation_address_list || 'Moroso').trim() || 'Moroso',
+      wisphub_sync_enabled: b.wisphub_sync_enabled === 'true'
+    };
+    const key = String(b.wisphub_api_key || '').trim();
+    if (key) next.wisphub_api_key = key; // vacío = mantener la guardada
+    saveSettings(next);
+    req.session._msg = { type: 'success', text: 'Configuración de migración guardada.' };
+  } catch (e) {
+    req.session._msg = { type: 'error', text: 'No se pudo guardar: ' + e.message };
+  }
+  res.redirect('/admin/wisphub');
+});
+
+router.post('/wisphub/:action(test|simulate|sync)', requireAdminSession, requireMainAdmin, async (req, res) => {
+  const wh = require('../services/wisphubSyncService');
+  try {
+    if (req.params.action === 'test') return res.json(await wh.testConnection());
+    const report = await wh.run({ dryRun: req.params.action !== 'sync' });
+    return res.json({ ok: true, ...report });
+  } catch (e) {
+    return res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
 router.get('/areas', requireAdminSession, requireSidebarMenuAccess('areas'), (req, res) => {
   const areas = areaSvc.getAllAreas();
   res.render('admin/areas', { title: 'Manajemen Area', company: company(), activePage: 'areas', areas, msg: flashMsg(req) });

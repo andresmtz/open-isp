@@ -651,6 +651,15 @@ function findCustomerByAny(val) {
   return null;
 }
 
+// Método de corte: 'address_list' (IP en la lista de corte, compatible con WispHub) o 'profile' (original)
+function isolationMethod() {
+  const v = String(getSetting('isolation_method', 'address_list') || 'address_list').toLowerCase();
+  return v === 'profile' ? 'profile' : 'address_list';
+}
+function customerIsolationIp(c) {
+  return String((c && (c.pppoe_remote_address || c.static_ip)) || '').trim();
+}
+
 async function suspendCustomer(id) {
   const customer = getCustomerById(id);
   if (!customer) throw new Error('Cliente no encontrado');
@@ -673,7 +682,10 @@ async function suspendCustomer(id) {
 
   // UPDATE MIKROTIK DULU sebelum update database status (priority: network change)
   try {
-    if (customer.connection_type === 'static' && customer.static_ip) {
+    if (isolationMethod() === 'address_list' && customerIsolationIp(customer) && customer.connection_type !== 'hotspot') {
+      const r = await mikrotikSvc.addToIsolationList(customerIsolationIp(customer), `${customer.name || ''} | ${customer.pppoe_username || ''}`.trim(), effectiveRouterId);
+      logger.info(`[suspendCustomer] ${customer.name}: IP ${r.address} ${r.already ? 'ya estaba' : 'agregada'} en la lista "${r.list}"`);
+    } else if (customer.connection_type === 'static' && customer.static_ip) {
       const pkg = getPackageById(customer.package_id);
       let limit = '5M/5M';
       if (pkg) {
@@ -820,7 +832,10 @@ async function activateCustomer(id, targetStatus = 'active') {
 
   // UPDATE MIKROTIK DULU sebelum update database status (priority: network change)
   try {
-    if (customer.connection_type === 'static' && customer.static_ip) {
+    if (isolationMethod() === 'address_list' && customerIsolationIp(customer) && customer.connection_type !== 'hotspot') {
+      const r = await mikrotikSvc.removeFromIsolationList(customerIsolationIp(customer), effectiveRouterId);
+      logger.info(`[activateCustomer] ${customer.name}: IP ${customerIsolationIp(customer)} quitada de la lista de corte (${r.removed || 0})`);
+    } else if (customer.connection_type === 'static' && customer.static_ip) {
       const pkg = getPackageById(customer.package_id);
       let limit = '5M/5M';
       if (pkg) {

@@ -15,6 +15,17 @@ const { formatUnpaidInvoicesSummary } = require('./whatsappService');
 const regional = require('../config/regional');
 
 // Helper: Random delay generator untuk smart rate limiting
+/**
+ * Modo migración (setting `migration_mode`): mientras WispHub sigue operando, Open-ISP no genera
+ * facturas, no corta, no envía recordatorios ni toca perfiles. Los datos llegan por la sincronización.
+ */
+function inMigrationMode(jobName) {
+  const v = getSetting('migration_mode', false);
+  const on = v === true || v === 'true';
+  if (on) logger.info(`[CRON] Modo migración activo: se omite "${jobName}"`);
+  return on;
+}
+
 function getRandomDelay(baseDelayMs, varianceMs = 3000) {
   const minDelay = Math.max(baseDelayMs - varianceMs, 2000);
   const maxDelay = baseDelayMs + varianceMs;
@@ -362,6 +373,7 @@ async function runAutoBillingReminder() {
 function startCronJobs() {
   // 1. Generate Tagihan Otomatis setiap tanggal 1 jam 00:01
   cron.schedule('1 0 1 * *', () => {
+    if (inMigrationMode('facturación mensual')) return; 
     const now = new Date();
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
@@ -377,6 +389,7 @@ function startCronJobs() {
 
   // 2. Isolir Otomatis setiap hari jam 02:00
   cron.schedule('0 2 * * *', async () => {
+    if (inMigrationMode('corte automático')) return; 
     const now = new Date();
     const today = now.getDate();
     logger.info(`[CRON] Menjalankan pengecekan isolir otomatis harian (Tanggal ${today})`);
@@ -439,13 +452,14 @@ function startCronJobs() {
     logger.info(`[CRON] Selesai pengecekan isolir. Total ${isolatedCount} pelanggan baru di-isolir.`);
   });
 
-  cron.schedule('0 9 * * *', () => { runAutoBillingReminder().catch(function (e) { logger.error('[CRON] Reminder error: ' + (e && e.message)); }); });
+  cron.schedule('0 9 * * *', () => { if (inMigrationMode('recordatorio de pago')) return; runAutoBillingReminder().catch(function (e) { logger.error('[CRON] Reminder error: ' + (e && e.message)); }); });
 
   // Auto-PERINGATAN TUNGGAKAN (menuju nonaktif/hapus) — sekali per kenaikan streak
   // Rekap bulanan auto-lunas (mitra) ke admin — tgl 1 jam 00:30
-  cron.schedule('30 0 1 * *', () => { sendAutoLunasRecap().catch(function (e) { logger.error('[CRON] recap error: ' + (e && e.message)); }); }, { timezone: getSetting('timezone', 'America/Asuncion') });
+  cron.schedule('30 0 1 * *', () => { if (inMigrationMode('resumen de pagos automáticos')) return; sendAutoLunasRecap().catch(function (e) { logger.error('[CRON] recap error: ' + (e && e.message)); }); }, { timezone: getSetting('timezone', 'America/Asuncion') });
 
   cron.schedule('10 9 * * *', async () => {
+    if (inMigrationMode('aviso de deuda')) return; 
     try {
       const enabled = getSetting('arrears_notice_enabled', true) !== false && getSetting('arrears_notice_enabled', true) !== 'false';
       if (!enabled || !getSetting('whatsapp_enabled', false)) return;
@@ -474,6 +488,7 @@ function startCronJobs() {
 
   // 4. Jam Kalong (Night Speed) Start - Jam 00:00
   cron.schedule('0 0 * * *', async () => {
+    if (inMigrationMode('horario nocturno (inicio)')) return; 
     logger.info('[CRON] Memulai Jam Kalong (Night Speed) - Ganti Profile...');
     try {
       let count = 0;
@@ -514,6 +529,7 @@ function startCronJobs() {
 
   // 5. Jam Kalong (Night Speed) End - Jam 06:00
   cron.schedule('0 6 * * *', async () => {
+    if (inMigrationMode('horario nocturno (fin)')) return; 
     logger.info('[CRON] Mengakhiri Jam Kalong (Night Speed) - Kembali ke Profile Normal...');
     try {
       let count = 0;
@@ -553,6 +569,16 @@ function startCronJobs() {
   });
 
   // 6. Track Usage Pelanggan (Data Traffic) - Setiap 10 Menit
+  // Sincronización con WispHub cada hora (minuto 7), solo si está activada en Migración WispHub
+  cron.schedule('7 * * * *', async () => {
+    const v = getSetting('wisphub_sync_enabled', false);
+    if (!(v === true || v === 'true')) return;
+    try {
+      const r = await require('./wisphubSyncService').run({ dryRun: false, invoicesMonths: 3 });
+      logger.info('[CRON] WispHub: ' + r.summary);
+    } catch (e) { logger.error('[CRON] WispHub: ' + e.message); }
+  });
+
   cron.schedule('*/10 * * * *', async () => {
     const enabled = getSetting('usage_tracking_enabled', true);
     if (!enabled) return;
@@ -612,6 +638,7 @@ function startCronJobs() {
 
   // 7. FUP (Fair Usage Policy) Check - Setiap Jam
   cron.schedule('0 * * * *', async () => {
+    if (inMigrationMode('FUP')) return; 
     logger.info('[CRON] Mengecek FUP Pelanggan...');
     try {
       const now = new Date();
@@ -775,6 +802,7 @@ function startCronJobs() {
 
   // Auto-nonaktif: pelanggan menunggak >= N bulan (default 3)
   cron.schedule('30 3 * * *', async () => {
+    if (inMigrationMode('desactivación automática')) return; 
     try {
       const enabled = getSetting('auto_deactivate_enabled', true);
       if (!enabled) return;

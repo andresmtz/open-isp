@@ -20,7 +20,7 @@ router.get('/payment-methods', async (req, res) => {
     if (!methods || methods.length === 0) {
       return res.status(503).json({
         success: false,
-        error: 'Tidak ada payment gateway yang aktif'
+        error: 'No hay ninguna pasarela de pago activa'
       });
     }
 
@@ -43,7 +43,7 @@ router.get('/payment-methods', async (req, res) => {
     logger.error('[VoucherPaymentAPI] Error getting payment methods:', error.message);
     return res.status(500).json({
       success: false,
-      error: 'Gagal mengambil payment methods'
+      error: 'No se pudieron obtener los métodos de pago'
     });
   }
 });
@@ -67,7 +67,7 @@ router.post('/create-payment', async (req, res) => {
     if (!paymentMethod || !paymentMethod.gateway || !paymentMethod.code) {
       return res.status(400).json({
         success: false,
-        error: 'Payment method tidak valid'
+        error: 'Método de pago inválido'
       });
     }
 
@@ -79,14 +79,14 @@ router.post('/create-payment', async (req, res) => {
     if (!voucherOrder) {
       return res.status(404).json({
         success: false,
-        error: 'Voucher order tidak ditemukan'
+        error: 'Pedido de ficha no encontrado'
       });
     }
 
     if (voucherOrder.status !== 'pending') {
       return res.status(400).json({
         success: false,
-        error: `Voucher order sudah ${voucherOrder.status}`
+        error: `El pedido de ficha ya está ${voucherOrder.status}`
       });
     }
 
@@ -136,7 +136,7 @@ router.post('/create-payment', async (req, res) => {
     logger.error('[VoucherPaymentAPI] Error creating payment:', error.message);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Gagal membuat payment'
+      error: error.message || 'No se pudo crear el pago'
     });
   }
 });
@@ -156,7 +156,7 @@ router.get('/order/:orderId', (req, res) => {
     if (!order) {
       return res.status(404).json({
         success: false,
-        error: 'Voucher order tidak ditemukan'
+        error: 'Pedido de ficha no encontrado'
       });
     }
 
@@ -180,7 +180,7 @@ router.get('/order/:orderId', (req, res) => {
     logger.error('[VoucherPaymentAPI] Error getting order:', error.message);
     return res.status(500).json({
       success: false,
-      error: 'Gagal mengambil order details'
+      error: 'No se pudo obtener el detalle del pedido'
     });
   }
 });
@@ -196,7 +196,7 @@ router.get('/default-gateway', (req, res) => {
     if (!gateway) {
       return res.status(503).json({
         success: false,
-        error: 'Tidak ada payment gateway yang aktif'
+        error: 'No hay ninguna pasarela de pago activa'
       });
     }
 
@@ -208,7 +208,7 @@ router.get('/default-gateway', (req, res) => {
     logger.error('[VoucherPaymentAPI] Error getting default gateway:', error.message);
     return res.status(500).json({
       success: false,
-      error: 'Gagal mengambil default gateway'
+      error: 'No se pudo obtener la pasarela predeterminada'
     });
   }
 });
@@ -228,7 +228,7 @@ router.get('/status/:orderId', (req, res) => {
     if (!order) {
       return res.status(404).json({
         success: false,
-        error: 'Voucher order tidak ditemukan'
+        error: 'Pedido de ficha no encontrado'
       });
     }
 
@@ -242,7 +242,7 @@ router.get('/status/:orderId', (req, res) => {
     logger.error('[VoucherPaymentAPI] Error getting status:', error.message);
     return res.status(500).json({
       success: false,
-      error: 'Gagal mengambil status'
+      error: 'No se pudo obtener el estado'
     });
   }
 });

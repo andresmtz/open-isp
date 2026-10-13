@@ -164,7 +164,7 @@ function getAllCustomerAreas() {
 
 function resetPromoCyclesUsed(customerId) {
   const id = Number(customerId);
-  if (!Number.isFinite(id) || id <= 0) throw new Error('ID pelanggan tidak valid');
+  if (!Number.isFinite(id) || id <= 0) throw new Error('ID de cliente inválido');
   return db.prepare('UPDATE customers SET promo_cycles_used = 0 WHERE id=?').run(id);
 }
 
@@ -193,23 +193,23 @@ function assertCustomerUnique(data, excludeId) {
   const staticIp = String(data.static_ip || '').trim();
   if (phone) {
     const r = db.prepare('SELECT id, name FROM customers WHERE phone = ? AND id != ? LIMIT 1').get(phone, ex);
-    if (r) throw new Error('Nomor HP sudah terdaftar untuk pelanggan: ' + r.name);
+    if (r) throw new Error('El teléfono ya está registrado para el cliente:' + r.name);
   }
   if (name) {
     const r = db.prepare('SELECT id, name FROM customers WHERE lower(trim(name)) = lower(trim(?)) AND id != ? LIMIT 1').get(name, ex);
-    if (r) throw new Error('Nama pelanggan sudah terdaftar: ' + r.name + ' (ID ' + r.id + ')');
+    if (r) throw new Error('El nombre del cliente ya está registrado:' + r.name + ' (ID ' + r.id + ')');
   }
   if (pppoe) {
     const r = db.prepare('SELECT id, name FROM customers WHERE pppoe_username = ? AND id != ? LIMIT 1').get(pppoe, ex);
-    if (r) throw new Error('PPPoE Username sudah dipakai pelanggan: ' + r.name);
+    if (r) throw new Error('El usuario PPPoE ya lo usa el cliente:' + r.name);
   }
   if (hotspot) {
     const r = db.prepare('SELECT id, name FROM customers WHERE hotspot_username = ? AND id != ? LIMIT 1').get(hotspot, ex);
-    if (r) throw new Error('Hotspot Username sudah dipakai pelanggan: ' + r.name);
+    if (r) throw new Error('El usuario hotspot ya lo usa el cliente:' + r.name);
   }
   if (staticIp) {
     const r = db.prepare('SELECT id, name FROM customers WHERE static_ip = ? AND id != ? LIMIT 1').get(staticIp, ex);
-    if (r) throw new Error('Static IP sudah dipakai pelanggan: ' + r.name);
+    if (r) throw new Error('La IP fija ya la usa el cliente:' + r.name);
   }
 }
 
@@ -220,7 +220,7 @@ function slugifyPppoeName(name) {
 function generatePppoeAccount(customerId) {
   const { getSetting } = require('../config/settingsManager');
   const c = getCustomerById(customerId);
-  if (!c) throw new Error('Pelanggan tidak ditemukan');
+  if (!c) throw new Error('Cliente no encontrado');
   const domain = String(getSetting('pppoe_domain', 'sky.id') || 'sky.id').replace(/^@/, '').trim() || 'sky.id';
   const _pat = String(getSetting('pppoe_username_pattern', 'name') || 'name');
   const base = slugifyPppoeName(_pat === 'customer_code' ? (c.customer_code || c.name) : c.name);
@@ -472,12 +472,12 @@ function getPackageById(id) {
 
 function createPackage(data) {
   const pkgName = String(data.name || '').trim();
-  if (!pkgName) throw new Error('Nama paket wajib diisi.');
+  if (!pkgName) throw new Error('El nombre del plan es obligatorio.');
   const _dup = db.prepare('SELECT id FROM packages WHERE lower(trim(name)) = lower(trim(?))').get(pkgName);
-  if (_dup) throw new Error('Nama paket sudah dipakai: ' + pkgName);
+  if (_dup) throw new Error('El nombre del plan ya existe:' + pkgName);
   const down = Math.round(parseFloat(data.speed_down || 0) * 1000);
   const up = Math.round(parseFloat(data.speed_up || 0) * 1000);
-  if (!(down > 0) || !(up > 0)) throw new Error('Kecepatan Download & Upload wajib diisi dan > 0.');
+  if (!(down > 0) || !(up > 0)) throw new Error('Las velocidades de bajada y subida son obligatorias y mayores a 0.');
   const down_upto = Math.round(parseFloat(data.speed_down_upto || 0) * 1000);
   const up_upto = Math.round(parseFloat(data.speed_up_upto || 0) * 1000);
   const n_down = Math.round(parseFloat(data.night_speed_down || 0) * 1000);
@@ -528,12 +528,12 @@ function parsePromoPrice(raw) {
 
 function updatePackage(id, data) {
   const pkgName = String(data.name || '').trim();
-  if (!pkgName) throw new Error('Nama paket wajib diisi.');
+  if (!pkgName) throw new Error('El nombre del plan es obligatorio.');
   const _dup = db.prepare('SELECT id FROM packages WHERE lower(trim(name)) = lower(trim(?)) AND id != ?').get(pkgName, id);
-  if (_dup) throw new Error('Nama paket sudah dipakai: ' + pkgName);
+  if (_dup) throw new Error('El nombre del plan ya existe:' + pkgName);
   const down = Math.round(parseFloat(data.speed_down || 0) * 1000);
   const up = Math.round(parseFloat(data.speed_up || 0) * 1000);
-  if (!(down > 0) || !(up > 0)) throw new Error('Kecepatan Download & Upload wajib diisi dan > 0.');
+  if (!(down > 0) || !(up > 0)) throw new Error('Las velocidades de bajada y subida son obligatorias y mayores a 0.');
   const down_upto = Math.round(parseFloat(data.speed_down_upto || 0) * 1000);
   const up_upto = Math.round(parseFloat(data.speed_up_upto || 0) * 1000);
   const n_down = Math.round(parseFloat(data.night_speed_down || 0) * 1000);
@@ -653,7 +653,7 @@ function findCustomerByAny(val) {
 
 async function suspendCustomer(id) {
   const customer = getCustomerById(id);
-  if (!customer) throw new Error('Pelanggan tidak ditemukan');
+  if (!customer) throw new Error('Cliente no encontrado');
   
   const mikrotikSvc = require('./mikrotikService');
 
@@ -717,7 +717,7 @@ async function suspendCustomer(id) {
       const { getSetting } = require('../config/settingsManager');
       if (getSetting('whatsapp_enabled', false)) {
         {
-          const defaultIsolir = `Yth. Pelanggan {{nama}},\n\nLayanan internet Anda (Paket {{paket}}) saat ini ditangguhkan (Terisolir) karena belum melunasi tagihan sebesar *{{moneda}} {{tagihan}}*.\n\nSilakan lakukan pembayaran segera melalui portal pelanggan: {{link}}\n\nTerima kasih.`;
+          const defaultIsolir = `Estimado/a {{nama}},\n\nSu servicio de internet (plan {{paket}}) fue suspendido por una deuda de *{{moneda}} {{tagihan}}*.\n\nAl registrar su pago, el servicio se rehabilita automáticamente. Detalle: {{link}}\n\nGracias.`;
           const template = db.getAppSetting('whatsapp_isolir_message', defaultIsolir);
 
           // Get unpaid invoices & calculate total amount
@@ -728,7 +728,7 @@ async function suspendCustomer(id) {
           const summary = formatUnpaidInvoicesSummary(unpaidInvoices);
           const totalTagihan = summary.totalAmount;
           const displayPeriode = summary.isMultiple
-            ? `${summary.periodText}\n\n📋 *Rincian Tunggakan:*\n${summary.breakdownText}`
+            ? `${summary.periodText}\n\n📋 *Detalle de la deuda:*\n${summary.breakdownText}`
             : summary.periodText;
 
           // Generate Login Link
@@ -750,7 +750,7 @@ async function suspendCustomer(id) {
             .replace(/{{pppoe}}/gi, customer.pppoe_username || '-')
             .replace(/{{paket}}/gi, customer.package_name || '-')
             .replace(/{{tagihan}}/gi, summary.totalAmountStr || totalTagihan.toLocaleString(regional.locale()))
-            .replace(/{{rincian_detail}}/gi, summary.isMultiple ? `📋 *Rincian Tunggakan:*\n${summary.breakdownText}` : '')
+            .replace(/{{rincian_detail}}/gi, summary.isMultiple ? `📋 *Detalle de la deuda:*\n${summary.breakdownText}` : '')
             .replace(/{{rincian}}/gi, displayPeriode || '-')
             .replace(/{{periode}}/gi, displayPeriode || '-')
             .replace(/{{company}}/gi, getSetting('company_header', '') || '-')
@@ -758,7 +758,7 @@ async function suspendCustomer(id) {
             .replace(/{{link}}/gi, loginLink);
 
           if (summary.isMultiple && !template.includes('{{periode}}') && !template.includes('{{rincian}}')) {
-            const extraInfo = `\n\n📌 *Periode Tunggakan:* ${summary.periodText}\n📋 *Rincian Tunggakan:*\n${summary.breakdownText}`;
+            const extraInfo = `\n\n📌 *Períodos adeudados:* ${summary.periodText}\n📋 *Detalle de la deuda:*\n${summary.breakdownText}`;
             if (formattedMsg.includes('Silakan lakukan pembayaran')) {
               formattedMsg = formattedMsg.replace('Silakan lakukan pembayaran', extraInfo + '\n\nSilakan lakukan pembayaran');
             } else {
@@ -797,7 +797,7 @@ function _handleUnsuspendInvoice(id, customer, wasSuspended, targetStatus) {
 
 async function activateCustomer(id, targetStatus = 'active') {
   const customer = getCustomerById(id);
-  if (!customer) throw new Error('Pelanggan tidak ditemukan');
+  if (!customer) throw new Error('Cliente no encontrado');
   
   const wasSuspended = (customer.status === 'suspended' || customer.status === 'isolated');
 
@@ -903,7 +903,7 @@ async function autoDeactivateOverdueCustomers(months = 3, actor = null) {
       if (waOn && c.phone) {
         try {
           {
-            const _def = '⚠️ *Layanan Dinonaktifkan*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nLayanan internet Anda untuk sementara kami *nonaktifkan* karena tagihan belum diselesaikan selama *{{bulan_nunggak}} bulan berturut-turut*.\n\nApabila bulan depan masih belum dibayar, akun Anda akan *DIHAPUS OTOMATIS* dan untuk berlangganan kembali harus *mendaftar dari awal*.\n\nBayar: {{link}}\n— {{company}}';
+            const _def = '⚠️ *Servicio dado de baja*\n\nEstimado/a *{{nama}}* (ID: {{id_pelanggan}}),\n\nSu servicio de internet fue *dado de baja* por registrar *{{bulan_nunggak}} meses* sin pagar.\n\nSi el mes próximo la deuda sigue pendiente, su cuenta será *ELIMINADA* y para volver a contratar deberá solicitar una nueva instalación.\n\nDetalle de su deuda: {{link}}\n— {{company}}';
             const _tpl = String(db.getAppSetting('whatsapp_deactivated_message', _def) || _def);
             const _msg = _tpl.replace(/{{nama}}/gi, c.name || 'Pelanggan').replace(/{{id_pelanggan}}/gi, c.customer_code || ('ID:' + c.id)).replace(/{{bulan_nunggak}}/gi, String(c.unpaid_streak || 0)).replace(/{{batas}}/gi, String(getSetting('auto_deactivate_months', 3) || 3)).replace(/{{link}}/gi, String(getSetting('public_base_url', '') || '').replace(/\/+$/, '') + '/customer').replace(/{{company}}/gi, getSetting('company_header', '') || '-');
             await waNotify.sendText(c.phone, _msg);
@@ -928,7 +928,7 @@ async function autoDeactivateOverdueCustomers(months = 3, actor = null) {
         logger.warn(`[AutoDelete] Menghapus pelanggan "${c.name}" (ID ${c.id}) — menunggak ${c.unpaid_streak} bulan berturut-turut (> ${m}).`);
         // Void dulu tagihan unpaid agar tidak menjadi 'piutang yatim'
         try { db.prepare("UPDATE invoices SET status='void', voided_at=NOW_LOCAL(), void_reason='Auto-hapus: menunggak > ? bulan' WHERE customer_id=? AND status='unpaid'").run(m, c.id); } catch (e) {}
-        if (waOn && c.phone) { try { const _def = '🗑️ *Akun Dihapus*\n\nYth. *{{nama}}*,\n\nAkun layanan internet Anda telah *DIHAPUS OTOMATIS* karena tagihan tidak dibayar *{{bulan_nunggak}} bulan berturut-turut*.\n\nUntuk berlangganan kembali, silakan *mendaftar dari awal*. Terima kasih.\n— {{company}}'; const _tpl = String(db.getAppSetting('whatsapp_deleted_message', _def) || _def); const _msg = _tpl.replace(/{{nama}}/gi, c.name || 'Pelanggan').replace(/{{id_pelanggan}}/gi, c.customer_code || ('ID:' + c.id)).replace(/{{bulan_nunggak}}/gi, String(c.unpaid_streak || 0)).replace(/{{company}}/gi, getSetting('company_header','') || '-'); await waNotify.sendText(c.phone, _msg); } catch (e) {} }
+        if (waOn && c.phone) { try { const _def = 'Estimado/a *{{nama}}*,\n\nSu cuenta de internet fue *eliminada* por registrar *{{bulan_nunggak}} meses* sin pagar.\n\nSi desea volver a contratar el servicio, deberá solicitar una nueva instalación.\n— {{company}}'; const _tpl = String(db.getAppSetting('whatsapp_deleted_message', _def) || _def); const _msg = _tpl.replace(/{{nama}}/gi, c.name || 'Pelanggan').replace(/{{id_pelanggan}}/gi, c.customer_code || ('ID:' + c.id)).replace(/{{bulan_nunggak}}/gi, String(c.unpaid_streak || 0)).replace(/{{company}}/gi, getSetting('company_header','') || '-'); await waNotify.sendText(c.phone, _msg); } catch (e) {} }
         await deleteCustomer(c.id);
         removed.push(c.name);
       } catch (e) {
@@ -941,8 +941,8 @@ async function autoDeactivateOverdueCustomers(months = 3, actor = null) {
   if (waOn && (processed > 0 || removed.length > 0)) {
     try {
       const parts = [];
-      if (processed) parts.push(`${processed} pelanggan NONAKTIF (menunggak ${m} bln)`);
-      if (removed.length) parts.push(`${removed.length} pelanggan DIHAPUS (menunggak > ${m} bln)`);
+      if (processed) parts.push(`${processed} clientes DADOS DE BAJA (${m} meses de deuda)`);
+      if (removed.length) parts.push(`${removed.length} clientes ELIMINADOS (más de ${m} meses de deuda)`);
       await waNotify.notifyAdmin(`📋 *Auto-Tunggakan*
 ${parts.join('; ')}.
 

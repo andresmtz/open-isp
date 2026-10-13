@@ -33,16 +33,16 @@ function getBaseAmount(inv) {
 
 function applyDiscountToInvoice(invoiceId, opts = {}, actor = null) {
   const invId = Number(invoiceId);
-  if (!invId) throw new Error('ID tagihan tidak valid');
+  if (!invId) throw new Error('ID de factura inválido');
 
   const inv = db.prepare('SELECT * FROM invoices WHERE id=?').get(invId);
-  if (!inv) throw new Error('Tagihan tidak ditemukan');
+  if (!inv) throw new Error('Factura no encontrada');
   if (inv.status === 'paid') throw new Error('Tagihan sudah lunas, tidak bisa didiskon');
   if (inv.status === 'void') throw new Error('Tagihan sudah dihanguskan');
 
   const type = opts.type === 'percent' ? 'percent' : 'amount';
   const value = Math.round(Number(opts.value) || 0);
-  if (value <= 0) throw new Error('Nilai diskon harus lebih dari 0');
+  if (value <= 0) throw new Error('El descuento debe ser mayor a 0');
   if (type === 'percent' && value > 100) throw new Error('Diskon persen maksimal 100%');
 
   const original = Number(inv.amount_before_discount || 0) > 0
@@ -67,7 +67,7 @@ function applyDiscountToInvoice(invoiceId, opts = {}, actor = null) {
     WHERE id = ? AND status = 'unpaid'
   `).run(newAmount, original, type, value, discountAmount, invId);
 
-  if (!res.changes) throw new Error('Gagal menerapkan diskon (status tagihan berubah)');
+  if (!res.changes) throw new Error('No se pudo aplicar el descuento (cambió el estado de la factura)');
 
   const actorName = (actor && (actor.name || actor.username)) || 'Admin';
   try {
@@ -111,15 +111,15 @@ function applyDiscountToInvoice(invoiceId, opts = {}, actor = null) {
 function applyDiscountBatch(opts = {}) {
   const pMonth = Number(opts.periodMonth) || 0;
   const pYear = Number(opts.periodYear) || 0;
-  if (!pMonth || pMonth < 1 || pMonth > 12) throw new Error('Bulan periode tidak valid');
-  if (!pYear) throw new Error('Tahun periode tidak valid');
+  if (!pMonth || pMonth < 1 || pMonth > 12) throw new Error('Mes del período inválido');
+  if (!pYear) throw new Error('Año del período inválido');
 
   let ids = Array.isArray(opts.customerIds) ? opts.customerIds.map(Number).filter(n => n > 0) : [];
   if (opts.all) {
     ids = db.prepare("SELECT id FROM customers WHERE status IN ('active','ditangguhkan') AND package_id IS NOT NULL").all().map(r => r.id);
   }
   ids = [...new Set(ids)];
-  if (!ids.length) throw new Error('Tidak ada pelanggan yang dipilih');
+  if (!ids.length) throw new Error('No se eligió ningún cliente');
 
   const findInv = db.prepare("SELECT id FROM invoices WHERE customer_id=? AND period_month=? AND period_year=? AND status='unpaid' LIMIT 1");
   const summary = { applied: [], skipped: [], totalDiscount: 0, totalCustomers: ids.length };

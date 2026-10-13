@@ -61,7 +61,7 @@ const uploadCustomer = multer({
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Hanya file gambar yang diperbolehkan (JPEG, PNG, GIF, WebP)'));
+      cb(new Error('Solo se permiten imágenes (JPEG, PNG, GIF, WebP)'));
     }
   }
 });
@@ -90,7 +90,7 @@ const uploadProof = multer({
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Hanya file gambar yang diperbolehkan (JPEG, PNG, WebP)'));
+      cb(new Error('Solo se permiten imágenes (JPEG, PNG, WebP)'));
     }
   }
 });
@@ -454,11 +454,11 @@ router.get('/qris/static.jpg', async (req, res) => {
     const baseUrl = getBaseUrl(req, getSettingsWithCache());
     const loginLink = `${baseUrl}/customer/login`;
     res.set('Content-Type', 'text/html; charset=utf-8');
-    return res.status(status).send(`<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font-family:system-ui,Segoe UI,Arial; margin:0; background:#0b1220; color:#e5e7eb} .wrap{max-width:520px;margin:0 auto;padding:24px} .card{background:#0f172a;border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:18px} h1{font-size:18px;margin:0 0 8px} p{margin:0 0 12px;color:#cbd5e1;line-height:1.45} a{display:inline-block;background:#1d4ed8;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px}</style></head><body><div class="wrap"><div class="card"><h1>${title}</h1><p>${detail || ''}</p><a href="${loginLink}">Buka Portal Pelanggan</a></div></div></body></html>`);
+    return res.status(status).send(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font-family:system-ui,Segoe UI,Arial; margin:0; background:#0b1220; color:#e5e7eb} .wrap{max-width:520px;margin:0 auto;padding:24px} .card{background:#0f172a;border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:18px} h1{font-size:18px;margin:0 0 8px} p{margin:0 0 12px;color:#cbd5e1;line-height:1.45} a{display:inline-block;background:#1d4ed8;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px}</style></head><body><div class="wrap"><div class="card"><h1>${title}</h1><p>${detail || ''}</p><a href="${loginLink}">Abrir portal del cliente</a></div></div></body></html>`);
   };
   try {
     const amount = Math.max(0, Math.floor(Number(req.query.amount || 0) || 0));
-    if (!amount) return sendPretty(400, 'Nominal belum ada', 'Tambahkan parameter amount, contoh: ?amount=3948');
+    if (!amount) return sendPretty(400, 'Todavía no hay monto', 'Tambahkan parameter amount, contoh: ?amount=3948');
     const settings = getSettingsWithCache();
 
     let payload = getStaticQrisPayload(settings);
@@ -491,15 +491,15 @@ router.get('/qris/static.jpg', async (req, res) => {
       return res.redirect(url);
     }
 
-    return sendPretty(404, 'QRIS tidak ditemukan', 'QRIS belum diatur oleh admin atau payload QRIS tidak valid.');
+    return sendPretty(404, 'QRIS tidak ditemukan', 'El administrador todavía no configuró el QR o el payload no es válido.');
   } catch {
-    return sendPretty(404, 'QRIS tidak ditemukan', 'Gagal memuat QRIS.');
+    return sendPretty(404, 'QRIS tidak ditemukan', 'No se pudo cargar el QR.');
   }
 });
 
 function ensureInvoiceQrisUnique(inv, force = false) {
   const invId = Number(inv?.id || 0);
-  if (!Number.isFinite(invId) || invId <= 0) throw new Error('Invoice ID tidak valid');
+  if (!Number.isFinite(invId) || invId <= 0) throw new Error('ID de factura inválido');
   if (String(inv?.status) !== 'unpaid') throw new Error('Hanya tagihan BELUM BAYAR yang bisa dibuat kode QRIS.');
 
   const custId = Number(inv?.customer_id || 0);
@@ -513,7 +513,7 @@ function ensureInvoiceQrisUnique(inv, force = false) {
     }
   }
 
-  if (!Number.isFinite(baseAmount) || baseAmount <= 0) throw new Error('Nominal tagihan tidak valid');
+  if (!Number.isFinite(baseAmount) || baseAmount <= 0) throw new Error('Monto de la factura inválido');
 
   const currentAmount = Number(inv?.qris_amount_unique || 0) || 0;
   const currentCode = Number(inv?.qris_unique_code || 0) || 0;
@@ -564,7 +564,7 @@ function ensureInvoiceQrisUnique(inv, force = false) {
     }
   }
 
-  if (!chosenAmount) throw new Error('Gagal membuat nominal unik (slot 1-999 penuh).');
+  if (!chosenAmount) throw new Error('No se pudo crear el monto único (los códigos 1-999 están ocupados).');
   update.run(chosenCode, chosenAmount, invId);
 
   return { uniqueCode: chosenCode, amountUnique: chosenAmount };
@@ -572,11 +572,11 @@ function ensureInvoiceQrisUnique(inv, force = false) {
 
 function ensureVoucherOrderQrisUnique(order, force = false) {
   const orderId = Number(order?.id || 0);
-  if (!Number.isFinite(orderId) || orderId <= 0) throw new Error('Order ID tidak valid');
+  if (!Number.isFinite(orderId) || orderId <= 0) throw new Error('ID de pedido inválido');
   if (String(order?.status) !== 'pending') throw new Error('Hanya pesanan PENDING yang bisa dibuat kode QRIS.');
 
   const baseAmount = Number(order?.price || 0);
-  if (!Number.isFinite(baseAmount) || baseAmount <= 0) throw new Error('Harga voucher tidak valid');
+  if (!Number.isFinite(baseAmount) || baseAmount <= 0) throw new Error('Precio de la ficha inválido');
 
   const currentAmount = Number(order?.qris_amount_unique || 0) || 0;
   const currentCode = Number(order?.qris_unique_code || 0) || 0;
@@ -615,7 +615,7 @@ function ensureVoucherOrderQrisUnique(order, force = false) {
     }
   }
 
-  if (!chosenAmount) throw new Error('Gagal membuat nominal unik (slot 1-999 penuh).');
+  if (!chosenAmount) throw new Error('No se pudo crear el monto único (los códigos 1-999 están ocupados).');
   update.run(chosenCode, chosenAmount, orderId);
 
   return { uniqueCode: chosenCode, amountUnique: chosenAmount };
@@ -890,7 +890,7 @@ router.get('/check-billing', async (req, res) => {
 let _voucherLastGoodProfiles = null;
 
 router.get('/voucher', async (req, res) => {
-    if (!voucherFeatureOn()) return res.redirect('/customer/login?err=' + encodeURIComponent('Fitur voucher sedang dinonaktifkan'));
+    if (!voucherFeatureOn()) return res.redirect('/customer/login?err=' + encodeURIComponent('La venta de fichas está desactivada'));
   const settings = getSettingsWithCache();
   const error = String(req.query.err || '').trim() || null;
   const info = String(req.query.info || '').trim() || null;
@@ -1150,18 +1150,18 @@ router.get('/voucher', async (req, res) => {
 });
 
 router.get('/voucher/qris/:orderId', async (req, res) => {
-    if (!voucherFeatureOn()) return res.redirect('/customer/login?err=' + encodeURIComponent('Fitur voucher sedang dinonaktifkan'));
+    if (!voucherFeatureOn()) return res.redirect('/customer/login?err=' + encodeURIComponent('La venta de fichas está desactivada'));
   const settings = getSettingsWithCache();
   const orderId = Number(req.params.orderId || 0);
   const secret = settings.session_secret || 'rahasia-portal-pelanggan-default-ganti-ini';
   const payload = verifyPublicToken(req.query.t, secret);
   if (!payload || Number(payload.voucherOrderId) !== orderId) {
-    return res.redirect('/customer/voucher?err=' + encodeURIComponent('Link voucher tidak valid atau sudah kadaluarsa'));
+    return res.redirect('/customer/voucher?err=' + encodeURIComponent('El enlace de la ficha no es válido o venció'));
   }
 
   try {
     const order = db.prepare('SELECT * FROM public_voucher_orders WHERE id = ?').get(orderId);
-    if (!order) throw new Error('Order tidak ditemukan');
+    if (!order) throw new Error('Pedido no encontrado');
     if (String(order.status) === 'fulfilled' && order.voucher_code) {
       return res.redirect('/customer/voucher?order=' + encodeURIComponent(String(orderId)) + '&t=' + encodeURIComponent(String(req.query.t || '')));
     }
@@ -1171,7 +1171,7 @@ router.get('/voucher/qris/:orderId', async (req, res) => {
 
     const { uniqueCode, amountUnique } = ensureVoucherOrderQrisUnique(order, false);
     const qrisQrUrl = await getStaticQrisQrUrlForAmount(settings, amountUnique);
-    if (!qrisQrUrl) throw new Error('QRIS statis belum diatur oleh admin');
+    if (!qrisQrUrl) throw new Error('El administrador todavía no configuró el QR estático');
     const adminWaDigits = getFirstAdminWaDigits(settings);
 
     return res.render('qris_static', {
@@ -1186,7 +1186,7 @@ router.get('/voucher/qris/:orderId', async (req, res) => {
       amountUnique,
       uniqueCode,
       qrisQrUrl,
-      helpText: 'Setelah transfer, sistem akan otomatis memproses voucher jika notifikasi masuk.',
+      helpText: 'Después de transferir, el sistema procesa la ficha automáticamente cuando llega la notificación.',
       adminWaDigits,
       publicToken: String(req.query.t || ''),
       proofUrl: String(order.proof_url || ''),
@@ -1198,7 +1198,7 @@ router.get('/voucher/qris/:orderId', async (req, res) => {
 });
 // API endpoint untuk cek status voucher order (untuk auto-polling di halaman QRIS)
 router.get('/voucher/status/:orderId', async (req, res) => {
-    if (!voucherFeatureOn()) return res.json({ success: false, status: 'disabled', message: 'Fitur voucher dinonaktifkan' });
+    if (!voucherFeatureOn()) return res.json({ success: false, status: 'disabled', message: 'La venta de fichas está desactivada' });
   const settings = getSettingsWithCache();
   const orderId = Number(req.params.orderId || 0);
   const secret = settings.session_secret || 'rahasia-portal-pelanggan-default-ganti-ini';
@@ -1211,7 +1211,7 @@ router.get('/voucher/status/:orderId', async (req, res) => {
   try {
     const order = db.prepare('SELECT id, status, voucher_code FROM public_voucher_orders WHERE id = ?').get(orderId);
     if (!order) {
-      return res.status(404).json({ error: 'Order tidak ditemukan', status: 'error' });
+      return res.status(404).json({ error: 'Pedido no encontrado', status: 'error' });
     }
 
     return res.json({
@@ -1227,16 +1227,16 @@ router.get('/voucher/status/:orderId', async (req, res) => {
 
 
 router.post('/public/voucher/create-payment', async (req, res) => {
-    if (!voucherFeatureOn()) return res.status(403).json({ success: false, message: 'Fitur voucher dinonaktifkan' });
+    if (!voucherFeatureOn()) return res.status(403).json({ success: false, message: 'La venta de fichas está desactivada' });
   const settings = getSettingsWithCache();
 
   const buyerPhone = normalizeBuyerPhone(req.body.buyer_phone);
   const profileName = String(req.body.profile_name || '').trim();
   const tosChecked = req.body.tos === 'on' || req.body.tos === '1' || req.body.tos === true || req.body.tos === 'true';
 
-  if (!buyerPhone) return res.redirect('/customer/voucher?err=' + encodeURIComponent('Nomor WhatsApp tidak valid'));
-  if (!profileName) return res.redirect('/customer/voucher?err=' + encodeURIComponent('Pilih paket voucher terlebih dahulu'));
-  if (!tosChecked) return res.redirect('/customer/voucher?err=' + encodeURIComponent('Harap centang persetujuan Syarat & Ketentuan (TOS) untuk melanjutkan.'));
+  if (!buyerPhone) return res.redirect('/customer/voucher?err=' + encodeURIComponent('Número de WhatsApp inválido'));
+  if (!profileName) return res.redirect('/customer/voucher?err=' + encodeURIComponent('Primero elija un plan de ficha'));
+  if (!tosChecked) return res.redirect('/customer/voucher?err=' + encodeURIComponent('Debe aceptar los Términos y condiciones para continuar.'));
 
   const getConfiguredVoucherPrice = (routerId, profileName) => {
     const rid = routerId === undefined ? null : routerId;
@@ -1358,8 +1358,8 @@ router.post('/public/voucher/create-payment', async (req, res) => {
     }
   }
 
-  if (!selected) return res.redirect('/customer/voucher?err=' + encodeURIComponent('Profile voucher tidak ditemukan'));
-  if (!Number.isFinite(selected.price) || selected.price <= 0) return res.redirect('/customer/voucher?err=' + encodeURIComponent('Harga voucher tidak valid'));
+  if (!selected) return res.redirect('/customer/voucher?err=' + encodeURIComponent('Perfil de ficha no encontrado'));
+  if (!Number.isFinite(selected.price) || selected.price <= 0) return res.redirect('/customer/voucher?err=' + encodeURIComponent('Precio de la ficha inválido'));
 
   try {
     const ins = db.prepare(`
@@ -1375,7 +1375,7 @@ router.post('/public/voucher/create-payment', async (req, res) => {
     let method = String(req.body.method || 'QRIS').toUpperCase();
     if (method === 'QRIS_STATIC') {
       const hasStaticQris = !!(getStaticQrisQrUrl(settings) || getStaticQrisPayload(settings));
-      if (!hasStaticQris) throw new Error('QRIS statis belum diatur oleh admin');
+      if (!hasStaticQris) throw new Error('El administrador todavía no configuró el QR estático');
 
       const orderRow = db.prepare('SELECT * FROM public_voucher_orders WHERE id=?').get(orderId);
       const { uniqueCode, amountUnique } = ensureVoucherOrderQrisUnique(orderRow, false);
@@ -1412,7 +1412,7 @@ router.post('/public/voucher/create-payment', async (req, res) => {
     }
 
     const gateway = resolveConfiguredGatewayForAmount(settings, selected.price);
-    if (!gateway) throw new Error('Payment gateway belum dikonfigurasi atau nominal terlalu kecil untuk gateway aktif');
+    if (!gateway) throw new Error('La pasarela de pago no está configurada o el monto es muy bajo para la pasarela activa');
     let tripayChannels = null;
     let tripayCandidates = null;
 
@@ -1479,7 +1479,7 @@ router.post('/public/voucher/create-payment', async (req, res) => {
       }
     }
 
-    if (!result.success) throw new Error(result.message || 'Gagal membuat transaksi');
+    if (!result.success) throw new Error(result.message || 'No se pudo crear la transacción');
 
     db.prepare(`
       UPDATE public_voucher_orders SET
@@ -1504,7 +1504,7 @@ router.post('/public/voucher/create-payment', async (req, res) => {
     return res.redirect(result.link);
   } catch (e) {
     logger.error('[PublicVoucher] Create payment error: ' + (e?.message || e));
-    return res.redirect('/customer/voucher?err=' + encodeURIComponent('Gagal membuat pembayaran. Silakan coba lagi.'));
+    return res.redirect('/customer/voucher?err=' + encodeURIComponent('No se pudo crear el pago. Intente de nuevo.'));
   }
 });
 
@@ -1521,7 +1521,7 @@ router.post('/register/validate-voucher', express.json(), (req, res) => {
     const code = String((req.body && req.body.code) || '').trim();
     const pkgId = (req.body && req.body.package_id) || '';
     const pkg = pkgId ? customerSvc.getPackageById(pkgId) : null;
-    if (!pkg) return res.json({ ok: false, discount: 0, message: 'Pilih paket dulu untuk cek voucher.' });
+    if (!pkg) return res.json({ ok: false, discount: 0, message: 'Primero elija un plan para validar el código.' });
     const bill = registrationService.computeBill(pkg.price, {});
     if (!code) return res.json({ ok: true, discount: 0, message: '' });
     const chk = voucherService.validate(code, bill.gross);
@@ -1542,23 +1542,23 @@ router.post('/register', async (req, res) => {
     const arr = (global.__regHits.get(_ip) || []).filter(function (t) { return now - t < win; });
     if (arr.length >= max) {
       const _rc = registrationService.computeBill(0);
-      return res.render('register', { error: (res.locals.t || function(k,d){return d;})('customer.register.err_ratelimit', 'Terlalu banyak pendaftaran dari jaringan ini. Silakan coba lagi beberapa menit lagi.'), success: null, settings, packages, regCalc: _rc, installFee: _rc.installFee });
+      return res.render('register', { error: (res.locals.t || function(k,d){return d;})('customer.register.err_ratelimit', 'Demasiadas solicitudes desde esta red. Intente de nuevo en unos minutos.'), success: null, settings, packages, regCalc: _rc, installFee: _rc.installFee });
     }
     arr.push(now); global.__regHits.set(_ip, arr);
   }
 
   try {
     if (!name || !phone || !address || !package_id) {
-      throw new Error((res.locals.t || function(k,d){return d;})('customer.register.err_required', 'Semua field wajib diisi.'));
+      throw new Error((res.locals.t || function(k,d){return d;})('customer.register.err_required', 'Todos los campos son obligatorios.'));
     }
     // Validasi nomor WhatsApp
     {
-      if (!regional.isValidPhone(phone)) throw new Error((res.locals.t || function(k,d){return d;})('customer.register.err_phone', 'Nomor WhatsApp tidak valid. Gunakan format 08xxxxxxxxxx.').replace(/08x+/g, regional.phoneExample()));
+      if (!regional.isValidPhone(phone)) throw new Error((res.locals.t || function(k,d){return d;})('customer.register.err_phone', 'Número de WhatsApp inválido. Use el formato 08xxxxxxxx.').replace(/08x+/g, regional.phoneExample()));
       phone = regional.toLocalPhone(phone);
     }
 
     const selectedPkg = packages.find(p => String(p.id) === String(package_id));
-    if (!selectedPkg) throw new Error((res.locals.t || function(k,d){return d;})('customer.register.err_pkg', 'Paket yang dipilih tidak ditemukan.'));
+    if (!selectedPkg) throw new Error((res.locals.t || function(k,d){return d;})('customer.register.err_pkg', 'No se encontró el plan elegido.'));
     const bill = registrationService.computeBill(selectedPkg.price, { voucherCode: voucher });
 
     // Buat pelanggan dengan status inactive (menunggu survei/pemasangan)
@@ -1572,7 +1572,7 @@ router.post('/register', async (req, res) => {
       lat: String(lat || '').trim(),
       lng: String(lng || '').trim(),
       status: 'inactive',
-      notes: 'Pendaftar Baru via Online'
+      notes: 'Inscripto en línea'
     });
     const newCustId = ins && ins.lastInsertRowid ? Number(ins.lastInsertRowid) : null;
     if (newCustId) {
@@ -1587,12 +1587,12 @@ router.post('/register', async (req, res) => {
     if (settings.whatsapp_enabled && settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers.length > 0) {
       const waNotify = require('../services/waNotifyService');
       const selectedPkg = packages.find(p => p.id.toString() === package_id.toString());
-      const pkgName = selectedPkg ? selectedPkg.name : 'Tidak diketahui';
+      const pkgName = selectedPkg ? selectedPkg.name : 'Desconocido';
       
-      const adminMsg = `🔔 *PENDAFTARAN BARU*\n\nAda calon pelanggan baru yang mendaftar via web:\n\n👤 *Nama:* ${name}\n📞 *WA:* ${phone}\n📍 *Alamat:* ${address}\n📦 *Paket:* ${pkgName}\n🎟️ *Voucher:* ${bill.voucherCode || '-'}\n💰 *Estimasi Bayar Awal:* ${regional.currencySymbol()} ${bill.total.toLocaleString(regional.locale())}\n\nSilakan cek di panel Admin untuk menindaklanjuti.`;
+      const adminMsg = `🔔 *NUEVA SOLICITUD DE INSTALACIÓN*\n\nUn nuevo interesado se registró desde la web:\n\n👤 *Nombre:* ${name}\n📞 *WhatsApp:* ${phone}\n📍 *Dirección:* ${address}\n📦 *Plan:* ${pkgName}\n🎟️ *Cupón:* ${bill.voucherCode || '-'}\n💰 *Pago inicial estimado:* ${regional.currencySymbol()} ${bill.total.toLocaleString(regional.locale())}\n\nRevisalo en el panel de administración.`;
       const latStr = String(lat || '').trim();
       const lngStr = String(lng || '').trim();
-      const mapLine = (latStr && lngStr) ? `\n🗺️ *Lokasi:* https://maps.google.com/?q=${encodeURIComponent(latStr)},${encodeURIComponent(lngStr)}` : '';
+      const mapLine = (latStr && lngStr) ? `\n🗺️ *Ubicación:* https://maps.google.com/?q=${encodeURIComponent(latStr)},${encodeURIComponent(lngStr)}` : '';
       const finalAdminMsg = adminMsg + mapLine;
       
       const seen = new Set();
@@ -1615,12 +1615,12 @@ router.post('/register', async (req, res) => {
         
         if (technicians.length > 0) {
           const selectedPkg = packages.find(p => p.id.toString() === package_id.toString());
-          const pkgName = selectedPkg ? selectedPkg.name : 'Tidak diketahui';
+          const pkgName = selectedPkg ? selectedPkg.name : 'Desconocido';
           
-          const techMsg = `🔧 *PENDAFTARAN BARU - PERLU SURVEI*\n\nAda calon pelanggan baru yang perlu disurvei:\n\n👤 *Nama:* ${name}\n📞 *WA:* ${phone}\n📍 *Alamat:* ${address}\n📦 *Paket:* ${pkgName}\n\nSilakan koordinasi dengan admin untuk jadwal survei.`;
+          const techMsg = `🔧 *NUEVA SOLICITUD — REQUIERE VISITA*\n\nUn nuevo interesado necesita una visita técnica:\n\n👤 *Nombre:* ${name}\n📞 *WhatsApp:* ${phone}\n📍 *Dirección:* ${address}\n📦 *Plan:* ${pkgName}\n\nCoordiná la fecha de visita con la administración.`;
           const latStr = String(lat || '').trim();
           const lngStr = String(lng || '').trim();
-          const mapLine = (latStr && lngStr) ? `\n🗺️ *Lokasi:* https://maps.google.com/?q=${encodeURIComponent(latStr)},${encodeURIComponent(lngStr)}` : '';
+          const mapLine = (latStr && lngStr) ? `\n🗺️ *Ubicación:* https://maps.google.com/?q=${encodeURIComponent(latStr)},${encodeURIComponent(lngStr)}` : '';
           const finalTechMsg = techMsg + mapLine;
           
           const seenTech = new Set();
@@ -1638,7 +1638,7 @@ router.post('/register', async (req, res) => {
 
     let _newCust = null; try { _newCust = newCustId ? customerSvc.getCustomerById(newCustId) : null; } catch (e) {}
     const _rcOk = registrationService.computeBill(0);
-    res.render('register', { error: null, success: (res.locals.t || function(k,d){return d;})('customer.register.success', 'Pendaftaran berhasil! Tim kami akan segera menghubungi Anda melalui WhatsApp.'), settings, packages, newCustomer: _newCust, bill: bill, regCalc: _rcOk, installFee: _rcOk.installFee });
+    res.render('register', { error: null, success: (res.locals.t || function(k,d){return d;})('customer.register.success', '¡Solicitud enviada! Nuestro equipo se comunicará con usted por WhatsApp a la brevedad.'), settings, packages, newCustomer: _newCust, bill: bill, regCalc: _rcOk, installFee: _rcOk.installFee });
   } catch (err) {
     const _rcErr = registrationService.computeBill(0);
     res.render('register', { error: err.message, success: null, settings, packages, regCalc: _rcErr, installFee: _rcErr.installFee });
@@ -1656,7 +1656,7 @@ router.post('/login', loginRateLimiter, async (req, res) => {
   const isPhone = /^\+?\d[\d\s.\-]*$/.test(idRaw) && idRaw.replace(/\D/g, '').length >= 10;
   if (!isCode && !isPhone) {
     const packages = customerSvc.getAllPackages().filter(p => p.is_active !== 0);
-    return res.render('login', { error: 'Masukkan ID Pelanggan (cth: SKY-48213) atau Nomor WhatsApp (08xxxxxxxxxx).', settings, packages });
+    return res.render('login', { error: 'Ingrese su ID de cliente o su número de WhatsApp (08xxxxxxxx).', settings, packages });
   }
 
   let device = null;
@@ -1731,7 +1731,7 @@ router.post('/login', loginRateLimiter, async (req, res) => {
     logger.warn('[Login] Gagal: pelanggan tidak ditemukan.');
     const packages = customerSvc.getAllPackages().filter(p => p.is_active !== 0);
     return res.render('login', {
-      error: 'Data pelanggan tidak ditemukan. Pastikan nomor WhatsApp sudah benar.',
+      error: 'No se encontró el cliente. Verifique el número de WhatsApp.',
       settings,
       packages
     });
@@ -1765,14 +1765,14 @@ router.post('/login', loginRateLimiter, async (req, res) => {
         const waNotify = require('../services/waNotifyService');
         
         if (!(await waNotify.isConnected())) {
-          throw new Error('Sistem WhatsApp sedang tidak aktif. Silakan hubungi Admin.');
+          throw new Error('El sistema de WhatsApp no está activo. Comuníquese con la administración.');
         }
 
-        const msg = `🔐 Kode OTP Anda: *${otp}*\n\nBerlaku 10 menit. Jangan bagikan kode ini ke siapa pun.`;
+        const msg = `🔐 Su código de ingreso es: *${otp}*\n\nVálido por 10 minutos. No comparta este código con nadie.`;
         const sent = await waNotify.sendText(customerPhone, msg);
         
         if (!sent) {
-          throw new Error('Gagal mengirim kode OTP melalui WhatsApp. Pastikan nomor Anda terdaftar di WhatsApp.');
+          throw new Error('No se pudo enviar el código por WhatsApp. Verifique que su número tenga WhatsApp.');
         }
 
         logger.info('[Login] OTP dikirim via WhatsApp.');
@@ -1816,7 +1816,7 @@ router.post('/login-otp', loginRateLimiter, (req, res) => {
   if (Date.now() > pending.expiry) {
     delete req.session.pending_login;
     const packages = customerSvc.getAllPackages().filter(p => p.is_active !== 0);
-    return res.render('login', { error: 'Kode OTP telah kadaluarsa. Silakan login kembali.', settings, packages });
+    return res.render('login', { error: 'El código venció. Vuelva a ingresar.', settings, packages });
   }
 
   if (otp === pending.otp) {
@@ -1830,7 +1830,7 @@ router.post('/login-otp', loginRateLimiter, (req, res) => {
     }
     return res.redirect('/customer/dashboard');
   } else {
-    return res.render('login_otp', { error: 'Kode OTP salah. Silakan coba lagi.', settings, phone: pending.phone });
+    return res.render('login_otp', { error: 'Código incorrecto. Intente de nuevo.', settings, phone: pending.phone });
   }
 });
 
@@ -1983,7 +1983,7 @@ router.get('/dashboard', async (req, res) => {
   const _isolirText = _unpaid ? _isolirOf(_unpaid.period_year, _unpaid.period_month)
     : (_paid[0] ? _isolirOf(_paid[0].period_year, (_paid[0].period_month || 1) + 1) : _isolirOf(_now.getFullYear(), _now.getMonth() + 1));
   let _bill = null, _detail = { name: _pkgName + (_speedDown !== '-' ? ' (' + _speedDown + ' Mbps)' : ''), period: '-', status: _t('pwa.home.paid','Lunas'), paid: true, amount: _fmt(0) };
-  let _activeDaysText = _statusActive ? _t('common.active','Aktif') : _t('common.inactive','Tidak aktif'), _activePct = _statusActive ? 100 : 0;
+  let _activeDaysText = _statusActive ? _t('common.active','Aktif') : _t('common.inactive','Inactivo'), _activePct = _statusActive ? 100 : 0;
   if (_unpaid) {
     const _due = _unpaid.due_date ? new Date(_unpaid.due_date) : null;
     const _uniqCode = Number(_unpaid.qris_unique_code || 0);
@@ -1992,8 +1992,8 @@ router.get('/dashboard', async (req, res) => {
       id: _unpaid.id,
       label: _t('pwa.r.bill_prefix','Tagihan') + ' ' + _periodLabel(_unpaid),
       amount: _fmt(_unpaid.amount),
-      metaText: _t('pwa.r.unpaid','Belum dibayar') + (_due ? ' · ' + _t('pwa.r.due_short','jatuh') + ' ' + _due.getDate() + ' ' + _mNames[_due.getMonth()] : ''),
-      dueFull: _due ? (_t('pwa.r.due_full','Jatuh Tempo:') + ' ' + _due.getDate() + ' ' + _mNames[_due.getMonth()] + ' ' + _due.getFullYear()) : _t('pwa.r.waiting','Menunggu pembayaran'),
+      metaText: _t('pwa.r.unpaid','Sin pagar') + (_due ? ' · ' + _t('pwa.r.due_short','jatuh') + ' ' + _due.getDate() + ' ' + _mNames[_due.getMonth()] : ''),
+      dueFull: _due ? (_t('pwa.r.due_full','Jatuh Tempo:') + ' ' + _due.getDate() + ' ' + _mNames[_due.getMonth()] + ' ' + _due.getFullYear()) : _t('pwa.r.waiting','Esperando pago'),
       overdue: _due ? (_due < _now) : false,
       isolirText: _isolirText,
       amountUnique: _fmt(_uniqAmt),
@@ -2002,7 +2002,7 @@ router.get('/dashboard', async (req, res) => {
     _detail = { name: _pkgName + (_speedDown !== '-' ? ' (' + _speedDown + ' Mbps)' : ''), period: '1 - ' + new Date(_unpaid.period_year, _unpaid.period_month, 0).getDate() + ' ' + _periodLabel(_unpaid), status: _t('pwa.r.pending','Menunggu Pembayaran'), paid: false, amount: _fmt(_unpaid.amount) };
     if (_due) {
       const _dl = Math.ceil((_due - _now) / 86400000);
-      _activeDaysText = _dl > 0 ? (_dl + ' ' + _t('pwa.r.days_left','hari tersisa')) : (_t('pwa.r.over','Lewat') + ' ' + Math.abs(_dl) + ' ' + _t('pwa.r.days','hari'));
+      _activeDaysText = _dl > 0 ? (_dl + ' ' + _t('pwa.r.days_left','días restantes')) : (_t('pwa.r.over','Lewat') + ' ' + Math.abs(_dl) + ' ' + _t('pwa.r.days','hari'));
       _activePct = Math.max(0, Math.min(100, Math.round((1 - Math.max(0, _dl) / 30) * 100)));
     }
   } else if (_paid[0]) {
@@ -2021,11 +2021,11 @@ router.get('/dashboard', async (req, res) => {
   }));
   const _notice = (res.locals && res.locals.serviceNotice) || { active: false, mode: 'NORMAL', label: 'Normal', text: '' };
   const _notifs = [];
-  if (_notice.active) _notifs.push({ type: 'warning', title: _notice.label || _t('pwa.r.net_info','Info Jaringan'), message: (_notice.text || '') + (_notice.estimateText ? (' ' + _t('common.estimated_done','Estimasi selesai') + ': ' + _notice.estimateText) : ''), time: _t('pwa.r.service_info','Info Layanan') });
-  _paid.slice(0, 3).forEach(inv => _notifs.push({ type: 'payment', title: _t('pwa.r.payment_success','Pelunasan Tagihan Berhasil'), message: _t('pwa.r.bill_prefix','Tagihan') + ' ' + _periodLabel(inv) + ' ' + _t('pwa.r.amount_of','sebesar') + ' ' + _fmt(inv.amount) + ' ' + _t('pwa.r.has_paid','telah LUNAS.'), time: _t('pwa.r.system_confirmed','Terkonfirmasi Sistem') }));
-  if (_unpaid) _notifs.push({ type: 'warning', title: _t('pwa.r.monthly_reminder','Pengingat Tagihan Bulanan'), message: _t('pwa.r.bill_prefix','Tagihan') + ' ' + _periodLabel(_unpaid) + ' ' + _t('pwa.r.amount_of','sebesar') + ' ' + _fmt(_unpaid.amount) + ' ' + _t('pwa.r.awaiting','menunggu pembayaran.'), time: _t('pwa.r.due','Jatuh Tempo') });
+  if (_notice.active) _notifs.push({ type: 'warning', title: _notice.label || _t('pwa.r.net_info','Info Jaringan'), message: (_notice.text || '') + (_notice.estimateText ? (' ' + _t('common.estimated_done','Finalización estimada') + ': ' + _notice.estimateText) : ''), time: _t('pwa.r.service_info','Información del servicio') });
+  _paid.slice(0, 3).forEach(inv => _notifs.push({ type: 'payment', title: _t('pwa.r.payment_success','Pago recibido'), message: _t('pwa.r.bill_prefix','Tagihan') + ' ' + _periodLabel(inv) + ' ' + _t('pwa.r.amount_of','sebesar') + ' ' + _fmt(inv.amount) + ' ' + _t('pwa.r.has_paid','quedó PAGADA.'), time: _t('pwa.r.system_confirmed','Confirmado por el sistema') }));
+  if (_unpaid) _notifs.push({ type: 'warning', title: _t('pwa.r.monthly_reminder','Recordatorio de factura mensual'), message: _t('pwa.r.bill_prefix','Tagihan') + ' ' + _periodLabel(_unpaid) + ' ' + _t('pwa.r.amount_of','sebesar') + ' ' + _fmt(_unpaid.amount) + ' ' + _t('pwa.r.awaiting','está pendiente de pago.'), time: _t('pwa.r.due','Jatuh Tempo') });
   const __portal = {
-    title: _t('pwa.title','Portal Pelanggan'),
+    title: _t('pwa.title','Portal del cliente'),
     company: (settings && settings.company_header) || 'OPEN-ISP',
     name: _name, initials: _initials, code: _code, packageName: _pkgName,
     speedDown: _speedDown, speedUp: _speedUp,
@@ -2319,12 +2319,12 @@ router.get('/api/pppoe-traffic', async (req, res) => {
 router.post('/change-ssid', async (req, res) => {
   const wantsJson = String(req.headers['x-requested-with'] || '').toLowerCase().includes('fetch');
   const loginId = String(req.session?.phone ?? '').replace(/[\r\n\t]+/g, '').trim();
-  if (!loginId) return wantsJson ? res.status(401).json({ ok: false, message: 'Sesi berakhir. Silakan login ulang.' }) : res.redirect('/customer/login');
+  if (!loginId) return wantsJson ? res.status(401).json({ ok: false, message: 'La sesión venció. Vuelva a ingresar.' }) : res.redirect('/customer/login');
   const { ssid } = req.body;
   const ssidClean = String(ssid ?? '').replace(/[\r\n\t]+/g, '').trim();
   if (!ssidClean) {
-    req.session._msg = { type: 'danger', text: 'Nama WiFi (SSID) tidak boleh kosong.' };
-    return wantsJson ? res.json({ ok: false, message: 'Nama WiFi (SSID) tidak boleh kosong.' }) : res.redirect('/customer/dashboard');
+    req.session._msg = { type: 'danger', text: 'El nombre del WiFi (SSID) no puede quedar vacío.' };
+    return wantsJson ? res.json({ ok: false, message: 'El nombre del WiFi (SSID) no puede quedar vacío.' }) : res.redirect('/customer/dashboard');
   }
   const profile = findCustomerProfileByLoginId(loginId);
   const cdKey = profile ? ('c' + profile.id) : ('l' + loginId);
@@ -2333,7 +2333,7 @@ router.post('/change-ssid', async (req, res) => {
   const remainMs = COOLDOWN_MS - (Date.now() - lastChange);
   if (lastChange && remainMs > 0) {
     const mins = Math.max(1, Math.ceil(remainMs / 60000));
-    const cdMsg = 'Mohon tunggu ' + mins + ' menit lagi sebelum mengganti nama WiFi (mencegah spam ke server).';
+    const cdMsg = 'Espere' + mins + ' minutos antes de volver a cambiar el nombre del WiFi (evita saturar el servidor).';
     req.session._msg = { type: 'danger', text: cdMsg };
     return wantsJson
       ? res.status(429).json({ ok: false, cooldown: true, retryAfter: Math.ceil(remainMs / 1000), message: cdMsg })
@@ -2348,8 +2348,8 @@ router.post('/change-ssid', async (req, res) => {
   if (ok) ssidChangeCooldown.set(cdKey, Date.now());
   
   req.session._msg = ok 
-    ? { type: 'success', text: 'Nama WiFi berhasil dikirim. Perubahan aktif dalam 1-5 menit.' }
-    : { type: 'danger', text: 'Gagal mengubah SSID.' };
+    ? { type: 'success', text: 'Nombre del WiFi enviado. El cambio se aplica en 1 a 5 minutos.' }
+    : { type: 'danger', text: 'No se pudo cambiar el SSID.' };
 
   // Kirim notifikasi WhatsApp ke pelanggan
   if (ok) {
@@ -2360,13 +2360,13 @@ router.post('/change-ssid', async (req, res) => {
           const waNotify = require('../services/waNotifyService');
           if (true) {
             const now = getNowLocal();
-            const msg = `\ud83d\udcf6 *PERUBAHAN SSID WIFI*\n\n` +
-              `\ud83d\udc64 *Pelanggan:* ${profile.name}\n` +
-              `\ud83d\udd52 *Waktu:* ${now}\n\n` +
-              `SSID WiFi Anda sudah diperbarui menjadi:\n` +
+            const msg = `📶 *CAMBIO DE NOMBRE DEL WIFI*\n\n` +
+              `👤 *Cliente:* ${profile.name}\n` +
+              `🕒 *Fecha:* ${now}\n\n` +
+              `El nombre (SSID) de su WiFi ahora es:\n` +
               `\ud83d\udce1 *${ssid}*\n\n` +
-              `Silakan pilih SSID baru di perangkat Anda untuk terhubung.\n` +
-              `\u26a0\ufe0f Jangan bagikan info ini ke orang lain.`;
+              `Seleccione la nueva red en sus dispositivos para conectarse.\n` +
+              `⚠️ No comparta esta información.`;
             await waNotify.sendText(profile.phone, msg);
           }
         }
@@ -2374,19 +2374,19 @@ router.post('/change-ssid', async (req, res) => {
     } catch (e) { /* ignore WA notification errors */ }
   }
 
-  if (wantsJson) return res.json({ ok: ok, cooldown: false, retryAfter: ok ? 300 : 0, message: ok ? 'Nama WiFi berhasil dikirim. Perubahan aktif dalam 1-5 menit. Mohon tunggu dan jangan ulangi agar tidak membebani server.' : 'Gagal mengubah SSID. Perangkat mungkin offline atau sedang sibuk, silakan coba lagi.' });
+  if (wantsJson) return res.json({ ok: ok, cooldown: false, retryAfter: ok ? 300 : 0, message: ok ? 'Nombre del WiFi enviado. El cambio se aplica en 1 a 5 minutos. Espere y no repita la solicitud.' : 'No se pudo cambiar el SSID. El equipo puede estar desconectado u ocupado; intente de nuevo.' });
   res.redirect('/customer/dashboard');
 });
 
 router.post('/change-password', async (req, res) => {
   const wantsJson = String(req.headers['x-requested-with'] || '').toLowerCase().includes('fetch');
   const loginId = String(req.session?.phone ?? '').replace(/[\r\n\t]+/g, '').trim();
-  if (!loginId) return wantsJson ? res.status(401).json({ ok: false, message: 'Sesi berakhir. Silakan login ulang.' }) : res.redirect('/customer/login');
+  if (!loginId) return wantsJson ? res.status(401).json({ ok: false, message: 'La sesión venció. Vuelva a ingresar.' }) : res.redirect('/customer/login');
   const passwordRaw = req.body ? req.body.password : '';
   const password = String(passwordRaw ?? '').replace(/[\r\n\t]+/g, '').trim();
   if (password.length < 8) {
-    req.session._msg = { type: 'danger', text: 'Gagal mengubah password. Pastikan minimal 8 karakter.' };
-    return wantsJson ? res.json({ ok: false, message: 'Gagal mengubah password. Pastikan minimal 8 karakter.' }) : res.redirect('/customer/dashboard');
+    req.session._msg = { type: 'danger', text: 'No se pudo cambiar la contraseña. Debe tener al menos 8 caracteres.' };
+    return wantsJson ? res.json({ ok: false, message: 'No se pudo cambiar la contraseña. Debe tener al menos 8 caracteres.' }) : res.redirect('/customer/dashboard');
   }
 
   const profile = findCustomerProfileByLoginId(loginId);
@@ -2405,8 +2405,8 @@ router.post('/change-password', async (req, res) => {
   }
 
   req.session._msg = ok
-    ? { type: 'success', text: 'Password WiFi berhasil diubah.' }
-    : { type: 'danger', text: 'Gagal mengubah password. Perangkat mungkin offline atau sedang sibuk, silakan coba lagi.' };
+    ? { type: 'success', text: 'Contraseña del WiFi cambiada.' }
+    : { type: 'danger', text: 'No se pudo cambiar la contraseña. El equipo puede estar desconectado u ocupado; intente de nuevo.' };
 
   // Kirim notifikasi WhatsApp ke pelanggan
   if (ok) {
@@ -2417,13 +2417,13 @@ router.post('/change-password', async (req, res) => {
           const waNotify = require('../services/waNotifyService');
           if (true) {
             const now = getNowLocal();
-            const msg = `\ud83d\udd11 *PERUBAHAN PASSWORD WIFI*\n\n` +
-              `\ud83d\udc64 *Pelanggan:* ${profile.name}\n` +
-              `\ud83d\udd52 *Waktu:* ${now}\n\n` +
-              `Password WiFi Anda sudah diperbarui menjadi:\n` +
+            const msg = `🔑 *CAMBIO DE CONTRASEÑA DEL WIFI*\n\n` +
+              `👤 *Cliente:* ${profile.name}\n` +
+              `🕒 *Fecha:* ${now}\n\n` +
+              `La contraseña de su WiFi ahora es:\n` +
               `\ud83d\udd10 *${password}*\n\n` +
-              `Silakan gunakan password baru untuk terhubung.\n` +
-              `\u26a0\ufe0f Jangan bagikan password ini ke orang lain.`;
+              `Use la nueva contraseña para conectarse.\n` +
+              `⚠️ No comparta esta contraseña.`;
             await waNotify.sendText(profile.phone, msg);
           }
         }
@@ -2431,7 +2431,7 @@ router.post('/change-password', async (req, res) => {
     } catch (e) { /* ignore WA notification errors */ }
   }
 
-  if (wantsJson) return res.json({ ok: ok, message: ok ? 'Password WiFi berhasil diubah.' : 'Gagal mengubah password. Perangkat mungkin offline atau sedang sibuk, silakan coba lagi.' });
+  if (wantsJson) return res.json({ ok: ok, message: ok ? 'Contraseña del WiFi cambiada.' : 'No se pudo cambiar la contraseña. El equipo puede estar desconectado u ocupado; intente de nuevo.' });
   res.redirect('/customer/dashboard');
 });
 
@@ -2441,8 +2441,8 @@ router.post('/reboot', async (req, res) => {
   const r = await requestReboot(phone);
   
   req.session._msg = r.ok
-    ? { type: 'success', text: 'Perangkat berhasil direboot. Silakan tunggu beberapa menit.' }
-    : { type: 'danger', text: r.message || 'Gagal reboot.' };
+    ? { type: 'success', text: 'Equipo reiniciado. Espere unos minutos.' }
+    : { type: 'danger', text: r.message || 'No se pudo reiniciar.' };
 
   res.redirect('/customer/dashboard');
 });
@@ -2470,7 +2470,7 @@ router.post('/api/device/refresh', async (req, res) => {
   }
 
   if (!result) {
-    result = { ok: false, message: 'Perangkat tidak ditemukan.' };
+    result = { ok: false, message: 'Equipo no encontrado.' };
   }
 
   return res.json(result);
@@ -2493,7 +2493,7 @@ router.get('/api/device/sync-status', async (req, res) => {
   }
 
   if (!deviceData) {
-    return res.json({ ok: false, found: false, message: 'Perangkat tidak ditemukan.' });
+    return res.json({ ok: false, found: false, message: 'Equipo no encontrado.' });
   }
 
   return res.json({
@@ -2528,7 +2528,7 @@ router.post('/change-tag', async (req, res) => {
       settings,
       paymentChannels: [],
       connectedUsers: data ? data.connectedUsers : [],
-      notif: dashboardNotif('ID/Tag baru tidak boleh kosong atau sama dengan yang lama.', 'warning')
+      notif: dashboardNotif('El nuevo ID/etiqueta no puede quedar vacío ni ser igual al anterior.', 'warning')
     });
   }
   const tagResult = await updateCustomerTag(oldTag, newTag);
@@ -2538,7 +2538,7 @@ router.post('/change-tag', async (req, res) => {
   if (tagResult.ok) {
     req.session.phone = newTag;
     resolvedPhone = newTag;
-    notif = dashboardNotif('ID/Tag berhasil diubah.', 'success');
+    notif = dashboardNotif('ID/etiqueta actualizado.', 'success');
     
     // UPDATE DATABASE SQLITE IF MATCHING PROFILE FOUND
     const profileToUpdate = customerSvc.getAllCustomers().find(c => {
@@ -2559,7 +2559,7 @@ router.post('/change-tag', async (req, res) => {
       }
     }
   } else {
-    notif = dashboardNotif(tagResult.message || 'Gagal mengubah ID/Tag pelanggan.', 'danger');
+    notif = dashboardNotif(tagResult.message || 'No se pudo cambiar el ID/etiqueta del cliente.', 'danger');
   }
   const deviceData = await getCustomerDeviceData(resolvedPhone);
   let searchToken = resolvedPhone;
@@ -2596,16 +2596,16 @@ router.post('/logout', (req, res) => {
 router.get('/invoice/:id/pdf', async (req, res) => {
   try {
     const inv = billingSvc.getInvoiceById(req.params.id);
-    if (!inv) return res.status(404).send('Invoice tidak ditemukan');
+    if (!inv) return res.status(404).send('Factura no encontrada');
 
     const _sessProf = (req.session && req.session.phone) ? findCustomerProfileByLoginId(req.session.phone) : null;
     const sessionCustId = _sessProf ? Number(_sessProf.id) : 0;
     if (sessionCustId > 0 && Number(inv.customer_id) !== sessionCustId) {
-      return res.status(403).send('Akses ditolak');
+      return res.status(403).send('Acceso denegado');
     }
 
     const customer = customerSvc.getCustomerById(inv.customer_id);
-    if (!customer) return res.status(404).send('Data pelanggan tidak ditemukan');
+    if (!customer) return res.status(404).send('Cliente no encontrado');
 
     const settings = getSettingsWithCache();
     const pdfBuffer = await pdfSvc.generateInvoicePdfBuffer(inv, customer, settings);
@@ -2621,7 +2621,7 @@ router.get('/invoice/:id/pdf', async (req, res) => {
     return res.send(pdfBuffer);
   } catch (err) {
     logger.error(`[Customer PDF Download] Error: ${err.message}`);
-    return res.status(500).send('Gagal generate PDF invoice: ' + err.message);
+    return res.status(500).send('No se pudo generar el PDF de la factura:' + err.message);
   }
 });
 
@@ -2629,17 +2629,17 @@ router.get('/invoice/:id/pdf', async (req, res) => {
 router.post('/invoice/:id/send-pdf-wa', async (req, res) => {
   try {
     const inv = billingSvc.getInvoiceById(req.params.id);
-    if (!inv) return res.status(404).json({ ok: false, message: 'Tagihan tidak ditemukan.' });
+    if (!inv) return res.status(404).json({ ok: false, message: 'Factura no encontrada.' });
 
     const _sessProf = (req.session && req.session.phone) ? findCustomerProfileByLoginId(req.session.phone) : null;
     const sessionCustId = _sessProf ? Number(_sessProf.id) : 0;
     if (sessionCustId > 0 && Number(inv.customer_id) !== sessionCustId) {
-      return res.status(403).json({ ok: false, message: 'Akses ditolak.' });
+      return res.status(403).json({ ok: false, message: 'Acceso denegado.' });
     }
 
     const customer = customerSvc.getCustomerById(inv.customer_id);
     if (!customer || !customer.phone) {
-      return res.status(400).json({ ok: false, message: 'Nomor WhatsApp pelanggan tidak tersedia.' });
+      return res.status(400).json({ ok: false, message: 'El cliente no tiene número de WhatsApp.' });
     }
 
     const settings = getSettingsWithCache();
@@ -2649,33 +2649,33 @@ router.post('/invoice/:id/send-pdf-wa', async (req, res) => {
     const pdfBuffer = await pdfSvc.generateInvoicePdfBuffer(inv, customer, settings);
     const filename = `Invoice_INV-${String(inv.id).padStart(4, '0')}.pdf`;
     const isPaid = inv.status === 'paid';
-    const caption = `📄 *INVOICE ${isPaid ? '(LUNAS)' : '(TAGIHAN)'}*\n` +
-      `Periode: ${inv.period_month}/${inv.period_year}\n` +
+    const caption = `📄 *FACTURA ${isPaid ? '(PAGADA)' : '(PENDIENTE)'}*\n` +
+      `Período: ${inv.period_month}/${inv.period_year}\n` +
       `Total: ${regional.currencySymbol()} ${Number(inv.amount || 0).toLocaleString(regional.locale())}\n` +
-      `Status: *${isPaid ? 'LUNAS' : 'BELUM BAYAR'}*\n\n` +
-      `Terima kasih.\n— ${settings.company_header || 'OPEN-ISP'}`;
+      `Estado: *${isPaid ? 'PAGADA' : 'PENDIENTE'}*\n\n` +
+      `Gracias.\n— ${settings.company_header || 'OPEN-ISP'}`;
 
     const ok = await waNotify.sendDocument(customer.phone, pdfBuffer, filename, caption);
-    return res.json({ ok: !!ok, message: ok ? 'Invoice dikirim ke WhatsApp Anda.' : 'Gagal mengirim invoice. Coba lagi.' });
+    return res.json({ ok: !!ok, message: ok ? 'Factura enviada a su WhatsApp.' : 'No se pudo enviar la factura. Intente de nuevo.' });
   } catch (err) {
     logger.error(`[Customer Send PDF WA] Error: ${err.message}`);
-    return res.status(500).json({ ok: false, message: 'Gagal mengirim invoice: ' + err.message });
+    return res.status(500).json({ ok: false, message: 'No se pudo enviar la factura:' + err.message });
   }
 });
 
 router.get('/invoice/:id/print', async (req, res) => {
   try {
     const inv = billingSvc.getInvoiceById(req.params.id);
-    if (!inv) return res.status(404).send('Invoice tidak ditemukan');
+    if (!inv) return res.status(404).send('Factura no encontrada');
 
     const _sessProf = (req.session && req.session.phone) ? findCustomerProfileByLoginId(req.session.phone) : null;
     const sessionCustId = _sessProf ? Number(_sessProf.id) : 0;
     if (sessionCustId > 0 && Number(inv.customer_id) !== sessionCustId) {
-      return res.status(403).send('Akses ditolak');
+      return res.status(403).send('Acceso denegado');
     }
 
     const customer = customerSvc.getCustomerById(inv.customer_id);
-    if (!customer) return res.status(404).send('Data pelanggan tidak ditemukan');
+    if (!customer) return res.status(404).send('Cliente no encontrado');
 
     const settings = getSettingsWithCache();
     return res.render('admin/print_invoice', {
@@ -2691,23 +2691,23 @@ router.get('/invoice/:id/print', async (req, res) => {
     });
   } catch (err) {
     logger.error(`[Customer Print Invoice] Error: ${err.message}`);
-    return res.status(500).send('Gagal memuat invoice: ' + err.message);
+    return res.status(500).send('No se pudo cargar la factura:' + err.message);
   }
 });
 
 router.get('/invoice/:id/print-thermal', async (req, res) => {
   try {
     const inv = billingSvc.getInvoiceById(req.params.id);
-    if (!inv) return res.status(404).send('Invoice tidak ditemukan');
+    if (!inv) return res.status(404).send('Factura no encontrada');
 
     const _sessProf = (req.session && req.session.phone) ? findCustomerProfileByLoginId(req.session.phone) : null;
     const sessionCustId = _sessProf ? Number(_sessProf.id) : 0;
     if (sessionCustId > 0 && Number(inv.customer_id) !== sessionCustId) {
-      return res.status(403).send('Akses ditolak');
+      return res.status(403).send('Acceso denegado');
     }
 
     const customer = customerSvc.getCustomerById(inv.customer_id);
-    if (!customer) return res.status(404).send('Data pelanggan tidak ditemukan');
+    if (!customer) return res.status(404).send('Cliente no encontrado');
 
     const settings = getSettingsWithCache();
     return res.render('collector/print_thermal', {
@@ -2715,14 +2715,14 @@ router.get('/invoice/:id/print-thermal', async (req, res) => {
       customer,
       company: settings.company_header || 'OPEN-ISP',
       settings,
-      collectorName: 'Portal Pelanggan',
+      collectorName: 'Portal del cliente',
       formatDateLocal,
       formatTimeLocal,
       getNowLocal
     });
   } catch (err) {
     logger.error(`[Customer Print Thermal Error]: ${err.message}`);
-    return res.status(500).send('Gagal memuat struk thermal: ' + err.message);
+    return res.status(500).send('No se pudo cargar el recibo térmico:' + err.message);
   }
 });
 
@@ -2740,21 +2740,21 @@ router.post('/public/payment/create/:invoiceId', async (req, res) => {
   };
 
   if (!payload) {
-    return redirectBack('', 'Link pembayaran tidak valid atau sudah kadaluarsa.');
+    return redirectBack('', 'El enlace de pago no es válido o venció.');
   }
 
   if (String(req.params.invoiceId) !== String(payload.invoiceId)) {
-    return redirectBack(payload.lookup, 'Link pembayaran tidak valid.');
+    return redirectBack(payload.lookup, 'Enlace de pago inválido.');
   }
 
   const tosChecked = req.body.tos === 'on' || req.body.tos === '1' || req.body.tos === true || req.body.tos === 'true';
   if (!tosChecked) {
-    return redirectBack(payload.lookup, 'Harap centang persetujuan Syarat & Ketentuan (TOS) untuk melanjutkan.');
+    return redirectBack(payload.lookup, 'Debe aceptar los Términos y condiciones para continuar.');
   }
 
   try {
     const inv = billingSvc.getInvoiceById(req.params.invoiceId);
-    if (!inv) throw new Error('Tagihan tidak ditemukan');
+    if (!inv) throw new Error('Factura no encontrada');
     if (Number(inv.customer_id) !== Number(payload.customerId)) throw new Error('Tagihan tidak valid');
     if (inv.status === 'paid') {
       return redirectBack(payload.lookup, '', 'Tagihan ini sudah lunas.');
@@ -2764,7 +2764,7 @@ router.post('/public/payment/create/:invoiceId', async (req, res) => {
     if (selectedMethod === 'QRIS_STATIC') {
       const { uniqueCode, amountUnique } = ensureInvoiceQrisUnique(inv, false);
       const qrisQrUrl = await getStaticQrisQrUrlForAmount(settings, amountUnique);
-      if (!qrisQrUrl) throw new Error('QRIS statis belum diatur oleh admin');
+      if (!qrisQrUrl) throw new Error('El administrador todavía no configuró el QR estático');
       const adminWaDigits = getFirstAdminWaDigits(settings);
       return res.render('qris_static', {
         settings,
@@ -2778,7 +2778,7 @@ router.post('/public/payment/create/:invoiceId', async (req, res) => {
         amountUnique,
         uniqueCode,
         qrisQrUrl,
-        helpText: 'Pastikan nominal dibayar sama persis agar sistem dapat mendeteksi pembayaran.',
+        helpText: 'Pague el monto exacto para que el sistema pueda detectar el pago.',
         adminWaDigits,
         publicToken: String(req.body.token || ''),
         proofUrl: '',
@@ -2819,7 +2819,7 @@ router.post('/public/payment/create/:invoiceId', async (req, res) => {
     }
 
     const gateway = resolveConfiguredGatewayForAmount(settings, inv.amount);
-    if (!gateway) throw new Error('Payment gateway belum dikonfigurasi atau nominal terlalu kecil untuk gateway aktif');
+    if (!gateway) throw new Error('La pasarela de pago no está configurada o el monto es muy bajo para la pasarela activa');
     let method = selectedMethod;
     const cust = customerSvc.getCustomerById(inv.customer_id);
 
@@ -2888,10 +2888,10 @@ router.post('/public/payment/create/:invoiceId', async (req, res) => {
       return res.redirect(result.link);
     }
 
-    throw new Error(result.message || 'Gagal membuat transaksi');
+    throw new Error(result.message || 'No se pudo crear la transacción');
   } catch (error) {
     logger.error(`[Payment] Create Error (public): ${error.message}`);
-    return redirectBack(payload.lookup, 'Terjadi kesalahan saat membuat transaksi pembayaran. Silakan coba lagi.');
+    return redirectBack(payload.lookup, 'Ocurrió un error al crear la transacción de pago. Intente de nuevo.');
   }
 });
 
@@ -2906,7 +2906,7 @@ router.post('/tickets/create', uploadCustomer.array('photos', 5), async (req, re
   const customerId = req.body.customerId || (profile ? profile.id : null);
   const { subject, message } = req.body;
   if (!subject || !message || !customerId) {
-    req.session._msg = { type: 'danger', text: 'Semua field wajib diisi.' };
+    req.session._msg = { type: 'danger', text: 'Todos los campos son obligatorios.' };
     return res.redirect('/customer/dashboard');
   }
 
@@ -2935,7 +2935,7 @@ router.post('/tickets/create', uploadCustomer.array('photos', 5), async (req, re
     
     const ticketId = result.lastInsertRowid;
     
-    req.session._msg = { type: 'success', text: 'Keluhan berhasil dikirim. Tim teknisi akan segera mengeceknya.' };
+    req.session._msg = { type: 'success', text: 'Reclamo enviado. El equipo técnico lo revisará a la brevedad.' };
 
     // --- WHATSAPP NOTIFICATION FOR NEW TICKET ---
     try {
@@ -2945,21 +2945,21 @@ router.post('/tickets/create', uploadCustomer.array('photos', 5), async (req, re
         const customer = customerSvc.getCustomerById(customerId);
         
         const photoCount = photoPaths.length;
-        const photoText = photoCount > 0 ? `\n📸 *Foto Masalah:* ${photoCount} foto terlampir` : '';
+        const photoText = photoCount > 0 ? `\n📸 *Fotos del problema:* ${photoCount} adjuntas` : '';
         
         const _waDigits = normalizeWaDigits(customer ? customer.phone : '');
         const _mapQ = (customer && customer.lat && customer.lng) ? (customer.lat + ',' + customer.lng) : String(customer ? customer.address : '');
         const _base = (String(settings.public_base_url || '') || String(settings.app_url || '') || ('http://' + (req.get('host') || ''))).replace(/\/+$/, '');
         const _links = `\n🔗 *Tautan Cepat:*\n` +
-          (_waDigits ? `• 💬 Chat Pelanggan: https://wa.me/${_waDigits}\n` : '') +
-          (_mapQ ? `• 📍 Share Lokasi: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(_mapQ)}` : '');
-        const waMsg = `🎫 *TIKET KELUHAN BARU*\n\n` +
-                     `👤 *Pelanggan:* ${customer ? customer.name : 'Unknown'}\n` +
+          (_waDigits ? `• 💬 Chat con el cliente: https://wa.me/${_waDigits}\n` : '') +
+          (_mapQ ? `• 📍 Ubicación: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(_mapQ)}` : '');
+        const waMsg = `🎫 *NUEVO RECLAMO*\n\n` +
+                     `👤 *Cliente:* ${customer ? customer.name : 'Desconocido'}\n` +
                      `📞 *WhatsApp:* ${customer ? customer.phone : '-'}\n` +
-                     `📍 *Alamat:* ${customer ? customer.address : '-'}\n` +
+                     `📍 *Dirección:* ${customer ? customer.address : '-'}\n` +
                      `📝 *Subjek:* ${subject}\n` +
-                     `💬 *Pesan:* ${message}${photoText}\n\n` +
-                     `Silakan cek di panel Admin/Teknisi untuk menindaklanjuti.` + _links;
+                     `💬 *Mensaje:* ${message}${photoText}\n\n` +
+                     `Revisalo en el panel de administración/técnicos para darle seguimiento.` + _links;
 
         const recipients = new Set();
         if (settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers.length > 0) {
@@ -2987,7 +2987,7 @@ router.post('/tickets/create', uploadCustomer.array('photos', 5), async (req, re
     // --------------------------------------------
 
   } catch (error) {
-    req.session._msg = { type: 'danger', text: 'Gagal mengirim keluhan: ' + error.message };
+    req.session._msg = { type: 'danger', text: 'No se pudo enviar el reclamo:' + error.message };
   }
   res.redirect('/customer/dashboard');
 });
@@ -3000,7 +3000,7 @@ router.get('/payment/status/:invoiceId', async (req, res) => {
     const inv = billingSvc.getInvoiceById(invoiceId);
 
     if (!inv) {
-      return res.status(404).json({ error: 'Invoice tidak ditemukan', status: 'error' });
+      return res.status(404).json({ error: 'Factura no encontrada', status: 'error' });
     }
 
     // CHECK 1: Session-based auth (existing)
@@ -3053,7 +3053,7 @@ router.get('/payment/create/:invoiceId', async (req, res) => {
     const settings = getSettingsWithCache();
     const inv = billingSvc.getInvoiceById(req.params.invoiceId);
     
-    if (!inv) throw new Error('Tagihan tidak ditemukan');
+    if (!inv) throw new Error('Factura no encontrada');
     if (inv.status === 'paid') throw new Error('Tagihan ini sudah lunas.');
     
     // Verify loginId atau publicToken
@@ -3068,9 +3068,9 @@ router.get('/payment/create/:invoiceId', async (req, res) => {
       if (!payload || String(payload.invoiceId) !== String(inv.id)) throw new Error('Token tidak valid atau expired');
       // Get customer from invoice
       profile = customerSvc.getCustomerById(inv.customer_id);
-      if (!profile) throw new Error('Pelanggan tidak ditemukan');
+      if (!profile) throw new Error('Cliente no encontrado');
     } else {
-      throw new Error('Akses tidak diizinkan');
+      throw new Error('Acceso no permitido');
     }
 
     const methodRaw = String(req.query.method || 'QRIS').toUpperCase();
@@ -3108,13 +3108,13 @@ router.get('/payment/create/:invoiceId', async (req, res) => {
     }
 
     const gateway = resolveConfiguredGatewayForAmount(settings, inv.amount);
-    if (!gateway) throw new Error('Payment gateway belum dikonfigurasi atau nominal terlalu kecil untuk gateway aktif');
+    if (!gateway) throw new Error('La pasarela de pago no está configurada o el monto es muy bajo para la pasarela activa');
     
     // Mode 1: Payment Gateway Mayar
     if (gateway === 'mayar') {
       const mayar = require('../services/mayarService');
-      if (!mayar.isConfigured()) throw new Error('Payment gateway (Mayar) belum dikonfigurasi. Isi API key Mayar di pengaturan.');
-      const desc = 'Tagihan ' + inv.period_month + '/' + inv.period_year + ((profile && profile.customer_code) ? ' • ' + profile.customer_code : '');
+      if (!mayar.isConfigured()) throw new Error('La pasarela de pago (Mayar) no está configurada. Cargá la API key de Mayar en la configuración.');
+      const desc = 'Factura' + inv.period_month + '/' + inv.period_year + ((profile && profile.customer_code) ? ' • ' + profile.customer_code : '');
       const r = await mayar.createInvoice({
         name: (profile && profile.name) || inv.customer_name || 'Pelanggan',
         email: (profile && profile.email) || '',
@@ -3135,7 +3135,7 @@ router.get('/payment/create/:invoiceId', async (req, res) => {
     if (gateway === 'qris_static') {
       const { uniqueCode, amountUnique } = ensureInvoiceQrisUnique(inv, false);
       const qrisQrUrl = await getStaticQrisQrUrlForAmount(settings, amountUnique);
-      if (!qrisQrUrl) throw new Error('QRIS statis belum diatur oleh admin');
+      if (!qrisQrUrl) throw new Error('El administrador todavía no configuró el QR estático');
       const adminWaDigits = getFirstAdminWaDigits(settings);
       return res.render('qris_static', {
         settings,
@@ -3149,7 +3149,7 @@ router.get('/payment/create/:invoiceId', async (req, res) => {
         amountUnique,
         uniqueCode,
         qrisQrUrl,
-        helpText: 'Pastikan nominal dibayar sama persis agar sistem dapat mendeteksi pembayaran.',
+        helpText: 'Pague el monto exacto para que el sistema pueda detectar el pago.',
         adminWaDigits,
         publicToken: publicToken || '',
         proofUrl: '',
@@ -3182,7 +3182,7 @@ router.get('/payment/create/:invoiceId', async (req, res) => {
         const allowed = new Set(tripayCandidates);
         if (!allowed.has(method)) method = tripayCandidates[0] || 'QRIS';
       } catch (e) {
-        throw new Error('Metode pembayaran Tripay tidak tersedia');
+        throw new Error('El método de pago Tripay no está disponible');
       }
     }
 
@@ -3229,7 +3229,7 @@ router.get('/payment/create/:invoiceId', async (req, res) => {
       logger.info(`[Payment] New link created for INV-${inv.id} via ${gateway}`);
       res.redirect(result.link);
     } else {
-      throw new Error(result.message || 'Gagal membuat transaksi');
+      throw new Error(result.message || 'No se pudo crear la transacción');
     }
   } catch (error) {
     logger.error(`[Payment] Create Error: ${error.message}`);
@@ -3249,25 +3249,25 @@ router.post('/payment/proof/:invoiceId', uploadProof.single('proof'), async (req
   const profile = payload ? null : findCustomerProfileByLoginId(loginId);
 
   const invoiceId = Number(req.params.invoiceId);
-  if (!Number.isFinite(invoiceId) || invoiceId <= 0) return res.status(400).send('Invoice ID tidak valid');
+  if (!Number.isFinite(invoiceId) || invoiceId <= 0) return res.status(400).send('ID de factura inválido');
 
   try {
     const inv = billingSvc.getInvoiceById(invoiceId);
-    if (!inv) throw new Error('Tagihan tidak ditemukan');
+    if (!inv) throw new Error('Factura no encontrada');
     if (String(inv.status) !== 'unpaid') throw new Error('Tagihan sudah tidak bisa dikonfirmasi (status bukan unpaid).');
 
     if (payload) {
       if (Number(inv.customer_id) !== Number(payload.customerId)) throw new Error('Tagihan tidak valid');
     } else {
-      if (!profile) throw new Error('Sesi tidak valid, silakan login ulang.');
+      if (!profile) throw new Error('Sesión inválida, vuelva a ingresar.');
       if (Number(inv.customer_id) !== Number(profile.id)) throw new Error('Tagihan tidak valid');
     }
 
     const { uniqueCode, amountUnique } = ensureInvoiceQrisUnique(inv, false);
     const qrisQrUrl = await getStaticQrisQrUrlForAmount(settings, amountUnique);
-    if (!qrisQrUrl) throw new Error('QRIS statis belum diatur oleh admin');
+    if (!qrisQrUrl) throw new Error('El administrador todavía no configuró el QR estático');
 
-    if (!req.file) throw new Error('Bukti transfer belum dipilih');
+    if (!req.file) throw new Error('No eligió el comprobante de transferencia');
     const relPath = '/admin/media/payment-proof/' + String(req.file.filename || '');
     if (!relPath || relPath.endsWith('/')) throw new Error('Gagal menyimpan bukti');
 
@@ -3292,11 +3292,11 @@ router.post('/payment/proof/:invoiceId', uploadProof.single('proof'), async (req
         if (await waNotify.isConnected()) {
           const who = payload ? (inv.customer_name || 'Pelanggan') : (profile?.name || inv.customer_name || 'Pelanggan');
           const msg =
-            `🧾 *KONFIRMASI PEMBAYARAN (QRIS STATIS)*\n\n` +
-            `👤 *Nama:* ${who}\n` +
+            `🧾 *CONFIRMACIÓN DE PAGO (QR ESTÁTICO)*\n\n` +
+            `👤 *Nombre:* ${who}\n` +
             `🧾 *Invoice:* INV-${inv.id}\n` +
-            `📅 *Periode:* ${inv.period_month}/${inv.period_year}\n` +
-            `💰 *Nominal:* ${regional.currencySymbol()} ${Number(amountUnique).toLocaleString(regional.locale())} (kode ${String(uniqueCode).padStart(3, '0')})\n` +
+            `📅 *Período:* ${inv.period_month}/${inv.period_year}\n` +
+            `💰 *Monto:* ${regional.currencySymbol()} ${Number(amountUnique).toLocaleString(regional.locale())} (código ${String(uniqueCode).padStart(3, '0')})\n` +
             `📎 *Bukti:* ${proofUrl}\n`;
           await waNotify.sendText(adminWaDigits, msg);
         }
@@ -3314,7 +3314,7 @@ router.post('/payment/proof/:invoiceId', uploadProof.single('proof'), async (req
       settings,
       backUrl,
       error: null,
-      info: 'Bukti transfer berhasil diupload. Silakan kirim konfirmasi ke admin.',
+      info: 'Comprobante subido. Envíe la confirmación a la administración.',
       kind: 'invoice',
       invoiceId: Number(inv.id),
       periodText: `${inv.period_month}/${inv.period_year}`,
@@ -3322,7 +3322,7 @@ router.post('/payment/proof/:invoiceId', uploadProof.single('proof'), async (req
       amountUnique,
       uniqueCode,
       qrisQrUrl,
-      helpText: 'Pastikan nominal dibayar sama persis agar sistem dapat mendeteksi pembayaran.',
+      helpText: 'Pague el monto exacto para que el sistema pueda detectar el pago.',
       adminWaDigits,
       publicToken: payload ? token : '',
       proofUrl,
@@ -3354,25 +3354,25 @@ router.post('/payment/proof/:invoiceId', uploadProof.single('proof'), async (req
 });
 
 router.post('/voucher/proof/:orderId', uploadProof.single('proof'), async (req, res) => {
-    if (!voucherFeatureOn()) return res.redirect('/customer/login?err=' + encodeURIComponent('Fitur voucher sedang dinonaktifkan'));
+    if (!voucherFeatureOn()) return res.redirect('/customer/login?err=' + encodeURIComponent('La venta de fichas está desactivada'));
   const settings = getSettingsWithCache();
   const secret = settings.session_secret || 'rahasia-portal-pelanggan-default-ganti-ini';
   const token = String(req.body && req.body.token ? req.body.token : '').trim();
   const payload = verifyPublicToken(token, secret);
   const orderId = Number(req.params.orderId);
-  if (!Number.isFinite(orderId) || orderId <= 0) return res.status(400).send('Order ID tidak valid');
+  if (!Number.isFinite(orderId) || orderId <= 0) return res.status(400).send('ID de pedido inválido');
   if (!payload || Number(payload.voucherOrderId) !== orderId) return res.status(403).send('Forbidden');
 
   try {
     const order = db.prepare('SELECT * FROM public_voucher_orders WHERE id=?').get(orderId);
-    if (!order) throw new Error('Order tidak ditemukan');
+    if (!order) throw new Error('Pedido no encontrado');
     if (String(order.status) !== 'pending') throw new Error('Order sudah tidak bisa dikonfirmasi (status bukan pending).');
 
     const { uniqueCode, amountUnique } = ensureVoucherOrderQrisUnique(order, false);
     const qrisQrUrl = await getStaticQrisQrUrlForAmount(settings, amountUnique);
-    if (!qrisQrUrl) throw new Error('QRIS statis belum diatur oleh admin');
+    if (!qrisQrUrl) throw new Error('El administrador todavía no configuró el QR estático');
 
-    if (!req.file) throw new Error('Bukti transfer belum dipilih');
+    if (!req.file) throw new Error('No eligió el comprobante de transferencia');
     const relPath = '/admin/media/payment-proof/' + String(req.file.filename || '');
     if (!relPath || relPath.endsWith('/')) throw new Error('Gagal menyimpan bukti');
 
@@ -3389,10 +3389,10 @@ router.post('/voucher/proof/:orderId', uploadProof.single('proof'), async (req, 
         const waNotify = require('../services/waNotifyService');
         if (await waNotify.isConnected()) {
           const msg =
-            `🎫 *KONFIRMASI PEMBAYARAN VOUCHER (QRIS STATIS)*\n\n` +
+            `🎫 *CONFIRMACIÓN DE PAGO DE FICHA (QR ESTÁTICO)*\n\n` +
             `🧾 *Order:* VOUCHER-${orderId}\n` +
-            `📦 *Paket:* ${order.profile_name || '-'}${order.validity ? ' (' + order.validity + ')' : ''}\n` +
-            `💰 *Nominal:* ${regional.currencySymbol()} ${Number(amountUnique).toLocaleString(regional.locale())} (kode ${String(uniqueCode).padStart(3, '0')})\n` +
+            `📦 *Plan:* ${order.profile_name || '-'}${order.validity ? ' (' + order.validity + ')' : ''}\n` +
+            `💰 *Monto:* ${regional.currencySymbol()} ${Number(amountUnique).toLocaleString(regional.locale())} (código ${String(uniqueCode).padStart(3, '0')})\n` +
             `📞 *WA Pembeli:* ${order.buyer_phone || '-'}\n` +
             `📎 *Bukti:* ${proofUrl}\n`;
           await waNotify.sendText(adminWaDigits, msg);
@@ -3407,7 +3407,7 @@ router.post('/voucher/proof/:orderId', uploadProof.single('proof'), async (req, 
       settings,
       backUrl: '/customer/voucher?order=' + encodeURIComponent(String(orderId)) + '&t=' + encodeURIComponent(token),
       error: null,
-      info: 'Bukti transfer berhasil diupload. Menunggu verifikasi/auto-detect notifikasi.',
+      info: 'Comprobante subido. Esperando la verificación o la detección automática.',
       kind: 'voucher',
       invoiceId: Number(orderId),
       periodText: `${order.profile_name || ''}${order.validity ? ' • ' + String(order.validity) : ''}`,
@@ -3415,7 +3415,7 @@ router.post('/voucher/proof/:orderId', uploadProof.single('proof'), async (req, 
       amountUnique,
       uniqueCode,
       qrisQrUrl,
-      helpText: 'Jika notifikasi e-wallet sudah masuk ke sistem, voucher akan otomatis diproses.',
+      helpText: 'Si la notificación de la billetera ya llegó al sistema, la ficha se procesa automáticamente.',
       adminWaDigits,
       publicToken: token,
       proofUrl,
@@ -3594,7 +3594,7 @@ router.post('/payment/callback', express.json({
               throw e;
             }
           }
-          if (!created) throw new Error('Gagal membuat voucher (kode duplikat terlalu sering)');
+          if (!created) throw new Error('No se pudo crear la ficha (código duplicado demasiadas veces)');
 
           db.prepare(`
             UPDATE public_voucher_orders
@@ -3611,15 +3611,15 @@ router.post('/payment/callback', express.json({
             try {
               const waNotify = require('../services/waNotifyService');
               if (!(await waNotify.isConnected())) throw new Error('Bot WhatsApp belum terhubung');
-              if (!fresh.buyer_phone) throw new Error('Nomor WhatsApp pembeli kosong');
+              if (!fresh.buyer_phone) throw new Error('El número de WhatsApp del comprador está vacío');
               const msg =
                 `🎫 *VOUCHER HOTSPOT*\n\n` +
-                `✅ Pembayaran diterima via *${gateway}*\n` +
-                `📦 Paket: *${fresh.profile_name}* (${fresh.validity || '-'})\n` +
+                `✅ Pago recibido vía *${gateway}*\n` +
+                `📦 Plan: *${fresh.profile_name}* (${fresh.validity || '-'})\n` +
                 `💰 Harga: ${regional.currencySymbol()} ${Number(fresh.price || 0).toLocaleString(regional.locale())}\n\n` +
                 `👤 User: *${created.code}*\n` +
                 `🔑 Pass: *${created.pass}*\n\n` +
-                `Terima kasih.`;
+                `Gracias.`;
               await waNotify.sendText(fresh.buyer_phone, msg);
               db.prepare(`
                 UPDATE public_voucher_orders
@@ -3658,7 +3658,7 @@ router.post('/payment/callback', express.json({
             throw new Error('Bot WhatsApp belum terhubung');
           }
           if (!customer.phone) {
-            throw new Error('Nomor WhatsApp pelanggan kosong');
+            throw new Error('El número de WhatsApp del cliente está vacío');
           }
           const appUrl = (getSettingsWithCache().public_base_url || appUrlFromReq(req) || '').replace(/\/$/, '');
           const portalUrl = `${appUrl}/customer`;
@@ -3705,13 +3705,13 @@ router.post('/customer/reconnect', async (req, res) => {
     const sessionPhone = req.session.phone;
     if (!sessionPhone) {
       if (req.xhr || req.headers.accept?.includes('json')) {
-        return res.status(401).json({ success: false, message: 'Silakan login terlebih dahulu' });
+        return res.status(401).json({ success: false, message: 'Inicie sesión primero' });
       }
       return res.redirect('/customer/login');
     }
 
     const customer = customerSvc.findCustomerByAny(sessionPhone);
-    if (!customer) throw new Error('Data pelanggan tidak ditemukan');
+    if (!customer) throw new Error('Cliente no encontrado');
 
     const username = customer.pppoe_username || customer.hotspot_username || customer.name;
     const radiusSvc = require('../services/radiusServerService');
@@ -3728,18 +3728,18 @@ router.post('/customer/reconnect', async (req, res) => {
     if (req.xhr || req.headers.accept?.includes('json')) {
       return res.json({
         success: true,
-        message: 'Koneksi internet Anda berhasil direfresh! Silakan tunggu 2-3 detik agar IP & kecepatan kembali normal.'
+        message: '¡Su conexión se reinició! Espere 2-3 segundos a que la IP y la velocidad se normalicen.'
       });
     }
 
-    req.session._msg = { type: 'success', text: 'Koneksi internet Anda berhasil direfresh! Silakan tunggu 2-3 detik agar IP & kecepatan kembali normal.' };
+    req.session._msg = { type: 'success', text: '¡Su conexión se reinició! Espere 2-3 segundos a que la IP y la velocidad se normalicen.' };
     return res.redirect('/customer/dashboard');
   } catch (e) {
     logger.error('[Customer Reconnect] Error: ' + e.message);
     if (req.xhr || req.headers.accept?.includes('json')) {
-      return res.status(500).json({ success: false, message: 'Gagal refresh koneksi: ' + e.message });
+      return res.status(500).json({ success: false, message: 'No se pudo reiniciar la conexión:' + e.message });
     }
-    req.session._msg = { type: 'error', text: 'Gagal refresh koneksi: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo reiniciar la conexión:' + e.message };
     return res.redirect('/customer/dashboard');
   }
 });

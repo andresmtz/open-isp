@@ -68,7 +68,7 @@ function computeInvoiceAmountAndMeta(customer, pkg, periodMonth, periodYear) {
     metaParts.push(`Promo siklus ${promoUsed + 1}/${promoCycles} @ ${regional.currencySymbol()} ${Number(promoPrice).toLocaleString(regional.locale())}`);
   }
   if (prorated && billableDays != null && dim != null) {
-    metaParts.push(`Prorata ${billableDays}/${dim} hari`);
+    metaParts.push(`Prorrateo ${billableDays}/${dim} días`);
   }
 
   // PPN Calculation
@@ -114,7 +114,7 @@ function generateMonthlyInvoices(month, year) {
       const { amount, bumpPromo: bump, notesAuto } = computeInvoiceAmountAndMeta(c, pkg, month, year);
       const ir = insert.run(c.id, month, year, amount, notesAuto);
       if (bump) bumpPromo.run(c.id);
-      voidPreviousUnpaidInvoices(c.id, month, year, `Dihanguskan otomatis: tagihan baru periode ${month}/${year} terbit`);
+      voidPreviousUnpaidInvoices(c.id, month, year, `Anulada automáticamente: se emitió la factura del período ${month}/${year}`);
 
       const ap = autoPayInvoiceIfNeeded(ir.lastInsertRowid, c, amount, notesAuto);
       if (ap) { ap.periodText = `${month}/${year}`; autoPaid.push(ap); }
@@ -136,13 +136,13 @@ function generateInvoiceForCustomer(customerId, month, year) {
   const cid = Number(customerId);
   const m = Number(month);
   const y = Number(year);
-  if (!Number.isFinite(cid) || cid <= 0) throw new Error('Customer ID tidak valid');
-  if (!Number.isFinite(m) || m < 1 || m > 12) throw new Error('Bulan tidak valid');
-  if (!Number.isFinite(y) || y < 2000 || y > 3000) throw new Error('Tahun tidak valid');
+  if (!Number.isFinite(cid) || cid <= 0) throw new Error('ID de cliente inválido');
+  if (!Number.isFinite(m) || m < 1 || m > 12) throw new Error('Mes inválido');
+  if (!Number.isFinite(y) || y < 2000 || y > 3000) throw new Error('Año inválido');
 
   const customer = db.prepare('SELECT * FROM customers WHERE id=?').get(cid);
-  if (!customer) throw new Error('Pelanggan tidak ditemukan');
-  if (!customer.package_id) throw new Error('Pelanggan belum memiliki paket');
+  if (!customer) throw new Error('Cliente no encontrado');
+  if (!customer.package_id) throw new Error('El cliente no tiene plan asignado');
 
   const exists = db.prepare('SELECT id FROM invoices WHERE customer_id=? AND period_month=? AND period_year=? LIMIT 1').get(cid, m, y);
   if (exists) {
@@ -150,14 +150,14 @@ function generateInvoiceForCustomer(customerId, month, year) {
   }
 
   const pkg = db.prepare('SELECT * FROM packages WHERE id=?').get(customer.package_id);
-  if (!pkg) throw new Error('Paket pelanggan tidak ditemukan');
+  if (!pkg) throw new Error('No se encontró el plan del cliente');
 
   const { amount, bumpPromo: bump, notesAuto } = computeInvoiceAmountAndMeta(customer, pkg, m, y);
   const r = db.prepare('INSERT INTO invoices (customer_id, period_month, period_year, amount, notes) VALUES (?, ?, ?, ?, ?)').run(cid, m, y, amount, notesAuto);
   if (bump) {
     db.prepare('UPDATE customers SET promo_cycles_used = COALESCE(promo_cycles_used,0) + 1 WHERE id=?').run(cid);
   }
-  voidPreviousUnpaidInvoices(cid, m, y, `Dihanguskan otomatis: tagihan baru periode ${m}/${y} terbit`);
+  voidPreviousUnpaidInvoices(cid, m, y, `Anulada automáticamente: se emitió la factura del período ${m}/${y}`);
 
   const ap = autoPayInvoiceIfNeeded(r.lastInsertRowid, customer, amount, notesAuto);
   if (ap) { try { notifyAutoPaid(ap.customer, ap.invoiceId, `${m}/${y}`, ap.amount, ap.reason); } catch (e) {} }
@@ -169,12 +169,12 @@ function payInvoiceForCustomerPeriod(customerId, month, year, paidByName, notes)
   const cid = Number(customerId);
   const m = Number(month);
   const y = Number(year);
-  if (!Number.isFinite(cid) || cid <= 0) throw new Error('Customer ID tidak valid');
-  if (!Number.isFinite(m) || m < 1 || m > 12) throw new Error('Bulan tidak valid');
-  if (!Number.isFinite(y) || y < 2000 || y > 3000) throw new Error('Tahun tidak valid');
+  if (!Number.isFinite(cid) || cid <= 0) throw new Error('ID de cliente inválido');
+  if (!Number.isFinite(m) || m < 1 || m > 12) throw new Error('Mes inválido');
+  if (!Number.isFinite(y) || y < 2000 || y > 3000) throw new Error('Año inválido');
 
   const customer = db.prepare('SELECT id, name FROM customers WHERE id=?').get(cid);
-  if (!customer) throw new Error('Pelanggan tidak ditemukan');
+  if (!customer) throw new Error('Cliente no encontrado');
 
   const inv = db.prepare('SELECT id, status FROM invoices WHERE customer_id=? AND period_month=? AND period_year=? LIMIT 1').get(cid, m, y);
   if (inv && inv.status === 'paid') {
@@ -189,19 +189,19 @@ function payInvoiceForCustomerPeriod(customerId, month, year, paidByName, notes)
 function payInvoicesForCustomerMonths(customerId, year, months, paidByName, notes) {
   const cid = Number(customerId);
   const y = Number(year);
-  if (!Number.isFinite(cid) || cid <= 0) throw new Error('Customer ID tidak valid');
-  if (!Number.isFinite(y) || y < 2000 || y > 3000) throw new Error('Tahun tidak valid');
+  if (!Number.isFinite(cid) || cid <= 0) throw new Error('ID de cliente inválido');
+  if (!Number.isFinite(y) || y < 2000 || y > 3000) throw new Error('Año inválido');
 
   const rawMonths = Array.isArray(months) ? months : (months == null ? [] : [months]);
   const selectedMonths = [...new Set(rawMonths.map(m => parseInt(m)).filter(m => Number.isFinite(m) && m >= 1 && m <= 12))].sort((a, b) => a - b);
   if (selectedMonths.length === 0) throw new Error('Pilih minimal 1 bulan');
 
   const customer = db.prepare('SELECT * FROM customers WHERE id=?').get(cid);
-  if (!customer) throw new Error('Pelanggan tidak ditemukan');
-  if (!customer.package_id) throw new Error('Pelanggan belum memiliki paket');
+  if (!customer) throw new Error('Cliente no encontrado');
+  if (!customer.package_id) throw new Error('El cliente no tiene plan asignado');
 
   const pkg = db.prepare('SELECT * FROM packages WHERE id=?').get(customer.package_id);
-  if (!pkg) throw new Error('Paket pelanggan tidak ditemukan');
+  if (!pkg) throw new Error('No se encontró el plan del cliente');
 
   const selectInv = db.prepare('SELECT id, status, amount FROM invoices WHERE customer_id=? AND period_month=? AND period_year=? LIMIT 1');
   const insertInv = db.prepare('INSERT INTO invoices (customer_id, period_month, period_year, amount, notes) VALUES (?, ?, ?, ?, ?)');
@@ -245,8 +245,8 @@ function payInvoicesForCustomerMonths(customerId, year, months, paidByName, note
 function getPaidMonthsForCustomerYear(customerId, year) {
   const cid = Number(customerId);
   const y = Number(year);
-  if (!Number.isFinite(cid) || cid <= 0) throw new Error('Customer ID tidak valid');
-  if (!Number.isFinite(y) || y < 2000 || y > 3000) throw new Error('Tahun tidak valid');
+  if (!Number.isFinite(cid) || cid <= 0) throw new Error('ID de cliente inválido');
+  if (!Number.isFinite(y) || y < 2000 || y > 3000) throw new Error('Año inválido');
   const rows = db.prepare(`
     SELECT period_month
     FROM invoices
@@ -259,8 +259,8 @@ function getPaidMonthsForCustomerYear(customerId, year) {
 function getCustomerBillingYearSummary(customerId, year) {
   const cid = Number(customerId);
   const y = Number(year);
-  if (!Number.isFinite(cid) || cid <= 0) throw new Error('Customer ID tidak valid');
-  if (!Number.isFinite(y) || y < 2000 || y > 3000) throw new Error('Tahun tidak valid');
+  if (!Number.isFinite(cid) || cid <= 0) throw new Error('ID de cliente inválido');
+  if (!Number.isFinite(y) || y < 2000 || y > 3000) throw new Error('Año inválido');
 
   const customer = db.prepare(`
     SELECT c.id, c.name, p.price as package_price
@@ -268,7 +268,7 @@ function getCustomerBillingYearSummary(customerId, year) {
     LEFT JOIN packages p ON c.package_id = p.id
     WHERE c.id=?
   `).get(cid);
-  if (!customer) throw new Error('Pelanggan tidak ditemukan');
+  if (!customer) throw new Error('Cliente no encontrado');
 
   const invoices = db.prepare(`
     SELECT period_month as month, status, amount
@@ -383,7 +383,7 @@ function markAsPaid(invoiceId, paidByName, notes, actor = null) {
   if (!invId) return { changes: 0, error: 'Invalid invoice ID' };
 
   const existing = db.prepare('SELECT id, customer_id, period_month, period_year, amount, status, notes FROM invoices WHERE id=?').get(invId);
-  if (!existing) return { changes: 0, error: 'Invoice tidak ditemukan' };
+  if (!existing) return { changes: 0, error: 'Factura no encontrada' };
   if (existing.status === 'paid') {
     return { changes: 0, alreadyPaid: true, invoice: existing };
   }
@@ -613,26 +613,26 @@ function getTodayRevenue() {
  */
 function createInstallProrataCatchUpInvoice(customerId) {
   const cid = Number(customerId);
-  if (!Number.isFinite(cid) || cid <= 0) throw new Error('ID pelanggan tidak valid');
+  if (!Number.isFinite(cid) || cid <= 0) throw new Error('ID de cliente inválido');
 
   const customer = db.prepare('SELECT * FROM customers WHERE id=?').get(cid);
-  if (!customer) throw new Error('Pelanggan tidak ditemukan');
-  if (!customer.package_id) throw new Error('Pelanggan belum memiliki paket');
-  if (!customer.install_date) throw new Error('Isi tanggal pasang (install_date) di data pelanggan');
+  if (!customer) throw new Error('Cliente no encontrado');
+  if (!customer.package_id) throw new Error('El cliente no tiene plan asignado');
+  if (!customer.install_date) throw new Error('Cargá la fecha de instalación en los datos del cliente');
 
   const inst = parseInstallYMD(String(customer.install_date));
-  if (!inst) throw new Error('Format tanggal pasang tidak valid (gunakan YYYY-MM-DD)');
+  if (!inst) throw new Error('Formato de fecha de instalación inválido (use AAAA-MM-DD)');
 
   const pkg = db.prepare('SELECT * FROM packages WHERE id=?').get(customer.package_id);
-  if (!pkg) throw new Error('Paket tidak ditemukan');
-  if (!pkg.prorate_first_invoice) throw new Error('Paket ini belum mengaktifkan opsi prorata tagihan pertama');
+  if (!pkg) throw new Error('Plan no encontrado');
+  if (!pkg.prorate_first_invoice) throw new Error('Este plan no tiene activado el prorrateo de la primera factura');
 
   const periodMonth = inst.m;
   const periodYear = inst.y;
 
   const exists = db.prepare('SELECT id FROM invoices WHERE customer_id=? AND period_month=? AND period_year=? LIMIT 1').get(cid, periodMonth, periodYear);
   if (exists) {
-    throw new Error(`Sudah ada tagihan untuk periode pasang ${String(periodMonth).padStart(2, '0')}/${periodYear}`);
+    throw new Error(`Ya existe una factura para el período de instalación ${String(periodMonth).padStart(2, '0')}/${periodYear}`);
   }
 
   const dim = daysInMonth(periodYear, periodMonth);
@@ -641,7 +641,7 @@ function createInstallProrataCatchUpInvoice(customerId) {
   const baseAmount = Math.max(0, Math.round(basePrice * (billableDays / dim)));
   
   let taxAmount = 0;
-  const metaParts = [`Susulan prorata bulan pasang (${billableDays}/${dim} hari, dasar harga reguler ${regional.currencySymbol()} ${basePrice.toLocaleString(regional.locale())})`];
+  const metaParts = [`Prorrateo del mes de instalación (${billableDays}/${dim} días, precio base ${regional.currencySymbol()} ${basePrice.toLocaleString(regional.locale())})`];
 
   // PPN
   if (pkg.use_ppn === 1) {
@@ -716,7 +716,7 @@ function autoPayInvoiceIfNeeded(invoiceId, customer, amount, existingNotes) {
   if (!reasons.length) return null;
   const note = `AUTO-LUNAS: ${reasons.join(' / ')} (verifikasi sistem)`;
   const finalNotes = existingNotes ? `${existingNotes} | ${note}` : note;
-  const res = db.prepare(`UPDATE invoices SET status='paid', paid_at=NOW_LOCAL(), paid_by_name=?, notes=? WHERE id=? AND status='unpaid'`).run('Sistem (Auto)', finalNotes, invoiceId);
+  const res = db.prepare(`UPDATE invoices SET status='paid', paid_at=NOW_LOCAL(), paid_by_name=?, notes=? WHERE id=? AND status='unpaid'`).run('Sistema (automático)', finalNotes, invoiceId);
   if (!res.changes) return null;
   try { db.prepare("UPDATE customers SET unpaid_streak=0, deactivate_cause='', deactivated_at=NULL WHERE id=?").run(customer.id); } catch (e) {}
   return { invoiceId, customer, amount, reason: reasons.join(' / ') };
@@ -728,7 +728,7 @@ function notifyAutoPaid(customer, invoiceId, periodText, amount, reason) {
     if (!getSetting('whatsapp_enabled', false)) return;
     const waSvc = require('./whatsappService');
     if (!waSvc || typeof waSvc.sendWhatsAppMessage !== 'function') return;
-    const msg = `✅ *PEMBAYARAN LUNAS*\n\nYth. *${customer.name}*,\nTagihan periode *${periodText}* sebesar *${regional.currencySymbol()} ${Number(amount || 0).toLocaleString(regional.locale())}* telah *LUNAS otomatis oleh sistem* (${reason}).\n\nDokumen tagihan tetap tercatat. Terima kasih.`;
+    const msg = `✅ *FACTURA PAGADA*\n\nEstimado/a *${customer.name}*,\nLa factura del período *${periodText}* por *${regional.currencySymbol()} ${Number(amount || 0).toLocaleString(regional.locale())}* quedó *PAGADA automáticamente por el sistema* (${reason}).\n\nLa factura queda registrada. Gracias.`;
     waSvc.sendWhatsAppMessage(customer.phone, msg).catch(() => {});
   } catch (e) {}
 }
@@ -749,7 +749,7 @@ function autoLunasUnpaidForCustomer(customerId, opts = {}) {
     if (Number(customer.auto_isolate) === 0) reasons.push('Auto Isolir OFF');
     if (Number(inv.amount) === 0) reasons.push('Nominal ' + regional.formatMoney(0));
     if (!reasons.length) continue;
-    const note = 'AUTO-LUNAS: ' + reasons.join(' / ') + ' (verifikasi sistem)';
+    const note = 'AUTO-LUNAS:' + reasons.join(' / ') + ' (verifikasi sistem)';
     const finalNotes = inv.notes ? (inv.notes + ' | ' + note) : note;
     const r = db.prepare("UPDATE invoices SET status='paid', paid_at=NOW_LOCAL(), paid_by_name='Sistem (Auto)', notes=? WHERE id=? AND status='unpaid'").run(finalNotes, inv.id);
     if (r.changes) items.push({ id: inv.id, amount: Number(inv.amount || 0), period: inv.period_month + '/' + inv.period_year });
@@ -770,7 +770,7 @@ function notifyAutoPaidPolite(customer, items) {
     if (!waSvc || typeof waSvc.sendWhatsAppMessage !== 'function') return;
     const periods = items.map(function (it) { return it.period; }).join(', ');
     const total = items.reduce(function (s, it) { return s + Number(it.amount || 0); }, 0);
-    const _defAl = '✅ *Tagihan LUNAS*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nTerima kasih, tagihan internet Anda telah kami tandai *LUNAS* otomatis.\n\n📅 Periode: {{rincian}}\n💰 Nominal: *{{moneda}} {{tagihan}}*\n\nTerima kasih 🙏\n— {{company}}';
+    const _defAl = '✅ *Factura saldada*\n\nEstimado/a *{{nama}}* (ID: {{id_pelanggan}}),\n\nSu factura del período {{rincian}} quedó registrada como *PAGADA*.\n\n💰 Monto: *{{moneda}} {{tagihan}}*\n\n¡Gracias! 🙏\n— {{company}}';
     const _tplAl = String(db.getAppSetting('whatsapp_autolunas_message', _defAl) || _defAl);
     const msg = _tplAl
       .replace(/{{nama}}/gi, customer.name || 'Pelanggan')

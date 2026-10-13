@@ -95,7 +95,7 @@ function requireCustomerApiAuth(req, res, next) {
   if (!payload) {
     return res.status(401).json({
       success: false,
-      message: 'Autentikasi pelanggan diperlukan. Silakan login terlebih dahulu.'
+      message: 'Se requiere ingresar como cliente. Inicie sesión primero.'
     });
   }
 
@@ -103,7 +103,7 @@ function requireCustomerApiAuth(req, res, next) {
   if (!custId) {
     return res.status(401).json({
       success: false,
-      message: 'Token tidak valid untuk akun pelanggan.'
+      message: 'Token inválido para la cuenta del cliente.'
     });
   }
 
@@ -111,7 +111,7 @@ function requireCustomerApiAuth(req, res, next) {
   if (!customer) {
     return res.status(401).json({
       success: false,
-      message: 'Akun pelanggan tidak ditemukan.'
+      message: 'Cuenta de cliente no encontrada.'
     });
   }
 
@@ -127,7 +127,7 @@ function requireAdminApiAuth(req, res, next) {
   if (!payload || (payload.role !== 'admin' && payload.role !== 'cashier' && payload.role !== 'root')) {
     return res.status(401).json({
       success: false,
-      message: 'Akses ditolak: Autentikasi Admin / Kasir diperlukan.'
+      message: 'Acceso denegado: se requiere ingresar como administrador / cajero.'
     });
   }
   req.admin = payload;
@@ -142,7 +142,7 @@ function requireCollectorApiAuth(req, res, next) {
   if (!payload || (payload.role !== 'collector' && payload.role !== 'admin' && payload.role !== 'root')) {
     return res.status(401).json({
       success: false,
-      message: 'Akses ditolak: Autentikasi Kolektor diperlukan.'
+      message: 'Acceso denegado: se requiere ingresar como cobrador.'
     });
   }
   req.collector = payload;
@@ -278,7 +278,7 @@ router.get('/app/version', (req, res) => {
   const settings = getSettingsWithCache();
   const vCode = Number(settings.app_version_code) || 7;
   const vName = settings.app_version_name || "1.2.5";
-  const notes = settings.app_release_notes || "• Peningkatan kualitas layanan\n• Nomor WhatsApp admin dinamis otomatis dari server\n• Peningkatan kecepatan & stabilitas koneksi";
+  const notes = settings.app_release_notes || "• Mejoras en la calidad del servicio\n• Número de WhatsApp de atención actualizado automáticamente desde el servidor\n• Más velocidad y estabilidad de conexión";
   res.json({
     success: true,
     data: {
@@ -383,7 +383,7 @@ router.get('/app/admin/customers', requireAdminApiAuth, (req, res) => {
 router.post('/app/admin/customers/create', requireAdminApiAuth, async (req, res) => {
   try {
     const { name, phone, address, package_id, pppoe_username, pppoe_password, isolate_day } = req.body || {};
-    if (!name || !phone) return res.status(400).json({ success: false, message: 'Nama dan nomor WhatsApp wajib diisi' });
+    if (!name || !phone) return res.status(400).json({ success: false, message: 'El nombre y el número de WhatsApp son obligatorios' });
 
     const custData = {
       name: String(name).trim(),
@@ -406,19 +406,19 @@ router.post('/app/admin/customers/create', requireAdminApiAuth, async (req, res)
         if (true) {
           const pkg = customerSvc.getPackageById(custData.package_id);
           const msg = `🎉 *SELAMAT BERGABUNG!*\n\n` +
-                      `Halo Bp/Ibu *${custData.name}*,\n` +
-                      `Layanan internet Anda telah terdaftar dan aktif.\n\n` +
-                      `📦 *Paket:* ${pkg?.name || 'Internet'}\n` +
+                      `Hola, *${custData.name}*,\n` +
+                      `Su servicio de internet ya está registrado y activo.\n\n` +
+                      `📦 *Plan:* ${pkg?.name || 'Internet'}\n` +
                       `📅 *Tgl Jatuh Tempo:* Setiap tgl ${custData.isolate_day}\n\n` +
-                      `Terima kasih telah mempercayakan koneksi internet Anda kepada kami.`;
+                      `Gracias por confiarnos su conexión a internet.`;
           await waNotify.sendText(custData.phone, msg);
         }
       }
     } catch (_) {}
 
-    res.json({ success: true, message: `Pelanggan "${custData.name}" berhasil didaftarkan!`, customerId: newId });
+    res.json({ success: true, message: `¡Cliente "${custData.name}" registrado!`, customerId: newId });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal menambah pelanggan: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo agregar el cliente:' + e.message });
   }
 });
 
@@ -427,10 +427,10 @@ router.post('/app/admin/customers/update', requireAdminApiAuth, (req, res) => {
   try {
     const { id, name, phone, address, package_id, pppoe_username, pppoe_password, isolate_day } = req.body || {};
     const cId = Number(id);
-    if (!cId) return res.status(400).json({ success: false, message: 'ID Pelanggan tidak valid' });
+    if (!cId) return res.status(400).json({ success: false, message: 'ID de cliente inválido' });
 
     const existing = customerSvc.getCustomerById(cId);
-    if (!existing) return res.status(404).json({ success: false, message: 'Pelanggan tidak ditemukan' });
+    if (!existing) return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
 
     const updated = {
       ...existing,
@@ -444,9 +444,9 @@ router.post('/app/admin/customers/update', requireAdminApiAuth, (req, res) => {
     };
 
     customerSvc.updateCustomer(cId, updated);
-    res.json({ success: true, message: `Data pelanggan "${updated.name}" berhasil diperbarui!` });
+    res.json({ success: true, message: `¡Datos de "${updated.name}" actualizados!` });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal memperbarui pelanggan: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo actualizar el cliente:' + e.message });
   }
 });
 
@@ -454,12 +454,12 @@ router.post('/app/admin/customers/update', requireAdminApiAuth, (req, res) => {
 router.post('/app/admin/customers/delete', requireAdminApiAuth, (req, res) => {
   try {
     const cId = Number(req.body.id || req.body.customerId);
-    if (!cId) return res.status(400).json({ success: false, message: 'ID Pelanggan tidak valid' });
+    if (!cId) return res.status(400).json({ success: false, message: 'ID de cliente inválido' });
 
     customerSvc.deleteCustomer(cId);
-    res.json({ success: true, message: 'Pelanggan berhasil dihapus.' });
+    res.json({ success: true, message: 'Cliente eliminado.' });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal menghapus pelanggan: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo eliminar el cliente:' + e.message });
   }
 });
 
@@ -471,13 +471,13 @@ function renderTemplateMessage(template, customer, invoice = null) {
   const base = settings.public_base_url || settings.app_url || `http://localhost:${settings.port || 3001}`;
   const link = `${base}/customer/login?u=${encodeURIComponent(customer.pppoe_username || customer.phone || '')}`;
 
-  const pkgName = customer.package_name || customer.packageName || 'Paket Internet';
+  const pkgName = customer.package_name || customer.packageName || 'Planes de internet';
   const billAmount = invoice ? Number(invoice.amount || 0) : Number(customer.package_price || 0);
   const fmtMoney = new Intl.NumberFormat(regional.locale()).format(billAmount);
 
   const now = new Date();
   const period = invoice ? `${invoice.period_month || (now.getMonth() + 1)}/${invoice.period_year || now.getFullYear()}` : `${now.getMonth() + 1}/${now.getFullYear()}`;
-  const rincian = `Tagihan Bulan ${period}`;
+  const rincian = `Factura del mes ${period}`;
 
   let txt = template
     .replace(/\{\{nama\}\}/gi, customer.name || 'Pelanggan')
@@ -506,13 +506,13 @@ router.get('/app/admin/customer/:id/wa-templates', requireAdminApiAuth, (req, re
   try {
     const cId = Number(req.params.id);
     const customer = customerSvc.getCustomerById(cId);
-    if (!customer) return res.status(404).json({ success: false, message: 'Pelanggan tidak ditemukan' });
+    if (!customer) return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
 
     const invoice = billingSvc.getLatestInvoiceForCustomer ? billingSvc.getLatestInvoiceForCustomer(cId) : null;
 
-    const defaultAutoBilling = `Yth. Pelanggan {{nama}},\n\nIni adalah pengingat sebelum tanggal jatuh tempo/isolir.\n\n📦 *Paket:* {{paket}}\n💰 *Total Tagihan:* {{moneda}} {{tagihan}}\n📅 *Periode:* {{rincian}}\n\nMohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\nTerima kasih atas kerja samanya.\nSalam,\nAdmin {{company}}`;
-    const defaultIsolir = `Yth. Pelanggan {{nama}},\n\nLayanan internet Anda (Paket {{paket}}) saat ini ditangguhkan (Terisolir) karena belum melunasi tagihan sebesar *{{moneda}} {{tagihan}}*.\n\nSilakan lakukan pembayaran segera melalui portal pelanggan: {{link}}\n\nTerima kasih.`;
-    const defaultSuccess = `✅ *PEMBAYARAN DITERIMA*\n\nTerima kasih, Bp/Ibu {{nama}}.\nPembayaran tagihan internet Paket *{{paket}}* sebesar *{{moneda}} {{tagihan}}* telah kami terima dan dinyatakan *LUNAS*.\n\nSalam,\nAdmin {{company}}`;
+    const defaultAutoBilling = `Estimado/a {{nama}},\n\nLe recordamos que su factura de internet está por vencer.\n\n📦 *Plan:* {{paket}}\n💰 *Monto:* {{moneda}} {{tagihan}}\n📅 *Período:* {{rincian}}\n\nPor favor, realice su pago antes de la fecha de corte. Detalle: {{link}}\n\n¡Gracias!\n— {{company}}`;
+    const defaultIsolir = `Estimado/a {{nama}},\n\nSu servicio de internet (plan {{paket}}) fue suspendido por una deuda de *{{moneda}} {{tagihan}}*.\n\nAl registrar su pago, el servicio se rehabilita automáticamente. Detalle: {{link}}\n\nGracias.`;
+    const defaultSuccess = `✅ *PAGO RECIBIDO*\n\nGracias, {{nama}}.\nRecibimos su pago del plan *{{paket}}* por *{{moneda}} {{tagihan}}*; la factura quedó *PAGADA*.\n\nSaludos,\n{{company}}`;
 
     const rawBilling = (db.getAppSetting && db.getAppSetting('whatsapp_auto_billing_message')) || defaultAutoBilling;
     const rawIsolir = (db.getAppSetting && db.getAppSetting('whatsapp_isolir_message')) || defaultIsolir;
@@ -530,41 +530,41 @@ router.get('/app/admin/customer/:id/wa-templates', requireAdminApiAuth, (req, re
           name: customer.name,
           phone: customer.phone,
           status: customer.status,
-          packageName: customer.package_name || 'Paket Internet'
+          packageName: customer.package_name || 'Planes de internet'
         },
         templates: {
           billing: renderedBilling,
           isolir: renderedIsolir,
           success: renderedSuccess,
-          custom: `Halo Bp/Ibu ${customer.name},\n\n`
+          custom: `Hola, ${customer.name},\n\n`
         }
       }
     });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal memuat template: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo cargar la plantilla:' + e.message });
   }
 });
 
 router.post('/app/admin/whatsapp/send', requireAdminApiAuth, async (req, res) => {
   try {
     const { phone, message } = req.body;
-    if (!phone || !message) return res.status(400).json({ success: false, message: 'Nomor WhatsApp dan pesan wajib diisi' });
+    if (!phone || !message) return res.status(400).json({ success: false, message: 'El número de WhatsApp y el mensaje son obligatorios' });
 
     const p = regional.normalizePhone(phone);
 
     const waNotify = require('../services/waNotifyService');
     if (false) {
-      return res.status(400).json({ success: false, message: 'Bot WhatsApp di server belum terhubung / scan QR.' });
+      return res.status(400).json({ success: false, message: 'WhatsApp del servidor no está conectado / falta escanear el QR.' });
     }
 
     const sent = await waNotify.sendText(p, String(message).trim());
     if (sent) {
-      res.json({ success: true, message: 'Pesan WhatsApp berhasil dikirim ke nomor pelanggan!' });
+      res.json({ success: true, message: '¡Mensaje de WhatsApp enviado al cliente!' });
     } else {
-      res.status(500).json({ success: false, message: 'Gagal mengirim pesan WhatsApp via server bot.' });
+      res.status(500).json({ success: false, message: 'No se pudo enviar el mensaje de WhatsApp desde el servidor.' });
     }
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Error kirim WhatsApp: ' + e.message });
+    res.status(500).json({ success: false, message: 'Error al enviar WhatsApp:' + e.message });
   }
 });
 
@@ -573,10 +573,10 @@ router.post('/app/admin/pay-invoice', requireAdminApiAuth, async (req, res) => {
   try {
     const { invoiceId, note } = req.body || {};
     const invId = Number(invoiceId);
-    if (!invId) return res.status(400).json({ success: false, message: 'ID Tagihan tidak valid' });
+    if (!invId) return res.status(400).json({ success: false, message: 'ID de factura inválido' });
 
     const inv = billingSvc.getInvoiceById(invId);
-    if (!inv) return res.status(404).json({ success: false, message: 'Tagihan tidak ditemukan' });
+    if (!inv) return res.status(404).json({ success: false, message: 'Factura no encontrada' });
 
     const adminName = req.admin?.name || req.admin?.username || 'Admin';
     const collectorLabel = `${adminName} (APK Native)`;
@@ -642,7 +642,7 @@ router.post('/app/admin/pay-invoice', requireAdminApiAuth, async (req, res) => {
 
     res.json({
       success: true,
-      message: `Tagihan #INV-${invId} berhasil divalidasi LUNAS!${unisolated ? ' (Layanan pelanggan otomatis dibuka)' : ''}`,
+      message: `¡Factura #${invId} registrada como PAGADA!${unisolated ? ' (servicio del cliente rehabilitado automáticamente)' : ''}`,
       unisolated,
       receipt: {
         invoiceNumber: `#INV-${invId}`,
@@ -656,7 +656,7 @@ router.post('/app/admin/pay-invoice', requireAdminApiAuth, async (req, res) => {
       }
     });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal memproses pembayaran: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo procesar el pago:' + e.message });
   }
 });
 
@@ -692,18 +692,18 @@ router.get('/app/admin/paid-invoices', requireAdminApiAuth, (req, res) => {
 router.post('/app/admin/isolate-customer', requireAdminApiAuth, async (req, res) => {
   try {
     const customerId = Number(req.body.customerId || req.body.id || 0);
-    if (!customerId) return res.status(400).json({ success: false, message: 'ID Pelanggan tidak valid' });
+    if (!customerId) return res.status(400).json({ success: false, message: 'ID de cliente inválido' });
 
     await customerSvc.suspendCustomer(customerId);
     const updated = customerSvc.getCustomerById(customerId);
 
     res.json({
       success: true,
-      message: `Pelanggan "${updated?.name || customerId}" berhasil DI-ISOLIR di MikroTik dan Database.`,
+      message: `Se CORTÓ el servicio de "${updated?.name || customerId}" en el MikroTik y en el sistema.`,
       status: 'suspended'
     });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal mengisolir pelanggan: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo cortar el servicio:' + e.message });
   }
 });
 
@@ -711,7 +711,7 @@ router.post('/app/admin/isolate-customer', requireAdminApiAuth, async (req, res)
 router.post('/app/admin/unisolate-customer', requireAdminApiAuth, async (req, res) => {
   try {
     const customerId = Number(req.body.customerId || req.body.id || 0);
-    if (!customerId) return res.status(400).json({ success: false, message: 'ID Pelanggan tidak valid' });
+    if (!customerId) return res.status(400).json({ success: false, message: 'ID de cliente inválido' });
 
     // Aktifkan kembali profil normal di MikroTik dan set status ke 'ditangguhkan'
     // Status 'ditangguhkan' TIDAK akan terkena cron auto-isolir walau tagihan belum lunas
@@ -720,11 +720,11 @@ router.post('/app/admin/unisolate-customer', requireAdminApiAuth, async (req, re
 
     res.json({
       success: true,
-      message: `Isolir dibuka! Pelanggan "${updated?.name || customerId}" kembali ONLINE dengan status DITANGGUHKAN (Bebas auto-isolir harian).`,
+      message: `¡Servicio habilitado! "${updated?.name || customerId}" vuelve a estar EN LÍNEA con estado DITANGGUHKAN (sin corte automático diario).`,
       status: 'ditangguhkan'
     });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal membuka isolir: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo habilitar el servicio:' + e.message });
   }
 });
 
@@ -812,10 +812,10 @@ router.post('/app/collector/pay-bill', requireCollectorApiAuth, async (req, res)
       invId = Number(generated?.invoiceId || 0);
     }
 
-    if (!invId) return res.status(400).json({ success: false, message: 'ID Tagihan tidak valid' });
+    if (!invId) return res.status(400).json({ success: false, message: 'ID de factura inválido' });
 
     const inv = billingSvc.getInvoiceById(invId);
-    if (!inv) return res.status(404).json({ success: false, message: 'Tagihan tidak ditemukan' });
+    if (!inv) return res.status(404).json({ success: false, message: 'Factura no encontrada' });
 
     const collectorId = Number(req.collector?.collectorId || req.collector?.id || 0);
     const collector = collectorId ? db.prepare('SELECT id, name, auto_approve FROM collectors WHERE id = ?').get(collectorId) : null;
@@ -836,7 +836,7 @@ router.post('/app/collector/pay-bill', requireCollectorApiAuth, async (req, res)
       // Catat transaksi di collector_payment_requests (approved)
       db.prepare(`
         INSERT INTO collector_payment_requests (collector_id, invoice_id, customer_id, amount, note, status, decided_by_role, decided_by_name, decided_note, decided_at)
-        VALUES (?, ?, ?, ?, ?, 'approved', 'system', 'Auto-Approve', 'Otomatis disetujui (kolektor setting aktif)', (NOW_LOCAL()))
+        VALUES (?, ?, ?, ?, ?, 'approved', 'system', 'Auto-Approve', 'Aprobado automáticamente (configuración del cobrador)', (NOW_LOCAL()))
       `).run(collectorId, invId, Number(inv.customer_id || 0), Number(inv.amount || 0), note || '');
 
       // Auto-unisolate jika suspended dan tidak ada sisa tagihan lain
@@ -888,7 +888,7 @@ router.post('/app/collector/pay-bill', requireCollectorApiAuth, async (req, res)
 
       res.json({
         success: true,
-        message: `Tagihan #INV-${invId} berhasil dibayar LUNAS!${unisolated ? ' (Layanan pelanggan otomatis aktif)' : ''}`,
+        message: `¡Factura #${invId} PAGADA!${unisolated ? ' (servicio del cliente rehabilitado automáticamente)' : ''}`,
         receipt: {
           invoiceId: invId,
           customerName: customer?.name || 'Pelanggan',
@@ -906,12 +906,12 @@ router.post('/app/collector/pay-bill', requireCollectorApiAuth, async (req, res)
 
       res.json({
         success: true,
-        message: `Setoran tagihan #INV-${invId} berhasil dicatat! Menunggu verifikasi/approval kasir atau admin.`,
+        message: `¡Cobro de la factura #${invId} registrado! Queda esperando la aprobación del cajero o del administrador.`,
         pendingApproval: true
       });
     }
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal memproses pembayaran kolektor: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo procesar el cobro:' + e.message });
   }
 });
 
@@ -1022,7 +1022,7 @@ router.post('/app/collector/attendance/checkin', requireCollectorApiAuth, (req, 
     const collectorName = req.collector?.name || 'Kolektor';
     const today = attendanceSvc.getTodayAttendance('collector', collectorId);
     if (today) {
-      return res.status(400).json({ success: false, message: 'Anda sudah melakukan check-in hari ini!' });
+      return res.status(400).json({ success: false, message: '¡Ya registraste tu entrada hoy!' });
     }
 
     let { lat, lng, note, photo } = req.body || {};
@@ -1042,13 +1042,13 @@ router.post('/app/collector/attendance/checkin', requireCollectorApiAuth, (req, 
       employee_name: collectorName,
       lat: String(lat || officeLat || ''),
       lng: String(lng || officeLng || ''),
-      note: String(note || 'Check-in Kolektor APK Native'),
+      note: String(note || 'Entrada del cobrador (app)'),
       photo: photoPath
     });
 
-    res.json({ success: true, message: '✅ Check-in berhasil dicatat!', id: result.lastInsertRowid });
+    res.json({ success: true, message: '✅ ¡Entrada registrada!', id: result.lastInsertRowid });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal check-in: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo registrar la entrada:' + e.message });
   }
 });
 
@@ -1058,10 +1058,10 @@ router.post('/app/collector/attendance/checkout', requireCollectorApiAuth, (req,
     const collectorId = Number(req.collector?.collectorId || req.collector?.id || 1);
     const today = attendanceSvc.getTodayAttendance('collector', collectorId);
     if (!today) {
-      return res.status(400).json({ success: false, message: 'Anda belum melakukan check-in hari ini!' });
+      return res.status(400).json({ success: false, message: '¡Todavía no registraste tu entrada hoy!' });
     }
     if (today.status === 'checked_out') {
-      return res.status(400).json({ success: false, message: 'Anda sudah check-out hari ini!' });
+      return res.status(400).json({ success: false, message: '¡Ya registraste tu salida hoy!' });
     }
 
     let { lat, lng, note, photo } = req.body || {};
@@ -1078,13 +1078,13 @@ router.post('/app/collector/attendance/checkout', requireCollectorApiAuth, (req,
     attendanceSvc.checkOut(today.id, {
       lat: String(lat || officeLat || ''),
       lng: String(lng || officeLng || ''),
-      note: String(note || 'Check-out Kolektor APK Native'),
+      note: String(note || 'Salida del cobrador (app)'),
       photo: photoPath
     });
 
-    res.json({ success: true, message: '🏁 Check-out berhasil dicatat. Selamat beristirahat!' });
+    res.json({ success: true, message: '🏁 Salida registrada. ¡Buen descanso!' });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal check-out: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo registrar la salida:' + e.message });
   }
 });
 
@@ -1138,7 +1138,7 @@ router.post('/app/cashier/attendance/checkin', requireAdminApiAuth, (req, res) =
 
     const today = attendanceSvc.getTodayAttendance('cashier', cashierId);
     if (today) {
-      return res.status(400).json({ success: false, message: 'Kasir ' + cashierName + ' sudah check-in hari ini!' });
+      return res.status(400).json({ success: false, message: 'Kasir' + cashierName + ' ya registró su entrada hoy!' });
     }
 
     const { getSetting } = require('../config/settingsManager');
@@ -1157,13 +1157,13 @@ router.post('/app/cashier/attendance/checkin', requireAdminApiAuth, (req, res) =
       employee_name: cashierName,
       lat: String(lat || officeLat || ''),
       lng: String(lng || officeLng || ''),
-      note: String(note || 'Check-in Kasir APK Native'),
+      note: String(note || 'Entrada del cajero (app)'),
       photo: photoPath
     });
 
-    res.json({ success: true, message: '✅ Check-in kasir (' + cashierName + ') berhasil dicatat!', id: result.lastInsertRowid });
+    res.json({ success: true, message: '✅ ¡Entrada del cajero (' + cashierName + ') registrada!', id: result.lastInsertRowid });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal check-in kasir: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo registrar la entrada del cajero:' + e.message });
   }
 });
 
@@ -1175,10 +1175,10 @@ router.post('/app/cashier/attendance/checkout', requireAdminApiAuth, (req, res) 
 
     const today = attendanceSvc.getTodayAttendance('cashier', cashierId);
     if (!today) {
-      return res.status(400).json({ success: false, message: 'Kasir belum melakukan check-in hari ini!' });
+      return res.status(400).json({ success: false, message: '¡El cajero todavía no registró su entrada hoy!' });
     }
     if (today.status === 'checked_out') {
-      return res.status(400).json({ success: false, message: 'Kasir sudah check-out hari ini!' });
+      return res.status(400).json({ success: false, message: '¡El cajero ya registró su salida hoy!' });
     }
 
     const { getSetting } = require('../config/settingsManager');
@@ -1194,13 +1194,13 @@ router.post('/app/cashier/attendance/checkout', requireAdminApiAuth, (req, res) 
     attendanceSvc.checkOut(today.id, {
       lat: String(lat || officeLat || ''),
       lng: String(lng || officeLng || ''),
-      note: String(note || 'Check-out Kasir APK Native'),
+      note: String(note || 'Salida del cajero (app)'),
       photo: photoPath
     });
 
-    res.json({ success: true, message: '🏁 Check-out kasir berhasil dicatat. Selesai bertugas!' });
+    res.json({ success: true, message: '🏁 Salida del cajero registrada. ¡Fin de la jornada!' });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal check-out: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo registrar la salida:' + e.message });
   }
 });
 
@@ -1409,10 +1409,10 @@ router.get('/app/admin/expenses', requireAdminApiAuth, (req, res) => {
 router.post('/app/admin/expenses/create', requireAdminApiAuth, (req, res) => {
   try {
     const { date, category, amount, description, vendor, payment_method } = req.body;
-    if (!category || !amount) return res.status(400).json({ success: false, message: 'Kategori dan nominal wajib diisi' });
+    if (!category || !amount) return res.status(400).json({ success: false, message: 'La categoría y el monto son obligatorios' });
     db.prepare(`INSERT INTO expenses (date, category, amount, description, vendor, payment_method, recorded_by_role) VALUES (?, ?, ?, ?, ?, ?, 'admin')`)
       .run(date || new Date().toISOString().slice(0, 10), category, Number(amount), description || '', vendor || '', payment_method || 'cash');
-    res.json({ success: true, message: 'Pengeluaran berhasil dicatat' });
+    res.json({ success: true, message: 'Gasto registrado' });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -1555,7 +1555,7 @@ router.post('/app/admin/vouchers/create-single', requireAdminApiAuth, express.js
     const defaultComment = `vc-${roleName}-${dd}.${mm}.${yy}`;
     const comment = String(req.body.comment || defaultComment).trim();
 
-    if (!profileName) return res.status(400).json({ success: false, message: 'Profile hotspot wajib diisi' });
+    if (!profileName) return res.status(400).json({ success: false, message: 'El perfil hotspot es obligatorio' });
 
     if (!username) {
       const prefix = String(req.body.prefix || '').trim();
@@ -1595,7 +1595,7 @@ router.post('/app/admin/vouchers/create-single', requireAdminApiAuth, express.js
     } catch (mErr) {
       db.prepare('UPDATE vouchers SET status = ? WHERE id = ?').run('failed', voucherId);
       db.prepare('UPDATE voucher_batches SET qty_created = 0, qty_failed = 1, status = ? WHERE id = ?').run('failed', batchId);
-      return res.status(500).json({ success: false, message: 'Gagal simpan ke MikroTik: ' + mErr.message });
+      return res.status(500).json({ success: false, message: 'No se pudo guardar en el MikroTik:' + mErr.message });
     }
 
     const settings = getSettingsWithCache();
@@ -1606,7 +1606,7 @@ router.post('/app/admin/vouchers/create-single', requireAdminApiAuth, express.js
 
     res.json({
       success: true,
-      message: `Voucher "${username}" berhasil dibuat!`,
+      message: `¡Ficha "${username}" creada!`,
       data: {
         id: voucherId,
         batchId,
@@ -1650,9 +1650,9 @@ router.post('/app/admin/vouchers/create-batch', requireAdminApiAuth, express.jso
     const defaultComment = `vc-${roleName}-${dd}.${mm}.${yy}`;
     const batchComment = String(req.body.comment || defaultComment).trim();
 
-    if (!profileName) return res.status(400).json({ success: false, message: 'Profile hotspot wajib diisi' });
-    if (!qty) return res.status(400).json({ success: false, message: 'Jumlah voucher wajib diisi' });
-    if (prefix.length >= codeLength) return res.status(400).json({ success: false, message: 'Prefix terlalu panjang untuk panjang kode yang dipilih' });
+    if (!profileName) return res.status(400).json({ success: false, message: 'El perfil hotspot es obligatorio' });
+    if (!qty) return res.status(400).json({ success: false, message: 'La cantidad de fichas es obligatoria' });
+    if (prefix.length >= codeLength) return res.status(400).json({ success: false, message: 'El prefijo es demasiado largo para la longitud de código elegida' });
 
     const insertBatch = db.prepare(`
       INSERT INTO voucher_batches (router_id, profile_name, qty_total, qty_created, qty_failed, price, validity, prefix, code_length, status, created_by, mode, charset, updated_at)
@@ -1726,7 +1726,7 @@ router.post('/app/admin/vouchers/create-batch', requireAdminApiAuth, express.jso
 
     res.json({
       success: true,
-      message: `Batch ${qty} voucher berhasil dibuat dan sedang disinkronkan ke MikroTik.`,
+      message: `Lote de ${qty} fichas creado; se está sincronizando con el MikroTik.`,
       data: {
         batchId,
         qty,
@@ -1744,7 +1744,7 @@ router.get('/app/admin/vouchers/batch/:id/vouchers', requireAdminApiAuth, (req, 
   try {
     const batchId = Number(req.params.id);
     const batch = db.prepare('SELECT * FROM voucher_batches WHERE id = ?').get(batchId);
-    if (!batch) return res.status(404).json({ success: false, message: 'Batch tidak ditemukan' });
+    if (!batch) return res.status(404).json({ success: false, message: 'Lote no encontrado' });
 
     const vouchers = db.prepare('SELECT id, code, password, profile_name, status, used_at FROM vouchers WHERE batch_id = ? ORDER BY id ASC').all(batchId) || [];
     const settings = getSettingsWithCache();
@@ -1773,7 +1773,7 @@ router.post('/app/admin/vouchers/send-wa', requireAdminApiAuth, async (req, res)
   try {
     let { phone, code, password, profile, validity, price } = req.body;
     if (!phone || !code) {
-      return res.status(400).json({ success: false, message: 'Nomor WhatsApp dan Kode Voucher wajib diisi' });
+      return res.status(400).json({ success: false, message: 'El número de WhatsApp y el código de la ficha son obligatorios' });
     }
 
     const p = regional.normalizePhone(phone);
@@ -1790,12 +1790,12 @@ router.post('/app/admin/vouchers/send-wa', requireAdminApiAuth, async (req, res)
     let msg = `🎫 *VOUCHER INTERNET HOTSPOT*\n`;
     msg += `--------------------------------\n`;
     msg += `🏢 *${companyName}*\n`;
-    msg += `📦 *Paket:* ${profile || 'Hotspot'}\n`;
+    msg += `📦 *Plan:* ${profile || 'Hotspot'}\n`;
     if (validity && validity !== '-') msg += `⏱️ *Masa Aktif:* ${validity}\n`;
     if (price) msg += `💰 *Tarif:* ${price}\n\n`;
 
     if (isSame) {
-      msg += `👤 *Kode Login:* \`${code}\`\n\n`;
+      msg += `👤 *Código de acceso:* \`${code}\`\n\n`;
     } else {
       msg += `👤 *Username:* \`${code}\`\n`;
       msg += `🔑 *Password:* \`${pass}\`\n\n`;
@@ -1808,15 +1808,15 @@ router.post('/app/admin/vouchers/send-wa', requireAdminApiAuth, async (req, res)
       msg += `📞 *Bantuan / CS:* ${companyPhone}\n`;
     }
     msg += `--------------------------------\n`;
-    msg += `Sambungkan perangkat ke WiFi, lalu masukkan kode login di atas. Terima kasih!`;
+    msg += `Conecte su dispositivo al WiFi e ingrese el código de arriba. ¡Gracias!`;
 
     const whatsappService = require('../services/whatsappService');
     await whatsappService.sendWhatsAppMessage(p, msg);
 
-    res.json({ success: true, message: `Voucher berhasil dikirim ke WhatsApp ${phone}` });
+    res.json({ success: true, message: `Ficha enviada por WhatsApp a ${phone}` });
   } catch (err) {
     logger.error('[Voucher Send WA] Error: ' + err.message);
-    res.status(500).json({ success: false, message: err.message || 'Gagal mengirim pesan WhatsApp' });
+    res.status(500).json({ success: false, message: err.message || 'No se pudo enviar el mensaje de WhatsApp' });
   }
 });
 
@@ -1834,7 +1834,7 @@ router.get('/app/admin/vouchers/batch/:id/print', (req, res) => {
 
     const batchId = Number(req.params.id);
     const batch = db.prepare('SELECT * FROM voucher_batches WHERE id = ?').get(batchId);
-    if (!batch) return res.status(404).send('<h3>Batch voucher tidak ditemukan</h3>');
+    if (!batch) return res.status(404).send('<h3>Lote de fichas no encontrado</h3>');
 
     const vouchers = db.prepare('SELECT code, password, profile_name, status FROM vouchers WHERE batch_id = ? ORDER BY id ASC').all(batchId) || [];
     const settings = getSettingsWithCache();
@@ -2035,7 +2035,7 @@ router.get('/app/admin/vouchers/batch/:id/print', (req, res) => {
 
     res.send(html);
   } catch (e) {
-    res.status(500).send('<h3>Error memuat halaman cetak: ' + e.message + '</h3>');
+    res.status(500).send('<h3>Error al cargar la página de impresión:' + e.message + '</h3>');
   }
 });
 
@@ -2043,7 +2043,7 @@ router.delete('/app/admin/vouchers/batch/:id', requireAdminApiAuth, async (req, 
   try {
     const batchId = Number(req.params.id);
     const batch = db.prepare('SELECT * FROM voucher_batches WHERE id = ?').get(batchId);
-    if (!batch) return res.status(404).json({ success: false, message: 'Batch tidak ditemukan' });
+    if (!batch) return res.status(404).json({ success: false, message: 'Lote no encontrado' });
 
     const vouchers = db.prepare('SELECT code FROM vouchers WHERE batch_id = ?').all(batchId) || [];
     for (const v of vouchers) {
@@ -2056,7 +2056,7 @@ router.delete('/app/admin/vouchers/batch/:id', requireAdminApiAuth, async (req, 
     db.prepare('DELETE FROM vouchers WHERE batch_id = ?').run(batchId);
     db.prepare('DELETE FROM voucher_batches WHERE id = ?').run(batchId);
 
-    res.json({ success: true, message: `Batch #${batchId} berhasil dihapus dari sistem & MikroTik.` });
+    res.json({ success: true, message: `Lote #${batchId} eliminado del sistema y del MikroTik.` });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -2103,13 +2103,13 @@ router.get('/app/admin/whatsapp/status', requireAdminApiAuth, async (req, res) =
       success: true,
       data: {
         connected: isConnected,
-        status: isConnected ? 'Terhubung' : 'Tidak Terhubung',
+        status: isConnected ? 'Terhubung' : 'Desconectado',
         number: waNumber,
         name: waName
       }
     });
   } catch (e) {
-    res.json({ success: true, data: { connected: false, status: 'Bot Tidak Aktif', number: '-', name: '-' } });
+    res.json({ success: true, data: { connected: false, status: 'Bot inactivo', number: '-', name: '-' } });
   }
 });
 
@@ -2133,7 +2133,7 @@ router.get('/app/map', (req, res) => {
     const company = settings.company_header || settings.company_name || 'ISP NETWORK';
 
     res.render('admin/map_mobile', {
-      title: 'Peta / Mapping ONU Pelanggan',
+      title: 'Mapa de ONU de clientes',
       company,
       customers: customers || [],
       odps: odps || [],
@@ -2194,7 +2194,7 @@ router.post('/app/admin/settings/update', requireAdminApiAuth, (req, res) => {
       if (updates[key] !== undefined) { current[key] = updates[key]; changed++; }
     }
     if (changed > 0) require('fs').writeFileSync(settingsPath, JSON.stringify(current, null, 2));
-    res.json({ success: true, message: `${changed} pengaturan berhasil diperbarui` });
+    res.json({ success: true, message: `${changed} ajustes actualizados` });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -2221,7 +2221,7 @@ router.post('/app/admin/webhook/test', requireAdminApiAuth, (req, res) => {
     const secret = s.webhook_secret || 'billing-rtrw-secret-key';
     res.json({
       success: true,
-      message: 'Koneksi Gateway Webhook Berhasil!',
+      message: '¡Conexión con el webhook correcta!',
       server_time: new Date().toISOString(),
       secret_configured: !!secret
     });
@@ -2265,7 +2265,7 @@ router.post('/app/admin/customers/topup', requireAdminApiAuth, async (req, res) 
     const sendWa = sendWhatsApp !== false && sendWhatsApp !== 'false';
 
     if (!cid || !amt || amt <= 0) {
-      return res.status(400).json({ success: false, message: 'ID Pelanggan dan nominal valid wajib diisi.' });
+      return res.status(400).json({ success: false, message: 'El ID de cliente y un monto válido son obligatorios.' });
     }
 
     const result = await customerSvc.topupCustomerBalance(cid, amt, note, actorName, action, sendWa);
@@ -2273,7 +2273,7 @@ router.post('/app/admin/customers/topup', requireAdminApiAuth, async (req, res) 
 
     res.json({
       success: true,
-      message: `Saldo pelanggan "${result.customer?.name || ''}" berhasil ${actionText} ${regional.currencySymbol()} ${amt.toLocaleString(regional.locale())}. Sisa saldo: ${regional.currencySymbol()} ${result.after.toLocaleString(regional.locale())}`,
+      message: `Saldo de "${result.customer?.name || ''}": ${actionText} ${regional.currencySymbol()} ${amt.toLocaleString(regional.locale())}. Saldo actual: ${regional.currencySymbol()} ${result.after.toLocaleString(regional.locale())}`,
       data: {
         customerId: cid,
         customerName: result.customer?.name,
@@ -2306,14 +2306,14 @@ router.get('/app/admin/collector-payments', requireAdminApiAuth, (req, res) => {
 router.post('/app/admin/collector-payments/approve', requireAdminApiAuth, async (req, res) => {
   try {
     const payId = Number(req.body.paymentId || req.body.id);
-    if (!payId) return res.status(400).json({ success: false, message: 'ID pembayaran tidak valid' });
+    if (!payId) return res.status(400).json({ success: false, message: 'ID de pago inválido' });
     const pay = db.prepare(`
       SELECT cp.*, col.name as collector_name
       FROM collector_payment_requests cp
       LEFT JOIN collectors col ON col.id = cp.collector_id
       WHERE cp.id = ?
     `).get(payId);
-    if (!pay) return res.status(404).json({ success: false, message: 'Pembayaran tidak ditemukan' });
+    if (!pay) return res.status(404).json({ success: false, message: 'Pago no encontrado' });
     if (pay.status !== 'pending') return res.status(400).json({ success: false, message: 'Pembayaran sudah diproses' });
 
     const adminName = req.admin?.name || 'Admin';
@@ -2332,7 +2332,7 @@ router.post('/app/admin/collector-payments/approve', requireAdminApiAuth, async 
         try { await customerSvc.activateCustomer(pay.customer_id); } catch (_) {}
       }
     }
-    res.json({ success: true, message: 'Pembayaran berhasil di-approve dan tagihan ditandai LUNAS' });
+    res.json({ success: true, message: 'Pago aprobado y factura marcada como PAGADA' });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
@@ -2372,9 +2372,9 @@ router.get('/app/admin/tickets', requireAdminApiAuth, (req, res) => {
 router.post('/app/admin/tickets/update-status', requireAdminApiAuth, (req, res) => {
   try {
     const { ticketId, status, note } = req.body;
-    if (!ticketId) return res.status(400).json({ success: false, message: 'ID tiket tidak valid' });
+    if (!ticketId) return res.status(400).json({ success: false, message: 'ID de ticket inválido' });
     db.prepare('UPDATE tickets SET status = ?, updated_at = datetime("now","localtime") WHERE id = ?').run(status || 'resolved', Number(ticketId));
-    res.json({ success: true, message: 'Status tiket berhasil diperbarui' });
+    res.json({ success: true, message: 'Estado del ticket actualizado' });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
@@ -2405,7 +2405,7 @@ router.post('/app/admin/backup/create', requireAdminApiAuth, (req, res) => {
     const src = path.join(__dirname, '../database/billing.db');
     fs.copyFileSync(src, dest);
     const size = fs.statSync(dest).size;
-    res.json({ success: true, message: `Backup berhasil dibuat: billing_backup_${ts}.db (${(size / 1024).toFixed(1)} KB)` });
+    res.json({ success: true, message: `Respaldo creado: billing_backup_${ts}.db (${(size / 1024).toFixed(1)} KB)` });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
@@ -2431,7 +2431,7 @@ router.get('/app/tech/dashboard', requireTechApiAuth, (req, res) => {
     res.json({
       success: true,
       data: {
-        tech: techInfo || { id: techId, name: req.tech?.name || 'Teknisi Lapangan', username: req.tech?.username || 'teknisi', area: 'Semua Area' },
+        tech: techInfo || { id: techId, name: req.tech?.name || 'Técnico de campo', username: req.tech?.username || 'teknisi', area: 'Semua Area' },
         stats: stats || { total: 0, open: 0, inProgress: 0, resolved: 0 },
         assignedTickets: assignedTickets || [],
         openTickets: openTickets || [],
@@ -2447,12 +2447,12 @@ router.post('/app/tech/tickets/take', requireTechApiAuth, (req, res) => {
   try {
     const ticketId = Number(req.body.ticketId || req.body.id);
     const techId = resolveTechId(req);
-    if (!ticketId) return res.status(400).json({ success: false, message: 'ID Tiket tidak valid' });
+    if (!ticketId) return res.status(400).json({ success: false, message: 'ID de ticket inválido' });
 
     techSvc.takeTicket(ticketId, techId);
-    res.json({ success: true, message: `Tiket #${ticketId} berhasil diambil! Silakan mulai pengerjaan.` });
+    res.json({ success: true, message: `¡Ticket #${ticketId} tomado! Ya podés empezar a trabajarlo.` });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal mengambil tiket: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo tomar el ticket:' + e.message });
   }
 });
 
@@ -2462,7 +2462,7 @@ router.post('/app/tech/tickets/update', requireTechApiAuth, async (req, res) => 
     const techId = resolveTechId(req);
     const status = String(req.body.status || 'in_progress').trim();
     const notes = String(req.body.notes || '').trim();
-    if (!ticketId) return res.status(400).json({ success: false, message: 'ID Tiket tidak valid' });
+    if (!ticketId) return res.status(400).json({ success: false, message: 'ID de ticket inválido' });
 
     techSvc.updateTicketStatus(ticketId, techId, status, { notes });
 
@@ -2477,22 +2477,22 @@ router.post('/app/tech/tickets/update', requireTechApiAuth, async (req, res) => 
           const tech = techSvc.getTechById(techId);
 
           if (ticket && ticket.customer_phone) {
-            const waMsg = `✅ *TIKET KELUHAN SELESAI*\n\n` +
-              `🎫 *ID Tiket:* #${ticket.id}\n` +
-              `👤 *Pelanggan:* ${ticket.customer_name}\n` +
+            const waMsg = `✅ *RECLAMO RESUELTO*\n\n` +
+              `🎫 *Ticket:* #${ticket.id}\n` +
+              `👤 *Cliente:* ${ticket.customer_name}\n` +
               `📝 *Subjek:* ${ticket.subject}\n` +
-              `🛠️ *Teknisi:* ${tech?.name || 'Teknisi Lapangan'}\n` +
-              `💬 *Catatan:* ${notes || 'Selesai diperbaiki'}\n\n` +
-              `Layanan internet Anda telah kembali normal. Terima kasih.`;
+              `🛠️ *Técnico:* ${tech?.name || 'Técnico de campo'}\n` +
+              `💬 *Nota:* ${notes || 'Reparado'}\n\n` +
+              `Su servicio de internet ya funciona con normalidad. ¡Gracias!`;
             await waNotify.sendText(ticket.customer_phone, waMsg);
           }
         }
       } catch (_) {}
     }
 
-    res.json({ success: true, message: `Status tiket #${ticketId} berhasil diperbarui menjadi ${status.toUpperCase()}!` });
+    res.json({ success: true, message: `¡Estado del ticket #${ticketId} actualizado a ${status.toUpperCase()}!` });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal memperbarui status: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo actualizar el estado:' + e.message });
   }
 });
 
@@ -2534,7 +2534,7 @@ router.get('/app/tech/mikrotik/secrets', requireTechApiAuth, async (req, res) =>
 
     res.json({ success: true, data: result, total: result.length });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal mengambil data PPPoE MikroTik: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudieron leer los datos PPPoE del MikroTik:' + e.message });
   }
 });
 
@@ -2551,19 +2551,19 @@ router.get('/app/tech/mikrotik/profiles', requireTechApiAuth, async (req, res) =
 router.post('/app/tech/mikrotik/secret/create', requireTechApiAuth, async (req, res) => {
   try {
     const { username, password, profile, comment, routerId } = req.body;
-    if (!username || !password) return res.status(400).json({ success: false, message: 'Username & Password PPPoE wajib diisi' });
+    if (!username || !password) return res.status(400).json({ success: false, message: 'El usuario y la contraseña PPPoE son obligatorios' });
 
     await mikrotikService.addPppoeUser(username.trim(), password.trim(), profile || 'default', routerId ? Number(routerId) : null, { comment });
-    res.json({ success: true, message: `User PPPoE "${username}" berhasil dibuat di MikroTik!` });
+    res.json({ success: true, message: `¡Usuario PPPoE "${username}" creado en el MikroTik!` });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal membuat user PPPoE: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo crear el usuario PPPoE:' + e.message });
   }
 });
 
 router.post('/app/tech/mikrotik/secret/update', requireTechApiAuth, async (req, res) => {
   try {
     const { username, password, profile, disabled, routerId } = req.body;
-    if (!username) return res.status(400).json({ success: false, message: 'Username PPPoE tidak valid' });
+    if (!username) return res.status(400).json({ success: false, message: 'Usuario PPPoE inválido' });
 
     const updateData = {};
     if (password) updateData.password = password;
@@ -2571,33 +2571,33 @@ router.post('/app/tech/mikrotik/secret/update', requireTechApiAuth, async (req, 
     if (disabled !== undefined) updateData.disabled = disabled;
 
     await mikrotikService.updatePppoeUser(username.trim(), updateData, routerId ? Number(routerId) : null);
-    res.json({ success: true, message: `User PPPoE "${username}" berhasil diperbarui di MikroTik!` });
+    res.json({ success: true, message: `¡Usuario PPPoE "${username}" actualizado en el MikroTik!` });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal update user PPPoE: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo actualizar el usuario PPPoE:' + e.message });
   }
 });
 
 router.post('/app/tech/mikrotik/secret/delete', requireTechApiAuth, async (req, res) => {
   try {
     const { username, routerId } = req.body;
-    if (!username) return res.status(400).json({ success: false, message: 'Username PPPoE tidak valid' });
+    if (!username) return res.status(400).json({ success: false, message: 'Usuario PPPoE inválido' });
 
     await mikrotikService.deletePppoeUser(username.trim(), routerId ? Number(routerId) : null);
-    res.json({ success: true, message: `User PPPoE "${username}" berhasil dihapus dari MikroTik!` });
+    res.json({ success: true, message: `¡Usuario PPPoE "${username}" eliminado del MikroTik!` });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal menghapus user PPPoE: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo eliminar el usuario PPPoE:' + e.message });
   }
 });
 
 router.post('/app/tech/mikrotik/secret/kick', requireTechApiAuth, async (req, res) => {
   try {
     const { username, routerId } = req.body;
-    if (!username) return res.status(400).json({ success: false, message: 'Username PPPoE tidak valid' });
+    if (!username) return res.status(400).json({ success: false, message: 'Usuario PPPoE inválido' });
 
     await mikrotikService.kickPppoeUser(username.trim(), routerId ? Number(routerId) : null);
-    res.json({ success: true, message: `Sesi PPPoE "${username}" berhasil diputus (kicked)!` });
+    res.json({ success: true, message: `¡Sesión PPPoE "${username}" desconectada!` });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal kick sesi PPPoE: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo desconectar la sesión PPPoE:' + e.message });
   }
 });
 
@@ -2645,7 +2645,7 @@ router.get('/app/tech/tr069/devices', requireTechApiAuth, async (req, res) => {
         softwareVersion: mapped.softwareVersion || '-',
         ssid: mapped.ssid || '-',
         customerId: customer ? customer.id : null,
-        customerName: customer ? customer.name : 'Belum Terikat Pelanggan',
+        customerName: customer ? customer.name : 'Sin cliente asignado',
         customerPhone: customer ? customer.phone : '-',
         manufacturer: d._deviceId?._Manufacturer || d._deviceId?.Manufacturer || 'ZTE/Huawei/Fiberhome'
       };
@@ -2669,14 +2669,14 @@ router.get('/app/tech/tr069/devices', requireTechApiAuth, async (req, res) => {
 
     res.json({ success: true, data: devices, total: devices.length });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal mengambil data TR-069: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudieron leer los datos TR-069:' + e.message });
   }
 });
 
 router.post('/app/tech/tr069/device/ssid', requireTechApiAuth, async (req, res) => {
   try {
     const { tag, ssid } = req.body;
-    if (!tag || !ssid) return res.status(400).json({ success: false, message: 'Tag perangkat dan SSID baru wajib diisi' });
+    if (!tag || !ssid) return res.status(400).json({ success: false, message: 'La etiqueta del equipo y el nuevo SSID son obligatorios' });
 
     const ok = await customerDevice.updateSSID(tag, ssid.trim());
     if (ok) {
@@ -2688,20 +2688,20 @@ router.post('/app/tech/tr069/device/ssid', requireTechApiAuth, async (req, res) 
           if (cust && cust.phone) {
             const waNotify = require('../services/waNotifyService');
             const now = new Date().toLocaleString(regional.locale());
-            const msg = `📡 *PERUBAHAN NAMA WIFI (SSID)*\n\n` +
-              `👤 *Pelanggan:* ${cust.name}\n` +
-              `🕒 *Waktu:* ${now}\n\n` +
-              `Nama WiFi (SSID) modem Anda telah berhasil diubah menjadi:\n` +
+            const msg = `📡 *CAMBIO DE NOMBRE DEL WIFI (SSID)*\n\n` +
+              `👤 *Cliente:* ${cust.name}\n` +
+              `🕒 *Fecha:* ${now}\n\n` +
+              `El nombre (SSID) del WiFi de su módem ahora es:\n` +
               `📶 *${ssid}*\n\n` +
-              `Silakan hubungkan perangkat Anda ke nama WiFi yang baru.`;
+              `Conecte sus dispositivos a la nueva red WiFi.`;
             await waNotify.sendText(cust.phone, msg);
           }
         }
       } catch (_) {}
 
-      res.json({ success: true, message: `Nama WiFi (SSID) berhasil diubah menjadi "${ssid}"!` });
+      res.json({ success: true, message: `¡Nombre del WiFi cambiado a "${ssid}"!` });
     } else {
-      res.status(400).json({ success: false, message: 'Gagal mengubah SSID. Pastikan perangkat terhubung ke TR-069.' });
+      res.status(400).json({ success: false, message: 'No se pudo cambiar el SSID. Verificá que el equipo esté conectado por TR-069.' });
     }
   } catch (e) {
     res.status(500).json({ success: false, message: 'Error update SSID: ' + e.message });
@@ -2712,7 +2712,7 @@ router.post('/app/tech/tr069/device/password', requireTechApiAuth, async (req, r
   try {
     const { tag, password } = req.body;
     if (!tag || !password || password.length < 8) {
-      return res.status(400).json({ success: false, message: 'Password WiFi minimal 8 karakter' });
+      return res.status(400).json({ success: false, message: 'La contraseña del WiFi debe tener al menos 8 caracteres' });
     }
 
     const ok = await customerDevice.updatePassword(tag, password.trim());
@@ -2725,20 +2725,20 @@ router.post('/app/tech/tr069/device/password', requireTechApiAuth, async (req, r
           if (cust && cust.phone) {
             const waNotify = require('../services/waNotifyService');
             const now = new Date().toLocaleString(regional.locale());
-            const msg = `🔑 *PERUBAHAN SANDI WIFI*\n\n` +
-              `👤 *Pelanggan:* ${cust.name}\n` +
-              `🕒 *Waktu:* ${now}\n\n` +
-              `Password WiFi modem Anda telah berhasil diperbarui menjadi:\n` +
+            const msg = `🔑 *CAMBIO DE CONTRASEÑA DEL WIFI*\n\n` +
+              `👤 *Cliente:* ${cust.name}\n` +
+              `🕒 *Fecha:* ${now}\n\n` +
+              `La contraseña del WiFi de su módem ahora es:\n` +
               `🔐 *${password}*\n\n` +
-              `Silakan gunakan sandi baru untuk terhubung.`;
+              `Use la nueva contraseña para conectarse.`;
             await waNotify.sendText(cust.phone, msg);
           }
         }
       } catch (_) {}
 
-      res.json({ success: true, message: `Password WiFi berhasil diubah!` });
+      res.json({ success: true, message: `¡Contraseña del WiFi cambiada!` });
     } else {
-      res.status(400).json({ success: false, message: 'Gagal mengubah password WiFi. Pastikan perangkat terhubung ke TR-069.' });
+      res.status(400).json({ success: false, message: 'No se pudo cambiar la contraseña del WiFi. Verificá que el equipo esté conectado por TR-069.' });
     }
   } catch (e) {
     res.status(500).json({ success: false, message: 'Error update Password WiFi: ' + e.message });
@@ -2748,13 +2748,13 @@ router.post('/app/tech/tr069/device/password', requireTechApiAuth, async (req, r
 router.post('/app/tech/tr069/device/reboot', requireTechApiAuth, async (req, res) => {
   try {
     const { tag } = req.body;
-    if (!tag) return res.status(400).json({ success: false, message: 'Tag / ID perangkat tidak valid' });
+    if (!tag) return res.status(400).json({ success: false, message: 'Etiqueta / ID de equipo inválido' });
 
     const ok = await customerDevice.requestReboot(tag);
     if (ok) {
-      res.json({ success: true, message: 'Perintah Reboot berhasil dikirim ke Modem ONT melalui TR-069!' });
+      res.json({ success: true, message: '¡Orden de reinicio enviada a la ONT por TR-069!' });
     } else {
-      res.status(400).json({ success: false, message: 'Gagal mengirim perintah reboot. Pastikan perangkat terhubung ke TR-069.' });
+      res.status(400).json({ success: false, message: 'No se pudo enviar la orden de reinicio. Verificá que el equipo esté conectado por TR-069.' });
     }
   } catch (e) {
     res.status(500).json({ success: false, message: 'Error reboot TR-069: ' + e.message });
@@ -2777,7 +2777,7 @@ router.get('/app/tech/customers/options', requireTechApiAuth, (req, res) => {
 router.post('/app/tech/customers/create', requireTechApiAuth, async (req, res) => {
   try {
     const name = String(req.body.name || '').trim();
-    if (!name) return res.status(400).json({ success: false, message: 'Nama pelanggan wajib diisi' });
+    if (!name) return res.status(400).json({ success: false, message: 'El nombre del cliente es obligatorio' });
 
     const customerData = {
       name,
@@ -2793,13 +2793,13 @@ router.post('/app/tech/customers/create', requireTechApiAuth, async (req, res) =
       lng: String(req.body.lng || '').trim(),
       status: 'active',
       install_date: new Date().toISOString().slice(0, 10),
-      notes: String(req.body.notes || 'Pasang Baru via Teknisi APK').trim(),
+      notes: String(req.body.notes || 'Alta nueva desde la app del técnico').trim(),
       isolate_day: req.body.isolate_day ? Number(req.body.isolate_day) : 10
     };
 
     if (customerData.pppoe_username) {
       const existing = db.prepare('SELECT id, name FROM customers WHERE pppoe_username = ? LIMIT 1').get(customerData.pppoe_username);
-      if (existing) return res.status(400).json({ success: false, message: `PPPoE Username sudah dipakai oleh ${existing.name}` });
+      if (existing) return res.status(400).json({ success: false, message: `El usuario PPPoE ya lo usa ${existing.name}` });
     }
 
     const inserted = customerSvc.createCustomer(customerData);
@@ -2813,7 +2813,7 @@ router.post('/app/tech/customers/create', requireTechApiAuth, async (req, res) =
           name: customerData.pppoe_username,
           password: customerData.pppoe_password,
           profile: pkg?.name || 'default',
-          comment: `Pelanggan #${newId}: ${customerData.name}`
+          comment: `Cliente #${newId}: ${customerData.name}`
         });
       } catch (mErr) {
         logger.error('[Tech Create Customer] MikroTik upsert error: ' + mErr.message);
@@ -2829,11 +2829,11 @@ router.post('/app/tech/customers/create', requireTechApiAuth, async (req, res) =
 
     res.json({
       success: true,
-      message: `Pelanggan "${name}" berhasil didaftarkan dan terhubung ke sistem!`,
+      message: `¡Cliente "${name}" registrado y conectado al sistema!`,
       customerId: newId
     });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal mendaftarkan pelanggan: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo registrar el cliente:' + e.message });
   }
 });
 
@@ -2861,7 +2861,7 @@ router.post('/app/tech/attendance/checkin', requireTechApiAuth, (req, res) => {
     const attendanceSvc = require('../services/attendanceService');
     const today = attendanceSvc.getTodayAttendance('technician', techId);
     if (today) {
-      return res.status(400).json({ success: false, message: 'Anda sudah melakukan check-in hari ini!' });
+      return res.status(400).json({ success: false, message: '¡Ya registraste tu entrada hoy!' });
     }
 
     let { lat, lng, note, photo } = req.body || {};
@@ -2878,16 +2878,16 @@ router.post('/app/tech/attendance/checkin', requireTechApiAuth, (req, res) => {
     const result = attendanceSvc.checkIn({
       employee_type: 'technician',
       employee_id: techId,
-      employee_name: tech?.name || req.tech?.name || 'Teknisi Lapangan',
+      employee_name: tech?.name || req.tech?.name || 'Técnico de campo',
       lat: String(lat || officeLat || ''),
       lng: String(lng || officeLng || ''),
-      note: String(note || 'Check-in via APK Native Teknisi'),
+      note: String(note || 'Entrada desde la app del técnico'),
       photo: photoPath
     });
 
-    res.json({ success: true, message: '✅ Check-in berhasil dicatat!', id: result.lastInsertRowid });
+    res.json({ success: true, message: '✅ ¡Entrada registrada!', id: result.lastInsertRowid });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal check-in: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo registrar la entrada:' + e.message });
   }
 });
 
@@ -2897,10 +2897,10 @@ router.post('/app/tech/attendance/checkout', requireTechApiAuth, (req, res) => {
     const attendanceSvc = require('../services/attendanceService');
     const today = attendanceSvc.getTodayAttendance('technician', techId);
     if (!today) {
-      return res.status(400).json({ success: false, message: 'Anda belum check-in hari ini!' });
+      return res.status(400).json({ success: false, message: '¡Todavía no registraste tu entrada hoy!' });
     }
     if (today.status === 'checked_out') {
-      return res.status(400).json({ success: false, message: 'Anda sudah check-out hari ini!' });
+      return res.status(400).json({ success: false, message: '¡Ya registraste tu salida hoy!' });
     }
 
     let { lat, lng, note, photo } = req.body || {};
@@ -2917,13 +2917,13 @@ router.post('/app/tech/attendance/checkout', requireTechApiAuth, (req, res) => {
     attendanceSvc.checkOut(today.id, {
       lat: String(lat || officeLat || ''),
       lng: String(lng || officeLng || ''),
-      note: String(note || 'Check-out via APK Native Teknisi'),
+      note: String(note || 'Salida desde la app del técnico'),
       photo: photoPath
     });
 
-    res.json({ success: true, message: '✅ Check-out berhasil dicatat! Terima kasih atas dedikasi Anda hari ini.' });
+    res.json({ success: true, message: '✅ ¡Salida registrada! Gracias por tu trabajo de hoy.' });
   } catch (e) {
-    res.status(500).json({ success: false, message: 'Gagal check-out: ' + e.message });
+    res.status(500).json({ success: false, message: 'No se pudo registrar la salida:' + e.message });
   }
 });
 
@@ -2953,7 +2953,7 @@ router.post('/app/customer/topup/create', requireCustomerApiAuth, async (req, re
     const customerId = req.customer.id;
     const amount = Number(req.body.amount || 0);
     if (!amount || amount < 10000) {
-      return res.status(400).json({ success: false, message: 'Minimal top-up saldo adalah ' + regional.formatMoney(10000) });
+      return res.status(400).json({ success: false, message: 'La carga mínima de saldo es' + regional.formatMoney(10000) });
     }
 
     const customer = req.customer;
@@ -2999,7 +2999,7 @@ router.get('/app/customer/topup/status/:id', requireCustomerApiAuth, (req, res) 
   try {
     const reqId = Number(req.params.id);
     const row = db.prepare('SELECT * FROM customer_topup_requests WHERE id = ? AND customer_id = ?').get(reqId, req.customer.id);
-    if (!row) return res.status(404).json({ success: false, message: 'Data topup tidak ditemukan' });
+    if (!row) return res.status(404).json({ success: false, message: 'Carga de saldo no encontrada' });
 
     const cust = db.prepare('SELECT balance FROM customers WHERE id = ?').get(row.customer_id);
     res.json({
@@ -3051,10 +3051,10 @@ router.post('/auth/login', (req, res) => {
   const inputPass = String(password || '').trim();
 
   if (!inputUser) {
-    return res.status(400).json({ success: false, message: 'Username / No. WA / ID harus diisi.' });
+    return res.status(400).json({ success: false, message: 'El usuario / WhatsApp / ID es obligatorio.' });
   }
   if (!inputPass) {
-    return res.status(400).json({ success: false, message: 'Password harus diisi.' });
+    return res.status(400).json({ success: false, message: 'La contraseña es obligatoria.' });
   }
 
   // 1. Check Root Administrator
@@ -3065,7 +3065,7 @@ router.post('/auth/login', (req, res) => {
     const token = generateApiToken({ id: 1, adminId: 1, name: 'Administrator', username: adminUser, role: 'admin' });
     return res.json({
       success: true,
-      message: 'Login Administrator berhasil.',
+      message: 'Ingreso de administrador correcto.',
       role: 'admin',
       token,
       user: adminObj
@@ -3080,7 +3080,7 @@ router.post('/auth/login', (req, res) => {
       const token = generateApiToken({ id: cashier.id, cashierId: cashier.id, name: cashier.name, username: cashier.username, role: 'cashier' });
       return res.json({
         success: true,
-        message: 'Login Kasir berhasil.',
+        message: 'Ingreso de cajero correcto.',
         role: 'cashier',
         token,
         user: cashierObj
@@ -3096,7 +3096,7 @@ router.post('/auth/login', (req, res) => {
       const token = generateApiToken({ id: collector.id, collectorId: collector.id, name: collector.name, phone: collector.phone, username: collector.username, role: 'collector' });
       return res.json({
         success: true,
-        message: 'Login Kolektor berhasil.',
+        message: 'Ingreso de cobrador correcto.',
         role: 'collector',
         token,
         user: collectorObj
@@ -3112,7 +3112,7 @@ router.post('/auth/login', (req, res) => {
       const token = generateApiToken({ id: tech.id, techId: tech.id, name: tech.name, phone: tech.phone, username: tech.username, role: 'tech' });
       return res.json({
         success: true,
-        message: 'Login Teknisi berhasil.',
+        message: 'Ingreso de técnico correcto.',
         role: 'tech',
         token,
         user: techObj
@@ -3150,7 +3150,7 @@ router.post('/auth/login', (req, res) => {
     if (!passMatched) {
       return res.status(401).json({
         success: false,
-        message: 'Password / PIN yang Anda masukkan salah.'
+        message: 'La contraseña / PIN es incorrecto.'
       });
     }
 
@@ -3164,7 +3164,7 @@ router.post('/auth/login', (req, res) => {
     });
     return res.json({
       success: true,
-      message: 'Login Pelanggan berhasil.',
+      message: 'Ingreso de cliente correcto.',
       role: 'customer',
       token,
       customer: {
@@ -3182,7 +3182,7 @@ router.post('/auth/login', (req, res) => {
   // Not matched anywhere
   return res.status(401).json({
     success: false,
-    message: 'Username / No. WA atau Password salah. Periksa kembali akun Anda.'
+    message: 'Usuario / WhatsApp o contraseña incorrectos. Verifique sus datos.'
   });
 });
 
@@ -3239,7 +3239,7 @@ router.get('/dashboard', requireCustomerApiAuth, async (req, res) => {
     available: false,
     tr069Connected: false,
     online: false,
-    model: 'Perangkat Belum Terdaftar di TR-069',
+    model: 'Equipo no registrado en TR-069',
     serialNumber: customer.onu_sn || '-',
     softwareVersion: '-',
     pppoeUsername: customer.pppoe_username || customer.name,
@@ -3334,7 +3334,7 @@ router.get('/wifi', requireCustomerApiAuth, async (req, res) => {
 router.post('/wifi/change-ssid', requireCustomerApiAuth, async (req, res) => {
   const { ssid } = req.body;
   if (!ssid || ssid.trim().length < 2) {
-    return res.status(400).json({ success: false, message: 'Nama WiFi (SSID) minimal 2 karakter.' });
+    return res.status(400).json({ success: false, message: 'El nombre del WiFi (SSID) debe tener al menos 2 caracteres.' });
   }
   const customer = req.customer;
   const newSsid = ssid.trim();
@@ -3354,7 +3354,7 @@ router.post('/wifi/change-ssid', requireCustomerApiAuth, async (req, res) => {
 
   res.json({
     success: true,
-    message: `Nama WiFi (SSID) berhasil diubah menjadi "${newSsid}". Silakan sambungkan ulang perangkat Anda.`
+    message: `Nombre del WiFi cambiado a "${newSsid}". Vuelva a conectar sus dispositivos.`
   });
 });
 
@@ -3362,7 +3362,7 @@ router.post('/wifi/change-ssid', requireCustomerApiAuth, async (req, res) => {
 router.post('/wifi/change-password', requireCustomerApiAuth, async (req, res) => {
   const { newPassword } = req.body;
   if (!newPassword || newPassword.trim().length < 8) {
-    return res.status(400).json({ success: false, message: 'Sandi WiFi minimal 8 karakter.' });
+    return res.status(400).json({ success: false, message: 'La contraseña del WiFi debe tener al menos 8 caracteres.' });
   }
   const customer = req.customer;
   const newPass = newPassword.trim();
@@ -3382,7 +3382,7 @@ router.post('/wifi/change-password', requireCustomerApiAuth, async (req, res) =>
 
   res.json({
     success: true,
-    message: 'Sandi WiFi berhasil diperbarui! Silakan gunakan sandi baru untuk terhubung.'
+    message: '¡Contraseña del WiFi actualizada! Use la nueva contraseña para conectarse.'
   });
 });
 
@@ -3396,7 +3396,7 @@ router.post('/wifi/reboot', requireCustomerApiAuth, async (req, res) => {
   }
   res.json({
     success: true,
-    message: 'Perintah restart modem telah dikirim. Modem akan menyala ulang dalam 1-2 menit.'
+    message: 'Orden de reinicio enviada. El módem se reiniciará en 1 a 2 minutos.'
   });
 });
 
@@ -3414,7 +3414,7 @@ router.get('/tickets', requireCustomerApiAuth, (req, res) => {
     data: tickets.map(t => ({
       id: t.id,
       ticketNo: `#TCK-${t.id}`,
-      title: t.subject || 'Gangguan Layanan',
+      title: t.subject || 'Falla en el servicio',
       description: t.message || '',
       status: t.status || 'open',
       createdAt: t.created_at,
@@ -3427,7 +3427,7 @@ router.post('/tickets/create', requireCustomerApiAuth, async (req, res) => {
   const title = String(req.body.title || req.body.subject || '').trim();
   const description = String(req.body.description || req.body.message || '').trim();
   const customer = req.customer;
-  const subject = title || 'Gangguan Layanan';
+  const subject = title || 'Falla en el servicio';
   const message = description || subject;
 
   try {
@@ -3440,7 +3440,7 @@ router.post('/tickets/create', requireCustomerApiAuth, async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Laporan gangguan Anda telah berhasil diajukan. Tim teknisi akan segera menindaklanjuti.',
+      message: 'Su reclamo fue registrado. El equipo técnico lo atenderá a la brevedad.',
       ticketId: ticketId
     });
 
@@ -3449,12 +3449,12 @@ router.post('/tickets/create', requireCustomerApiAuth, async (req, res) => {
       const settings = getSettingsWithCache();
       if (settings.whatsapp_enabled) {
         const waNotify = require('../services/waNotifyService');
-        const waMsg = `🎫 *TIKET KELUHAN BARU (Mobile App)*\n\n` +
-                     `👤 *Pelanggan:* ${customer.name || 'Unknown'}\n` +
+        const waMsg = `🎫 *NUEVO RECLAMO (app)*\n\n` +
+                     `👤 *Cliente:* ${customer.name || 'Desconocido'}\n` +
                      `📞 *WhatsApp:* ${customer.phone || '-'}\n` +
                      `📝 *Subjek:* ${subject}\n` +
-                     `💬 *Pesan:* ${message}\n\n` +
-                     `Silakan cek di panel Admin/Teknisi untuk menindaklanjuti.`;
+                     `💬 *Mensaje:* ${message}\n\n` +
+                     `Revisalo en el panel de administración/técnicos para darle seguimiento.`;
 
         const recipients = new Set();
 
@@ -3489,7 +3489,7 @@ router.post('/tickets/create', requireCustomerApiAuth, async (req, res) => {
     // ----------------------------------------------------------
 
   } catch (e) {
-    res.status(500).json({ success: false, message: `Gagal membuat tiket: ${e.message}` });
+    res.status(500).json({ success: false, message: `No se pudo crear el ticket: ${e.message}` });
   }
 });
 
@@ -3499,11 +3499,11 @@ function requireTechApiAuth(req, res, next) {
   try {
     const auth = extractToken(req);
     const token = String(auth || '').replace(/^Bearer\s+/i, '').trim();
-    if (!token) return res.status(401).json({ success: false, message: 'Token tidak ada' });
+    if (!token) return res.status(401).json({ success: false, message: 'Falta el token' });
     const payload = verifyApiToken(token);
-    if (!payload) return res.status(401).json({ success: false, message: 'Token tidak valid' });
+    if (!payload) return res.status(401).json({ success: false, message: 'Token inválido' });
     if (payload.role !== 'tech' && payload.role !== 'admin' && payload.role !== 'cashier' && payload.role !== 'root') {
-      return res.status(403).json({ success: false, message: 'Akses ditolak: Hanya Teknisi atau Admin' });
+      return res.status(403).json({ success: false, message: 'Acceso denegado: solo técnicos o administradores' });
     }
     req.tech = payload;
     req.admin = payload;
@@ -3518,10 +3518,10 @@ function requireTechApiAuth(req, res, next) {
 router.post('/tech/login', express.json(), (req, res) => {
   try {
     const { username, password } = req.body || {};
-    if (!username || !password) return res.status(400).json({ success: false, message: 'Username dan password harus diisi' });
+    if (!username || !password) return res.status(400).json({ success: false, message: 'El usuario y la contraseña son obligatorios' });
     const techSvc = require('../services/techService');
     const tech = techSvc.authenticate ? techSvc.authenticate(username, password) : null;
-    if (!tech) return res.status(401).json({ success: false, message: 'Username atau password salah' });
+    if (!tech) return res.status(401).json({ success: false, message: 'Usuario o contraseña incorrectos' });
     const secret = getApiSecret();
     const payload = { techId: tech.id, name: tech.name, phone: tech.phone, role: 'tech', exp: Date.now() + 30 * 24 * 60 * 60 * 1000 };
     const body = b64urlEncode(JSON.stringify(payload));
@@ -3553,7 +3553,7 @@ router.get('/tech/pool', requireTechApiAuth, (req, res) => {
     for (const c of customers) customerMap[c.id] = c;
     const enriched = open.map(t => ({
       ...t,
-      customer_name: customerMap[t.customer_id]?.name || `Pelanggan #${t.customer_id}`,
+      customer_name: customerMap[t.customer_id]?.name || `Cliente #${t.customer_id}`,
       customer_phone: customerMap[t.customer_id]?.phone || '',
       customer_address: customerMap[t.customer_id]?.address || ''
     }));
@@ -3568,7 +3568,7 @@ router.post('/tech/tickets/:id/take', requireTechApiAuth, (req, res) => {
   try {
     const techSvc = require('../services/techService');
     techSvc.takeTicket(req.params.id, req.tech.techId);
-    res.json({ success: true, message: 'Tiket berhasil diambil.' });
+    res.json({ success: true, message: 'Ticket tomado.' });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -3585,7 +3585,7 @@ router.post('/tech/tickets/:id/update', requireTechApiAuth, express.json(), (req
       db.prepare(`UPDATE tickets SET status = ?, technician_notes = ?, updated_at = (NOW_LOCAL()) WHERE id = ?`)
         .run(status || 'resolved', notes || '', req.params.id);
     }
-    res.json({ success: true, message: 'Status tiket berhasil diperbarui.' });
+    res.json({ success: true, message: 'Estado del ticket actualizado.' });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }
@@ -3718,7 +3718,7 @@ function requireCustomerOrPublicInvoiceAuth(req, res, next) {
     }
   }
 
-  return res.status(401).json({ success: false, message: 'Autentikasi atau token tagihan diperlukan.' });
+  return res.status(401).json({ success: false, message: 'Se requiere autenticación o el token de la factura.' });
 }
 
 // GET /api/customer/public-check-bill?q=08...
@@ -3726,7 +3726,7 @@ function requireCustomerOrPublicInvoiceAuth(req, res, next) {
 router.get('/public-check-bill', (req, res) => {
   const qStr = String(req.query.q || '').trim();
   if (!qStr) {
-    return res.status(400).json({ success: false, message: 'Nomor HP atau ID Pelanggan harus diisi.' });
+    return res.status(400).json({ success: false, message: 'El teléfono o ID de cliente es obligatorio.' });
   }
 
   const cleanPhone = qStr.replace(/[^0-9]/g, '');
@@ -3738,7 +3738,7 @@ router.get('/public-check-bill', (req, res) => {
   `).get(cleanPhone, qStr, qStr, Number(qStr) || 0);
 
   if (!cust) {
-    return res.status(404).json({ success: false, message: 'Data pelanggan tidak ditemukan. Periksa kembali nomor HP atau ID yang dimasukkan.' });
+    return res.status(404).json({ success: false, message: 'No se encontró el cliente. Verifique el teléfono o ID ingresado.' });
   }
 
   const unpaidInvoices = db.prepare(`
@@ -3794,7 +3794,7 @@ router.get('/public-check-bill', (req, res) => {
         name: cust.name,
         phone: cust.phone,
         status: cust.status,
-        packageName: cust.package_name || 'Paket Internet Home'
+        packageName: cust.package_name || 'Plan de internet residencial'
       },
       unpaidCount: list.length,
       totalUnpaid: list.reduce((sum, item) => sum + item.totalAmount, 0),
@@ -3806,7 +3806,7 @@ router.get('/public-check-bill', (req, res) => {
 router.get('/invoices/:id', requireCustomerOrPublicInvoiceAuth, (req, res) => {
   const invId = Number(req.params.id);
   if (!invId) {
-    return res.status(400).json({ success: false, message: 'ID tagihan tidak valid.' });
+    return res.status(400).json({ success: false, message: 'ID de factura inválido.' });
   }
 
   const inv = db.prepare(`
@@ -3818,7 +3818,7 @@ router.get('/invoices/:id', requireCustomerOrPublicInvoiceAuth, (req, res) => {
   `).get(invId);
 
   if (!inv) {
-    return res.status(404).json({ success: false, message: 'Tagihan tidak ditemukan.' });
+    return res.status(404).json({ success: false, message: 'Factura no encontrada.' });
   }
 
   const settings = getSettingsWithCache();
@@ -3846,7 +3846,7 @@ router.get('/invoices/:id', requireCustomerOrPublicInvoiceAuth, (req, res) => {
       invoiceNo: `#INV-${inv.id}`,
       customerName: inv.customer_name,
       customerPhone: inv.customer_phone,
-      packageName: inv.package_name || 'Paket Internet',
+      packageName: inv.package_name || 'Planes de internet',
       periodMonth: inv.period_month,
       periodYear: inv.period_year,
       baseAmount: baseAmt,
@@ -3862,7 +3862,7 @@ router.get('/invoices/:id', requireCustomerOrPublicInvoiceAuth, (req, res) => {
       paymentLink: inv.payment_link,
       companyPhone: getResolvedAdminPhone(settings),
       adminPhone: getResolvedAdminPhone(settings),
-      instructions: 'Transfer manual atau scan QRIS melalui m-Banking / e-Wallet (BCA, Mandiri, BRI, BNI, DANA, GoPay, OVO, ShopeePay).'
+      instructions: 'Transferencia o pago con QR desde la app de su banco o billetera.'
     }
   });
 });
@@ -3909,7 +3909,7 @@ router.post('/invoices/:id/pay', requireCustomerApiAuth, async (req, res) => {
 
   const inv = billingSvc.getInvoiceById(invId);
   if (!inv || Number(inv.customer_id) !== Number(customer.id)) {
-    return res.status(404).json({ success: false, message: 'Tagihan tidak ditemukan.' });
+    return res.status(404).json({ success: false, message: 'Factura no encontrada.' });
   }
   if (inv.status === 'paid') {
     return res.json({ success: true, message: 'Tagihan ini sudah lunas.', status: 'paid' });
@@ -3934,7 +3934,7 @@ router.post('/invoices/:id/pay', requireCustomerApiAuth, async (req, res) => {
     }
 
     if (!result || !result.success) {
-      return res.status(400).json({ success: false, message: result?.message || 'Gagal membuat transaksi pembayaran.' });
+      return res.status(400).json({ success: false, message: result?.message || 'No se pudo crear la transacción de pago.' });
     }
 
     res.json({
@@ -3951,7 +3951,7 @@ router.post('/invoices/:id/pay', requireCustomerApiAuth, async (req, res) => {
     });
   } catch (error) {
     logger.error(`[CustomerAPI] Payment creation error: ${error.message}`);
-    res.status(500).json({ success: false, message: `Error membuat pembayaran: ${error.message}` });
+    res.status(500).json({ success: false, message: `Error al crear el pago: ${error.message}` });
   }
 });
 
@@ -3959,11 +3959,11 @@ router.post('/invoices/:id/pay', requireCustomerApiAuth, async (req, res) => {
 router.get('/invoices/:id/check-status', requireCustomerOrPublicInvoiceAuth, (req, res) => {
   const invId = Number(req.params.id);
   const inv = db.prepare('SELECT id, customer_id, status, paid_at, payment_gateway FROM invoices WHERE id = ?').get(invId);
-  if (!inv) return res.status(404).json({ success: false, message: 'Tagihan tidak ditemukan.' });
+  if (!inv) return res.status(404).json({ success: false, message: 'Factura no encontrada.' });
 
   // Validasi customer_id jika customer authenticated
   if (req.customer && Number(inv.customer_id) !== Number(req.customer.id || req.customer.customerId)) {
-    return res.status(403).json({ success: false, message: 'Akses ditolak.' });
+    return res.status(403).json({ success: false, message: 'Acceso denegado.' });
   }
 
   res.json({

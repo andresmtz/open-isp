@@ -387,7 +387,7 @@ function formatRelativeTime(value) {
   const ts = new Date(value).getTime();
   if (!Number.isFinite(ts)) return '-';
   const diffMs = Date.now() - ts;
-  if (diffMs < 0) return 'baru saja';
+  if (diffMs < 0) return 'recién';
   const sec = Math.floor(diffMs / 1000);
   if (sec < 60) return `${sec} detik lalu`;
   const min = Math.floor(sec / 60);
@@ -395,7 +395,7 @@ function formatRelativeTime(value) {
   const hour = Math.floor(min / 60);
   if (hour < 24) return `${hour} jam lalu`;
   const day = Math.floor(hour / 24);
-  return `${day} hari lalu`;
+  return `hace ${day} días`;
 }
 
 function collectRefreshObjects(device) {
@@ -1061,14 +1061,14 @@ async function requestRefresh(tag, actor = null) {
   try {
     const device = await resolveDeviceToken(tag);
     if (!device || !device._id) {
-      return { ok: false, message: 'Perangkat tidak ditemukan.' };
+      return { ok: false, message: 'Equipo no encontrado.' };
     }
 
     const server = device._acs_server_id
       ? genieacsApi.getACSServer(device._acs_server_id)
       : genieacsApi.getACSServer('legacy');
     if (!server) {
-      return { ok: false, message: 'Server ACS tidak ditemukan.' };
+      return { ok: false, message: 'Servidor ACS no encontrado.' };
     }
 
     if (server.id === 'builtin') {
@@ -1081,7 +1081,7 @@ async function requestRefresh(tag, actor = null) {
              AND status IN ('pending', 'in_progress')`
         ).get(device._id);
         if (pending && pending.c > 0) {
-          return { ok: true, message: 'Sinkronisasi ONU masih berjalan. Mohon tunggu sebentar.' };
+          return { ok: true, message: 'La sincronización de ONU sigue en curso. Esperá un momento.' };
         }
       } catch (e) {
         logger.debug(`[CustomerDevice] Unable to check pending ACS tasks for ${device._id}: ${e.message}`);
@@ -1121,16 +1121,16 @@ async function requestRefresh(tag, actor = null) {
     };
   } catch (e) {
     logger.error(`[CustomerDevice] Error requesting refresh for ${tag}: ${e.message}`);
-    return { ok: false, message: 'Gagal memulai sinkronisasi ONU.' };
+    return { ok: false, message: 'No se pudo iniciar la sincronización de ONU.' };
   }
 }
 
 async function requestReboot(tag, actor = null) {
   const device = await resolveDeviceToken(tag);
-  if (!device || !device._id) return { ok: false, message: 'Perangkat tidak ditemukan.' };
+  if (!device || !device._id) return { ok: false, message: 'Equipo no encontrado.' };
   
   const server = device._acs_server_id ? genieacsApi.getACSServer(device._acs_server_id) : genieacsApi.getACSServer('legacy');
-  if (!server) return { ok: false, message: 'Server ACS tidak ditemukan.' };
+  if (!server) return { ok: false, message: 'Servidor ACS no encontrado.' };
   
   const instance = genieacsApi.createAxiosInstance(server);
   
@@ -1157,9 +1157,9 @@ async function requestReboot(tag, actor = null) {
       });
     }
 
-    return { ok: true, message: 'Perintah reboot terkirim. Tunggu beberapa menit hingga ONU online.' };
+    return { ok: true, message: 'Orden de reinicio enviada. Esperá unos minutos a que la ONU vuelva a estar en línea.' };
   } catch (e) {
-    return { ok: false, message: 'Gagal mengirim reboot ke GenieACS.' };
+    return { ok: false, message: 'No se pudo enviar el reinicio a GenieACS.' };
   }
 }
 
@@ -1230,7 +1230,7 @@ async function listDevicesWithTags(limit = 250) {
     return { ok: true, devices: allDevices.slice(0, limit) };
   }
   
-  return { ok: false, devices: [], message: 'Gagal mengambil daftar dari GenieACS.' };
+  return { ok: false, devices: [], message: 'No se pudo obtener la lista desde GenieACS.' };
 }
 
 /** Mengambil semua perangkat tanpa melihat tag. */
@@ -1282,15 +1282,15 @@ async function listAllDevices(limit = 999999, acsId = null) {
     return { ok: true, devices: allDevices.slice(0, limit) };
   }
   
-  return { ok: false, devices: [], message: 'Gagal mengambil daftar dari GenieACS: ' + (lastError ? lastError.message : 'Unknown error') };
+  return { ok: false, devices: [], message: 'No se pudo obtener la lista desde GenieACS:' + (lastError ? lastError.message : 'Unknown error') };
 }
 
 async function updateCustomerTag(oldTag, newTag) {
   const device = await findDeviceByTag(oldTag);
-  if (!device || !device._id) return { ok: false, message: 'Perangkat tidak ditemukan.' };
+  if (!device || !device._id) return { ok: false, message: 'Equipo no encontrado.' };
   
   const server = device._acs_server_id ? genieacsApi.getACSServer(device._acs_server_id) : genieacsApi.getACSServer('legacy');
-  if (!server) return { ok: false, message: 'Server ACS tidak ditemukan.' };
+  if (!server) return { ok: false, message: 'Servidor ACS no encontrado.' };
   
   const instance = genieacsApi.createAxiosInstance(server);
   
@@ -1303,7 +1303,7 @@ async function updateCustomerTag(oldTag, newTag) {
     );
     return { ok: true };
   } catch (e) {
-    return { ok: false, message: 'Gagal mengubah tag.' };
+    return { ok: false, message: 'No se pudo cambiar la etiqueta.' };
   }
 }
 

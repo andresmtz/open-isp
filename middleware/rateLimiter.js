@@ -12,7 +12,7 @@ try {
       if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
         return res.status(429).json({
           ok: false,
-          error: 'Terlalu banyak percobaan login. Silakan coba lagi dalam 15 menit.'
+          error: 'Demasiados intentos de ingreso. Intente de nuevo en 15 minutos.'
         });
       }
       return res.status(429).send(`

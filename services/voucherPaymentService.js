@@ -188,11 +188,11 @@ async function createVoucherPayment(voucherOrder, paymentMethod, appUrl = '') {
   const settings = getSettingsWithCache();
 
   if (!voucherOrder || !voucherOrder.id) {
-    throw new Error('Voucher order tidak valid');
+    throw new Error('Pedido de ficha inválido');
   }
 
   if (!paymentMethod || !paymentMethod.gateway) {
-    throw new Error('Payment method tidak valid');
+    throw new Error('Método de pago inválido');
   }
 
   const gateway = paymentMethod.gateway.toLowerCase();
@@ -254,7 +254,7 @@ async function createVoucherPayment(voucherOrder, paymentMethod, appUrl = '') {
         result = await paymentSvc.createDuitkuTransaction(invoice, customer, paymentMethod.code, appUrl, opts);
         break;
       default:
-        throw new Error(`Gateway ${gateway} tidak didukung`);
+        throw new Error(`La pasarela ${gateway} no está disponible`);
     }
 
     return {

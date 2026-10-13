@@ -31,9 +31,9 @@ function toWaMobile(phone) {
  */
 async function createInvoice(opts) {
   const o = opts || {};
-  if (!isConfigured()) throw new Error('Mayar belum dikonfigurasi (mayar_api_key kosong).');
+  if (!isConfigured()) throw new Error('Mayar no está configurado (falta mayar_api_key).');
   const amount = Math.round(Number(o.amount) || 0);
-  if (amount <= 0) throw new Error('Nominal tagihan tidak valid untuk Mayar.');
+  if (amount <= 0) throw new Error('Monto de factura inválido para Mayar.');
   const desc = String(o.description || 'Tagihan').slice(0, 200);
   const body = {
     name: String(o.name || 'Pelanggan').slice(0, 100),
@@ -49,7 +49,7 @@ async function createInvoice(opts) {
   const d = (res.data && res.data.data) ? res.data.data : (res.data || {});
   const link = d.link || d.paymentLink || d.payment_url || d.url || '';
   const orderId = d.id || d.transactionId || d.paymentLinkId || '';
-  if (!link) throw new Error('Mayar tidak mengembalikan link pembayaran.');
+  if (!link) throw new Error('Mayar no devolvió un enlace de pago.');
   return {
     success: true,
     order_id: String(orderId),
@@ -66,7 +66,7 @@ async function getInvoice(id) {
 }
 
 async function testConnection() {
-  if (!isConfigured()) return { ok: false, error: 'API key kosong' };
+  if (!isConfigured()) return { ok: false, error: 'Falta la API key' };
   try {
     const res = await axios.get(MAYAR_BASE + '/invoices?page=1&pageSize=1', { headers: headers(), timeout: 15000 });
     return { ok: true, status: res.status };

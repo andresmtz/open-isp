@@ -120,7 +120,7 @@ async function checkDependencies() {
       const isOnline = !!res.is_connected;
       results.whatsapp = {
         status: isOnline ? 'online' : 'offline',
-        message: isOnline ? `GoWA connected (${res.jid || res.device_id || '-'})` : 'GoWA tidak terhubung'
+        message: isOnline ? `GoWA connected (${res.jid || res.device_id || '-'})` : 'GoWA no está conectado'
       };
     } else {
       const whatsappBotModule = await import('./whatsappBot.mjs');
@@ -145,11 +145,11 @@ async function checkDependencies() {
     const enabled = !!getSetting('telegram_enabled', false);
     const token = String(getSetting('telegram_bot_token', '') || '').trim();
     if (!enabled || !token) {
-      results.telegram = { status: 'offline', message: !enabled ? 'Telegram dinonaktifkan' : 'Token belum diisi' };
+      results.telegram = { status: 'offline', message: !enabled ? 'Telegram desactivado' : 'Falta el token' };
     } else {
       const resp = await axios.get(`https://api.telegram.org/bot${token}/getMe`, { timeout: 6000, validateStatus: (s) => s < 500 });
-      if (resp.data && resp.data.ok) results.telegram = { status: 'online', message: 'Terhubung sebagai @' + ((resp.data.result && resp.data.result.username) || '-') };
-      else results.telegram = { status: 'offline', message: (resp.data && resp.data.description) || 'getMe gagal' };
+      if (resp.data && resp.data.ok) results.telegram = { status: 'online', message: 'Conectado como @' + ((resp.data.result && resp.data.result.username) || '-') };
+      else results.telegram = { status: 'offline', message: (resp.data && resp.data.description) || 'falló getMe' };
     }
   } catch (err) {
     results.telegram = { status: 'offline', message: `Telegram check error: ${err.message}` };

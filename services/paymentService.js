@@ -12,7 +12,7 @@ function isMayarConfigured() {
 async function createMayarTransaction(invoice, customer, method, appUrl, opts = {}) {
   const o = opts || {};
   const inv = invoice || {};
-  const desc = o.itemName || inv.item_name || ('Tagihan ' + (inv.period_month ? inv.period_month + '/' + inv.period_year : ''));
+  const desc = o.itemName || inv.item_name || ('Factura' + (inv.period_month ? inv.period_month + '/' + inv.period_year : ''));
   return mayar.createInvoice({
     name: (customer && customer.name) || 'Pelanggan',
     email: (customer && customer.email) || '',
@@ -28,7 +28,7 @@ async function getTripayChannels() { return []; }
 function verifyTripayWebhook() { return false; }
 function verifyMidtransWebhook() { return false; }
 function verifyDuitkuWebhook() { return false; }
-function _removed(name) { throw new Error('Gateway ' + name + ' sudah dihapus. Gunakan Mayar (Mode 1) atau QRIS statis (Mode 2).'); }
+function _removed(name) { throw new Error('Gateway ' + name + ' se quitó. Usá Mayar (modo 1) o QR estático (modo 2).'); }
 function createTripayTransaction() { return _removed('Tripay'); }
 function createMidtransTransaction() { return _removed('Midtrans'); }
 function createXenditTransaction() { return _removed('Xendit'); }

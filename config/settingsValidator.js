@@ -31,22 +31,22 @@ const VALIDATION_RULES = {
     type: 'string',
     maxLength: 100,
     required: true,
-    description: 'Nama perusahaan'
+    description: 'Nombre de la empresa'
   },
   public_base_url: {
     type: 'string',
     pattern: /^https?:\/\/.+/,
-    description: 'URL publik aplikasi (http://... atau https://...)'
+    description: 'URL pública del sistema (http://... o https://...)'
   },
   company_manager: {
     type: 'string',
     maxLength: 100,
-    description: 'Nama manager'
+    description: 'Nombre del responsable'
   },
   company_phone: {
     type: 'string',
     pattern: /^[0-9\-\+\s]+$/,
-    description: 'Nomor telepon perusahaan'
+    description: 'Teléfono de la empresa'
   },
   company_email: {
     type: 'string',
@@ -56,7 +56,7 @@ const VALIDATION_RULES = {
   company_address: {
     type: 'string',
     maxLength: 500,
-    description: 'Alamat perusahaan'
+    description: 'Dirección de la empresa'
   },
   footer_info: {
     type: 'string',
@@ -108,7 +108,7 @@ const VALIDATION_RULES = {
   mikrotik_host: {
     type: 'string',
     pattern: /^(\d{1,3}\.){3}\d{1,3}$|^[a-zA-Z0-9\-\.]+$/,
-    description: 'Host MikroTik (IP atau hostname)'
+    description: 'Host del MikroTik (IP o nombre)'
   },
   mikrotik_user: {
     type: 'string',
@@ -130,7 +130,7 @@ const VALIDATION_RULES = {
     type: 'number',
     min: 1,
     max: 365,
-    description: 'Hari isolir (1-365)'
+    description: 'Día de corte (1-365)'
   },
 
   // WhatsApp Configuration
@@ -207,8 +207,8 @@ function validateValue(field, value, rule) {
 
   if (rule.type === 'string') {
     if (typeof trimmedValue !== 'string') return `${field} harus berupa string`;
-    if (rule.minLength && trimmedValue.length < rule.minLength) return `${field} minimal ${rule.minLength} karakter`;
-    if (rule.maxLength && trimmedValue.length > rule.maxLength) return `${field} maksimal ${rule.maxLength} karakter`;
+    if (rule.minLength && trimmedValue.length < rule.minLength) return `${field} debe tener al menos ${rule.minLength} caracteres`;
+    if (rule.maxLength && trimmedValue.length > rule.maxLength) return `${field} debe tener como máximo ${rule.maxLength} caracteres`;
     if (rule.pattern && !rule.pattern.test(trimmedValue)) return `${field} format tidak valid`;
     if (rule.enum && !rule.enum.includes(trimmedValue)) return `${field} harus salah satu dari: ${rule.enum.join(', ')}`;
   }
@@ -235,7 +235,7 @@ function validateSettings(settings) {
 
     // Check required
     if (rule.required && (value === undefined || value === null || value === '')) {
-      errors.push(`${field} wajib diisi`);
+      errors.push(`${field} es obligatorio`);
       return;
     }
 

@@ -74,7 +74,7 @@ function encodeIp(ipStr) {
  */
 function decodePacket(buffer, secret) {
   if (!Buffer.isBuffer(buffer) || buffer.length < 20) {
-    throw new Error('Paket RADIUS terlalu pendek (minimal 20 byte)');
+    throw new Error('Paquete RADIUS demasiado corto (mínimo 20 bytes)');
   }
 
   const code = buffer.readUInt8(0);
@@ -82,7 +82,7 @@ function decodePacket(buffer, secret) {
   const length = buffer.readUInt16BE(2);
 
   if (buffer.length < length) {
-    throw new Error(`Paket RADIUS terpotong: diharapkan ${length} byte, diterima ${buffer.length} byte`);
+    throw new Error(`Paquete RADIUS truncado: se esperaban ${length} bytes, llegaron ${buffer.length}`);
   }
 
   const authenticator = buffer.slice(4, 20);

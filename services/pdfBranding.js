@@ -48,7 +48,7 @@ function companyInfo(settings) {
   return {
     name: s.company_header || 'OPEN-ISP',
     sub: s.company_subheader || 'PT Artha Mega Data',
-    address: s.company_address || 'Pusat Layanan Internet',
+    address: s.company_address || 'Proveedor de servicios de internet',
     phone,
     email: s.company_email || '',
     manager: s.company_manager || 'Bagian Keuangan',

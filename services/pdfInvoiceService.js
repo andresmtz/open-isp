@@ -23,7 +23,7 @@ function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
         info: {
           Title: `Invoice #INV-${String(invoice.id).padStart(4, '0')}`,
           Author: settings.company_header || 'OPEN-ISP',
-          Subject: 'Invoice Pembayaran Internet'
+          Subject: 'Factura de servicio de internet'
         }
       });
       const buffers = [];
@@ -33,7 +33,7 @@ function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
 
       const companyName = settings.company_header || 'OPEN-ISP';
       const companySub = settings.company_subheader || 'PT Artha Mega Data';
-      const companyAddress = settings.company_address || 'Pusat Layanan Internet Terpercaya';
+      const companyAddress = settings.company_address || 'Proveedor de servicios de internet';
       const companyPhone = (settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers.length > 0)
         ? '+' + regional.normalizePhone(settings.whatsapp_admin_numbers[0])
         : (settings.company_phone || '-');
@@ -105,7 +105,7 @@ function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
       if (customer.customer_code) meta.push(`ID: ${customer.customer_code}`);
       if (customer.phone) meta.push(`HP: ${customer.phone}`);
       if (meta.length) doc.fillColor(MUTED).fontSize(8.5).font('Helvetica').text(meta.join('   •   '), LEFT + 16, y + 44, { width: 270 });
-      if (customer.address) doc.fillColor(MUTED).fontSize(8.5).font('Helvetica').text(`Alamat: ${customer.address}`, LEFT + 16, y + 58, { width: 270, height: 28 });
+      if (customer.address) doc.fillColor(MUTED).fontSize(8.5).font('Helvetica').text(`Dirección: ${customer.address}`, LEFT + 16, y + 58, { width: 270, height: 28 });
 
       // Ringkasan kanan
       doc.roundedRect(LEFT + 315, y, 200, cardH, 8).fillAndStroke(SOFT, LINE);
@@ -120,7 +120,7 @@ function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
 
       // ── Tabel layanan ──
       y = 262;
-      doc.fillColor(MUTED).fontSize(8).font('Helvetica-Bold').text('RINCIAN LAYANAN', LEFT, y);
+      doc.fillColor(MUTED).fontSize(8).font('Helvetica-Bold').text('DETALLE DEL SERVICIO', LEFT, y);
       y += 12;
       doc.roundedRect(LEFT, y, W, 24, 6).fill(BRAND);
       doc.fillColor('#ffffff').fontSize(8.5).font('Helvetica-Bold');
@@ -129,12 +129,12 @@ function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
       doc.text('Jumlah', LEFT + W - 130, y + 8, { width: 118, align: 'right' });
       y += 24;
 
-      const pkgName = customer.package_name || 'Paket Internet';
+      const pkgName = customer.package_name || 'Planes de internet';
       const amount = Number(invoice.amount || 0);
       const rowH = 40;
       doc.rect(LEFT, y, W, rowH).fill('#ffffff').strokeColor(LINE).stroke();
       doc.fillColor(INK).fontSize(9.5).font('Helvetica-Bold').text('01', LEFT + 12, y + 9);
-      doc.fillColor(INK).fontSize(9.5).font('Helvetica-Bold').text(`Layanan Internet — ${pkgName}`, LEFT + 40, y + 8);
+      doc.fillColor(INK).fontSize(9.5).font('Helvetica-Bold').text(`Servicio de internet — ${pkgName}`, LEFT + 40, y + 8);
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Langganan bulanan • ${periodStr}`, LEFT + 40, y + 22);
       doc.fillColor(INK).fontSize(10).font('Helvetica-Bold').text(fmtRp(amount), LEFT + W - 130, y + 12, { width: 118, align: 'right' });
 
@@ -171,7 +171,7 @@ function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
 
       // Info metode bayar (kiri)
       let my = y;
-      doc.fillColor(MUTED).fontSize(8).font('Helvetica-Bold').text('STATUS PEMBAYARAN', LEFT, my); my += 14;
+      doc.fillColor(MUTED).fontSize(8).font('Helvetica-Bold').text('ESTADO DEL PAGO', LEFT, my); my += 14;
       const payRows = [
         ['Metode', invoice.payment_gateway || invoice.paid_by_name || (isPaid ? 'Manual' : '-')],
         ['Waktu', isPaid && invoice.paid_at ? String(invoice.paid_at).replace('T', ' ').slice(0, 19) : '-'],
@@ -189,7 +189,7 @@ function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
       doc.fillColor('#92400e').fontSize(8.5).font('Helvetica-Bold').text('Catatan', LEFT + 12, ny + 8);
       const noteText = invoice.notes
         ? String(invoice.notes).replace(/\n+/g, ' ').slice(0, 200)
-        : (isPaid ? 'Pembayaran telah diterima. Simpan dokumen ini sebagai bukti pembayaran yang sah.' : 'Mohon lakukan pembayaran sebelum tanggal jatuh tempo.');
+        : (isPaid ? 'Pago recibido. Conserve este documento como comprobante de pago.' : 'Por favor, realice el pago antes de la fecha de vencimiento.');
       doc.fillColor('#92400e').fontSize(8).font('Helvetica').text(noteText, LEFT + 12, ny + 20, { width: W - 24, height: 22 });
 
       // ── Footer ──
@@ -197,7 +197,7 @@ function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
       doc.moveTo(LEFT, fy - 12).lineTo(RIGHT, fy - 12).strokeColor(LINE).stroke();
       doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(companyName, LEFT, fy);
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(companyAddress, LEFT, fy + 13, { width: 330, height: 22 });
-      doc.fillColor(MUTED).fontSize(7.5).text(`Dokumen dibuat otomatis • ${new Date().toLocaleString(regional.locale())}`, LEFT, fy + 40);
+      doc.fillColor(MUTED).fontSize(7.5).text(`Documento generado automáticamente • ${new Date().toLocaleString(regional.locale())}`, LEFT, fy + 40);
 
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text('Hormat Kami,', 430, fy, { width: 125, align: 'center' });
       doc.moveTo(430, fy + 34).lineTo(555, fy + 34).strokeColor(INK).stroke();

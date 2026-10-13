@@ -24,11 +24,11 @@ function normalizePhone(phone) {
  */
 async function sendFonnteMessage(toPhone, messageText, options = {}) {
   const phone = normalizePhone(toPhone);
-  if (!phone) throw new Error('Nomor tujuan WhatsApp tidak valid.');
+  if (!phone) throw new Error('Número de WhatsApp de destino inválido.');
 
   const token = getSetting('fonnte_token', '');
   if (!token) {
-    throw new Error('Token Fonnte belum dikonfigurasi. Harap isi API Token Fonnte di menu Pengaturan WhatsApp.');
+    throw new Error('El token de Fonnte no está configurado. Cargalo en Configuración de WhatsApp.');
   }
 
   const apiUrl = getSetting('fonnte_api_url', 'https://api.fonnte.com/send').trim() || 'https://api.fonnte.com/send';
@@ -109,7 +109,7 @@ async function sendFonnteMessage(toPhone, messageText, options = {}) {
  * Test Koneksi / Kirim Pesan Uji Coba Fonnte
  */
 async function testFonnteConnection(targetPhone, customMessage) {
-  const msg = customMessage || '🔔 *Tes Koneksi Fonnte WhatsApp Gateway Berhasil!*\n\nOPEN-ISP siap mengirimkan notifikasi otomatis melalui gateway Fonnte.';
+  const msg = customMessage || '🔔 *¡Prueba de conexión con Fonnte correcta!*\n\nEl sistema ya puede enviar notificaciones automáticas a través de Fonnte.';
   return await sendFonnteMessage(targetPhone, msg);
 }
 
@@ -124,7 +124,7 @@ async function processFonnteWebhook(data = {}) {
   const inboxid = data.inboxid || null;
 
   if (!rawSender || !messageText) {
-    return { ok: false, reason: 'Sender atau message kosong' };
+    return { ok: false, reason: 'Remitente o mensaje vacío' };
   }
 
   const phone = normalizePhone(rawSender);

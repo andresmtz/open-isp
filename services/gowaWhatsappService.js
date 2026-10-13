@@ -112,7 +112,7 @@ async function sendGowaMessage(toPhone, messageText, options = {}) {
 }
 async function sendGowaImage(toPhone, imageBuffer, caption = '', options = {}) {
   const buf = Buffer.isBuffer(imageBuffer) ? imageBuffer : Buffer.from(imageBuffer || []);
-  if (!buf.length) throw new Error('Buffer gambar kosong');
+  if (!buf.length) throw new Error('La imagen está vacía');
   const json = await postForm('/send/image', {
     phone: normalizePhoneJid(toPhone),
     caption: String(caption || ''),
@@ -122,7 +122,7 @@ async function sendGowaImage(toPhone, imageBuffer, caption = '', options = {}) {
 }
 async function sendGowaDocument(toPhone, documentBuffer, filename = 'file.pdf', caption = '', mimetype = 'application/pdf', options = {}) {
   const buf = Buffer.isBuffer(documentBuffer) ? documentBuffer : Buffer.from(documentBuffer || []);
-  if (!buf.length) throw new Error('Buffer dokumen kosong');
+  if (!buf.length) throw new Error('El documento está vacío');
   const json = await postForm('/send/file', {
     phone: normalizePhoneJid(toPhone),
     caption: String(caption || ''),
@@ -132,7 +132,7 @@ async function sendGowaDocument(toPhone, documentBuffer, filename = 'file.pdf', 
   return { success: true, gateway: 'gowa', raw: json };
 }
 async function testGowaConnection(phone, message) {
-  return await sendGowaMessage(phone, message || 'Tes koneksi GOWA berhasil ✅');
+  return await sendGowaMessage(phone, message || 'Prueba de conexión con GOWA correcta ✅');
 }
 async function gowaStatus() {
   try {

@@ -76,7 +76,7 @@ const upload = multer({
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Hanya file gambar yang diperbolehkan (JPEG, PNG, GIF, WebP)'));
+      cb(new Error('Solo se permiten imágenes (JPEG, PNG, GIF, WebP)'));
     }
   }
 });
@@ -138,7 +138,7 @@ try {
 // --- AUTH ---
 router.get('/login', (req, res) => {
   if (req.session && req.session.isTechnician) return res.redirect('/tech');
-  res.render('tech/login', { title: 'Teknisi Login', company: company(), error: null });
+  res.render('tech/login', { title: 'Ingreso de técnicos', company: company(), error: null });
 });
 
 router.post('/login', loginRateLimiter, express.urlencoded({ extended: true }), (req, res) => {
@@ -150,7 +150,7 @@ router.post('/login', loginRateLimiter, express.urlencoded({ extended: true }), 
     req.session.techName = tech.name;
     return res.redirect('/tech');
   }
-  res.render('tech/login', { title: 'Teknisi Login', company: company(), error: 'Username atau password salah!' });
+  res.render('tech/login', { title: 'Ingreso de técnicos', company: company(), error: '¡Usuario o contraseña incorrectos!' });
 });
 
 router.get('/logout', (req, res) => {
@@ -165,7 +165,7 @@ router.get('/', requireTechSession, (req, res) => {
   const myTickets = techSvc.getAssignedTickets(techId);
   
   res.render('tech/dashboard', {
-    title: 'Dashboard Teknisi', 
+    title: 'Panel del técnico', 
     company: company(), 
     techName: req.session.techName,
     activePage: 'dashboard',
@@ -192,7 +192,7 @@ router.get('/history', requireTechSession, (req, res) => {
   const techId = req.session.techId;
   const historyTickets = techSvc.getResolvedTickets(techId);
   res.render('tech/history', {
-    title: 'Riwayat Tiket', 
+    title: 'Historial de tickets', 
     company: company(), 
     activePage: 'history',
     tickets: historyTickets,
@@ -220,9 +220,9 @@ router.get('/map', requireTechSession, (req, res) => {
 router.post('/tickets/:id/take', requireTechSession, (req, res) => {
   try {
     techSvc.takeTicket(req.params.id, req.session.techId);
-    req.session._msg = { type: 'success', text: 'Tiket berhasil diambil. Silakan mulai kerjakan.' };
+    req.session._msg = { type: 'success', text: 'Ticket tomado. Ya podés empezar a trabajarlo.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal mengambil tiket: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo tomar el ticket:' + e.message };
   }
   res.redirect('/tech');
 });
@@ -256,7 +256,7 @@ router.post('/tickets/:id/update', requireTechSession, upload.array('photos', 10
       photoMetadata: JSON.stringify(photoMetadata)
     });
     
-    req.session._msg = { type: 'success', text: 'Status keluhan berhasil diperbarui.' };
+    req.session._msg = { type: 'success', text: 'Estado del reclamo actualizado.' };
 
     // --- WHATSAPP NOTIFICATION FOR RESOLVED TICKET ---
     if (status === 'resolved') {
@@ -271,14 +271,14 @@ router.post('/tickets/:id/update', requireTechSession, upload.array('photos', 10
           
           if (ticket) {
             const photoCount = photoPaths.length;
-            const photoText = photoCount > 0 ? `\n📸 *Foto Pekerjaan:* ${photoCount} foto terlampir` : '';
+            const photoText = photoCount > 0 ? `\n📸 *Fotos del trabajo:* ${photoCount} adjuntas` : '';
             
-            const waMsg = `✅ *TIKET KELUHAN SELESAI*\n\n` +
-                         `🎫 *ID Tiket:* #${ticket.id}\n` +
-                         `👤 *Pelanggan:* ${ticket.customer_name}\n` +
+            const waMsg = `✅ *RECLAMO RESUELTO*\n\n` +
+                         `🎫 *Ticket:* #${ticket.id}\n` +
+                         `👤 *Cliente:* ${ticket.customer_name}\n` +
                          `📝 *Subjek:* ${ticket.subject}\n` +
-                         `🛠️ *Teknisi:* ${req.session.techName}${photoText}\n\n` +
-                         `Keluhan Anda telah selesai dikerjakan. Terima kasih atas kesabarannya.`;
+                         `🛠️ *Técnico:* ${req.session.techName}${photoText}\n\n` +
+                         `Su reclamo fue resuelto. ¡Gracias por su paciencia!`;
 
             // Kirim ke Pelanggan
             if (ticket.customer_phone) {
@@ -292,12 +292,12 @@ router.post('/tickets/:id/update', requireTechSession, upload.array('photos', 10
             // Kirim ke Admin dengan info foto
             if (settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers.length > 0) {
               const notesText = notes ? `\n💬 *Catatan:* ${notes}` : '';
-              const adminMsg = `✅ *LAPORAN TIKET SELESAI*\n\n` +
-                               `🎫 *ID Tiket:* #${ticket.id}\n` +
-                               `👤 *Pelanggan:* ${ticket.customer_name}\n` +
-                               `🛠️ *Teknisi:* ${req.session.techName}\n` +
+              const adminMsg = `✅ *TICKET RESUELTO*\n\n` +
+                               `🎫 *Ticket:* #${ticket.id}\n` +
+                               `👤 *Cliente:* ${ticket.customer_name}\n` +
+                               `🛠️ *Técnico:* ${req.session.techName}\n` +
                                `📝 *Subjek:* ${ticket.subject}\n` +
-                               `💬 *Pesan:* ${ticket.message}${notesText}${photoText}`;
+                               `💬 *Mensaje:* ${ticket.message}${notesText}${photoText}`;
               const recipients = new Set();
               for (const adminPhone of settings.whatsapp_admin_numbers) {
                 const digits = normalizeWaDigits(adminPhone);
@@ -318,7 +318,7 @@ router.post('/tickets/:id/update', requireTechSession, upload.array('photos', 10
     // -------------------------------------------------
 
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal update keluhan: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo actualizar el reclamo:' + e.message };
   }
   res.redirect('/tech');
 });
@@ -351,7 +351,7 @@ router.get('/customers/new', requireTechSession, (req, res) => {
   const routers = mikrotikService.getAllRouters();
   const olts = oltSvc.getAllOlts();
   res.render('tech/create_customer', {
-    title: 'Tambah Pelanggan',
+    title: 'Agregar cliente',
     company: company(),
     activePage: 'create_customer',
     packages,
@@ -365,7 +365,7 @@ router.get('/customers/new', requireTechSession, (req, res) => {
 router.post('/customers', requireTechSession, express.urlencoded({ extended: true }), async (req, res) => {
   try {
     const name = String(req.body.name || '').trim();
-    if (!name) throw new Error('Nama pelanggan wajib diisi');
+    if (!name) throw new Error('El nombre del cliente es obligatorio');
 
     const customerData = {
       name,
@@ -391,12 +391,12 @@ router.post('/customers', requireTechSession, express.urlencoded({ extended: tru
 
     // VALIDATION: If customer has PPPoE connection, router_id is REQUIRED
     if (customerData.pppoe_username && !customerData.router_id) {
-      throw new Error('Router harus dipilih jika menggunakan koneksi PPPoE');
+      throw new Error('Hay que elegir un router si la conexión es PPPoE');
     }
 
     if (customerData.pppoe_username) {
       const existing = db.prepare('SELECT id, name FROM customers WHERE router_id IS ? AND pppoe_username = ? LIMIT 1').get(customerData.router_id ?? null, customerData.pppoe_username);
-      if (existing) throw new Error(`PPPoE Username sudah dipakai pelanggan lain: ${existing.name}`);
+      if (existing) throw new Error(`El usuario PPPoE ya lo usa otro cliente: ${existing.name}`);
 
       let conn = null;
       try {
@@ -451,10 +451,10 @@ router.post('/customers', requireTechSession, express.urlencoded({ extended: tru
       }
     }
 
-    req.session._msg = { type: 'success', text: `Pelanggan "${name}" berhasil dibuat.` };
+    req.session._msg = { type: 'success', text: `Cliente "${name}" creado.` };
     res.redirect('/tech/customers/new');
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal membuat pelanggan: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo crear el cliente:' + e.message };
     res.redirect('/tech/customers/new');
   }
 });
@@ -488,9 +488,9 @@ router.get('/api/mikrotik/pppoe-profiles', requireTechSession, async (req, res) 
 router.get('/api/odps/:id/ports', requireTechSession, (req, res) => {
   try {
     const odpId = Number(req.params.id);
-    if (!odpId) return res.status(400).json({ error: 'ODP tidak valid' });
+    if (!odpId) return res.status(400).json({ error: 'NAP inválida' });
     const usage = odpSvc.getOdpPortUsage(odpId);
-    if (!usage) return res.status(404).json({ error: 'ODP tidak ditemukan' });
+    if (!usage) return res.status(404).json({ error: 'NAP no encontrada' });
     res.json(usage);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -600,13 +600,13 @@ router.post('/api/device/:tag/ssid', requireTechSession, express.json(), async (
           const waNotify = require('../services/waNotifyService');
           if (true) {
             const now = getNowLocal();
-            const msg = `\ud83d\udcf6 *PERUBAHAN SSID WIFI*\n\n` +
-              `\ud83d\udc64 *Pelanggan:* ${cust.name}\n` +
-              `\ud83d\udd52 *Waktu:* ${now}\n\n` +
-              `SSID WiFi Anda sudah diperbarui menjadi:\n` +
+            const msg = `📶 *CAMBIO DE NOMBRE DEL WIFI*\n\n` +
+              `👤 *Cliente:* ${cust.name}\n` +
+              `🕒 *Fecha:* ${now}\n\n` +
+              `El nombre (SSID) de su WiFi ahora es:\n` +
               `\ud83d\udce1 *${ssid}*\n\n` +
-              `Silakan pilih SSID baru di perangkat Anda untuk terhubung.\n` +
-              `\u26a0\ufe0f Jangan bagikan info ini ke orang lain.`;
+              `Seleccione la nueva red en sus dispositivos para conectarse.\n` +
+              `⚠️ No comparta esta información.`;
             await waNotify.sendText(cust.phone, msg);
           }
         }
@@ -618,7 +618,7 @@ router.post('/api/device/:tag/ssid', requireTechSession, express.json(), async (
 
 router.post('/api/device/:tag/password', requireTechSession, express.json(), async (req, res) => {
   const { password } = req.body;
-  if (!password || password.length < 8) return res.status(400).json({ error: 'Password minimal 8 karakter' });
+  if (!password || password.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' });
   const ok = await customerDevice.updatePassword(req.params.tag, password);
   // Kirim notifikasi WhatsApp ke pelanggan
   if (ok) {
@@ -632,13 +632,13 @@ router.post('/api/device/:tag/password', requireTechSession, express.json(), asy
           const waNotify = require('../services/waNotifyService');
           if (true) {
             const now = getNowLocal();
-            const msg = `\ud83d\udd11 *PERUBAHAN PASSWORD WIFI*\n\n` +
-              `\ud83d\udc64 *Pelanggan:* ${cust.name}\n` +
-              `\ud83d\udd52 *Waktu:* ${now}\n\n` +
-              `Password WiFi Anda sudah diperbarui menjadi:\n` +
+            const msg = `🔑 *CAMBIO DE CONTRASEÑA DEL WIFI*\n\n` +
+              `👤 *Cliente:* ${cust.name}\n` +
+              `🕒 *Fecha:* ${now}\n\n` +
+              `La contraseña de su WiFi ahora es:\n` +
               `\ud83d\udd10 *${password}*\n\n` +
-              `Silakan gunakan password baru untuk terhubung.\n` +
-              `\u26a0\ufe0f Jangan bagikan password ini ke orang lain.`;
+              `Use la nueva contraseña para conectarse.\n` +
+              `⚠️ No comparta esta contraseña.`;
             await waNotify.sendText(cust.phone, msg);
           }
         }
@@ -689,14 +689,14 @@ router.post('/attendance/checkin', requireTechSession, uploadAttendance.single('
     const techName = req.session.techName;
 
     if (!req.file) {
-      return res.json({ success: false, message: 'Foto check-in wajib diunggah' });
+      return res.json({ success: false, message: 'La foto de entrada es obligatoria' });
     }
     
     // Check if already checked in today
     const today = attendanceSvc.getTodayAttendance('technician', techId);
     if (today) {
       removeAttendanceFile(req.file);
-      return res.json({ success: false, message: 'Anda sudah melakukan check-in hari ini' });
+      return res.json({ success: false, message: 'Ya registraste tu entrada hoy' });
     }
     
     // Prepare photo path
@@ -715,10 +715,10 @@ router.post('/attendance/checkin', requireTechSession, uploadAttendance.single('
       photo: photoPath
     });
     
-    res.json({ success: true, message: 'Check-in berhasil!', id: result.lastInsertRowid });
+    res.json({ success: true, message: '¡Entrada registrada!', id: result.lastInsertRowid });
   } catch (e) {
     removeAttendanceFile(req.file);
-    res.json({ success: false, message: 'Gagal check-in: ' + e.message });
+    res.json({ success: false, message: 'No se pudo registrar la entrada:' + e.message });
   }
 });
 
@@ -728,19 +728,19 @@ router.post('/attendance/checkout', requireTechSession, uploadAttendance.single(
     const techId = req.session.techId;
 
     if (!req.file) {
-      return res.json({ success: false, message: 'Foto check-out wajib diunggah' });
+      return res.json({ success: false, message: 'La foto de salida es obligatoria' });
     }
     
     // Get today's attendance
     const today = attendanceSvc.getTodayAttendance('technician', techId);
     if (!today) {
       removeAttendanceFile(req.file);
-      return res.json({ success: false, message: 'Anda belum check-in hari ini' });
+      return res.json({ success: false, message: 'Todavía no registraste tu entrada hoy' });
     }
     
     if (today.status === 'checked_out') {
       removeAttendanceFile(req.file);
-      return res.json({ success: false, message: 'Anda sudah check-out hari ini' });
+      return res.json({ success: false, message: 'Ya registraste tu salida hoy' });
     }
     
     // Prepare photo path
@@ -756,10 +756,10 @@ router.post('/attendance/checkout', requireTechSession, uploadAttendance.single(
       photo: photoPath
     });
     
-    res.json({ success: true, message: 'Check-out berhasil!' });
+    res.json({ success: true, message: '¡Salida registrada!' });
   } catch (e) {
     removeAttendanceFile(req.file);
-    res.json({ success: false, message: 'Gagal check-out: ' + e.message });
+    res.json({ success: false, message: 'No se pudo registrar la salida:' + e.message });
   }
 });
 
@@ -1094,18 +1094,18 @@ router.post('/api/add-wan/:deviceId', requireTechSession, async (req, res) => {
         // 1. Validasi awal
         const normalizedMode = String(mode || '').trim().toLowerCase();
         if (!['pppoe', 'bridge'].includes(normalizedMode)) {
-            return res.json({ success: false, message: 'Mode WAN tidak valid' });
+            return res.json({ success: false, message: 'Modo WAN inválido' });
         }
 
         const parsedVlan = parseInt(vlanId, 10);
         if (isNaN(parsedVlan) || parsedVlan < 1 || parsedVlan > 4094) {
-            return res.json({ success: false, message: 'VLAN ID tidak valid (harus 1-4094)' });
+            return res.json({ success: false, message: 'VLAN ID inválido (debe ser 1-4094)' });
         }
         
         const trimmedPppoeUser = String(pppoeUser || '').trim();
         const trimmedPppoePass = String(pppoePass || '').trim();
         if (normalizedMode === 'pppoe' && (!trimmedPppoeUser || !trimmedPppoePass)) {
-            return res.json({ success: false, message: 'Username dan password PPPoE wajib diisi untuk mode PPPoE' });
+            return res.json({ success: false, message: 'El usuario y la contraseña PPPoE son obligatorios en modo PPPoE' });
         }
         
         const servers = getACSServers(acsId);
@@ -1125,7 +1125,7 @@ router.post('/api/add-wan/:deviceId', requireTechSession, async (req, res) => {
                 });
             } catch (mErr) {
                 console.error('[TechAddWAN] Failed to create PPPoE Secret in MikroTik:', mErr.message);
-                return res.json({ success: false, message: `Gagal membuat akun PPPoE di MikroTik: ${mErr.message}` });
+                return res.json({ success: false, message: `No se pudo crear la cuenta PPPoE en el MikroTik: ${mErr.message}` });
             }
         }
         
@@ -1139,7 +1139,7 @@ router.post('/api/add-wan/:deviceId', requireTechSession, async (req, res) => {
         });
         
         const deviceData = Array.isArray(getDeviceRes.data) && getDeviceRes.data.length > 0 ? getDeviceRes.data[0] : null;
-        if (!deviceData) return res.json({ success: false, message: 'CPE/Device tidak ditemukan di GenieACS' });
+        if (!deviceData) return res.json({ success: false, message: 'El CPE/equipo no se encontró en GenieACS' });
         
         const manufacturer = (deviceData._deviceId?._Manufacturer || deviceData._deviceId?.Manufacturer || '').toLowerCase();
         const wlanConfig = deviceData.InternetGatewayDevice?.LANDevice?.['1']?.WLANConfiguration || {};
@@ -1164,7 +1164,7 @@ router.post('/api/add-wan/:deviceId', requireTechSession, async (req, res) => {
             });
 
             await axios.post(`${baseUrl}/devices/${encodeURIComponent(deviceId)}/tasks`, task, config);
-            return res.json({ success: true, message: 'Workflow Add WAN built-in berhasil dikirim. Task akan mengikuti instance asli dari ONU.' });
+            return res.json({ success: true, message: 'Se envió el proceso de alta WAN. Las tareas siguen la instancia original de la ONU.' });
         }
 
         const wanConnObj = deviceData.InternetGatewayDevice?.WANDevice?.['1']?.WANConnectionDevice || {};
@@ -1279,7 +1279,7 @@ router.post('/api/add-wan/:deviceId', requireTechSession, async (req, res) => {
             objectName: ''
         }, config).catch(() => {});
         
-        res.json({ success: true, message: 'Semua antrean tugas Add WAN (dan Wi-Fi) berhasil dikirimkan ke GenieACS.' });
+        res.json({ success: true, message: 'Todas las tareas de alta WAN (y WiFi) se enviaron a GenieACS.' });
     } catch (err) {
         res.json({ success: false, message: err.message });
     }

@@ -49,7 +49,7 @@ const promoUpload = multer({
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Hanya file gambar (JPEG, PNG, GIF, WebP) yang diperbolehkan'), false);
+      cb(new Error('Solo se permiten imágenes (JPEG, PNG, GIF, WebP)'), false);
     }
   }
 });
@@ -267,7 +267,7 @@ async function sendPaymentSuccessWA(customerPhone, customerName, periodText, amo
 // Middleware strictly for Admin
 function restrictToAdmin(req, res, next) {
   if (req.session?.isAdmin) return next();
-  req.session._msg = { type: 'error', text: 'Hanya Admin yang dapat mengakses halaman ini.' };
+  req.session._msg = { type: 'error', text: 'Solo el administrador puede acceder a esta página.' };
   return res.redirect('/admin');
 }
 
@@ -311,16 +311,16 @@ function requireSidebarMenuAccess(menuKey) {
     if (access.allowed) return next();
 
     if (access.reason === 'hidden') {
-      req.session._msg = { type: 'error', text: `Menu "${access.menu.labelDefault}" sedang disembunyikan dari sidebar.` };
+      req.session._msg = { type: 'error', text: `El menú "${access.menu.labelDefault}" está oculto en la barra lateral.` };
       return res.redirect('/admin');
     }
 
     if (access.reason === 'locked') {
-      req.session._msg = { type: 'error', text: `Menu "${access.menu.labelDefault}" terkunci. Hubungi ${sidebarMenuSvc.FEATURE_CONTACT_PHONE} untuk mendapatkan password.` };
+      req.session._msg = { type: 'error', text: `El menú "${access.menu.labelDefault}" está bloqueado. Contactá a ${sidebarMenuSvc.FEATURE_CONTACT_PHONE} para obtener la contraseña.` };
       return res.redirect('/admin/sidebar-settings');
     }
 
-    req.session._msg = { type: 'error', text: 'Anda tidak memiliki akses ke menu ini.' };
+    req.session._msg = { type: 'error', text: 'No tenés acceso a este menú.' };
     return res.redirect('/admin');
   };
 }
@@ -387,7 +387,7 @@ function getUpdateInfo(repoRoot) {
   if (!inside.ok) {
     // Tanpa .git (Docker/container): update dilakukan via rebuild image (bukan git)
     info.container = true;
-    info.containerMessage = 'Instalasi ini berjalan sebagai kontainer/gambar (tanpa .git). Pembaruan dilakukan dengan membangun ulang image dari repo terbaru.';
+    info.containerMessage = 'Esta instalación corre en un contenedor (sin .git). Para actualizar, reconstruí la imagen desde el repositorio.';
     return info;
   }
 
@@ -400,7 +400,7 @@ function getUpdateInfo(repoRoot) {
     ? runCmd('git', ['fetch', '--prune', 'https://github.com/' + _repo + '.git', branch], repoRoot)
     : runCmd('git', ['fetch', '--prune'], repoRoot);
   if (!fetch.ok) {
-    info.error = 'Gagal git fetch: ' + (fetch.stderr || fetch.stdout || '').trim();
+    info.error = 'Falló git fetch:' + (fetch.stderr || fetch.stdout || '').trim();
     return info;
   }
 
@@ -408,7 +408,7 @@ function getUpdateInfo(repoRoot) {
     ? runCmd('git', ['show', 'FETCH_HEAD:version.txt'], repoRoot)
     : runCmd('git', ['show', `origin/${branch}:version.txt`], repoRoot);
   if (!remote.ok) {
-    info.error = `Tidak bisa membaca version.txt dari GitHub (origin/${branch}).`;
+    info.error = `No se pudo leer version.txt desde GitHub (origin/${branch}).`;
     return info;
   }
 
@@ -573,7 +573,7 @@ router.post('/login', loginRateLimiter, express.urlencoded({ extended: true }), 
     return res.redirect('/admin');
   }
 
-  res.render('admin/login', { title: 'Admin Login', company: company(), error: 'Username atau password salah' });
+  res.render('admin/login', { title: 'Admin Login', company: company(), error: 'Usuario o contraseña incorrectos' });
 });
 
 router.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/admin/login'); });
@@ -621,7 +621,7 @@ router.post('/olts/test-connection', requireAdminSession, restrictToAdmin, expre
 router.post('/olts/:id/test-connection', requireAdminSession, restrictToAdmin, async (req, res) => {
   try {
     const olt = oltSvc.getOltById(req.params.id);
-    if (!olt) return res.status(404).json({ success: false, message: 'OLT tidak ditemukan' });
+    if (!olt) return res.status(404).json({ success: false, message: 'OLT no encontrada' });
     const result = await oltSvc.testOltConnection(olt);
     res.json(result);
   } catch (e) {
@@ -632,7 +632,7 @@ router.post('/olts/:id/test-connection', requireAdminSession, restrictToAdmin, a
 router.post('/olts/:id/onu/:index/reboot', requireAdminSession, restrictToAdmin, async (req, res) => {
   try {
     await oltSvc.rebootOnu(req.params.id, req.params.index);
-    res.json({ success: true, message: 'Perintah reboot berhasil dikirim.' });
+    res.json({ success: true, message: 'Orden de reinicio enviada.' });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -641,9 +641,9 @@ router.post('/olts/:id/onu/:index/reboot', requireAdminSession, restrictToAdmin,
 router.post('/olts/:id/onu/:index/rename', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), async (req, res) => {
   try {
     const { name } = req.body;
-    if (!name) throw new Error('Nama tidak boleh kosong');
+    if (!name) throw new Error('El nombre no puede quedar vacío');
     await oltSvc.renameOnu(req.params.id, req.params.index, name);
-    res.json({ success: true, message: 'Nama ONU berhasil diubah.' });
+    res.json({ success: true, message: 'Nombre de la ONU actualizado.' });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -652,7 +652,7 @@ router.post('/olts/:id/onu/:index/rename', requireAdminSession, restrictToAdmin,
 router.post('/olts/:id/onu/authorize', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), async (req, res) => {
   try {
     const output = await oltSvc.authorizeOnu(req.params.id, req.body);
-    res.json({ success: true, message: 'Otorisasi berhasil.', output });
+    res.json({ success: true, message: 'Autorización correcta.', output });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -667,7 +667,7 @@ router.post('/olts/:id/onu/configure-wan', requireAdminSession, restrictToAdmin,
     } else {
       output = await oltSvc.configureOnuWan(req.params.id, req.body);
     }
-    res.json({ success: true, message: 'Konfigurasi WAN berhasil.', output });
+    res.json({ success: true, message: 'Configuración WAN aplicada.', output });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -676,9 +676,9 @@ router.post('/olts/:id/onu/configure-wan', requireAdminSession, restrictToAdmin,
 router.post('/olts', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     oltSvc.createOlt(req.body);
-    req.session._msg = { type: 'success', text: 'OLT berhasil ditambahkan.' };
+    req.session._msg = { type: 'success', text: 'OLT agregada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/olts');
 });
@@ -686,9 +686,9 @@ router.post('/olts', requireAdminSession, restrictToAdmin, express.urlencoded({ 
 router.post('/olts/:id/update', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     oltSvc.updateOlt(req.params.id, req.body);
-    req.session._msg = { type: 'success', text: 'OLT berhasil diperbarui.' };
+    req.session._msg = { type: 'success', text: 'OLT actualizada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/olts');
 });
@@ -696,9 +696,9 @@ router.post('/olts/:id/update', requireAdminSession, restrictToAdmin, express.ur
 router.post('/olts/:id/delete', requireAdminSession, restrictToAdmin, (req, res) => {
   try {
     oltSvc.deleteOlt(req.params.id);
-    req.session._msg = { type: 'success', text: 'OLT berhasil dihapus.' };
+    req.session._msg = { type: 'success', text: 'OLT eliminada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/olts');
 });
@@ -901,7 +901,7 @@ router.post('/api/customers/:id/cable-path', requireAdminSession, (req, res) => 
   try {
     const id = Number(req.params.id);
     const { path } = req.body;
-    if (!id) throw new Error('ID pelanggan tidak valid');
+    if (!id) throw new Error('ID de cliente inválido');
     customerSvc.updateCustomerCablePath(id, path);
     res.json({ ok: true });
   } catch (e) {
@@ -913,7 +913,7 @@ router.post('/api/customers/:id/cable-path', requireAdminSession, (req, res) => 
 router.get('/api/odps/:id/ports', requireAdminSession, (req, res) => {
   try {
     const usage = odpSvc.getOdpPortUsage(Number(req.params.id));
-    if (!usage) return res.status(404).json({ error: 'ODP tidak ditemukan' });
+    if (!usage) return res.status(404).json({ error: 'NAP no encontrada' });
     res.json(usage);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -921,9 +921,9 @@ router.get('/api/odps/:id/ports', requireAdminSession, (req, res) => {
 router.post('/odps', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     odpSvc.createOdp(req.body);
-    req.session._msg = { type: 'success', text: 'ODP berhasil ditambahkan.' };
+    req.session._msg = { type: 'success', text: 'NAP agregada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/map');
 });
@@ -931,9 +931,9 @@ router.post('/odps', requireAdminSession, restrictToAdmin, express.urlencoded({ 
 router.post('/odps/:id/update', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     odpSvc.updateOdp(req.params.id, req.body);
-    req.session._msg = { type: 'success', text: 'ODP berhasil diperbarui.' };
+    req.session._msg = { type: 'success', text: 'NAP actualizada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/map');
 });
@@ -941,9 +941,9 @@ router.post('/odps/:id/update', requireAdminSession, restrictToAdmin, express.ur
 router.post('/odps/:id/delete', requireAdminSession, restrictToAdmin, (req, res) => {
   try {
     odpSvc.deleteOdp(req.params.id);
-    req.session._msg = { type: 'success', text: 'ODP berhasil dihapus.' };
+    req.session._msg = { type: 'success', text: 'NAP eliminada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/map');
 });
@@ -951,15 +951,15 @@ router.post('/odps/:id/delete', requireAdminSession, restrictToAdmin, (req, res)
 // --- TECHNICIAN MANAGEMENT ---
 router.get('/technicians', requireAdminSession, requireSidebarMenuAccess('technicians'), restrictToAdmin, (req, res) => {
   const technicians = adminSvc.getAllTechnicians();
-  res.render('admin/technicians', { title: 'Manajemen Teknisi', company: company(), activePage: 'technicians', technicians, msg: flashMsg(req) });
+  res.render('admin/technicians', { title: 'Gestión de técnicos', company: company(), activePage: 'technicians', technicians, msg: flashMsg(req) });
 });
 
 router.post('/technicians', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     adminSvc.createTechnician(req.body);
-    req.session._msg = { type: 'success', text: 'Teknisi berhasil ditambahkan.' };
+    req.session._msg = { type: 'success', text: 'Técnico agregado.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/technicians');
 });
@@ -967,31 +967,31 @@ router.post('/technicians', requireAdminSession, restrictToAdmin, express.urlenc
 router.post('/technicians/:id/update', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     adminSvc.updateTechnician(req.params.id, req.body);
-    req.session._msg = { type: 'success', text: 'Data teknisi diperbarui.' };
+    req.session._msg = { type: 'success', text: 'Datos del técnico actualizados.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/technicians');
 });
 
 router.post('/technicians/:id/delete', requireAdminSession, restrictToAdmin, (req, res) => {
   adminSvc.deleteTechnician(req.params.id);
-  req.session._msg = { type: 'success', text: 'Teknisi berhasil dihapus.' };
+  req.session._msg = { type: 'success', text: 'Técnico eliminado.' };
   res.redirect('/admin/technicians');
 });
 
 // --- CASHIER MANAGEMENT ---
 router.get('/cashiers', requireAdminSession, requireSidebarMenuAccess('cashiers'), restrictToAdmin, (req, res) => {
   const cashiers = adminSvc.getAllCashiers();
-  res.render('admin/cashiers', { title: 'Manajemen Kasir', company: company(), activePage: 'cashiers', cashiers, msg: flashMsg(req) });
+  res.render('admin/cashiers', { title: 'Gestión de cajeros', company: company(), activePage: 'cashiers', cashiers, msg: flashMsg(req) });
 });
 
 router.post('/cashiers', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     adminSvc.createCashier(req.body);
-    req.session._msg = { type: 'success', text: 'Kasir berhasil ditambahkan.' };
+    req.session._msg = { type: 'success', text: 'Cajero agregado.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/cashiers');
 });
@@ -999,16 +999,16 @@ router.post('/cashiers', requireAdminSession, restrictToAdmin, express.urlencode
 router.post('/cashiers/:id/update', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     adminSvc.updateCashier(req.params.id, req.body);
-    req.session._msg = { type: 'success', text: 'Data kasir diperbarui.' };
+    req.session._msg = { type: 'success', text: 'Datos del cajero actualizados.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/cashiers');
 });
 
 router.post('/cashiers/:id/delete', requireAdminSession, restrictToAdmin, (req, res) => {
   adminSvc.deleteCashier(req.params.id);
-  req.session._msg = { type: 'success', text: 'Kasir berhasil dihapus.' };
+  req.session._msg = { type: 'success', text: 'Cajero eliminado.' };
   res.redirect('/admin/cashiers');
 });
 
@@ -1016,15 +1016,15 @@ router.post('/cashiers/:id/delete', requireAdminSession, restrictToAdmin, (req, 
 router.get('/collectors', requireAdminSession, requireSidebarMenuAccess('collectors'), restrictToAdmin, (req, res) => {
   const collectors = adminSvc.getAllCollectors();
   const masterAreas = areaSvc.getAllAreas();
-  res.render('admin/collectors', { title: 'Manajemen Kolektor', company: company(), activePage: 'collectors', collectors, masterAreas, msg: flashMsg(req) });
+  res.render('admin/collectors', { title: 'Gestión de cobradores', company: company(), activePage: 'collectors', collectors, masterAreas, msg: flashMsg(req) });
 });
 
 router.post('/collectors', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     adminSvc.createCollector(req.body);
-    req.session._msg = { type: 'success', text: 'Kolektor berhasil ditambahkan.' };
+    req.session._msg = { type: 'success', text: 'Cobrador agregado.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/collectors');
 });
@@ -1032,16 +1032,16 @@ router.post('/collectors', requireAdminSession, restrictToAdmin, express.urlenco
 router.post('/collectors/:id/update', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     adminSvc.updateCollector(req.params.id, req.body);
-    req.session._msg = { type: 'success', text: 'Data kolektor diperbarui.' };
+    req.session._msg = { type: 'success', text: 'Datos del cobrador actualizados.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/collectors');
 });
 
 router.post('/collectors/:id/delete', requireAdminSession, restrictToAdmin, (req, res) => {
   adminSvc.deleteCollector(req.params.id);
-  req.session._msg = { type: 'success', text: 'Kolektor berhasil dihapus.' };
+  req.session._msg = { type: 'success', text: 'Cobrador eliminado.' };
   res.redirect('/admin/collectors');
 });
 
@@ -1054,9 +1054,9 @@ router.get('/areas', requireAdminSession, requireSidebarMenuAccess('areas'), (re
 router.post('/areas', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
   try {
     areaSvc.createArea(req.body);
-    req.session._msg = { type: 'success', text: 'Area berhasil ditambahkan.' };
+    req.session._msg = { type: 'success', text: 'Zona agregada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/areas');
 });
@@ -1064,9 +1064,9 @@ router.post('/areas', requireAdminSession, express.urlencoded({ extended: true }
 router.post('/areas/:id/update', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
   try {
     areaSvc.updateArea(req.params.id, req.body);
-    req.session._msg = { type: 'success', text: 'Data area berhasil diperbarui.' };
+    req.session._msg = { type: 'success', text: 'Zona actualizada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/areas');
 });
@@ -1074,9 +1074,9 @@ router.post('/areas/:id/update', requireAdminSession, express.urlencoded({ exten
 router.post('/areas/:id/delete', requireAdminSession, (req, res) => {
   try {
     areaSvc.deleteArea(req.params.id);
-    req.session._msg = { type: 'success', text: 'Area berhasil dihapus.' };
+    req.session._msg = { type: 'success', text: 'Zona eliminada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/areas');
 });
@@ -1098,7 +1098,7 @@ router.get('/collector-payments', requireAdminSession, requireSidebarMenuAccess(
   `).all(status);
 
   res.render('admin/collector_payments', {
-    title: 'Approval Pembayaran Kolektor',
+    title: 'Aprobación de cobros de cobradores',
     company: company(),
     activePage: 'collector_payments',
     status,
@@ -1110,7 +1110,7 @@ router.get('/collector-payments', requireAdminSession, requireSidebarMenuAccess(
 router.post('/collector-payments/:id/approve', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
   try {
     const id = Number(req.params.id || 0);
-    if (!Number.isFinite(id) || id <= 0) throw new Error('ID tidak valid');
+    if (!Number.isFinite(id) || id <= 0) throw new Error('ID inválido');
     const decidedNote = String(req.body.decided_note || '').trim();
 
     const row = db.prepare(`
@@ -1119,18 +1119,18 @@ router.post('/collector-payments/:id/approve', requireAdminSession, express.urle
       JOIN collectors col ON col.id = r.collector_id
       WHERE r.id = ?
     `).get(id);
-    if (!row) throw new Error('Request tidak ditemukan');
+    if (!row) throw new Error('Solicitud no encontrada');
     if (String(row.status) !== 'pending') throw new Error('Request sudah diproses');
 
     const inv = billingSvc.getInvoiceById(row.invoice_id);
-    if (!inv) throw new Error('Invoice tidak ditemukan');
+    if (!inv) throw new Error('Factura no encontrada');
     if (String(inv.status) === 'paid') {
       db.prepare(`
         UPDATE collector_payment_requests
         SET status='rejected', decided_by_role=?, decided_by_name=?, decided_note=?, decided_at=(NOW_LOCAL())
         WHERE id=?
-      `).run(req.session.isCashier ? 'cashier' : 'admin', resolvePaidByName(req, 'Admin'), 'Invoice sudah lunas', id);
-      req.session._msg = { type: 'error', text: 'Invoice sudah lunas, request ditolak.' };
+      `).run(req.session.isCashier ? 'cashier' : 'admin', resolvePaidByName(req, 'Admin'), 'La factura ya está pagada', id);
+      req.session._msg = { type: 'error', text: 'La factura ya está pagada; solicitud rechazada.' };
       return res.redirect('back');
     }
 
@@ -1181,9 +1181,9 @@ router.post('/collector-payments/:id/approve', requireAdminSession, express.urle
       await customerSvc.activateCustomer(inv.customer_id);
     }
 
-    req.session._msg = { type: 'success', text: 'Request disetujui dan invoice dilunasi.' };
+    req.session._msg = { type: 'success', text: 'Solicitud aprobada y factura pagada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + (e.message || String(e)) };
+    req.session._msg = { type: 'error', text: 'Error:' + (e.message || String(e)) };
   }
   res.redirect('back');
 });
@@ -1191,10 +1191,10 @@ router.post('/collector-payments/:id/approve', requireAdminSession, express.urle
 router.post('/collector-payments/:id/reject', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
   try {
     const id = Number(req.params.id || 0);
-    if (!Number.isFinite(id) || id <= 0) throw new Error('ID tidak valid');
+    if (!Number.isFinite(id) || id <= 0) throw new Error('ID inválido');
     const decidedNote = String(req.body.decided_note || '').trim();
     const row = db.prepare(`SELECT * FROM collector_payment_requests WHERE id=?`).get(id);
-    if (!row) throw new Error('Request tidak ditemukan');
+    if (!row) throw new Error('Solicitud no encontrada');
     if (String(row.status) !== 'pending') throw new Error('Request sudah diproses');
     const approver = resolvePaidByName(req, 'Admin');
     db.prepare(`
@@ -1202,9 +1202,9 @@ router.post('/collector-payments/:id/reject', requireAdminSession, express.urlen
       SET status='rejected', decided_by_role=?, decided_by_name=?, decided_note=?, decided_at=(NOW_LOCAL())
       WHERE id=?
     `).run(req.session.isCashier ? 'cashier' : 'admin', approver, decidedNote, id);
-    req.session._msg = { type: 'success', text: 'Request ditolak.' };
+    req.session._msg = { type: 'success', text: 'Solicitud rechazada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + (e.message || String(e)) };
+    req.session._msg = { type: 'error', text: 'Error:' + (e.message || String(e)) };
   }
   res.redirect('back');
 });
@@ -1215,7 +1215,7 @@ router.get('/cashiers/attendance', requireAdminSession, requireSidebarMenuAccess
     const cashierName = req.session.cashierName || req.session.username || 'Kasir';
     
     if (!cashierId) {
-      req.session._msg = { type: 'error', text: 'Session kasir tidak valid' };
+      req.session._msg = { type: 'error', text: 'Sesión de cajero inválida' };
       return res.redirect('/admin');
     }
 
@@ -1243,7 +1243,7 @@ router.get('/cashiers/attendance', requireAdminSession, requireSidebarMenuAccess
       t: (key, defaultVal) => defaultVal || key
     });
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal memuat absensi: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo cargar la asistencia:' + e.message };
     res.redirect('/admin');
   }
 });
@@ -1254,17 +1254,17 @@ router.post('/cashiers/attendance/checkin', requireAdminSession, uploadAttendanc
     const cashierName = req.session.cashierName || req.session.username;
     
     if (!cashierId) {
-      return res.json({ success: false, message: 'Session kasir tidak valid' });
+      return res.json({ success: false, message: 'Sesión de cajero inválida' });
     }
 
     if (!req.file) {
-      return res.json({ success: false, message: 'Foto check-in wajib diunggah' });
+      return res.json({ success: false, message: 'La foto de entrada es obligatoria' });
     }
     
     const today = attendanceSvc.getTodayAttendance('cashier', cashierId);
     if (today) {
       removeAttendanceFile(req.file);
-      return res.json({ success: false, message: 'Anda sudah melakukan check-in hari ini' });
+      return res.json({ success: false, message: 'Ya registraste tu entrada hoy' });
     }
     
     const result = attendanceSvc.checkIn({
@@ -1277,10 +1277,10 @@ router.post('/cashiers/attendance/checkin', requireAdminSession, uploadAttendanc
       photo: req.file ? '/uploads/attendance/' + req.file.filename : ''
     });
     
-    res.json({ success: true, message: 'Check-in berhasil!', id: result.lastInsertRowid });
+    res.json({ success: true, message: '¡Entrada registrada!', id: result.lastInsertRowid });
   } catch (e) {
     removeAttendanceFile(req.file);
-    res.json({ success: false, message: 'Gagal check-in: ' + e.message });
+    res.json({ success: false, message: 'No se pudo registrar la entrada:' + e.message });
   }
 });
 
@@ -1289,22 +1289,22 @@ router.post('/cashiers/attendance/checkout', requireAdminSession, uploadAttendan
     const cashierId = req.session.cashierId;
     
     if (!cashierId) {
-      return res.json({ success: false, message: 'Session kasir tidak valid' });
+      return res.json({ success: false, message: 'Sesión de cajero inválida' });
     }
 
     if (!req.file) {
-      return res.json({ success: false, message: 'Foto check-out wajib diunggah' });
+      return res.json({ success: false, message: 'La foto de salida es obligatoria' });
     }
     
     const today = attendanceSvc.getTodayAttendance('cashier', cashierId);
     if (!today) {
       removeAttendanceFile(req.file);
-      return res.json({ success: false, message: 'Anda belum check-in hari ini' });
+      return res.json({ success: false, message: 'Todavía no registraste tu entrada hoy' });
     }
     
     if (today.status === 'checked_out') {
       removeAttendanceFile(req.file);
-      return res.json({ success: false, message: 'Anda sudah check-out hari ini' });
+      return res.json({ success: false, message: 'Ya registraste tu salida hoy' });
     }
     
     attendanceSvc.checkOut(today.id, {
@@ -1314,10 +1314,10 @@ router.post('/cashiers/attendance/checkout', requireAdminSession, uploadAttendan
       photo: req.file ? '/uploads/attendance/' + req.file.filename : ''
     });
     
-    res.json({ success: true, message: 'Check-out berhasil!' });
+    res.json({ success: true, message: '¡Salida registrada!' });
   } catch (e) {
     removeAttendanceFile(req.file);
-    res.json({ success: false, message: 'Gagal check-out: ' + e.message });
+    res.json({ success: false, message: 'No se pudo registrar la salida:' + e.message });
   }
 });
 
@@ -1417,7 +1417,7 @@ router.get('/cashiers/reports', requireAdminSession, requireSidebarMenuAccess('c
       : [];
 
   res.render('admin/cashier_reports', {
-    title: 'Laporan Kasir',
+    title: 'Reporte de cajeros',
     company: company(),
     activePage: 'cashiers_reports',
     cashiers: safeCashiers,
@@ -1529,7 +1529,7 @@ router.get('/onu-stickers', requireAdminSession, requireSidebarMenuAccess('onu_s
     });
   } catch (e) {
     logger.error(`[ONU Stickers] Error: ${e.message}`);
-    res.status(500).send(`Gagal memuat stiker: ${e.message}`);
+    res.status(500).send(`No se pudieron cargar las etiquetas: ${e.message}`);
   }
 });
 
@@ -1537,7 +1537,7 @@ router.get('/customers/:id/sticker-onu', requireAdminSession, async (req, res) =
   try {
     const settings = getSettings();
     const customer = customerSvc.getCustomerById(req.params.id);
-    if (!customer) return res.status(404).send('Pelanggan tidak ditemukan');
+    if (!customer) return res.status(404).send('Cliente no encontrado');
 
     const csPhone = settings.company_phone || settings.company_whatsapp || '08xxxxxxxxxx';
     const serverBaseUrl = `${req.protocol}://${req.get('host')}`;
@@ -1568,7 +1568,7 @@ router.get('/customers/:id/sticker-onu', requireAdminSession, async (req, res) =
       stickers
     });
   } catch (e) {
-    res.status(500).send(`Gagal memuat stiker: ${e.message}`);
+    res.status(500).send(`No se pudieron cargar las etiquetas: ${e.message}`);
   }
 });
 
@@ -1599,7 +1599,7 @@ router.get('/customers', requireAdminSession, requireSidebarMenuAccess('customer
   }
 
   res.render('admin/customers', {
-    title: 'Data Pelanggan', company: company(), activePage: 'customers',
+    title: 'Datos del cliente', company: company(), activePage: 'customers',
     customers, stats, packages, routers, olts, odps, collectors, areas, masterAreas, activeSessionsMap, search, filterStatus, filterArea, selectedRouterId,
     filterPackage, filterCollector, filterOlt, filterConn, filterBilling, filterAuto, msg: flashMsg(req),
     settings: getSettings()
@@ -1632,20 +1632,20 @@ router.post('/customers', requireAdminSession, express.urlencoded({ extended: tr
       req.body.pppoe_password = password;
       req.body.pppoe_remote_address = remoteAddress;
       
-      if (!username) throw new Error('PPPoE Username tidak boleh kosong');
+      if (!username) throw new Error('El usuario PPPoE no puede quedar vacío');
       
       // Router validation - required only if multi-router mode is active
       const effectiveRouterId = multiRouterMode ? routerId : (routerId || customerSvc.getEffectiveRouterId(null));
       if (!effectiveRouterId || effectiveRouterId <= 0) {
         if (multiRouterMode) {
-          throw new Error('Router MikroTik WAJIB dipilih untuk koneksi PPPoE (fungsi isolir & profile management membutuhkan router)');
+          throw new Error('Es OBLIGATORIO elegir un router MikroTik para conexiones PPPoE (el corte y los perfiles dependen del router)');
         } else {
           logger.warn('[Customer] Router MikroTik tidak tersedia; lanjut simpan data tanpa validasi router.');
         }
       }
       
       const existing = db.prepare('SELECT id, name FROM customers WHERE router_id IS ? AND pppoe_username = ? LIMIT 1').get(effectiveRouterId, username);
-      if (existing) throw new Error(`PPPoE Username sudah dipakai pelanggan lain: ${existing.name}`);
+      if (existing) throw new Error(`El usuario PPPoE ya lo usa otro cliente: ${existing.name}`);
 
       // Only validate against MikroTik if password is not provided (meaning it's from MikroTik list)
       if (!password) {
@@ -1671,20 +1671,20 @@ router.post('/customers', requireAdminSession, express.urlencoded({ extended: tr
       const routerId = req.body.router_id ? Number(req.body.router_id) : null;
       const staticIp = String(req.body.static_ip || '').trim();
       req.body.static_ip = staticIp;
-      if (!staticIp) throw new Error('Static IP tidak boleh kosong');
+      if (!staticIp) throw new Error('La IP fija no puede quedar vacía');
       
       // Router validation - required only if multi-router mode is active
       const effectiveRouterId = multiRouterMode ? routerId : (routerId || customerSvc.getEffectiveRouterId(null));
       if (!effectiveRouterId || effectiveRouterId <= 0) {
         if (multiRouterMode) {
-          throw new Error('Router MikroTik WAJIB dipilih untuk koneksi Static IP (untuk management & isolir)');
+          throw new Error('Es OBLIGATORIO elegir un router MikroTik para conexiones con IP fija (gestión y corte)');
         } else {
           logger.warn('[Customer] Router MikroTik tidak tersedia; lanjut simpan data tanpa validasi router.');
         }
       }
       
       const existing = db.prepare('SELECT id, name FROM customers WHERE router_id IS ? AND static_ip = ? LIMIT 1').get(effectiveRouterId, staticIp);
-      if (existing) throw new Error(`Static IP sudah dipakai pelanggan lain: ${existing.name}`);
+      if (existing) throw new Error(`La IP fija ya la usa otro cliente: ${existing.name}`);
       
       // Set effective router ID
       req.body.router_id = effectiveRouterId;
@@ -1694,20 +1694,20 @@ router.post('/customers', requireAdminSession, express.urlencoded({ extended: tr
       const routerId = req.body.router_id ? Number(req.body.router_id) : null;
       const username = String(req.body.hotspot_username || '').trim();
       req.body.hotspot_username = username;
-      if (!username) throw new Error('Hotspot Username tidak boleh kosong');
+      if (!username) throw new Error('El usuario hotspot no puede quedar vacío');
       
       // Router validation - required only if multi-router mode is active
       const effectiveRouterId = multiRouterMode ? routerId : (routerId || customerSvc.getEffectiveRouterId(null));
       if (!effectiveRouterId || effectiveRouterId <= 0) {
         if (multiRouterMode) {
-          throw new Error('Router MikroTik WAJIB dipilih untuk koneksi Hotspot (untuk user management & isolir)');
+          throw new Error('Es OBLIGATORIO elegir un router MikroTik para conexiones hotspot (gestión de usuarios y corte)');
         } else {
           logger.warn('[Customer] Router MikroTik tidak tersedia; lanjut simpan data tanpa validasi router.');
         }
       }
       
       const existing = db.prepare('SELECT id, name FROM customers WHERE router_id IS ? AND hotspot_username = ? LIMIT 1').get(effectiveRouterId, username);
-      if (existing) throw new Error(`Hotspot Username sudah dipakai pelanggan lain: ${existing.name}`);
+      if (existing) throw new Error(`El usuario hotspot ya lo usa otro cliente: ${existing.name}`);
 
       const password = String(req.body.hotspot_password || '').trim() || username;
       req.body.hotspot_password = password;
@@ -1718,7 +1718,7 @@ router.post('/customers', requireAdminSession, express.urlencoded({ extended: tr
         if (pkg) profile = String(pkg.name || '').trim();
       }
       req.body.hotspot_profile = profile;
-      if (!profile) throw new Error('Hotspot User Profile tidak boleh kosong');
+      if (!profile) throw new Error('El perfil de usuario hotspot no puede quedar vacío');
 
       try {
         const profs = await mikrotikService.getHotspotUserProfiles(effectiveRouterId);
@@ -1813,9 +1813,9 @@ router.post('/customers', requireAdminSession, express.urlencoded({ extended: tr
       }
     }
 
-    req.session._msg = { type: 'success', text: `Pelanggan "${req.body.name}" berhasil ditambahkan.` };
+    req.session._msg = { type: 'success', text: `Cliente "${req.body.name}" agregado.` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal menambahkan pelanggan: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo agregar el cliente:' + e.message };
   }
   res.redirect('/admin/customers');
 });
@@ -1841,20 +1841,20 @@ router.post('/customers/:id/update', requireAdminSession, express.urlencoded({ e
       const routerId = req.body.router_id ? Number(req.body.router_id) : null;
       const username = String(req.body.pppoe_username || '').trim();
       req.body.pppoe_username = username;
-      if (!username) throw new Error('PPPoE Username tidak boleh kosong');
+      if (!username) throw new Error('El usuario PPPoE no puede quedar vacío');
       
       // Router validation - required only if multi-router mode is active
       const effectiveRouterId = multiRouterMode ? routerId : (routerId || customerSvc.getEffectiveRouterId(null));
       if (!effectiveRouterId || effectiveRouterId <= 0) {
         if (multiRouterMode) {
-          throw new Error('Router MikroTik WAJIB dipilih untuk koneksi PPPoE (fungsi isolir & profile management membutuhkan router)');
+          throw new Error('Es OBLIGATORIO elegir un router MikroTik para conexiones PPPoE (el corte y los perfiles dependen del router)');
         } else {
           logger.warn('[Customer] Router MikroTik tidak tersedia; lanjut simpan data tanpa validasi router.');
         }
       }
       
       const existing = db.prepare('SELECT id, name FROM customers WHERE router_id IS ? AND pppoe_username = ? AND id != ? LIMIT 1').get(effectiveRouterId, username, customerId);
-      if (existing) throw new Error(`PPPoE Username sudah dipakai pelanggan lain: ${existing.name}`);
+      if (existing) throw new Error(`El usuario PPPoE ya lo usa otro cliente: ${existing.name}`);
 
       try {
         const conn = await mikrotikService.getConnection(effectiveRouterId);
@@ -1877,20 +1877,20 @@ router.post('/customers/:id/update', requireAdminSession, express.urlencoded({ e
       const routerId = req.body.router_id ? Number(req.body.router_id) : null;
       const staticIp = String(req.body.static_ip || '').trim();
       req.body.static_ip = staticIp;
-      if (!staticIp) throw new Error('Static IP tidak boleh kosong');
+      if (!staticIp) throw new Error('La IP fija no puede quedar vacía');
       
       // Router validation - required only if multi-router mode is active
       const effectiveRouterId = multiRouterMode ? routerId : (routerId || customerSvc.getEffectiveRouterId(null));
       if (!effectiveRouterId || effectiveRouterId <= 0) {
         if (multiRouterMode) {
-          throw new Error('Router MikroTik WAJIB dipilih untuk koneksi Static IP (untuk management & isolir)');
+          throw new Error('Es OBLIGATORIO elegir un router MikroTik para conexiones con IP fija (gestión y corte)');
         } else {
           logger.warn('[Customer] Router MikroTik tidak tersedia; lanjut simpan data tanpa validasi router.');
         }
       }
       
       const existing = db.prepare('SELECT id, name FROM customers WHERE router_id IS ? AND static_ip = ? AND id != ? LIMIT 1').get(effectiveRouterId, staticIp, customerId);
-      if (existing) throw new Error(`Static IP sudah dipakai pelanggan lain: ${existing.name}`);
+      if (existing) throw new Error(`La IP fija ya la usa otro cliente: ${existing.name}`);
       
       // Set effective router ID
       req.body.router_id = effectiveRouterId;
@@ -1900,20 +1900,20 @@ router.post('/customers/:id/update', requireAdminSession, express.urlencoded({ e
       const routerId = req.body.router_id ? Number(req.body.router_id) : null;
       const username = String(req.body.hotspot_username || '').trim();
       req.body.hotspot_username = username;
-      if (!username) throw new Error('Hotspot Username tidak boleh kosong');
+      if (!username) throw new Error('El usuario hotspot no puede quedar vacío');
       
       // Router validation - required only if multi-router mode is active
       const effectiveRouterId = multiRouterMode ? routerId : (routerId || customerSvc.getEffectiveRouterId(null));
       if (!effectiveRouterId || effectiveRouterId <= 0) {
         if (multiRouterMode) {
-          throw new Error('Router MikroTik WAJIB dipilih untuk koneksi Hotspot (untuk user management & isolir)');
+          throw new Error('Es OBLIGATORIO elegir un router MikroTik para conexiones hotspot (gestión de usuarios y corte)');
         } else {
           logger.warn('[Customer] Router MikroTik tidak tersedia; lanjut simpan data tanpa validasi router.');
         }
       }
       
       const existing = db.prepare('SELECT id, name FROM customers WHERE router_id IS ? AND hotspot_username = ? AND id != ? LIMIT 1').get(effectiveRouterId, username, customerId);
-      if (existing) throw new Error(`Hotspot Username sudah dipakai pelanggan lain: ${existing.name}`);
+      if (existing) throw new Error(`El usuario hotspot ya lo usa otro cliente: ${existing.name}`);
 
       const password = String(req.body.hotspot_password || '').trim() || username;
       req.body.hotspot_password = password;
@@ -1924,7 +1924,7 @@ router.post('/customers/:id/update', requireAdminSession, express.urlencoded({ e
         if (pkg) profile = String(pkg.name || '').trim();
       }
       req.body.hotspot_profile = profile;
-      if (!profile) throw new Error('Hotspot User Profile tidak boleh kosong');
+      if (!profile) throw new Error('El perfil de usuario hotspot no puede quedar vacío');
 
       try {
         const profs = await mikrotikService.getHotspotUserProfiles(effectiveRouterId);
@@ -2045,16 +2045,16 @@ router.post('/customers/:id/update', requireAdminSession, express.urlencoded({ e
       }
     }
 
-    req.session._msg = { type: 'success', text: 'Data pelanggan berhasil diperbarui.' };
+    req.session._msg = { type: 'success', text: 'Datos del cliente actualizados.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal memperbarui: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo actualizar:' + e.message };
   }
   res.redirect('/admin/customers');
 });
 
 async function syncCustomerToMikrotik(customerId) {
   const c = customerSvc.getCustomerById(customerId);
-  if (!c) return { ok: false, message: 'Pelanggan tidak ditemukan' };
+  if (!c) return { ok: false, message: 'Cliente no encontrado' };
   const routerId = customerSvc.getEffectiveRouterId(c.router_id);
 
   // ── Mode RADIUS: kredensial/paket dibaca langsung dari DB ──
@@ -2062,20 +2062,20 @@ async function syncCustomerToMikrotik(customerId) {
   //   kick sesi PPPoE sekarang supaya pelanggan redial (muat rate-limit/IP/paket baru).
   if (String(getSetting('radius_enabled', '0')) === '1') {
     const uname = String(c.pppoe_username || '').trim();
-    if (!uname) return { ok: false, message: 'PPPoE username kosong' };
+    if (!uname) return { ok: false, message: 'Usuario PPPoE vacío' };
     try { await mikrotikService.kickPppoeUser(uname, routerId); }
-    catch (e) { return { ok: false, message: 'Gagal kick sesi RADIUS: ' + e.message }; }
+    catch (e) { return { ok: false, message: 'No se pudo desconectar la sesión RADIUS:' + e.message }; }
     try { db.prepare("UPDATE radius_accounting SET status_type=2, updated_at=NOW_LOCAL() WHERE username=? AND status_type IN (1,3)").run(uname); } catch (e) {}
-    return { ok: true, message: 'Mode RADIUS: perubahan billing diterapkan saat redial. Sesi "' + uname + '" di-kick agar memuat ulang (rate-limit/IP/paket).' };
+    return { ok: true, message: 'Modo RADIUS: los cambios se aplican al reconectar. La sesión "' + uname + '" se desconectó para recargar velocidad/IP/plan.' };
   }
 
-  if (!routerId || routerId <= 0) return { ok: false, message: 'Router MikroTik tidak tersedia untuk pelanggan ini' };
+  if (!routerId || routerId <= 0) return { ok: false, message: 'No hay un router MikroTik disponible para este cliente' };
   const connType = String(c.connection_type || 'pppoe').toLowerCase();
   const pkg = c.package_id ? customerSvc.getPackageById(c.package_id) : null;
   const isSuspended = String(c.status || '').toLowerCase() !== 'active';
   if (connType === 'pppoe') {
     const username = String(c.pppoe_username || '').trim();
-    if (!username) return { ok: false, message: 'PPPoE username kosong' };
+    if (!username) return { ok: false, message: 'Usuario PPPoE vacío' };
     const targetProfile = isSuspended ? ((pkg && pkg.isolir_profile) || c.isolir_profile || getSetting('mikrotik_isolir_profile', 'isolir') || 'isolir') : (pkg ? pkg.name : 'default');
     const secrets = await mikrotikService.getPppoeSecrets(routerId);
     const exists = Array.isArray(secrets) && secrets.some(function (s) { return String(s.name || '').trim() === username; });
@@ -2084,20 +2084,20 @@ async function syncCustomerToMikrotik(customerId) {
       return { ok: true, message: 'Profil PPPoE "' + username + '" disinkronkan ke "' + targetProfile + '".' };
     }
     const pass = String(c.pppoe_password || '').trim();
-    if (!pass) return { ok: false, message: 'Secret "' + username + '" tidak ada di MikroTik & password kosong (tidak bisa dibuat).' };
+    if (!pass) return { ok: false, message: 'Secret "' + username + '" no existe en el MikroTik y la contraseña está vacía (no se puede crear).' };
     await mikrotikService.createPppoeSecret({ username: username, password: pass, profile: targetProfile, remoteAddress: String(c.pppoe_remote_address || '').trim(), routerId: routerId });
-    return { ok: true, message: 'Secret PPPoE "' + username + '" dibuat di MikroTik (profil "' + targetProfile + '").' };
+    return { ok: true, message: 'Secret PPPoE "' + username + '" creado en el MikroTik (perfil "' + targetProfile + '").' };
   }
   if (connType === 'hotspot') {
     const username = String(c.hotspot_username || '').trim();
-    if (!username) return { ok: false, message: 'Hotspot username kosong' };
+    if (!username) return { ok: false, message: 'Usuario hotspot vacío' };
     const profile = String(c.hotspot_profile || '').trim() || (pkg ? String(pkg.name || '') : '');
     await mikrotikService.upsertHotspotUser({ username: username, password: String(c.hotspot_password || '').trim(), profile: profile, macAddress: String(c.mac_address || '').trim(), disabled: isSuspended }, routerId);
     return { ok: true, message: 'Hotspot user "' + username + '" disinkronkan (' + (isSuspended ? 'disabled' : 'enabled') + ').' };
   }
   if (connType === 'static') {
     const ip = String(c.static_ip || '').trim();
-    if (!ip) return { ok: false, message: 'Static IP kosong' };
+    if (!ip) return { ok: false, message: 'IP fija vacía' };
     let limit = '5M/5M';
     if (pkg) {
       const up = Number(pkg.speed_up || 0) || 0;
@@ -2109,13 +2109,13 @@ async function syncCustomerToMikrotik(customerId) {
     await mikrotikService.manageStaticIp({ ip: ip, name: c.name, limit: limit, isolate: isSuspended }, routerId);
     return { ok: true, message: 'Static IP ' + ip + ' disinkronkan (' + (isSuspended ? 'isolir' : 'normal') + ').' };
   }
-  return { ok: false, message: 'Tipe koneksi tidak dikenal' };
+  return { ok: false, message: 'Tipo de conexión desconocido' };
 }
 
 router.post('/customers/sync-all-mikrotik', requireAdminSession, restrictToAdmin, async (req, res) => {
   try {
     const list = db.prepare("SELECT id FROM customers WHERE status IN ('active','suspended') ORDER BY id").all();
-    res.json({ ok: true, message: 'Sinkronisasi ' + list.length + ' pelanggan dijalankan di latar belakang. Cek log untuk hasilnya.' });
+    res.json({ ok: true, message: 'Sinkronisasi ' + list.length + ' clientes se procesan en segundo plano. Revisá el registro para ver el resultado.' });
     (async function () {
       let ok = 0, fail = 0;
       for (const row of list) {
@@ -2129,7 +2129,7 @@ router.post('/customers/sync-all-mikrotik', requireAdminSession, restrictToAdmin
 
 router.post('/customers/:id/sync-mikrotik', requireAdminSession, async (req, res) => {
   try { const r = await syncCustomerToMikrotik(req.params.id); return res.json(r); }
-  catch (e) { return res.json({ ok: false, message: 'Gagal sync: ' + e.message }); }
+  catch (e) { return res.json({ ok: false, message: 'Falló la sincronización:' + e.message }); }
 });
 
 router.post('/customers/:id/generate-pppoe', requireAdminSession, async (req, res) => {
@@ -2139,18 +2139,18 @@ router.post('/customers/:id/generate-pppoe', requireAdminSession, async (req, re
     try {
       const waNotify = require('../services/waNotifyService');
       const pkgC = cust && cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
-      const credMsg = '🔑 *KREDENSIAL PPPoE PELANGGAN*\n\n' +
-        '👤 *Nama:* ' + ((cust && cust.name) || '-') + '\n' +
+      const credMsg = '🔑 *CREDENCIALES PPPoE DEL CLIENTE*\n\n' +
+        '👤 *Nombre:*' + ((cust && cust.name) || '-') + '\n' +
         '🆔 *ID:* ' + ((cust && cust.customer_code) || '-') + '\n' +
-        '📦 *Paket:* ' + (pkgC ? pkgC.name : ((cust && cust.package_name) || '-')) + '\n' +
+        '📦 *Plan:*' + (pkgC ? pkgC.name : ((cust && cust.package_name) || '-')) + '\n' +
         '📡 *PPPoE User:* *' + g.username + '*\n' +
         '🔒 *PPPoE Pass:* *' + g.password + '*\n' +
-        '📍 *Alamat:* ' + ((cust && cust.address) || '-') + '\n\n' +
-        'Silakan konfigurasi perangkat pelanggan dengan data di atas.';
+        '📍 *Dirección:*' + ((cust && cust.address) || '-') + '\n\n' +
+        'Configurá el equipo del cliente con estos datos.';
       await waNotify.notifyAdmin(credMsg);
     } catch (e) {}
-    req.session._msg = { type: 'success', text: 'Akun PPPoE dibuat: ' + g.username + ' / ' + g.password + ' (kredensial dikirim ke admin & teknisi).' };
-  } catch (e) { req.session._msg = { type: 'error', text: 'Gagal generate PPPoE: ' + e.message }; }
+    req.session._msg = { type: 'success', text: 'Cuenta PPPoE creada:' + g.username + ' / ' + g.password + ' (credenciales enviadas al administrador y a los técnicos).' };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo generar la cuenta PPPoE:' + e.message }; }
   res.redirect(req.get('Referrer') || '/admin/customers');
 });
 
@@ -2164,9 +2164,9 @@ router.post('/customers/delete-bulk', requireAdminSession, express.urlencoded({ 
     if (!clean || clean.length === 0) throw new Error('Tidak ada pelanggan yang dipilih.');
 
     const deleted = await customerSvc.bulkDeleteCustomers(clean);
-    req.session._msg = { type: 'success', text: `${deleted} data pelanggan berhasil dihapus (Akun PPPoE di MikroTik tetap aman).` };
+    req.session._msg = { type: 'success', text: `${deleted} clientes eliminados (las cuentas PPPoE del MikroTik no se tocan).` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal hapus massal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Falló la eliminación masiva:' + e.message };
   }
   res.redirect('/admin/customers');
 });
@@ -2191,9 +2191,9 @@ router.post('/customers/:id/delete', requireAdminSession, async (req, res) => {
       });
     } catch (e) {}
     logger.info(`[Customer] Dihapus oleh ${req.session.adminUser || 'Admin'}: id=${req.params.id} ${cust ? cust.name : ''}`);
-    req.session._msg = { type: 'success', text: 'Pelanggan berhasil dihapus.' };
+    req.session._msg = { type: 'success', text: 'Cliente eliminado.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/customers');
 });
@@ -2202,7 +2202,7 @@ router.post('/customers/:id/disconnect', requireAdminSession, async (req, res) =
   try {
     const custId = Number(req.params.id);
     const customer = customerSvc.getCustomerById(custId);
-    if (!customer) throw new Error('Pelanggan tidak ditemukan');
+    if (!customer) throw new Error('Cliente no encontrado');
 
     const pppoeUser = String(customer.pppoe_username || '').trim();
     const hotspotUser = String(customer.hotspot_username || '').trim();
@@ -2218,12 +2218,12 @@ router.post('/customers/:id/disconnect', requireAdminSession, async (req, res) =
     }
 
     if (kicked) {
-      req.session._msg = { type: 'success', text: `Sesi koneksi aktif untuk "${customer.name}" berhasil diputus dari MikroTik.` };
+      req.session._msg = { type: 'success', text: `Se desconectó del MikroTik la sesión activa de "${customer.name}".` };
     } else {
-      req.session._msg = { type: 'error', text: `Sesi aktif untuk "${customer.name}" tidak ditemukan di MikroTik atau gagal diputus.` };
+      req.session._msg = { type: 'error', text: `No se encontró la sesión activa de "${customer.name}" en el MikroTik o no se pudo desconectar.` };
     }
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal memutus koneksi: ' + (e.message || String(e)) };
+    req.session._msg = { type: 'error', text: 'No se pudo desconectar:' + (e.message || String(e)) };
   }
   res.redirect('/admin/customers');
 });
@@ -2242,16 +2242,16 @@ router.get('/customers/export', requireAdminSession, (req, res) => {
       'Area': c.area || '',
       'Paket': c.package_name || '-',
       'Router': c.router_name || '-',
-      'Tipe Koneksi': c.connection_type || 'pppoe',
+      'Tipo de conexión': c.connection_type || 'pppoe',
       'Tag ONU': c.genieacs_tag,
       'PPPoE Username': c.pppoe_username,
       'Hotspot Username': c.hotspot_username || '',
       'Static IP': c.static_ip || '',
-      'Isolir Profile': c.isolir_profile,
+      'Perfil de corte': c.isolir_profile,
       'Status': c.status,
-      'Tanggal Pasang': c.install_date,
+      'Fecha de instalación': c.install_date,
       'Auto Isolir': c.auto_isolate === 1 ? 'YA' : 'TIDAK',
-      'Tgl Isolir': c.isolate_day,
+      'Día de corte': c.isolate_day,
       'ODP': c.odp_name || '-',
       'Latitude': c.lat || '',
       'Longitude': c.lng || '',
@@ -2268,13 +2268,13 @@ router.get('/customers/export', requireAdminSession, (req, res) => {
     res.send(buf);
   } catch (e) {
     logger.error('Export error:', e);
-    res.status(500).send('Gagal export data.');
+    res.status(500).send('No se pudieron exportar los datos.');
   }
 });
 
 router.post('/customers/import', requireAdminSession, upload.single('file'), async (req, res) => {
   try {
-    if (!req.file) throw new Error('File tidak ditemukan');
+    if (!req.file) throw new Error('Archivo no encontrado');
     const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
     const ws = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws);
@@ -2309,7 +2309,7 @@ router.post('/customers/import', requireAdminSession, upload.single('file'), asy
       const router = routers.find(r => r.name === routerName);
       
       // ✅ NEW: Handle Connection Type
-      const connType = String(cleanRow['Tipe Koneksi'] || cleanRow['connection_type'] || cleanRow['Connection Type'] || 'pppoe').trim().toLowerCase() || 'pppoe';
+      const connType = String(cleanRow['Tipo de conexión'] || cleanRow['connection_type'] || cleanRow['Connection Type'] || 'pppoe').trim().toLowerCase() || 'pppoe';
       
       const data = {
         nik: cleanRow['NIK'] || cleanRow['nik'] || cleanRow['No KTP'] || cleanRow['No. KTP'] || '',
@@ -2328,11 +2328,11 @@ router.post('/customers/import', requireAdminSession, upload.single('file'), asy
         hotspot_username: connType === 'hotspot' ? (cleanRow['Hotspot Username'] || cleanRow['hotspot_username'] || '') : '',
         static_ip: connType === 'static' ? (cleanRow['Static IP'] || cleanRow['static_ip'] || '') : '',
         connection_type: connType,
-        isolir_profile: cleanRow['Isolir Profile'] || cleanRow['isolir_profile'] || 'isolir',
+        isolir_profile: cleanRow['Perfil de corte'] || cleanRow['isolir_profile'] || 'isolir',
         status: (cleanRow['Status'] || cleanRow['status'] || 'active').toLowerCase(),
-        install_date: cleanRow['Tanggal Pasang'] || cleanRow['install_date'],
+        install_date: cleanRow['Fecha de instalación'] || cleanRow['install_date'],
         auto_isolate: (cleanRow['Auto Isolir'] === 'TIDAK' || cleanRow['auto_isolate'] === 0) ? 0 : 1,
-        isolate_day: parseInt(cleanRow['Tgl Isolir'] || cleanRow['isolate_day']) || 10,
+        isolate_day: parseInt(cleanRow['Día de corte'] || cleanRow['isolate_day']) || 10,
         notes: cleanRow['Catatan'] || cleanRow['notes']
       };
       
@@ -2348,10 +2348,10 @@ router.post('/customers/import', requireAdminSession, upload.single('file'), asy
     }
     
     logger.info(`[Import] Finished. Total processed: ${count}`);
-    req.session._msg = { type: 'success', text: `Berhasil mengimpor ${count} data pelanggan.` };
+    req.session._msg = { type: 'success', text: `Se importaron ${count} clientes.` };
   } catch (e) {
     logger.error('Import error:', e);
-    req.session._msg = { type: 'error', text: 'Gagal impor: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Falló la importación:' + e.message };
   }
   res.redirect('/admin/customers');
 });
@@ -2360,9 +2360,9 @@ router.post('/customers/:id/isolate', requireAdminSession, async (req, res) => {
   try {
     await customerSvc.suspendCustomer(req.params.id);
     const customer = customerSvc.getCustomerById(req.params.id);
-    req.session._msg = { type: 'success', text: `Pelanggan "${customer.name}" berhasil di-isolir manual.` };
+    req.session._msg = { type: 'success', text: `Se cortó manualmente el servicio de "${customer.name}".` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal isolir: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo cortar:' + e.message };
   }
   res.redirect('back');
 });
@@ -2370,14 +2370,14 @@ router.post('/customers/:id/isolate', requireAdminSession, async (req, res) => {
 router.post('/customers/:id/unisolate', requireAdminSession, async (req, res) => {
   try {
     const customer = customerSvc.getCustomerById(req.params.id);
-    if (!customer) throw new Error('Pelanggan tidak ditemukan');
+    if (!customer) throw new Error('Cliente no encontrado');
     const unpaid = db.prepare("SELECT COUNT(*) as cnt FROM invoices WHERE customer_id=? AND status='unpaid'").get(req.params.id)?.cnt || 0;
     const targetStatus = unpaid > 0 ? 'ditangguhkan' : 'active';
     await customerSvc.activateCustomer(req.params.id, targetStatus);
     const statusLabel = targetStatus === 'ditangguhkan' ? 'DITANGGUHKAN (Bebas auto-isolir sampai awal bulan berikutnya)' : 'AKTIF';
-    req.session._msg = { type: 'success', text: `Layanan pelanggan "${customer.name}" berhasil diaktifkan kembali (${statusLabel}).` };
+    req.session._msg = { type: 'success', text: `Se rehabilitó el servicio de "${customer.name}" (${statusLabel}).` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal aktivasi: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo rehabilitar:' + e.message };
   }
   res.redirect('back');
 });
@@ -2387,12 +2387,12 @@ router.post('/customers/:id/billing/generate', requireAdminSession, express.urle
     const { month, year } = req.body;
     const result = billingSvc.generateInvoiceForCustomer(req.params.id, parseInt(month), parseInt(year));
     if (result.created) {
-      req.session._msg = { type: 'success', text: `Tagihan berhasil dibuat untuk "${result.customerName}" periode ${month}/${year}.` };
+      req.session._msg = { type: 'success', text: `Factura creada para "${result.customerName}", período ${month}/${year}.` };
     } else {
-      req.session._msg = { type: 'success', text: `Tagihan sudah ada untuk "${result.customerName}" periode ${month}/${year}.` };
+      req.session._msg = { type: 'success', text: `Ya existe una factura para "${result.customerName}", período ${month}/${year}.` };
     }
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal generate tagihan: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo generar la factura:' + e.message };
   }
   res.redirect('back');
 });
@@ -2401,10 +2401,10 @@ router.post('/customers/:id/billing/reset-promo-cycles', requireAdminSession, re
   try {
     const r = customerSvc.resetPromoCyclesUsed(req.params.id);
     if (!r.changes) {
-      req.session._msg = { type: 'error', text: 'Pelanggan tidak ditemukan.' };
+      req.session._msg = { type: 'error', text: 'Cliente no encontrado.' };
     } else {
       const c = customerSvc.getCustomerById(req.params.id);
-      req.session._msg = { type: 'success', text: `Counter promo untuk "${c ? c.name : req.params.id}" di-reset (siklus promo dihitung ulang dari awal).` };
+      req.session._msg = { type: 'success', text: `Se reinició el contador de promoción de "${c ? c.name : req.params.id}" (el ciclo vuelve a empezar).` };
     }
   } catch (e) {
     req.session._msg = { type: 'error', text: e.message || String(e) };
@@ -2417,7 +2417,7 @@ router.post('/customers/:id/billing/install-prorata', requireAdminSession, restr
     const out = billingSvc.createInstallProrataCatchUpInvoice(req.params.id);
     req.session._msg = {
       type: 'success',
-      text: `Tagihan susulan prorata untuk "${out.customerName}" periode ${String(out.periodMonth).padStart(2, '0')}/${out.periodYear} sebesar ${regional.currencySymbol()} ${Number(out.amount).toLocaleString(regional.locale())} (${out.billableDays}/${out.daysInMonth} hari).`
+      text: `Factura complementaria prorrateada para "${out.customerName}", período ${String(out.periodMonth).padStart(2, '0')}/${out.periodYear}, por ${regional.currencySymbol()} ${Number(out.amount).toLocaleString(regional.locale())} (${out.billableDays}/${out.daysInMonth} días).`
     };
   } catch (e) {
     req.session._msg = { type: 'error', text: e.message || String(e) };
@@ -2438,7 +2438,7 @@ router.post('/customers/:id/billing/pay', requireAdminSession, express.urlencode
       const already = sum.alreadyPaidMonths.length;
       const created = sum.createdMonths.length;
       const total = Number(sum.totalAmount) || 0;
-      req.session._msg = { type: 'success', text: `Pembayaran berhasil untuk "${sum.customerName}" tahun ${sum.year}. Total: ${regional.currencySymbol()} ${total.toLocaleString(regional.locale())} (${sum.totalMonths || 0} bulan). Dibayar: ${done} bulan, dibuat: ${created}, sudah lunas: ${already}.` };
+      req.session._msg = { type: 'success', text: `Pago registrado para "${sum.customerName}", año ${sum.year}. Total: ${regional.currencySymbol()} ${total.toLocaleString(regional.locale())} (${sum.totalMonths || 0} meses). Pagados: ${done}, creados: ${created}, ya pagados: ${already}.` };
 
       if (customer && customer.phone && done > 0) {
         const monthsText = (sum.paidMonths || []).join(', ');
@@ -2463,10 +2463,10 @@ router.post('/customers/:id/billing/pay', requireAdminSession, express.urlencode
       const m = parseInt(month);
       const result = billingSvc.payInvoiceForCustomerPeriod(req.params.id, m, y, paidBy, notes);
       if (result.alreadyPaid) {
-        req.session._msg = { type: 'success', text: `Tagihan periode ${m}/${y} untuk "${result.customerName}" sudah lunas.` };
+        req.session._msg = { type: 'success', text: `La factura del período ${m}/${y} de "${result.customerName}" ya estaba pagada.` };
       } else {
-        const verb = result.created ? 'dibuat & dilunasi' : 'dilunasi';
-        req.session._msg = { type: 'success', text: `Tagihan periode ${m}/${y} untuk "${result.customerName}" berhasil ${verb}.` };
+        const verb = result.created ? 'creada y pagada' : 'dilunasi';
+        req.session._msg = { type: 'success', text: `Factura del período ${m}/${y} de "${result.customerName}": ${verb}.` };
 
         if (customer && customer.phone) {
           const invs = billingSvc.getInvoicesByAny(String(req.params.id)) || [];
@@ -2497,7 +2497,7 @@ router.post('/customers/:id/billing/pay', requireAdminSession, express.urlencode
       await customerSvc.activateCustomer(req.params.id);
     }
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal bayar: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo registrar el pago:' + e.message };
   }
   res.redirect('back');
 });
@@ -2529,7 +2529,7 @@ router.get('/packages', requireAdminSession, requireSidebarMenuAccess('packages'
     ipPoolEnd: String(getSetting('radius_isolir_ip_pool_end', '10.10.99.254') || '')
   };
   res.render('admin/packages', {
-    title: 'Paket Internet', company: company(), activePage: 'packages',
+    title: 'Planes de internet', company: company(), activePage: 'packages',
     packages, routers, selectedRouterId, msg: flashMsg(req),
     profileMode: _pkgMode, isolirSource, isolirProfileName, isolirExists, isolirLiveRl, isolirLiveLocal, isolirLiveRemote, radiusIsolir
   });
@@ -2544,9 +2544,9 @@ router.post('/packages', requireAdminSession, express.urlencoded({ extended: tru
       const r = await require('../services/packageProfileService').ensurePppProfileForPackage(pkg).catch(function () { return null; });
       if (r && r.message) extra = ' ' + r.message;
     }
-    req.session._msg = { type: 'success', text: `Paket "${req.body.name}" berhasil ditambahkan.` + extra };
+    req.session._msg = { type: 'success', text: `Plan "${req.body.name}" agregado.` + extra };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/packages');
 });
@@ -2571,9 +2571,9 @@ router.post('/packages/:id/update', requireAdminSession, express.urlencoded({ ex
       const r = await require('../services/packageProfileService').ensurePppProfileForPackage(pkg).catch(function () { return null; });
       if (r && r.message) extra = ' ' + r.message;
     }
-    req.session._msg = { type: 'success', text: 'Paket berhasil diperbarui.' + extra + _cleanup };
+    req.session._msg = { type: 'success', text: 'Plan actualizado.' + extra + _cleanup };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/packages');
 });
@@ -2593,9 +2593,9 @@ router.post('/packages/:id/delete', requireAdminSession, async (req, res) => {
       const r = await require('../services/packageProfileService').removePppProfileForPackage(pkg, { removePool: !poolUsed }).catch(function () { return null; });
       if (r && r.message) extra = ' ' + r.message;
     }
-    req.session._msg = { type: 'success', text: 'Paket berhasil dihapus.' + extra + (_cnt ? (' ' + _cnt + ' pelanggan kini tanpa paket — harap perbarui paketnya.') : '') };
+    req.session._msg = { type: 'success', text: 'Plan eliminado.' + extra + (_cnt ? (' ' + _cnt + ' clientes quedaron sin plan — asignales uno.') : '') };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/packages');
 });
@@ -2605,7 +2605,7 @@ router.get('/vouchers/packages', requireAdminSession, requireSidebarMenuAccess('
   const selectedRouterId = req.selectedRouterId || (req.query.router_id ? Number(req.query.router_id) : null);
   const routers = db.prepare('SELECT id, name FROM routers WHERE is_active = 1').all();
   res.render('admin/vouchers_packages', {
-    title: 'Paket Voucher Hotspot', company: company(), activePage: 'voucher_packages',
+    title: 'Planes de fichas hotspot', company: company(), activePage: 'voucher_packages',
     routers, selectedRouterId, msg: flashMsg(req)
   });
 });
@@ -2641,15 +2641,15 @@ router.post('/api/vouchers/packages', requireAdminSession, express.json(), (req,
     const { router_id, profile_name, price, validity, prefix, code_length, charset, is_active } = req.body;
     
     // VALIDATION: router_id is REQUIRED for voucher packages
-    if (!router_id || Number(router_id) <= 0) return res.status(400).json({ ok: false, error: 'Router harus dipilih' });
+    if (!router_id || Number(router_id) <= 0) return res.status(400).json({ ok: false, error: 'Hay que elegir un router' });
     
     // Verify router exists
     const router = db.prepare('SELECT id FROM routers WHERE id = ? LIMIT 1').get(Number(router_id));
-    if (!router) return res.status(400).json({ ok: false, error: 'Router tidak ditemukan di database' });
+    if (!router) return res.status(400).json({ ok: false, error: 'Router no encontrado en la base de datos' });
     
-    if (!profile_name) return res.status(400).json({ ok: false, error: 'Nama profil wajib diisi' });
-    if (!price || Number(price) <= 0) return res.status(400).json({ ok: false, error: 'Harga harus lebih besar dari 0' });
-    if (!validity) return res.status(400).json({ ok: false, error: 'Durasi/masa aktif wajib diisi' });
+    if (!profile_name) return res.status(400).json({ ok: false, error: 'El nombre del perfil es obligatorio' });
+    if (!price || Number(price) <= 0) return res.status(400).json({ ok: false, error: 'El precio debe ser mayor a 0' });
+    if (!validity) return res.status(400).json({ ok: false, error: 'La duración/vigencia es obligatoria' });
 
     const rId = router_id ? Number(router_id) : null;
     const prc = Math.floor(Number(price));
@@ -2708,7 +2708,7 @@ router.get('/discounts', requireAdminSession, requireSidebarMenuAccess('discount
   });
   const areas = [...new Set(allCustomers.map(c => c.area).filter(Boolean))].sort();
   res.render('admin/discounts', {
-    title: 'Diskon Tagihan', company: company(), activePage: 'discounts',
+    title: 'Descuentos en facturas', company: company(), activePage: 'discounts',
     customers, logs: discSvc.getDiscountLogs(100), fStatus, search, areas, timeInfo, msg: flashMsg(req)
   });
 });
@@ -2726,9 +2726,9 @@ router.post('/discounts/apply', requireAdminSession, requireSidebarMenuAccess('d
     else if (applyMode === 'single') { const cid = parseInt(req.body.customer_id, 10); if (cid) customerIds = [cid]; }
     else { const arr = Array.isArray(req.body.customer_ids) ? req.body.customer_ids : (req.body.customer_ids ? [req.body.customer_ids] : []); customerIds = arr.map(x => parseInt(x, 10)).filter(Boolean); }
     const result = discSvc.applyDiscountBatch({ customerIds, all, periodMonth: pMonth, periodYear: pYear, type: req.body.discount_type, value: req.body.discount_value, note: req.body.note, actor: adminActorFromReq(req) });
-    req.session._msg = { type: 'success', text: `Diskon diterapkan ke ${result.applied.length} tagihan (total potongan ${regional.currencySymbol()} ${Number(result.totalDiscount || 0).toLocaleString(regional.locale())}). ${result.skipped.length} pelanggan dilewati (tidak ada tagihan belum bayar pada periode tsb).` };
+    req.session._msg = { type: 'success', text: `Descuento aplicado a ${result.applied.length} facturas (total descontado ${regional.currencySymbol()} ${Number(result.totalDiscount || 0).toLocaleString(regional.locale())}). ${result.skipped.length} clientes omitidos (sin facturas pendientes en ese período).` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal menerapkan diskon: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo aplicar el descuento:' + e.message };
   }
   res.redirect('/admin/discounts');
 });
@@ -2739,7 +2739,7 @@ router.post('/billing/:id/discount', requireAdminSession, express.urlencoded({ e
     const r = discSvc.applyDiscountToInvoice(req.params.id, { type: req.body.discount_type, value: req.body.discount_value, note: req.body.note }, adminActorFromReq(req));
     req.session._msg = { type: 'success', text: `Diskon diterapkan: ${regional.currencySymbol()} ${Number(r.amountBefore).toLocaleString(regional.locale())} -> ${regional.currencySymbol()} ${Number(r.amountAfter).toLocaleString(regional.locale())} (potongan ${regional.currencySymbol()} ${Number(r.discountAmount).toLocaleString(regional.locale())}).` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal diskon: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Falló el descuento:' + e.message };
   }
   res.redirect(req.get('Referrer') || '/admin/billing');
 });
@@ -2763,10 +2763,10 @@ router.get('/billing', requireAdminSession, requireSidebarMenuAccess('billing'),
 
 router.get('/billing/:id/print', requireAdminSession, (req, res) => {
   const inv = billingSvc.getInvoiceById(req.params.id);
-  if (!inv) return res.status(404).send('Invoice tidak ditemukan');
+  if (!inv) return res.status(404).send('Factura no encontrada');
   
   const customer = customerSvc.getCustomerById(inv.customer_id);
-  if (!customer) return res.status(404).send('Data pelanggan tidak ditemukan');
+  if (!customer) return res.status(404).send('Cliente no encontrado');
 
   const settings = getSettings();
   res.render('admin/print_invoice', {
@@ -2779,10 +2779,10 @@ router.get('/billing/:id/print', requireAdminSession, (req, res) => {
 
 router.get('/billing/:id/print-thermal', requireAdminSession, (req, res) => {
   const inv = billingSvc.getInvoiceById(req.params.id);
-  if (!inv) return res.status(404).send('Invoice tidak ditemukan');
+  if (!inv) return res.status(404).send('Factura no encontrada');
   
   const customer = customerSvc.getCustomerById(inv.customer_id);
-  if (!customer) return res.status(404).send('Data pelanggan tidak ditemukan');
+  if (!customer) return res.status(404).send('Cliente no encontrado');
 
   const settings = getSettings();
   res.render('collector/print_thermal', {
@@ -2800,10 +2800,10 @@ router.get('/billing/:id/print-thermal', requireAdminSession, (req, res) => {
 router.get('/billing/:id/pdf', requireAdminSession, async (req, res) => {
   try {
     const inv = billingSvc.getInvoiceById(req.params.id);
-    if (!inv) return res.status(404).send('Invoice tidak ditemukan');
+    if (!inv) return res.status(404).send('Factura no encontrada');
     
     const customer = customerSvc.getCustomerById(inv.customer_id);
-    if (!customer) return res.status(404).send('Data pelanggan tidak ditemukan');
+    if (!customer) return res.status(404).send('Cliente no encontrado');
 
     const settings = getSettings();
     const pdfBuffer = await pdfSvc.generateInvoicePdfBuffer(inv, customer, settings);
@@ -2818,18 +2818,18 @@ router.get('/billing/:id/pdf', requireAdminSession, async (req, res) => {
     return res.send(pdfBuffer);
   } catch (err) {
     logger.error(`[PDF Download] Error: ${err.message}`);
-    return res.status(500).send('Gagal generate PDF invoice: ' + err.message);
+    return res.status(500).send('No se pudo generar el PDF de la factura:' + err.message);
   }
 });
 
 router.post('/billing/:id/send-pdf-wa', requireAdminSession, async (req, res) => {
   try {
     const inv = billingSvc.getInvoiceById(req.params.id);
-    if (!inv) return res.json({ success: false, message: 'Invoice tidak ditemukan' });
+    if (!inv) return res.json({ success: false, message: 'Factura no encontrada' });
     
     const customer = customerSvc.getCustomerById(inv.customer_id);
-    if (!customer) return res.json({ success: false, message: 'Data pelanggan tidak ditemukan' });
-    if (!customer.phone) return res.json({ success: false, message: 'Nomor WhatsApp pelanggan belum terisi' });
+    if (!customer) return res.json({ success: false, message: 'Cliente no encontrado' });
+    if (!customer.phone) return res.json({ success: false, message: 'El cliente no tiene número de WhatsApp' });
 
     const settings = getSettings();
     const pdfBuffer = await pdfSvc.generateInvoicePdfBuffer(inv, customer, settings);
@@ -2840,7 +2840,7 @@ router.post('/billing/:id/send-pdf-wa', requireAdminSession, async (req, res) =>
     const filename = `Invoice_${inv.id}_${safeName}.pdf`;
     const statusText = inv.status === 'paid' ? 'LUNAS' : 'BELUM BAYAR';
     
-    const caption = `📄 *INVOICE PEMBAYARAN INTERNET*\n\nYth. *${customer.name}*,\nBerikut kami lampirkan dokumen resmi Invoice Pembayaran Internet untuk periode *${periodStr}*.\n\n💰 *Total Tagihan:* ${regional.currencySymbol()} ${Number(inv.amount || 0).toLocaleString(regional.locale())}\n📌 *Status:* *${statusText}*\n\nTerima kasih telah menggunakan layanan *${settings.company_header || 'OPEN-ISP'}*!`;
+    const caption = `📄 *FACTURA DE INTERNET*\n\nEstimado/a *${customer.name}*,\nLe enviamos adjunta su factura de internet del período *${periodStr}*.\n\n💰 *Monto:* ${regional.currencySymbol()} ${Number(inv.amount || 0).toLocaleString(regional.locale())}\n📌 *Estado:* *${statusText}*\n\n¡Gracias por elegir *${settings.company_header || 'OPEN-ISP'}*!`;
 
     const waNotify = require('../services/waNotifyService');
     if (false) {
@@ -2849,13 +2849,13 @@ router.post('/billing/:id/send-pdf-wa', requireAdminSession, async (req, res) =>
 
     const sent = await waNotify.sendDocument(customer.phone, pdfBuffer, filename, caption);
     if (sent) {
-      return res.json({ success: true, message: `Invoice PDF berhasil dikirim ke WhatsApp ${customer.name} (${customer.phone})` });
+      return res.json({ success: true, message: `Factura PDF enviada por WhatsApp a ${customer.name} (${customer.phone})` });
     } else {
-      return res.json({ success: false, message: 'Gagal mengirim dokumen PDF ke WhatsApp' });
+      return res.json({ success: false, message: 'No se pudo enviar el PDF por WhatsApp' });
     }
   } catch (err) {
     logger.error(`[Send PDF WA] Error: ${err.message}`);
-    return res.json({ success: false, message: 'Gagal kirim PDF: ' + err.message });
+    return res.json({ success: false, message: 'No se pudo enviar el PDF:' + err.message });
   }
 });
 
@@ -2863,9 +2863,9 @@ router.post('/billing/generate', requireAdminSession, express.urlencoded({ exten
   try {
     const { month, year } = req.body;
     const count = billingSvc.generateMonthlyInvoices(parseInt(month), parseInt(year));
-    req.session._msg = { type: 'success', text: `${count} tagihan baru berhasil digenerate untuk periode ${month}/${year}.` };
+    req.session._msg = { type: 'success', text: `Se generaron ${count} facturas nuevas para el período ${month}/${year}.` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal generate: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo generar:' + e.message };
   }
   res.redirect('/admin/billing');
 });
@@ -2966,9 +2966,9 @@ router.post('/billing/pay-bulk', requireAdminSession, express.urlencoded({ exten
       }
     }
 
-    req.session._msg = { type: 'success', text: `${processed} tagihan berhasil diproses.` };
+    req.session._msg = { type: 'success', text: `Se procesaron ${processed} facturas.` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal bayar massal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Falló el cobro masivo:' + e.message };
   }
   res.redirect('back');
 });
@@ -2990,9 +2990,9 @@ router.post('/billing/delete-bulk', requireAdminSession, express.urlencoded({ ex
       } catch {}
     }
 
-    req.session._msg = { type: 'success', text: `${deleted} tagihan berhasil dihapus.` };
+    req.session._msg = { type: 'success', text: `Se eliminaron ${deleted} facturas.` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal hapus massal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Falló la eliminación masiva:' + e.message };
   }
   res.redirect('back');
 });
@@ -3000,7 +3000,7 @@ router.post('/billing/delete-bulk', requireAdminSession, express.urlencoded({ ex
 router.post('/billing/:id/pay', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
   try {
     const inv = billingSvc.getInvoiceById(req.params.id);
-    if (!inv) throw new Error('Tagihan tidak ditemukan');
+    if (!inv) throw new Error('Factura no encontrada');
 
     const paidBy = resolvePaidByName(req, req.body.paid_by_name);
     const wasPaid = String(inv.status || '').toLowerCase() === 'paid';
@@ -3035,9 +3035,9 @@ router.post('/billing/:id/pay', requireAdminSession, express.urlencoded({ extend
       }
     }
 
-    req.session._msg = { type: 'success', text: wasPaid ? 'Tagihan ini memang sudah lunas sebelumnya.' : 'Tagihan berhasil ditandai lunas.' };
+    req.session._msg = { type: 'success', text: wasPaid ? 'Esta factura ya estaba pagada.' : 'Factura marcada como pagada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('back');
 });
@@ -3045,9 +3045,9 @@ router.post('/billing/:id/pay', requireAdminSession, express.urlencoded({ extend
 router.post('/billing/:id/unpay', requireAdminSession, (req, res) => {
   try {
     billingSvc.markAsUnpaid(req.params.id);
-    req.session._msg = { type: 'success', text: 'Status tagihan direset ke Belum Bayar.' };
+    req.session._msg = { type: 'success', text: 'Pago anulado: la factura volvió a pendiente.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('back');
 });
@@ -3055,20 +3055,20 @@ router.post('/billing/:id/unpay', requireAdminSession, (req, res) => {
 router.post('/billing/:id/qris-assign', requireAdminSession, (req, res) => {
   try {
     const invId = Number(req.params.id);
-    if (!Number.isFinite(invId) || invId <= 0) throw new Error('Invoice ID tidak valid');
+    if (!Number.isFinite(invId) || invId <= 0) throw new Error('ID de factura inválido');
 
     const force = String(req.query.force || '') === '1';
     const inv = db.prepare('SELECT id, status, amount, qris_amount_unique FROM invoices WHERE id=?').get(invId);
-    if (!inv) throw new Error('Tagihan tidak ditemukan');
+    if (!inv) throw new Error('Factura no encontrada');
     if (String(inv.status) !== 'unpaid') throw new Error('Hanya tagihan BELUM BAYAR yang bisa dibuat kode QRIS.');
 
     if (!force && inv.qris_amount_unique) {
-      req.session._msg = { type: 'success', text: 'Kode QRIS sudah ada untuk tagihan ini.' };
+      req.session._msg = { type: 'success', text: 'Esta factura ya tiene código QR.' };
       return res.redirect('back');
     }
 
     const baseAmount = Number(inv.amount || 0);
-    if (!Number.isFinite(baseAmount) || baseAmount <= 0) throw new Error('Nominal tagihan tidak valid');
+    if (!Number.isFinite(baseAmount) || baseAmount <= 0) throw new Error('Monto de la factura inválido');
 
     const exists = db.prepare('SELECT id FROM invoices WHERE status=? AND qris_amount_unique=? AND id!=? LIMIT 1');
     const update = db.prepare(`
@@ -3101,12 +3101,12 @@ router.post('/billing/:id/qris-assign', requireAdminSession, (req, res) => {
       }
     }
 
-    if (!chosenAmount) throw new Error('Gagal membuat nominal unik (slot 1-999 penuh).');
+    if (!chosenAmount) throw new Error('No se pudo crear el monto único (los códigos 1-999 están ocupados).');
 
     update.run(chosenCode, chosenAmount, invId);
-    req.session._msg = { type: 'success', text: `Kode QRIS dibuat: ${regional.currencySymbol()} ${Number(chosenAmount).toLocaleString(regional.locale())} (kode ${chosenCode}).` };
+    req.session._msg = { type: 'success', text: `Código QR creado: ${regional.currencySymbol()} ${Number(chosenAmount).toLocaleString(regional.locale())} (código ${chosenCode}).` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal membuat kode QRIS: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo crear el código QR:' + e.message };
   }
   res.redirect('back');
 });
@@ -3114,15 +3114,15 @@ router.post('/billing/:id/qris-assign', requireAdminSession, (req, res) => {
 router.post('/billing/:id/qris-clear', requireAdminSession, (req, res) => {
   try {
     const invId = Number(req.params.id);
-    if (!Number.isFinite(invId) || invId <= 0) throw new Error('Invoice ID tidak valid');
+    if (!Number.isFinite(invId) || invId <= 0) throw new Error('ID de factura inválido');
     db.prepare(`
       UPDATE invoices
       SET qris_unique_code=NULL, qris_amount_unique=NULL, qris_assigned_at=NULL
       WHERE id=?
     `).run(invId);
-    req.session._msg = { type: 'success', text: 'Kode QRIS dihapus dari tagihan.' };
+    req.session._msg = { type: 'success', text: 'Código QR eliminado de la factura.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal menghapus kode QRIS: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo eliminar el código QR:' + e.message };
   }
   res.redirect('back');
 });
@@ -3131,19 +3131,19 @@ router.post('/billing/:id/whatsapp', requireAdminSession, async (req, res) => {
   try {
     const waEnabled = getSetting('whatsapp_enabled', false);
     const billingEnabled = getSetting('whatsapp_billing_to_customer_enabled', true);
-    if (!waEnabled) throw new Error('Notifikasi WhatsApp sedang dinonaktifkan di Pengaturan.');
-    if (!billingEnabled) throw new Error('Notifikasi tagihan WhatsApp ke pelanggan sedang dinonaktifkan.');
+    if (!waEnabled) throw new Error('Las notificaciones de WhatsApp están desactivadas en Configuración.');
+    if (!billingEnabled) throw new Error('El envío de facturas por WhatsApp a los clientes está desactivado.');
 
     const inv = billingSvc.getInvoiceById(req.params.id);
-    if (!inv) throw new Error('Tagihan tidak ditemukan');
+    if (!inv) throw new Error('Factura no encontrada');
     
     const customer = customerSvc.getCustomerById(inv.customer_id);
-    if (!customer || !customer.phone) throw new Error('Nomor WhatsApp pelanggan tidak ditemukan');
+    if (!customer || !customer.phone) throw new Error('No se encontró el número de WhatsApp del cliente');
 
     const waNotify = require('../services/waNotifyService');
     
     if (false) {
-      throw new Error('Bot WhatsApp belum terhubung. Silakan cek status WhatsApp di menu Admin.');
+      throw new Error('WhatsApp no está conectado. Revisá el estado de WhatsApp en el panel.');
     }
 
     const unpaidInvoices = billingSvc.getUnpaidInvoicesByCustomerId(customer.id);
@@ -3152,7 +3152,7 @@ router.post('/billing/:id/whatsapp', requireAdminSession, async (req, res) => {
     );
     const totalTagihan = summary.totalAmount > 0 ? summary.totalAmount : Number(inv.amount || 0);
     const rincianBulan = summary.periodText;
-    const rincianDetail = summary.isMultiple ? `📋 *Rincian Tunggakan:*\n${summary.breakdownText}\n` : '';
+    const rincianDetail = summary.isMultiple ? `📋 *Detalle de la deuda:*\n${summary.breakdownText}\n` : '';
 
     let qrisAmountUnique = Number(inv.qris_amount_unique || 0) || 0;
     let qrisCode = Number(inv.qris_unique_code || 0) || 0;
@@ -3237,12 +3237,12 @@ router.post('/billing/:id/whatsapp', requireAdminSession, async (req, res) => {
     };
     const parseEmvTlvString = (input) => {
       const raw = String(input || '').replace(/[\r\n\t]+/g, '').trim();
-      if (!raw) throw new Error('QRIS payload kosong');
+      if (!raw) throw new Error('El payload QRIS está vacío');
       if (raw.length < 8) throw new Error('QRIS payload terlalu pendek');
       const items = [];
       let i = 0;
       while (i < raw.length) {
-        if (i + 4 > raw.length) throw new Error('QRIS payload TLV tidak valid');
+        if (i + 4 > raw.length) throw new Error('El payload QRIS (TLV) no es válido');
         const tag = raw.slice(i, i + 2);
         const lenStr = raw.slice(i + 2, i + 4);
         if (!/^\d{2}$/.test(lenStr)) throw new Error('QRIS payload TLV length tidak valid');
@@ -3264,14 +3264,14 @@ router.post('/billing/:id/whatsapp', requireAdminSession, async (req, res) => {
         const value = String(it?.value ?? '');
         const len = value.length;
         if (!/^\d{2}$/.test(tag)) throw new Error('Tag TLV tidak valid');
-        if (len > 99) throw new Error('TLV length > 99 tidak didukung');
+        if (len > 99) throw new Error('No se admite una longitud TLV > 99');
         out += tag + String(len).padStart(2, '0') + value;
       }
       return out;
     };
     const convertStaticQrisToDynamic = (staticPayload, amount) => {
       const amt = Math.max(0, Math.floor(Number(amount || 0) || 0));
-      if (!amt) throw new Error('Nominal QRIS dinamis tidak valid');
+      if (!amt) throw new Error('El monto del QRIS dinámico no es válido');
       const source = parseEmvTlvString(staticPayload)
         .filter(x => x && x.tag)
         .map(x => ({ tag: String(x.tag), value: String(x.value ?? '') }));
@@ -3351,9 +3351,9 @@ router.post('/billing/:id/whatsapp', requireAdminSession, async (req, res) => {
     const loginLink = `${baseUrl}/customer/login`;
 
     const comp = company();
-    const defaultAutoBilling = "{Halo|Salam} Bapak/Ibu *{{nama}}*, 🙏\n\nBerikut kami sampaikan rincian tagihan layanan internet Anda:\n\n📋 *RINGKASAN TAGIHAN*\n• ID Pelanggan  : *{{id_pelanggan}}*\n• Paket         : {{paket}}\n• Total Tagihan : *{{moneda}} {{tagihan}}*\n• Periode       : {{rincian}}\n\n{Mohon|Silakan} melakukan pembayaran melalui portal pelanggan:\n{{link}}\n\nTerima kasih atas perhatian dan kerja samanya. Semoga harinya menyenangkan. 🙏\n— Admin {{company}}";
+    const defaultAutoBilling = "{Hola|Buenas}, *{{nama}}* 👋\n\nLe enviamos el detalle de su factura de internet:\n\n• ID de cliente: *{{id_pelanggan}}*\n• Plan: {{paket}}\n• Monto: *{{moneda}} {{tagihan}}*\n• Período: {{rincian}}\n\nPuede consultar su factura aquí:\n{{link}}\n\n¡Gracias!\n— {{company}}";
     
-    const defaultQris = `{Halo|Selamat Pagi|Yth.} Pelanggan {{nama}},\n\n{Berikut|Ini adalah} rincian tagihan manual + Kode Bayar QRIS Anda:\n\n📦 *Paket:* {{paket}}\n📅 *Periode:* {{periode}}\n💰 *Nominal:* {{moneda}} {{qris_nominal}}\n\n{Silakan scan|Mohon scan} QRIS terlampir untuk melakukan pembayaran otomatis:\n{{qris_qr}}\n\nTerima kasih.`;
+    const defaultQris = `{Hola|Buenas}, *{{nama}}* 👋\n\nLe enviamos el detalle de su factura:\n\n📦 *Plan:* {{paket}}\n📅 *Período:* {{periode}}\n💰 *Monto:* {{moneda}} {{qris_nominal}}\n\n{{qris_qr}}\n\n¡Gracias!`;
 
     const templateQris = db.getAppSetting('whatsapp_billing_qris_message', defaultQris);
     const template = db.getAppSetting('whatsapp_auto_billing_message', defaultAutoBilling);
@@ -3382,7 +3382,7 @@ router.post('/billing/:id/whatsapp', requireAdminSession, async (req, res) => {
           .replace(/{{qris_nominal}}/gi, finalNominalStr)
           .replace(/{{tagihan}}/gi, finalNominalStr)
           .replace(/{{qris_kode}}/gi, String(qrisCode).padStart(3, '0'))
-          .replace(/{{qris_qr}}/gi, `QRIS terlampir (gambar).\n🌐 Portal Pelanggan: ${loginLink}`)
+          .replace(/{{qris_qr}}/gi, `QR adjunto (imagen).\n🌐 Portal del cliente: ${loginLink}`)
       : '';
 
     const formattedMsg = isQrisCase
@@ -3401,7 +3401,7 @@ router.post('/billing/:id/whatsapp', requireAdminSession, async (req, res) => {
           .replace(/{{qris_nominal}}/gi, finalNominalStr)
           .replace(/{{tagihan}}/gi, finalNominalStr)
           .replace(/{{qris_kode}}/gi, String(qrisCode).padStart(3, '0'))
-          .replace(/{{qris_qr}}/gi, `🔗 Link QRIS JPG: ${qrisJpgLink}\n🌐 Portal Pelanggan: ${loginLink}`)
+          .replace(/{{qris_qr}}/gi, `🔗 QR (imagen JPG): ${qrisJpgLink}\n🌐 Portal del cliente: ${loginLink}`)
       : template
           .replace(/{{nama}}/gi, customer.name || 'Pelanggan')
           .replace(/{{id_pelanggan}}/gi, customer.customer_code || '-')
@@ -3433,11 +3433,11 @@ router.post('/billing/:id/whatsapp', requireAdminSession, async (req, res) => {
     if (!sent) {
       sent = await waNotify.sendText(customer.phone, formattedMsg);
     }
-    if (!sent) throw new Error('Gagal mengirim pesan melalui WhatsApp Bot.');
+    if (!sent) throw new Error('No se pudo enviar el mensaje por WhatsApp.');
 
-    req.session._msg = { type: 'success', text: `Tagihan WhatsApp berhasil dikirim ke ${customer.name}.` };
+    req.session._msg = { type: 'success', text: `Factura enviada por WhatsApp a ${customer.name}.` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal kirim WA: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo enviar el WhatsApp:' + e.message };
   }
   res.redirect('back');
 });
@@ -3445,9 +3445,9 @@ router.post('/billing/:id/whatsapp', requireAdminSession, async (req, res) => {
 router.post('/billing/:id/delete', requireAdminSession, (req, res) => {
   try {
     billingSvc.deleteInvoice(req.params.id);
-    req.session._msg = { type: 'success', text: 'Tagihan berhasil dihapus.' };
+    req.session._msg = { type: 'success', text: 'Factura eliminada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('back');
 });
@@ -3464,7 +3464,7 @@ router.get('/tickets', requireAdminSession, requireSidebarMenuAccess('tickets'),
   const technicians = techSvc.getAllTechnicians().filter(t => t.is_active === 1);
   
   res.render('admin/tickets', {
-    title: 'Keluhan & Tugas Teknisi', company: company(), activePage: 'tickets',
+    title: 'Reclamos y tareas de técnicos', company: company(), activePage: 'tickets',
     tickets, stats, customers, technicians, filterStatus: status, filterSearch: search, filterTech: filterTech, msg: flashMsg(req)
   });
 });
@@ -3473,7 +3473,7 @@ router.post('/tickets/create', requireAdminSession, express.urlencoded({ extende
   try {
     const { customer_id, subject, message, technician_id, status } = req.body;
     if (!subject || !message) {
-      req.session._msg = { type: 'error', text: 'Subjek dan Detail Pesan wajib diisi.' };
+      req.session._msg = { type: 'error', text: 'El asunto y el detalle son obligatorios.' };
       return res.redirect('/admin/tickets');
     }
 
@@ -3487,7 +3487,7 @@ router.post('/tickets/create', requireAdminSession, express.urlencoded({ extende
     });
 
     const ticketId = result.lastInsertRowid;
-    req.session._msg = { type: 'success', text: 'Tiket/tugas baru berhasil dibuat!' };
+    req.session._msg = { type: 'success', text: '¡Ticket/tarea creado!' };
 
     // --- WHATSAPP NOTIFICATION FOR NEW ADMIN CREATED TICKET ---
     try {
@@ -3506,16 +3506,16 @@ router.post('/tickets/create', requireAdminSession, express.urlencoded({ extende
         const _mapQ = (cust && cust.lat && cust.lng) ? (cust.lat + ',' + cust.lng) : String(custAddr || '');
         const _base = (getSetting('public_base_url', '') || getSetting('app_url', '') || ('http://' + (req.get('host') || ''))).replace(/\/+$/, '');
         const _links = `\n🔗 *Tautan Cepat:*\n` +
-          (_waDigits ? `• 💬 Chat Pelanggan: https://wa.me/${_waDigits}\n` : '') +
-          (_mapQ ? `• 📍 Share Lokasi: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(_mapQ)}` : '');
-        const waMsg = `📌 *TUGAS TEKNISI BARU DARI ADMIN*\n\n` +
-                     `🎫 *ID Tiket:* #${ticketId}\n` +
-                     `👤 *Pelanggan/Objek:* ${custName}\n` +
+          (_waDigits ? `• 💬 Chat con el cliente: https://wa.me/${_waDigits}\n` : '') +
+          (_mapQ ? `• 📍 Ubicación: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(_mapQ)}` : '');
+        const waMsg = `📌 *NUEVA TAREA PARA TÉCNICOS*\n\n` +
+                     `🎫 *Ticket:* #${ticketId}\n` +
+                     `👤 *Cliente/objeto:* ${custName}\n` +
                      `📞 *Kontak:* ${custPhone}\n` +
-                     `📍 *Alamat:* ${custAddr}\n` +
+                     `📍 *Dirección:* ${custAddr}\n` +
                      `📝 *Kendala/Tugas:* ${subject}\n` +
-                     `💬 *Detail Pesan:* ${message}\n\n` +
-                     `Silakan cek di portal teknisi/admin untuk menindaklanjuti.` + _links;
+                     `💬 *Detalle:* ${message}\n\n` +
+                     `Revisalo en el portal de técnicos/administración para darle seguimiento.` + _links;
 
         // Send to assigned technician or broadcast to all active technicians if not assigned
         if (tech && tech.phone) {
@@ -3535,7 +3535,7 @@ router.post('/tickets/create', requireAdminSession, express.urlencoded({ extende
       console.error(`[AdminPortal] WA Ticket Create Notification Error: ${waErr.message}`);
     }
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal membuat tiket: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo crear el ticket:' + e.message };
   }
   res.redirect('/admin/tickets');
 });
@@ -3548,7 +3548,7 @@ router.post('/tickets/:id/update', requireAdminSession, express.urlencoded({ ext
     
     const techId = (technician_id && parseInt(technician_id, 10) > 0) ? parseInt(technician_id, 10) : null;
     ticketSvc.updateTicketStatus(ticketId, status, techId);
-    req.session._msg = { type: 'success', text: 'Status & penugasan keluhan berhasil diperbarui.' };
+    req.session._msg = { type: 'success', text: 'Estado y asignación del reclamo actualizados.' };
 
     // --- WHATSAPP NOTIFICATION IF TECHNICIAN IS ASSIGNED / CHANGED ---
     if (techId && (!oldTicket || Number(oldTicket.technician_id) !== techId)) {
@@ -3564,15 +3564,15 @@ router.post('/tickets/:id/update', requireAdminSession, express.urlencoded({ ext
             let digits = String(newTech.phone).replace(/\D/g, '');
             digits = regional.normalizePhone(digits);
             
-            const waMsg = `📌 *PENUGASAN TIKET OLEH ADMIN*\n\n` +
-                         `🎫 *ID Tiket:* #${updatedTicket.id}\n` +
-                         `👤 *Pelanggan/Objek:* ${updatedTicket.customer_name}\n` +
+            const waMsg = `📌 *TICKET ASIGNADO POR LA ADMINISTRACIÓN*\n\n` +
+                         `🎫 *Ticket:* #${updatedTicket.id}\n` +
+                         `👤 *Cliente/objeto:* ${updatedTicket.customer_name}\n` +
                          `📞 *Kontak:* ${updatedTicket.customer_phone || '-'}\n` +
-                         `📍 *Alamat:* ${updatedTicket.customer_address || '-'}\n` +
+                         `📍 *Dirección:* ${updatedTicket.customer_address || '-'}\n` +
                          `📝 *Kendala/Tugas:* ${updatedTicket.subject}\n` +
-                         `💬 *Detail Pesan:* ${updatedTicket.message}\n` +
+                         `💬 *Detalle:* ${updatedTicket.message}\n` +
                          `📊 *Status:* ${status}\n\n` +
-                         `Silakan cek portal teknisi untuk memproses tugas ini.`;
+                         `Revisá el portal de técnicos para atender esta tarea.`;
             await waNotify.sendText(digits, waMsg);
           }
         }
@@ -3590,12 +3590,12 @@ router.post('/tickets/:id/update', requireAdminSession, express.urlencoded({ ext
           const ticket = ticketSvc.getTicketById(ticketId);
           
           if (ticket) {
-            const waMsg = `✅ *TIKET KELUHAN SELESAI*\n\n` +
-                         `🎫 *ID Tiket:* #${ticket.id}\n` +
-                         `👤 *Pelanggan:* ${ticket.customer_name}\n` +
+            const waMsg = `✅ *RECLAMO RESUELTO*\n\n` +
+                         `🎫 *Ticket:* #${ticket.id}\n` +
+                         `👤 *Cliente:* ${ticket.customer_name}\n` +
                          `📝 *Subjek:* ${ticket.subject}\n` +
                          `🛠️ *Petugas:* Admin\n\n` +
-                         `Keluhan Anda telah selesai dikerjakan. Terima kasih atas kesabarannya.`;
+                         `Su reclamo fue resuelto. ¡Gracias por su paciencia!`;
 
             // Kirim ke Pelanggan
             if (ticket.customer_phone) {
@@ -3604,11 +3604,11 @@ router.post('/tickets/:id/update', requireAdminSession, express.urlencoded({ ext
 
             // Kirim ke Admin Numbers
             if (settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers.length > 0) {
-              const adminMsg = `✅ *LAPORAN TIKET SELESAI (OLEH ADMIN)*\n\n` +
-                               `🎫 *ID Tiket:* #${ticket.id}\n` +
-                               `👤 *Pelanggan:* ${ticket.customer_name}\n` +
+              const adminMsg = `✅ *TICKET RESUELTO (POR LA ADMINISTRACIÓN)*\n\n` +
+                               `🎫 *Ticket:* #${ticket.id}\n` +
+                               `👤 *Cliente:* ${ticket.customer_name}\n` +
                                `📝 *Subjek:* ${ticket.subject}\n` +
-                               `💬 *Pesan:* ${ticket.message}`;
+                               `💬 *Mensaje:* ${ticket.message}`;
               const seen = new Set();
               for (const adminPhone of settings.whatsapp_admin_numbers) {
                 let digits = String(adminPhone || '').replace(/\D/g, '');
@@ -3628,7 +3628,7 @@ router.post('/tickets/:id/update', requireAdminSession, express.urlencoded({ ext
     // -------------------------------------------------------------
 
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal update keluhan: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo actualizar el reclamo:' + e.message };
   }
   res.redirect('back');
 });
@@ -3636,9 +3636,9 @@ router.post('/tickets/:id/update', requireAdminSession, express.urlencoded({ ext
 router.post('/tickets/:id/delete', requireAdminSession, (req, res) => {
   try {
     ticketSvc.deleteTicket(req.params.id);
-    req.session._msg = { type: 'success', text: 'Keluhan berhasil dihapus.' };
+    req.session._msg = { type: 'success', text: 'Reclamo eliminado.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal hapus keluhan: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo eliminar el reclamo:' + e.message };
   }
   res.redirect('back');
 });
@@ -3743,7 +3743,7 @@ router.get('/reports', requireAdminSession, requireSidebarMenuAccess('reports'),
   for (let _m = 1; _m <= 12; _m++) { monthlyFinance.push(Object.assign({ month: _m }, lab(_revMap[_m] || 0, _expMap[_m] || 0))); }
 
   res.render('admin/reports', {
-    title: 'Laporan Laba / Rugi', company: company(), activePage: 'reports',
+    title: 'Estado de resultados', company: company(), activePage: 'reports',
     filterYear, monthlyData, chartData: monthlyData, recentPayments, topUnpaid,
     totalRevenue: revenueYearAll,
     thisMonth: revenueThisMonthAll,
@@ -3784,7 +3784,7 @@ router.post('/reports/finance', requireAdminSession, restrictToAdmin, express.ur
     saveSettings(next);
     req.session._msg = { type: 'success', text: 'Pengaturan pajak & retribusi disimpan.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal menyimpan: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo guardar:' + e.message };
   }
   res.redirect('/admin/reports');
 });
@@ -3888,7 +3888,7 @@ router.get('/reports/pdf', requireAdminSession, requireSidebarMenuAccess('report
     res.setHeader('Content-Disposition', 'inline; filename="Laporan_Keuangan_' + filterYear + (filterMonth ? ('-' + _mPad) : '') + '_' + mode + '.pdf"');
     res.send(pdf);
   } catch (e) {
-    res.status(500).send('Gagal membuat PDF: ' + e.message);
+    res.status(500).send('No se pudo crear el PDF:' + e.message);
   }
 });
 
@@ -3908,9 +3908,9 @@ router.get('/reports/export-csv', requireAdminSession, requireSidebarMenuAccess(
       + q("SELECT COALESCE(SUM(amount),0) t FROM cash_in WHERE strftime('%Y', date)=? AND strftime('%m', date)=?", yStr, mStr);
     const keluar = q("SELECT COALESCE(SUM(amount),0) t FROM expenses WHERE strftime('%Y', date)=? AND strftime('%m', date)=?", yStr, mStr);
     const L = labaRugi(bruto, keluar, fin);
-    csvContent += `Laporan Laba/Rugi ${company()} - Bulan ${mStr}/${filterYear}\n\n`;
+    csvContent += `Estado de resultados ${company()} - Mes ${mStr}/${filterYear}\n\n`;
     csvContent += `Keterangan,Nilai (${regional.currencySymbol()})\n`;
-    csvContent += `Pemasukan (Bruto),${num(L.bruto)}\nDPP,${num(L.dpp)}\nPPN Keluaran (${fin.ppn}%),${num(L.ppn)}\nPengeluaran,${num(L.keluar)}\nUSO (${fin.uso}%),${num(L.uso)}\nBHP (${fin.bhp}%),${num(L.bhp)}\nLaba Sebelum PPh,${num(L.sebelumPph)}\nPPh Badan (${fin.pph}%),${num(L.pph)}\nLaba Bersih,${num(L.bersih)}\n\n`;
+    csvContent += `Ingresos (brutos),${num(L.bruto)}\nBase imponible,${num(L.dpp)}\nIVA (${fin.ppn}%),${num(L.ppn)}\nGastos,${num(L.keluar)}\nOtro impuesto 1 (${fin.uso}%),${num(L.uso)}\nOtro impuesto 2 (${fin.bhp}%),${num(L.bhp)}\nGanancia antes de impuesto a la renta,${num(L.sebelumPph)}\nImpuesto a la renta (${fin.pph}%),${num(L.pph)}\nGanancia neta,${num(L.bersih)}\n\n`;
     const invs = db.prepare("SELECT i.paid_at, c.name, i.amount FROM invoices i LEFT JOIN customers c ON c.id=i.customer_id WHERE i.status='paid' AND strftime('%Y', i.paid_at)=? AND strftime('%m', i.paid_at)=? ORDER BY i.paid_at").all(yStr, mStr);
     csvContent += "=== Pemasukan (Invoice Lunas) ===\nTanggal,Pelanggan,Nominal\n";
     invs.forEach(r => { csvContent += `${r.paid_at},"${(r.name || '').replace(/"/g, '""')}",${r.amount}\n`; });
@@ -3925,9 +3925,9 @@ router.get('/reports/export-csv', requireAdminSession, requireSidebarMenuAccess(
       + q("SELECT COALESCE(SUM(amount),0) t FROM cash_in WHERE strftime('%Y', date)=?", yStr);
     const keluar = q("SELECT COALESCE(SUM(amount),0) t FROM expenses WHERE strftime('%Y', date)=?", yStr);
     const L = labaRugi(bruto, keluar, fin);
-    csvContent += `Laporan Keuangan ${company()} - Tahun ${filterYear}\n\n`;
+    csvContent += `Reporte financiero ${company()} - Año ${filterYear}\n\n`;
     csvContent += `=== RINGKASAN LABA/RUGI ===\nKeterangan,Nilai (${regional.currencySymbol()})\n`;
-    csvContent += `Pemasukan (Bruto),${num(L.bruto)}\nDPP,${num(L.dpp)}\nPPN Keluaran (${fin.ppn}%),${num(L.ppn)}\nPengeluaran,${num(L.keluar)}\nUSO (${fin.uso}%),${num(L.uso)}\nBHP (${fin.bhp}%),${num(L.bhp)}\nLaba Sebelum PPh,${num(L.sebelumPph)}\nPPh Badan (${fin.pph}%),${num(L.pph)}\nLaba Bersih,${num(L.bersih)}\n\n`;
+    csvContent += `Ingresos (brutos),${num(L.bruto)}\nBase imponible,${num(L.dpp)}\nIVA (${fin.ppn}%),${num(L.ppn)}\nGastos,${num(L.keluar)}\nOtro impuesto 1 (${fin.uso}%),${num(L.uso)}\nOtro impuesto 2 (${fin.bhp}%),${num(L.bhp)}\nGanancia antes de impuesto a la renta,${num(L.sebelumPph)}\nImpuesto a la renta (${fin.pph}%),${num(L.pph)}\nGanancia neta,${num(L.bersih)}\n\n`;
     csvContent += "=== DATA PENGELUARAN ===\nTanggal,Kategori,Nominal,Deskripsi\n";
     expenses.forEach(e => { csvContent += `${e.date},"${e.category}",${e.amount},"${(e.description || '').replace(/"/g, '""')}"\n`; });
     csvContent += "\n=== DATA KAS MASUK TAMBAHAN ===\nTanggal,Sumber/Kategori,Nominal,Deskripsi\n";
@@ -3956,12 +3956,12 @@ router.post('/sidebar-settings', requireAdminSession, restrictToAdmin, express.u
   try {
     const featurePassword = String(req.body.feature_password || '').trim();
     if (!sidebarMenuSvc.isFeaturePasswordValid(featurePassword)) {
-      throw new Error(`Password aktivasi salah. Hubungi ${sidebarMenuSvc.getFeatureContactPhone()} untuk mendapatkan password yang benar.`);
+      throw new Error(`Código de activación incorrecto. Contactá a ${sidebarMenuSvc.getFeatureContactPhone()} para obtener el código correcto.`);
     }
 
     const menuStates = sidebarMenuSvc.sanitizeMenuStates(req.body.menu_state || {});
     const success = sidebarMenuSvc.saveMenuStates(menuStates);
-    if (!success) throw new Error('Gagal menyimpan pengaturan sidebar');
+    if (!success) throw new Error('No se pudo guardar la configuración del menú lateral');
 
     if (auditSvc && typeof auditSvc.logAuditTrail === 'function') {
       auditSvc.logAuditTrail({
@@ -3977,16 +3977,16 @@ router.post('/sidebar-settings', requireAdminSession, restrictToAdmin, express.u
       });
     }
 
-    req.session._msg = { type: 'success', text: 'Pengaturan sidebar berhasil disimpan.' };
+    req.session._msg = { type: 'success', text: 'Menú lateral guardado.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal menyimpan pengaturan sidebar: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo guardar la configuración del menú lateral:' + e.message };
   }
   res.redirect('/admin/sidebar-settings');
 });
 
 router.get('/service-notice', requireAdminSession, requireSidebarMenuAccess('service_notice'), (req, res) => {
   res.render('admin/service_notice', {
-    title: 'Status Layanan & Pengumuman', company: company(), activePage: 'service_notice',
+    title: 'Estado del servicio y avisos', company: company(), activePage: 'service_notice',
     settings: getSettings(), msg: flashMsg(req)
   });
 });
@@ -4008,9 +4008,9 @@ router.post('/service-notice', requireAdminSession, requireSidebarMenuAccess('se
     const noticeSvc = require('../services/serviceNoticeService');
     const n = noticeSvc.computeNotice();
     const detail = n.active ? (n.label + (n.estimateText ? ' — estimasi ' + n.estimateText : '')) : 'Normal (tanpa pengumuman)';
-    req.session._msg = { type: 'success', text: 'Status layanan diperbarui: ' + detail };
+    req.session._msg = { type: 'success', text: 'Estado del servicio actualizado:' + detail };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal menyimpan status layanan: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo guardar el estado del servicio:' + e.message };
   }
   res.redirect('/admin/service-notice');
 });
@@ -4019,7 +4019,7 @@ router.post('/customers/auto-deactivate-now', requireAdminSession, restrictToAdm
   try {
     const months = parseInt(getSetting('auto_deactivate_months', 3), 10) || 3;
     const r = await customerSvc.autoDeactivateOverdueCustomers(months);
-    return res.json({ success: true, processed: r.processed, candidates: r.candidates, message: `Auto-nonaktif: ${r.processed} pelanggan dinonaktifkan dari ${r.candidates} kandidat (>= ${months} bulan).` });
+    return res.json({ success: true, processed: r.processed, candidates: r.candidates, message: `Desactivación automática: ${r.processed} clientes desactivados de ${r.candidates} candidatos (>= ${months} meses).` });
   } catch (e) {
     return res.status(500).json({ success: false, message: e.message });
   }
@@ -4029,7 +4029,7 @@ router.post('/registrations/:id/approve', requireAdminSession, express.urlencode
   try {
     const id = Number(req.params.id);
     const cust = customerSvc.getCustomerById(id);
-    if (!cust) throw new Error('Pendaftar tidak ditemukan');
+    if (!cust) throw new Error('Inscripto no encontrado');
     let total = parseInt(req.body.final_total, 10);
     if (!Number.isFinite(total) || total < 0) total = Number(cust.reg_total || 0);
 
@@ -4069,7 +4069,7 @@ router.post('/registrations/:id/approve', requireAdminSession, express.urlencode
     const existingInv = db.prepare('SELECT id FROM invoices WHERE customer_id=? AND period_month=? AND period_year=?').get(id, pMonth, pYear);
     if (!existingInv) {
       db.prepare('INSERT INTO invoices (customer_id, period_month, period_year, amount, status, notes) VALUES (?,?,?,?,?,?)')
-        .run(id, pMonth, pYear, total, 'unpaid', 'Tagihan awal pendaftaran (biaya pasang + prorata)');
+        .run(id, pMonth, pYear, total, 'unpaid', 'Factura inicial de alta (instalación + prorrateo)');
     }
 
     const installDate = cust.install_date || String(cust.created_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
@@ -4090,15 +4090,15 @@ router.post('/registrations/:id/approve', requireAdminSession, express.urlencode
         const periodStr = (mns[pMonth - 1] || pMonth) + ' ' + pYear;
         const pkg = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
         const comp = getSetting('company_header', 'OPEN-ISP');
-        const caption = 'Halo *' + cust.name + '*,\n\n' +
-          '🎉 Selamat bergabung! Berikut tagihan internet pertama Anda:\n\n' +
-          '📋 *RINGKASAN TAGIHAN*\n' +
-          '• ID Pelanggan  : *' + (cust.customer_code || '-') + '*\n' +
-          '• Paket         : ' + (pkg ? pkg.name : (cust.package_name || '-')) + '\n' +
-          '• Total Tagihan : *' + regional.currencySymbol() + ' ' + Number(invRow.amount || 0).toLocaleString(regional.locale()) + '*\n' +
-          '• Periode       : ' + periodStr + '\n\n' +
-          'Silakan scan QRIS di atas untuk melakukan pembayaran.\n\n' +
-          'Terima kasih.\n— ' + comp;
+        const caption = 'Hola *' + cust.name + '*,\n\n' +
+          '🎉 ¡Bienvenido/a! Le enviamos su primera factura de internet:\n\n' +
+          '📋 *RESUMEN DE LA FACTURA*\n' +
+          '• ID de cliente : *' + (cust.customer_code || '-') + '*\n' +
+          '• Plan          :' + (pkg ? pkg.name : (cust.package_name || '-')) + '\n' +
+          '• Monto         : *' + regional.currencySymbol() + ' ' + Number(invRow.amount || 0).toLocaleString(regional.locale()) + '*\n' +
+          '• Período       :' + periodStr + '\n\n' +
+          'Escanee el QR de arriba para pagar.\n\n' +
+          'Gracias.\n—' + comp;
         if (q.payload) {
           const QRCode = require('qrcode');
           const png = await QRCode.toBuffer(q.payload, { width: 512, margin: 1 });
@@ -4114,20 +4114,20 @@ router.post('/registrations/:id/approve', requireAdminSession, express.urlencode
       if (pppoeUser) {
         const waNotify = require('../services/waNotifyService');
         const pkgC = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
-        const credMsg = '🔑 *KREDENSIAL PPPoE PELANGGAN BARU*\n\n' +
-          '👤 *Nama:* ' + cust.name + '\n' +
+        const credMsg = '🔑 *CREDENCIALES PPPoE DEL CLIENTE NUEVO*\n\n' +
+          '👤 *Nombre:*' + cust.name + '\n' +
           '🆔 *ID:* ' + (cust.customer_code || '-') + '\n' +
-          '📦 *Paket:* ' + (pkgC ? pkgC.name : (cust.package_name || '-')) + '\n' +
+          '📦 *Plan:*' + (pkgC ? pkgC.name : (cust.package_name || '-')) + '\n' +
           '📡 *PPPoE User:* *' + pppoeUser + '*\n' +
           '🔒 *PPPoE Pass:* *' + (pppoePass || '-') + '*\n' +
-          '📍 *Alamat:* ' + (cust.address || '-') + '\n\n' +
-          'Silakan konfigurasi perangkat pelanggan dengan data di atas.';
+          '📍 *Dirección:*' + (cust.address || '-') + '\n\n' +
+          'Configurá el equipo del cliente con estos datos.';
         await waNotify.notifyAdmin(credMsg);
       }
     } catch (e) { try { logger.error('[RegApprove] staff cred error: ' + e.message); } catch (_) {} }
 
-    req.session._msg = { type: 'success', text: 'Pendaftar ' + cust.name + ' disetujui (aktif) + tagihan pertama dibuat (' + regional.currencySymbol() + ' ' + total.toLocaleString(regional.locale()) + ', periode ' + pMonth + '/' + pYear + ').' };
-  } catch (e) { req.session._msg = { type: 'error', text: 'Gagal menyetujui: ' + e.message }; }
+    req.session._msg = { type: 'success', text: 'Pendaftar ' + cust.name + ' aprobado (activo) + primera factura creada (' + regional.currencySymbol() + ' ' + total.toLocaleString(regional.locale()) + ', período' + pMonth + '/' + pYear + ').' };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo aprobar:' + e.message }; }
   res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
 });
 
@@ -4135,10 +4135,10 @@ router.post('/registrations/:id/reject', requireAdminSession, (req, res) => {
   try {
     const id = Number(req.params.id);
     const cust = customerSvc.getCustomerById(id);
-    if (!cust) throw new Error('Pendaftar tidak ditemukan');
+    if (!cust) throw new Error('Inscripto no encontrado');
     db.prepare("UPDATE customers SET reg_status='rejected' WHERE id=?").run(id);
-    req.session._msg = { type: 'success', text: 'Pendaftar ' + cust.name + ' ditolak.' };
-  } catch (e) { req.session._msg = { type: 'error', text: 'Gagal menolak: ' + e.message }; }
+    req.session._msg = { type: 'success', text: 'Pendaftar ' + cust.name + ' rechazado.' };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo rechazar:' + e.message }; }
   res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
 });
 
@@ -4161,8 +4161,8 @@ router.post('/vouchers-discounts/save', requireAdminSession, express.urlencoded(
     const voucherSvc = require('../services/voucherService');
     if (req.body.id) voucherSvc.update(req.body.id, req.body);
     else voucherSvc.create(req.body);
-    req.session._msg = { type: 'success', text: 'Voucher berhasil disimpan.' };
-  } catch (e) { req.session._msg = { type: 'error', text: 'Gagal menyimpan voucher: ' + e.message }; }
+    req.session._msg = { type: 'success', text: 'Cupón guardado.' };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo guardar el cupón:' + e.message }; }
   res.redirect('/admin/vouchers-discounts');
 });
 
@@ -4171,28 +4171,28 @@ router.post('/vouchers-discounts/:id/toggle', requireAdminSession, (req, res) =>
     const voucherSvc = require('../services/voucherService');
     const v = voucherSvc.getById(req.params.id);
     if (v) voucherSvc.update(v.id, { active: v.active ? 0 : 1 });
-    req.session._msg = { type: 'success', text: 'Status voucher diubah.' };
-  } catch (e) { req.session._msg = { type: 'error', text: 'Gagal: ' + e.message }; }
+    req.session._msg = { type: 'success', text: 'Estado del cupón cambiado.' };
+  } catch (e) { req.session._msg = { type: 'error', text: 'Error:' + e.message }; }
   res.redirect('/admin/vouchers-discounts');
 });
 
 router.post('/vouchers-discounts/:id/delete', requireAdminSession, (req, res) => {
-  try { require('../services/voucherService').remove(req.params.id); req.session._msg = { type: 'success', text: 'Voucher dihapus.' }; }
-  catch (e) { req.session._msg = { type: 'error', text: 'Gagal: ' + e.message }; }
+  try { require('../services/voucherService').remove(req.params.id); req.session._msg = { type: 'success', text: 'Cupón eliminado.' }; }
+  catch (e) { req.session._msg = { type: 'error', text: 'Error:' + e.message }; }
   res.redirect('/admin/vouchers-discounts');
 });
 
 router.post('/vouchers-discounts/settings', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
   try {
     const fee = parseInt(req.body.registration_install_fee, 10) || 0;
-    if (fee <= 0) throw new Error('Biaya pasang tidak boleh 0. Untuk menggratiskan biaya pasang, gunakan kode voucher.');
+    if (fee <= 0) throw new Error('El costo de instalación no puede ser 0. Para hacerla gratis, usá un código de cupón.');
     saveSettings({
       registration_install_fee: fee,
       pppoe_domain: String(req.body.pppoe_domain || 'sky.id').replace(/^@/, '').trim() || 'sky.id',
       pppoe_default_password: String(req.body.pppoe_default_password || 'openisp').trim() || 'openisp'
     });
-    req.session._msg = { type: 'success', text: 'Biaya pasang disimpan: ' + regional.currencySymbol() + ' ' + fee.toLocaleString(regional.locale()) + '.' };
-  } catch (e) { req.session._msg = { type: 'error', text: 'Gagal: ' + e.message }; }
+    req.session._msg = { type: 'success', text: 'Costo de instalación guardado:' + regional.currencySymbol() + ' ' + fee.toLocaleString(regional.locale()) + '.' };
+  } catch (e) { req.session._msg = { type: 'error', text: 'Error:' + e.message }; }
   res.redirect('/admin/vouchers-discounts');
 });
 
@@ -4207,7 +4207,7 @@ router.get('/automation/template', requireAdminSession, (req, res) => {
     const _bsvc = require('../services/billingSendService');
     const defaults = waTemplateDefaults(company());
     if (!Object.prototype.hasOwnProperty.call(defaults, key)) {
-      return res.status(400).json({ ok: false, error: 'key tidak dikenal' });
+      return res.status(400).json({ ok: false, error: 'clave desconocida' });
     }
     const text = db.getAppSetting(key, defaults[key] || '');
     res.json({ ok: true, key: key, label: _bsvc.TEMPLATE_LABELS[key] || key, text: text });
@@ -4218,14 +4218,14 @@ router.get('/automation/template', requireAdminSession, (req, res) => {
 router.get('/automation', requireAdminSession, requireSidebarMenuAccess('automation'), (req, res) => {
   const comp = company();
   const defaultAutoBillingMsg =
-    'Yth. Pelanggan {{nama}},\n\n' +
-    'Ini adalah pengingat sebelum tanggal jatuh tempo/isolir.\n\n' +
-    '📦 *Paket:* {{paket}}\n' +
-    '💰 *Total Tagihan:* {{moneda}} {{tagihan}}\n' +
-    '📅 *Periode:* {{rincian}}\n\n' +
-    'Mohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\n' +
-    'Terima kasih atas kerja samanya.\n' +
-    'Salam,\nAdmin ' + comp;
+    'Estimado/a {{nama}},\n\n' +
+    'Le recordamos que su factura de internet está por vencer.\n\n' +
+    '📦 *Plan:* {{paket}}\n' +
+    '💰 *Monto:* {{moneda}} {{tagihan}}\n' +
+    '📅 *Período:* {{rincian}}\n\n' +
+    'Por favor, realice su pago antes de la fecha de corte. Detalle: {{link}}\n\n' +
+    '¡Gracias!\n' +
+    'Saludos,\n' + comp;
   const _bsvc = require('../services/billingSendService');
   const defaults = waTemplateDefaults(comp);
   const selectedTplKey = String(getSetting('auto_billing_template_key', 'whatsapp_auto_billing_message') || 'whatsapp_auto_billing_message');
@@ -4268,9 +4268,9 @@ router.post('/automation', requireAdminSession, express.urlencoded({ extended: t
     const msgText = typeof b.message === 'string' ? b.message.trim() : '';
     if (msgText && allowedKeys.includes(tplKey)) db.saveAppSetting(tplKey, msgText);
     saveSettings(next);
-    req.session._msg = { type: 'success', text: 'Pengaturan otomatisasi berhasil disimpan.' };
+    req.session._msg = { type: 'success', text: 'Configuración de automatización guardada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal menyimpan otomatisasi: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo guardar la automatización:' + e.message };
   }
   res.redirect('/admin/automation');
 });
@@ -4286,7 +4286,7 @@ router.post('/automation/send-now', requireAdminSession, express.urlencoded({ ex
       intervalMin: req.body.interval_min,
       intervalMax: req.body.interval_max,
     });
-    res.json({ ok: !!r.started, total: r.total || 0, label: r.label || '', message: r.started ? ('Pengiriman dimulai: ' + r.total + ' pelanggan (' + r.label + ').') : (r.message || 'Tidak ada target.') });
+    res.json({ ok: !!r.started, total: r.total || 0, label: r.label || '', message: r.started ? ('Pengiriman dimulai: ' + r.total + ' clientes (' + r.label + ').') : (r.message || 'No hay destinatarios.') });
   } catch (e) {
     res.status(500).json({ ok: false, message: e.message });
   }
@@ -4299,7 +4299,7 @@ router.get('/settings', requireAdminSession, requireSidebarMenuAccess('settings'
   const baseUrl = (settings && settings.app_url ? String(settings.app_url) : `${protocol}://${host}`).replace(/\/+$/, '');
   const paymentWebhookUrl = `${baseUrl}/customer/payment/callback`;
   res.render('admin/settings', {
-    title: 'Pengaturan Sistem', company: company(), activePage: 'settings',
+    title: 'Configuración del sistema', company: company(), activePage: 'settings',
     settings, msg: flashMsg(req),
     paymentWebhookUrl
   });
@@ -4317,7 +4317,7 @@ router.get('/ewallet-logs', requireAdminSession, requireSidebarMenuAccess('setti
   const alRows = db.prepare(`
     SELECT i.amount, i.period_month, i.period_year, i.paid_at, c.name AS customer_name, c.customer_code
     FROM invoices i JOIN customers c ON c.id = i.customer_id
-    WHERE i.paid_by_name = 'Sistem (Auto)' AND i.period_month = ? AND i.period_year = ?
+    WHERE i.paid_by_name = 'Sistema (automático)' AND i.period_month = ? AND i.period_year = ?
     ORDER BY c.name ASC
   `).all(alMonth, alYear);
   const alTotal = alRows.reduce(function (s, r) { return s + (Number(r.amount) || 0); }, 0);
@@ -4333,13 +4333,13 @@ router.get('/ewallet-logs', requireAdminSession, requireSidebarMenuAccess('setti
 router.post('/settings/qris-upload', requireAdminSession, qrisUpload.single('qris_file'), async (req, res) => {
   try {
     const f = req.file;
-    if (!f || !f.buffer || !f.originalname) throw new Error('File QRIS tidak ditemukan');
+    if (!f || !f.buffer || !f.originalname) throw new Error('Archivo QR no encontrado');
 
     const ext = String(path.extname(f.originalname || '') || '').toLowerCase();
     const allowedExt = new Set(['.png', '.jpg', '.jpeg', '.webp']);
     const allowedMime = new Set(['image/png', 'image/jpeg', 'image/webp']);
     if (!allowedExt.has(ext) || !allowedMime.has(String(f.mimetype || '').toLowerCase())) {
-      throw new Error('Format file tidak didukung. Gunakan PNG/JPG/WebP');
+      throw new Error('Formato no admitido. Usá PNG/JPG/WebP');
     }
 
     const dir = path.join(__dirname, '../public/uploads/qris');
@@ -4364,15 +4364,15 @@ router.post('/settings/qris-upload', requireAdminSession, qrisUpload.single('qri
     }
 
     const ok = saveSettings({ qris_static_qr_url: url, qris_static_enabled: true, ...(payload ? { qris_static_payload: payload } : {}) });
-    if (!ok) throw new Error('Gagal menyimpan pengaturan QRIS');
+    if (!ok) throw new Error('No se pudo guardar la configuración del QR');
 
     if (payload) {
-      req.session._msg = { type: 'success', text: 'QRIS berhasil di-upload. Payload QRIS berhasil terbaca otomatis.' };
+      req.session._msg = { type: 'success', text: 'QR subido. El payload se leyó automáticamente.' };
     } else {
-      req.session._msg = { type: 'success', text: 'QRIS berhasil di-upload, tetapi payload QRIS tidak terbaca otomatis. Silakan isi QRIS Static Payload (String) secara manual.' };
+      req.session._msg = { type: 'success', text: 'QR subido, pero el payload no se pudo leer automáticamente. Completá el payload a mano.' };
     }
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal upload QRIS: ' + (e?.message || e) };
+    req.session._msg = { type: 'error', text: 'No se pudo subir el QR:' + (e?.message || e) };
   }
   res.redirect('/admin/settings');
 });
@@ -4380,13 +4380,13 @@ router.post('/settings/qris-upload', requireAdminSession, qrisUpload.single('qri
 router.post('/settings/logo-upload', requireAdminSession, qrisUpload.single('logo_file'), async (req, res) => {
   try {
     const f = req.file;
-    if (!f || !f.buffer || !f.originalname) throw new Error('File logo tidak ditemukan');
+    if (!f || !f.buffer || !f.originalname) throw new Error('Archivo de logo no encontrado');
 
     const ext = String(path.extname(f.originalname || '') || '').toLowerCase();
     const allowedExt = new Set(['.png', '.jpg', '.jpeg', '.webp']);
     const allowedMime = new Set(['image/png', 'image/jpeg', 'image/webp']);
     if (!allowedExt.has(ext) || !allowedMime.has(String(f.mimetype || '').toLowerCase())) {
-      throw new Error('Format file tidak didukung. Gunakan PNG/JPG/WebP');
+      throw new Error('Formato no admitido. Usá PNG/JPG/WebP');
     }
 
     const dir = path.join(__dirname, '../public/img');
@@ -4395,13 +4395,13 @@ router.post('/settings/logo-upload', requireAdminSession, qrisUpload.single('log
     const fullPath = path.join(dir, 'logo.png');
     fs.writeFileSync(fullPath, f.buffer);
     let _iconMsg = '';
-    try { await require('../services/iconService').generatePwaIcons(f.buffer); _iconMsg = ' Ikon PWA (192/512/maskable/apple) ikut diperbarui.'; }
+    try { await require('../services/iconService').generatePwaIcons(f.buffer); _iconMsg = ' Los íconos de la app (192/512/maskable/apple) también se actualizaron.'; }
     catch (e) { try { logger.warn('[Logo] Gagal generate ikon PWA: ' + e.message); } catch (_) {} _iconMsg = ' (Ikon PWA gagal dibuat.)'; }
     try { saveSettings({ logo_version: String(Date.now()) }); } catch (e) {}
 
-    req.session._msg = { type: 'success', text: 'Logo aplikasi berhasil diperbarui!' + _iconMsg };
+    req.session._msg = { type: 'success', text: '¡Logo actualizado!' + _iconMsg };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal upload logo: ' + (e?.message || e) };
+    req.session._msg = { type: 'error', text: 'No se pudo subir el logo:' + (e?.message || e) };
   }
   res.redirect('/admin/settings');
 });
@@ -4417,22 +4417,22 @@ router.post('/settings/branding/logo/:type', requireAdminSession, qrisUpload.sin
     // Khusus foto hero landing: konversi ke WebP + JPEG (fallback)
     if (type === 'hero') {
       const f0 = req.file;
-      if (!f0 || !f0.buffer) throw new Error('File foto tidak ditemukan');
+      if (!f0 || !f0.buffer) throw new Error('Archivo de foto no encontrado');
       const dirH = path.join(__dirname, '../public/img/landing');
       if (!fs.existsSync(dirH)) fs.mkdirSync(dirH, { recursive: true });
       const r = await require('../services/imageOptimize').writeWebpAndJpg(f0.buffer, path.join(dirH, 'server-1600'), { maxWidth: 1600, quality: 82 });
       try { saveSettings({ landing_hero_version: String(Date.now()) }); } catch (e) {}
-      req.session._msg = { type: 'success', text: 'Foto hero landing diperbarui (WebP ' + Math.round(r.webp / 1024) + ' KB + JPEG ' + Math.round(r.jpg / 1024) + ' KB).' };
+      req.session._msg = { type: 'success', text: 'Imagen principal actualizada (WebP' + Math.round(r.webp / 1024) + ' KB + JPEG ' + Math.round(r.jpg / 1024) + ' KB).' };
       return res.redirect('/admin/settings');
     }
     const cfg = map[type];
-    if (!cfg) throw new Error('Jenis logo tidak dikenal');
+    if (!cfg) throw new Error('Tipo de logo desconocido');
     const f = req.file;
-    if (!f || !f.buffer) throw new Error('File logo tidak ditemukan');
+    if (!f || !f.buffer) throw new Error('Archivo de logo no encontrado');
     const ext = String(path.extname(f.originalname || '') || '').toLowerCase();
     const allowedExt = new Set(['.png', '.jpg', '.jpeg', '.webp']);
     const allowedMime = new Set(['image/png', 'image/jpeg', 'image/webp']);
-    if (!allowedExt.has(ext) || !allowedMime.has(String(f.mimetype || '').toLowerCase())) throw new Error('Format tidak didukung (PNG/JPG/WebP)');
+    if (!allowedExt.has(ext) || !allowedMime.has(String(f.mimetype || '').toLowerCase())) throw new Error('Formato no admitido (PNG/JPG/WebP)');
 
     const dir = path.join(__dirname, '../public/img');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -4443,12 +4443,12 @@ router.post('/settings/branding/logo/:type', requireAdminSession, qrisUpload.sin
 
     let extra = '';
     if (type === 'pwa') {
-      try { await require('../services/iconService').generatePwaIcons(f.buffer); extra = ' Ikon PWA (192/512/maskable/apple) dibuat ulang.'; }
-      catch (e) { extra = ' (Ikon PWA gagal dibuat.)'; }
+      try { await require('../services/iconService').generatePwaIcons(f.buffer); extra = ' Los íconos de la app (192/512/maskable/apple) se regeneraron.'; }
+      catch (e) { extra = ' (No se pudieron crear los íconos de la app.)'; }
     }
-    req.session._msg = { type: 'success', text: 'Logo ' + type + ' berhasil diperbarui.' + extra };
+    req.session._msg = { type: 'success', text: 'Logo ' + type + ' actualizado.' + extra };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal upload logo: ' + (e && e.message ? e.message : e) };
+    req.session._msg = { type: 'error', text: 'No se pudo subir el logo:' + (e && e.message ? e.message : e) };
   }
   res.redirect('/admin/settings');
 });
@@ -4456,11 +4456,11 @@ router.post('/settings/branding/logo/:type', requireAdminSession, qrisUpload.sin
 router.post('/settings/regenerate-icons', requireAdminSession, async (req, res) => {
   try {
     const p = path.join(__dirname, '../public/img/logo.png');
-    if (!fs.existsSync(p)) return res.json({ ok: false, message: 'Logo belum ada. Upload logo dulu.' });
+    if (!fs.existsSync(p)) return res.json({ ok: false, message: 'Todavía no hay logo. Subí un logo primero.' });
     await require('../services/iconService').generatePwaIcons(fs.readFileSync(p));
     try { saveSettings({ logo_version: String(Date.now()) }); } catch (e) {}
-    return res.json({ ok: true, message: 'Ikon PWA berhasil dibuat dari logo saat ini.' });
-  } catch (e) { return res.json({ ok: false, message: 'Gagal generate ikon: ' + e.message }); }
+    return res.json({ ok: true, message: 'Íconos de la app creados a partir del logo actual.' });
+  } catch (e) { return res.json({ ok: false, message: 'No se pudieron generar los íconos:' + e.message }); }
 });
 
 router.get('/update', requireAdminSession, requireSidebarMenuAccess('update'), restrictToAdmin, (req, res) => {
@@ -4479,7 +4479,7 @@ router.get('/update', requireAdminSession, requireSidebarMenuAccess('update'), r
 router.post('/update/run', requireAdminSession, restrictToAdmin, (req, res) => {
   const repoRoot = path.resolve(__dirname, '..');
   if (!runCmd('git', ['rev-parse', '--is-inside-work-tree'], repoRoot).ok) {
-    req.session._msg = { type: 'error', text: 'Instalasi kontainer (tanpa .git): pembaruan dilakukan dengan rebuild image, bukan lewat git.' };
+    req.session._msg = { type: 'error', text: 'Instalación en contenedor (sin .git): la actualización se hace reconstruyendo la imagen, no con git.' };
     return res.redirect('/admin/update');
   }
   const log = [];
@@ -4551,7 +4551,7 @@ router.post('/update/run', requireAdminSession, restrictToAdmin, (req, res) => {
   try {
     const inside = runCmd('git', ['rev-parse', '--is-inside-work-tree'], repoRoot);
     pushCmd('git rev-parse --is-inside-work-tree', inside);
-    if (!inside.ok) throw new Error('Folder ini belum menjadi git repository.');
+    if (!inside.ok) throw new Error('Esta carpeta no es un repositorio git.');
 
     const _repo = String(getSetting('update_repo', 'oxpoe/open-isp') || '').trim();
   info.repo = _repo || 'origin';
@@ -4559,17 +4559,17 @@ router.post('/update/run', requireAdminSession, restrictToAdmin, (req, res) => {
     ? runCmd('git', ['fetch', '--prune', 'https://github.com/' + _repo + '.git', branch], repoRoot)
     : runCmd('git', ['fetch', '--prune'], repoRoot);
     pushCmd('git fetch --prune', fetch);
-    if (!fetch.ok) throw new Error('Gagal git fetch.');
+    if (!fetch.ok) throw new Error('Falló git fetch.');
 
     const remote = _repo
     ? runCmd('git', ['show', 'FETCH_HEAD:version.txt'], repoRoot)
     : runCmd('git', ['show', `origin/${branch}:version.txt`], repoRoot);
     pushCmd(`git show origin/${branch}:version.txt`, remote);
-    if (!remote.ok) throw new Error('Tidak bisa membaca version.txt dari GitHub.');
+    if (!remote.ok) throw new Error('No se pudo leer version.txt desde GitHub.');
     const remoteVersion = String(remote.stdout || '').trim() || '-';
 
     if (remoteVersion !== '-' && remoteVersion === localBefore) {
-      req.session._msg = { type: 'success', text: 'Versi sudah terbaru: ' + localBefore };
+      req.session._msg = { type: 'success', text: 'Ya tenés la última versión:' + localBefore };
       req.session._updateLog = log.join('\n');
       return res.redirect('/admin/update');
     }
@@ -4584,7 +4584,7 @@ router.post('/update/run', requireAdminSession, restrictToAdmin, (req, res) => {
 
     const resetHard = runCmd('git', ['reset', '--hard', _repo ? 'FETCH_HEAD' : `origin/${branch}`], repoRoot);
     pushCmd(`git reset --hard origin/${branch}`, resetHard);
-    if (!resetHard.ok) throw new Error('Gagal reset ke origin/' + branch);
+    if (!resetHard.ok) throw new Error('No se pudo restablecer a origin/' + branch);
     repoChanged = true;
 
     if (remoteVersion && remoteVersion !== '-') {
@@ -4620,7 +4620,7 @@ router.post('/update/run', requireAdminSession, restrictToAdmin, (req, res) => {
       pushCmd('npm install --omit=dev --no-audit --no-fund --prefer-offline', npm);
       if (!npm.ok) throw new Error('Update berhasil, tetapi npm install gagal.');
     } else {
-      log.push('$ package.json tidak berubah, npm install dilewati (Hemat CPU & Waktu!).');
+      log.push('$ package.json no cambió, se omite npm install (ahorra CPU y tiempo).');
     }
 
     const localAfter = readTextFileSafe(versionPath) || '-';
@@ -4634,7 +4634,7 @@ router.post('/update/run', requireAdminSession, restrictToAdmin, (req, res) => {
         log.push(`$ restore preserved files failed: ${String(restoreErr?.message || restoreErr)}`);
       }
     }
-    req.session._msg = { type: 'error', text: 'Gagal update: ' + (e?.message || e) };
+    req.session._msg = { type: 'error', text: 'No se pudo actualizar:' + (e?.message || e) };
     req.session._updateLog = log.join('\n');
   } finally {
     try {
@@ -4649,7 +4649,7 @@ router.post('/api/telegram/sync', requireAdminSession, async (req, res) => {
   try {
     const { initTelegram } = require('../services/telegramBot');
     initTelegram();
-    res.json({ success: true, message: 'Bot Telegram berhasil disinkronkan.' });
+    res.json({ success: true, message: 'Bot de Telegram sincronizado.' });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -4746,12 +4746,12 @@ router.post('/settings', requireAdminSession, express.urlencoded({ extended: tru
       } else {
         require('../services/telegramBot').initTelegram(); // This will stop it if it was running
       }
-      req.session._msg = { type: 'success', text: 'Pengaturan berhasil disimpan.' };
+      req.session._msg = { type: 'success', text: 'Configuración guardada.' };
     } else {
-      req.session._msg = { type: 'error', text: 'Gagal menyimpan pengaturan' };
+      req.session._msg = { type: 'error', text: 'No se pudo guardar la configuración' };
     }
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/settings');
 });
@@ -4765,11 +4765,11 @@ router.post('/payment-unmatched/:id/match', requireAdminSession, express.urlenco
   try {
     const notifId = parseInt(req.params.id);
     const invId = parseInt(req.body.invoice_id || req.body.manual_invoice_id);
-    if (!invId) throw new Error('Pilih invoice kandidat atau isi ID invoice');
+    if (!invId) throw new Error('Elegí una factura candidata o ingresá el ID de la factura');
     const inv = db.prepare('SELECT * FROM invoices WHERE id = ?').get(invId);
-    if (!inv) throw new Error('Invoice #' + invId + ' tidak ditemukan');
+    if (!inv) throw new Error('Invoice #' + invId + ' no encontrada');
     if (String(inv.status) === 'paid') throw new Error('Invoice #' + invId + ' sudah lunas');
-    const note = 'DICocokkan MANUAL dari notif webhook #' + notifId;
+    const note = 'Conciliado A MANO desde la notificación webhook #' + notifId;
     billingSvc.markAsPaid(invId, 'Manual (Webhook)', note, req.session.admin || null);
     try { db.prepare('UPDATE webhook_payment_notifs SET matched_invoice_id = ? WHERE id = ?').run(invId, notifId); } catch (e) {}
     // Aktifkan kembali bila pelanggan isolir & tak ada unpaid
@@ -4780,9 +4780,9 @@ router.post('/payment-unmatched/:id/match', requireAdminSession, express.urlenco
         if (!unpaid) await customerSvc.activateCustomer(inv.customer_id);
       }
     } catch (e) {}
-    req.session._msg = { type: 'success', text: 'Invoice #' + invId + ' ditandai LUNAS & notif dicocokkan.' };
+    req.session._msg = { type: 'success', text: 'Invoice #' + invId + ' marcada como PAGADA y notificación conciliada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal cocokkan: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo conciliar:' + e.message };
   }
   res.redirect('/admin/payment-unmatched');
 });
@@ -4806,11 +4806,11 @@ router.get('/autolunas/export', requireAdminSession, requireSidebarMenuAccess('p
   const rows = db.prepare(`
     SELECT i.amount, i.period_month, i.period_year, i.paid_at, i.notes, c.name AS customer_name, c.customer_code
     FROM invoices i JOIN customers c ON c.id = i.customer_id
-    WHERE i.paid_by_name = 'Sistem (Auto)' AND i.period_month = ? AND i.period_year = ?
+    WHERE i.paid_by_name = 'Sistema (automático)' AND i.period_month = ? AND i.period_year = ?
     ORDER BY c.name ASC
   `).all(month, year);
   const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const lines = [['No','Pelanggan','ID Pelanggan','Periode','Nominal','Waktu Lunas','Catatan'].map(esc).join(',')];
+  const lines = [['No','Pelanggan','ID de cliente','Periode','Nominal','Fecha de pago','Catatan'].map(esc).join(',')];
   rows.forEach((r, i) => lines.push([i + 1, r.customer_name, r.customer_code || '', r.period_month + '/' + r.period_year, Number(r.amount) || 0, r.paid_at || '', String(r.notes || '').replace('AUTO-LUNAS:', '').trim()].map(esc).join(',')));
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', 'attachment; filename="rekap-autolunas-' + month + '-' + year + '.csv"');
@@ -4838,20 +4838,20 @@ router.get('/backup/download/:fileName', requireAdminSession, (req, res) => {
     const filePath = path.join(backupDir, fileName);
 
     if (!fs.existsSync(filePath)) {
-      req.session._msg = { type: 'error', text: 'File backup tidak ditemukan.' };
+      req.session._msg = { type: 'error', text: 'Archivo de respaldo no encontrado.' };
       return res.redirect('/admin/backup');
     }
 
     res.download(filePath, fileName, (err) => {
       if (err && !res.headersSent) {
         logger.error(`[Backup] Error downloading file ${fileName}:`, err);
-        req.session._msg = { type: 'error', text: 'Gagal mendownload file backup.' };
+        req.session._msg = { type: 'error', text: 'No se pudo descargar el respaldo.' };
         res.redirect('/admin/backup');
       }
     });
   } catch (e) {
     logger.error('[Backup] Download error:', e);
-    req.session._msg = { type: 'error', text: 'Gagal mendownload backup: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo descargar el respaldo:' + e.message };
     res.redirect('/admin/backup');
   }
 });
@@ -4868,17 +4868,17 @@ router.post('/backup/create', requireAdminSession, express.urlencoded({ extended
     } else if (type === 'settings') {
       result = backupSvc.backupSettings();
     } else {
-      req.session._msg = { type: 'error', text: 'Tipe backup tidak valid' };
+      req.session._msg = { type: 'error', text: 'Tipo de respaldo inválido' };
       return res.redirect('/admin/backup');
     }
 
     if (result.success) {
-      req.session._msg = { type: 'success', text: `Backup berhasil dibuat: ${result.fileName}` };
+      req.session._msg = { type: 'success', text: `Respaldo creado: ${result.fileName}` };
     } else {
-      req.session._msg = { type: 'error', text: `Gagal backup: ${result.error}` };
+      req.session._msg = { type: 'error', text: `Falló el respaldo: ${result.error}` };
     }
   } catch (e) {
-    req.session._msg = { type: 'error', text: `Gagal: ${e.message}` };
+    req.session._msg = { type: 'error', text: `Error: ${e.message}` };
   }
   res.redirect('/admin/backup');
 });
@@ -4894,22 +4894,22 @@ router.post('/backup/restore', requireAdminSession, express.urlencoded({ extende
     } else if (type === 'settings') {
       result = backupSvc.restoreSettings(fileName);
     } else {
-      req.session._msg = { type: 'error', text: 'Tipe restore tidak valid' };
+      req.session._msg = { type: 'error', text: 'Tipo de restauración inválido' };
       return res.redirect('/admin/backup');
     }
 
     if (result.success) {
       if (type === 'database') {
         restartNeeded = true;
-        req.session._msg = { type: 'success', text: `Restore database berhasil: ${fileName}. Aplikasi restart otomatis untuk menerapkan...` };
+        req.session._msg = { type: 'success', text: `Base de datos restaurada: ${fileName}. La aplicación se reinicia automáticamente para aplicarla...` };
       } else {
-        req.session._msg = { type: 'success', text: `Restore berhasil: ${fileName}` };
+        req.session._msg = { type: 'success', text: `Restauración completada: ${fileName}` };
       }
     } else {
-      req.session._msg = { type: 'error', text: `Gagal restore: ${result.error}` };
+      req.session._msg = { type: 'error', text: `Falló la restauración: ${result.error}` };
     }
   } catch (e) {
-    req.session._msg = { type: 'error', text: `Gagal: ${e.message}` };
+    req.session._msg = { type: 'error', text: `Error: ${e.message}` };
   }
   res.redirect('/admin/backup');
   // DB di-swap: koneksi lama masih memakai file lama -> muat ulang proses (PM2/Docker restart otomatis)
@@ -4921,7 +4921,7 @@ router.post('/backup/upload-restore', requireAdminSession, upload.single('backup
   try {
     const file = req.file;
     if (!file || !file.buffer || !file.originalname) {
-      throw new Error('File backup tidak ditemukan.');
+      throw new Error('Archivo de respaldo no encontrado.');
     }
 
     const originalName = path.basename(file.originalname);
@@ -4952,25 +4952,25 @@ router.post('/backup/upload-restore', requireAdminSession, upload.single('backup
         JSON.parse(file.buffer.toString('utf8'));
       } catch (jsonErr) {
         fs.unlinkSync(savePath);
-        throw new Error('Format JSON file settings tidak valid: ' + jsonErr.message);
+        throw new Error('El JSON del archivo de configuración no es válido:' + jsonErr.message);
       }
 
       result = backupSvc.restoreSettings(savedFileName);
     } else {
-      throw new Error('Format file tidak didukung. Harap upload file .db (database) atau .json (settings).');
+      throw new Error('Formato no admitido. Subí un archivo .db (base de datos) o .json (configuración).');
     }
 
     if (result && result.success) {
       req.session._msg = { 
         type: 'success', 
-        text: `File backup "${originalName}" berhasil di-upload dan di-restore! Backup otomatis sebelum restore telah dibuat (${result.preRestoreBackup || '-'}).` 
+        text: `¡Respaldo "${originalName}" subido y restaurado! Antes se creó un respaldo automático (${result.preRestoreBackup || '-'}).` 
       };
     } else {
-      req.session._msg = { type: 'error', text: `Gagal restore: ${result ? result.error : 'Error tidak diketahui'}` };
+      req.session._msg = { type: 'error', text: `Falló la restauración: ${result ? result.error : 'error desconocido'}` };
     }
   } catch (e) {
     logger.error('[Backup] Upload & restore error:', e);
-    req.session._msg = { type: 'error', text: 'Gagal upload & restore: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Falló la subida y restauración:' + e.message };
   }
   res.redirect('/admin/backup');
   if (restartNeeded && result && result.success) setTimeout(() => process.exit(0), 2000);
@@ -4985,15 +4985,15 @@ router.post('/backup/delete', requireAdminSession, express.urlencoded({ extended
     const backupFilePath = path.join(backupDir, fileName);
 
     if (!fs.existsSync(backupFilePath)) {
-      req.session._msg = { type: 'error', text: 'File backup tidak ditemukan' };
+      req.session._msg = { type: 'error', text: 'Archivo de respaldo no encontrado' };
       return res.redirect('/admin/backup');
     }
 
     fs.unlinkSync(backupFilePath);
     logger.info(`[Backup] Backup deleted: ${fileName}`);
-    req.session._msg = { type: 'success', text: `Backup berhasil dihapus: ${fileName}` };
+    req.session._msg = { type: 'success', text: `Respaldo eliminado: ${fileName}` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: `Gagal menghapus: ${e.message}` };
+    req.session._msg = { type: 'error', text: `No se pudo eliminar: ${e.message}` };
   }
   res.redirect('/admin/backup');
 });
@@ -5004,12 +5004,12 @@ router.post('/backup/cleanup', requireAdminSession, express.urlencoded({ extende
     const result = backupSvc.cleanupOldBackups(parseInt(retentionDays) || 30);
 
     if (result.success) {
-      req.session._msg = { type: 'success', text: `Cleanup selesai: ${result.deletedCount} backup lama dihapus` };
+      req.session._msg = { type: 'success', text: `Limpieza terminada: se eliminaron ${result.deletedCount} respaldos antiguos` };
     } else {
-      req.session._msg = { type: 'error', text: `Gagal cleanup: ${result.error}` };
+      req.session._msg = { type: 'error', text: `Falló la limpieza: ${result.error}` };
     }
   } catch (e) {
-    req.session._msg = { type: 'error', text: `Gagal: ${e.message}` };
+    req.session._msg = { type: 'error', text: `Error: ${e.message}` };
   }
   res.redirect('/admin/backup');
 });
@@ -5034,9 +5034,9 @@ router.get('/inventory', requireAdminSession, requireSidebarMenuAccess('inventor
 router.post('/inventory/category/add', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
   try {
     inventorySvc.createCategory(req.body);
-    req.session._msg = { type: 'success', text: 'Kategori berhasil ditambahkan.' };
+    req.session._msg = { type: 'success', text: 'Categoría agregada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/inventory');
 });
@@ -5044,9 +5044,9 @@ router.post('/inventory/category/add', requireAdminSession, express.urlencoded({
 router.post('/inventory/category/delete/:id', requireAdminSession, (req, res) => {
   try {
     inventorySvc.deleteCategory(req.params.id);
-    req.session._msg = { type: 'success', text: 'Kategori berhasil dihapus.' };
+    req.session._msg = { type: 'success', text: 'Categoría eliminada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/inventory');
 });
@@ -5054,9 +5054,9 @@ router.post('/inventory/category/delete/:id', requireAdminSession, (req, res) =>
 router.post('/inventory/item/add', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
   try {
     inventorySvc.createItem(req.body);
-    req.session._msg = { type: 'success', text: 'Barang berhasil ditambahkan.' };
+    req.session._msg = { type: 'success', text: 'Artículo agregado.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/inventory');
 });
@@ -5064,9 +5064,9 @@ router.post('/inventory/item/add', requireAdminSession, express.urlencoded({ ext
 router.post('/inventory/item/edit/:id', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
   try {
     inventorySvc.updateItem(req.params.id, req.body);
-    req.session._msg = { type: 'success', text: 'Barang berhasil diperbarui.' };
+    req.session._msg = { type: 'success', text: 'Artículo actualizado.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/inventory');
 });
@@ -5074,9 +5074,9 @@ router.post('/inventory/item/edit/:id', requireAdminSession, express.urlencoded(
 router.post('/inventory/stock/add', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
   try {
     inventorySvc.addStock(req.body, req.session.adminUser || 'Admin');
-    req.session._msg = { type: 'success', text: 'Stok berhasil ditambahkan.' };
+    req.session._msg = { type: 'success', text: 'Stock agregado.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/inventory');
 });
@@ -5109,7 +5109,7 @@ router.get('/monitoring', requireAdminSession, requireSidebarMenuAccess('monitor
   const settings = getSettings(); // Get current settings
 
   res.render('admin/monitoring', {
-      title: 'Monitoring Sistem',
+      title: 'Monitoreo del sistema',
       company: company(),
       activePage: 'monitoring',
       healthStatus,
@@ -5143,13 +5143,13 @@ router.post('/api/genieacs/settings', requireAdmin, async (req, res) => {
     
     // Validate input
     if (genieacs_timeout < 5000 || genieacs_timeout > 120000) {
-      return res.json({ success: false, message: 'Timeout harus antara 5000-120000 ms' });
+      return res.json({ success: false, message: 'El tiempo de espera debe estar entre 5000 y 120000 ms' });
     }
     if (genieacs_rxpower_threshold < -40 || genieacs_rxpower_threshold > -15) {
-      return res.json({ success: false, message: 'RX Power threshold harus antara -40 sampai -15 dBm' });
+      return res.json({ success: false, message: 'El umbral de potencia RX debe estar entre -40 y -15 dBm' });
     }
     if (genieacs_monitoring_interval < 1 || genieacs_monitoring_interval > 24) {
-      return res.json({ success: false, message: 'Monitoring interval harus antara 1-24 jam' });
+      return res.json({ success: false, message: 'El intervalo de monitoreo debe estar entre 1 y 24 horas' });
     }
 
     // Update settings
@@ -5193,7 +5193,7 @@ router.post('/api/genieacs/settings', requireAdmin, async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Pengaturan GenieACS berhasil disimpan. Restart aplikasi untuk menerapkan perubahan timeout.' 
+      message: 'Configuración de GenieACS guardada. Reiniciá la aplicación para aplicar el nuevo tiempo de espera.' 
     });
   } catch (error) {
     logger.error('[API] Error saving GenieACS settings:', error);
@@ -5208,14 +5208,14 @@ router.get('/api/genieacs/test', requireAdmin, async (req, res) => {
     
     res.json({ 
       success: true, 
-      message: 'Koneksi ke GenieACS berhasil!',
+      message: '¡Conexión con GenieACS correcta!',
       deviceCount: devices.length
     });
   } catch (error) {
     logger.error('[API] Error testing GenieACS connection:', error);
     res.json({ 
       success: false, 
-      message: 'Koneksi gagal: ' + error.message 
+      message: 'Falló la conexión:' + error.message 
     });
   }
 });
@@ -5331,13 +5331,13 @@ router.post('/api/device/:tag/ssid', requireAdmin, express.json(), async (req, r
       const cust = customerSvc.findCustomerByAny(tag);
       if (cust && cust.phone) {
         const now = getNowLocal();
-        const msg = `📶 *PERUBAHAN SSID WIFI*\n\n` +
-          `👤 *Pelanggan:* ${cust.name}\n` +
-          `🕒 *Waktu:* ${now}\n\n` +
-          `SSID WiFi Anda sudah diperbarui menjadi:\n` +
+        const msg = `📶 *CAMBIO DE NOMBRE DEL WIFI*\n\n` +
+          `👤 *Cliente:* ${cust.name}\n` +
+          `🕒 *Fecha:* ${now}\n\n` +
+          `El nombre (SSID) de su WiFi ahora es:\n` +
           `📡 *${ssid}*\n\n` +
-          `Silakan pilih SSID baru di perangkat Anda untuk terhubung.\n` +
-          `⚠️ Jangan bagikan info ini ke orang lain.`;
+          `Seleccione la nueva red en sus dispositivos para conectarse.\n` +
+          `⚠️ No comparta esta información.`;
         await trySendWhatsappPayment(cust.phone, msg);
       }
     } catch (e) { logger.error('[Admin] Gagal kirim notif SSID via WA: ' + (e.message || e)); }
@@ -5347,7 +5347,7 @@ router.post('/api/device/:tag/ssid', requireAdmin, express.json(), async (req, r
 
 router.post('/api/device/:tag/password', requireAdmin, express.json(), async (req, res) => {
   const { password } = req.body;
-  if (!password || password.length < 8) return res.status(400).json({ error: 'Password minimal 8 karakter' });
+  if (!password || password.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' });
   const ok = await customerDevice.updatePassword(req.params.tag, password);
   // Kirim notifikasi WhatsApp ke pelanggan
   if (ok) {
@@ -5356,13 +5356,13 @@ router.post('/api/device/:tag/password', requireAdmin, express.json(), async (re
       const cust = customerSvc.findCustomerByAny(tag);
       if (cust && cust.phone) {
         const now = getNowLocal();
-        const msg = `🔑 *PERUBAHAN PASSWORD WIFI*\n\n` +
-          `👤 *Pelanggan:* ${cust.name}\n` +
-          `🕒 *Waktu:* ${now}\n\n` +
-          `Password WiFi Anda sudah diperbarui menjadi:\n` +
+        const msg = `🔑 *CAMBIO DE CONTRASEÑA DEL WIFI*\n\n` +
+          `👤 *Cliente:* ${cust.name}\n` +
+          `🕒 *Fecha:* ${now}\n\n` +
+          `La contraseña de su WiFi ahora es:\n` +
           `🔐 *${password}*\n\n` +
-          `Silakan gunakan password baru untuk terhubung.\n` +
-          `⚠️ Jangan bagikan password ini ke orang lain.`;
+          `Use la nueva contraseña para conectarse.\n` +
+          `⚠️ No comparta esta contraseña.`;
         await trySendWhatsappPayment(cust.phone, msg);
       }
     } catch (e) { logger.error('[Admin] Gagal kirim notif Password via WA: ' + (e.message || e)); }
@@ -5389,13 +5389,13 @@ router.post('/api/bulk/ssid', requireAdmin, express.json(), async (req, res) => 
           const cust = customerSvc.findCustomerByAny(tag);
           if (cust && cust.phone) {
             const now = getNowLocal();
-            const msg = `📶 *PERUBAHAN SSID WIFI*\n\n` +
-              `👤 *Pelanggan:* ${cust.name}\n` +
-              `🕒 *Waktu:* ${now}\n\n` +
-              `SSID WiFi Anda sudah diperbarui menjadi:\n` +
+            const msg = `📶 *CAMBIO DE NOMBRE DEL WIFI*\n\n` +
+              `👤 *Cliente:* ${cust.name}\n` +
+              `🕒 *Fecha:* ${now}\n\n` +
+              `El nombre (SSID) de su WiFi ahora es:\n` +
               `📡 *${ssid}*\n\n` +
-              `Silakan pilih SSID baru di perangkat Anda untuk terhubung.\n` +
-              `⚠️ Jangan bagikan info ini ke orang lain.`;
+              `Seleccione la nueva red en sus dispositivos para conectarse.\n` +
+              `⚠️ No comparta esta información.`;
             await trySendWhatsappPayment(cust.phone, msg);
           }
         } catch (e) { /* ignore per-customer WA notification errors */ }
@@ -5584,7 +5584,7 @@ router.get('/vouchers/batches/:id/print', requireAdminSession, (req, res) => {
     LEFT JOIN routers r ON r.id = b.router_id
     WHERE b.id = ?
   `).get(batchId);
-  if (!batch) return res.status(404).send('Batch tidak ditemukan');
+  if (!batch) return res.status(404).send('Lote no encontrado');
 
   const vouchers = db.prepare(`
     SELECT code, password, profile_name, used_at
@@ -5622,7 +5622,7 @@ router.get('/vouchers/batches/:id/print', requireAdminSession, (req, res) => {
     if (!v) return '-';
     const s = String(v).trim();
     const mDay = s.match(/^(\d+)\s*d$/i);
-    if (mDay) return `${Number(mDay[1])} hari`;
+    if (mDay) return `${Number(mDay[1])} días`;
     return s;
   };
 
@@ -5747,7 +5747,7 @@ body{margin:0;font-family:Arial,sans-serif;color:#0f172a}
       };
       const combined = `${headerTpl}\n${rowTpl}\n${footerTpl}`;
       if (/<\?(?:php)?/i.test(combined) || looksLikePhpOnly(combined)) {
-        templateError = 'Template yang dipaste masih format PHP (Mikhmon). Di sini hanya mendukung template HTML + placeholder (%username% dll).';
+        templateError = 'La plantilla pegada todavía está en formato PHP (Mikhmon). Aquí solo se admiten plantillas HTML con marcadores (%username%, etc.).';
       }
 
       const phone = (Array.isArray(settings.whatsapp_admin_numbers) && settings.whatsapp_admin_numbers.length > 0)
@@ -5813,7 +5813,7 @@ body{margin:0;font-family:Arial,sans-serif;color:#0f172a}
   }
 
   res.render('admin/print_vouchers', {
-    title: 'Cetak Voucher',
+    title: 'Imprimir fichas',
     company: company(),
     settings,
     batch,
@@ -5828,13 +5828,13 @@ router.get('/vouchers/batches/:id/pdf', requireAdminSession, async (req, res) =>
   try {
     const batchId = Number(req.params.id);
     const batch = db.prepare(`SELECT b.*, r.name AS router_name FROM voucher_batches b LEFT JOIN routers r ON r.id = b.router_id WHERE b.id = ?`).get(batchId);
-    if (!batch) return res.status(404).send('Batch tidak ditemukan');
+    if (!batch) return res.status(404).send('Lote no encontrado');
     const vouchers = db.prepare('SELECT code, password, profile_name, used_at FROM vouchers WHERE batch_id = ? ORDER BY code ASC').all(batchId);
     const pdf = await require('../services/voucherPdfService').generateVoucherBatchPdfBuffer(batch, vouchers, getSettings());
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename="Voucher_Batch_' + batchId + '.pdf"');
     res.send(pdf);
-  } catch (e) { res.status(500).send('Gagal membuat PDF: ' + e.message); }
+  } catch (e) { res.status(500).send('No se pudo crear el PDF:' + e.message); }
 });
 
 router.get('/vouchers/batches/:id/export.csv', requireAdminSession, (req, res) => {
@@ -5845,7 +5845,7 @@ router.get('/vouchers/batches/:id/export.csv', requireAdminSession, (req, res) =
     LEFT JOIN routers r ON r.id = b.router_id
     WHERE b.id = ?
   `).get(batchId);
-  if (!batch) return res.status(404).send('Batch tidak ditemukan');
+  if (!batch) return res.status(404).send('Lote no encontrado');
 
   const vouchers = db.prepare(`
     SELECT code, password, profile_name, used_at
@@ -5909,7 +5909,7 @@ router.get('/api/vouchers/batches/:id', requireAdmin, (req, res) => {
     LEFT JOIN routers r ON r.id = b.router_id
     WHERE b.id = ?
   `).get(batchId);
-  if (!batch) return res.status(404).json({ error: 'Batch tidak ditemukan' });
+  if (!batch) return res.status(404).json({ error: 'Lote no encontrado' });
 
   const vouchers = db.prepare(`
     SELECT id, code, password, profile_name, status, used_at, last_seen_comment, last_seen_uptime, last_seen_at
@@ -5932,22 +5932,22 @@ router.post('/api/vouchers/batches', requireAdmin, express.json(), async (req, r
     const charset = String(req.body.charset || 'numbers');
     const priceInput = req.body.price;
     
-    if (!profileName) return res.status(400).json({ error: 'Profile wajib diisi' });
-    if (!qty) return res.status(400).json({ error: 'Jumlah voucher wajib diisi' });
+    if (!profileName) return res.status(400).json({ error: 'El perfil es obligatorio' });
+    if (!qty) return res.status(400).json({ error: 'La cantidad de fichas es obligatoria' });
     if (prefix.length >= codeLength) return res.status(400).json({ error: 'Prefix terlalu panjang' });
 
     const profiles = await mikrotikService.getHotspotUserProfiles(routerId);
     const profile = profiles.find(p => p.name === profileName);
-    if (!profile) return res.status(400).json({ error: 'Profile Hotspot tidak ditemukan di MikroTik' });
+    if (!profile) return res.status(400).json({ error: 'No se encontró el perfil hotspot en el MikroTik' });
 
     const meta = parseMikhmonOnLogin(profile.onLogin || profile['on-login']);
-    if (!meta || !meta.validity) return res.status(400).json({ error: 'Profile belum memiliki metadata harga/durasi (Format Mikhmon)' });
+    if (!meta || !meta.validity) return res.status(400).json({ error: 'El perfil no tiene datos de precio/duración (formato Mikhmon)' });
 
     const createdBy = req.session?.isAdmin ? (req.session.adminUser || 'admin') : (req.session.cashierName || 'kasir');
     let price = Number(meta.price || 0);
     if (priceInput !== undefined && priceInput !== null && String(priceInput).trim() !== '') {
       const p = Number(priceInput);
-      if (!Number.isFinite(p) || p < 0) return res.status(400).json({ error: 'Harga tidak valid' });
+      if (!Number.isFinite(p) || p < 0) return res.status(400).json({ error: 'Precio inválido' });
       price = Math.floor(p);
     }
 
@@ -6012,7 +6012,7 @@ router.post('/api/vouchers/batches/:id/sync', requireAdmin, async (req, res) => 
   try {
     const batchId = Number(req.params.id);
     const batch = db.prepare('SELECT * FROM voucher_batches WHERE id = ?').get(batchId);
-    if (!batch) return res.status(404).json({ error: 'Batch tidak ditemukan' });
+    if (!batch) return res.status(404).json({ error: 'Lote no encontrado' });
 
     const routerId = batch.router_id ?? null;
     const users = await mikrotikService.getHotspotUsers(routerId);
@@ -6061,12 +6061,12 @@ router.post('/api/vouchers/batches/:id/sync', requireAdmin, async (req, res) => 
 router.post('/api/vouchers/batches/:id/delete', requireAdmin, async (req, res) => {
   try {
     const batchId = Number(req.params.id);
-    if (!batchId) return res.status(400).json({ error: 'Batch ID tidak valid' });
+    if (!batchId) return res.status(400).json({ error: 'ID de lote inválido' });
 
     const batch = db.prepare('SELECT id, status FROM voucher_batches WHERE id = ?').get(batchId);
-    if (!batch) return res.status(404).json({ error: 'Batch tidak ditemukan' });
+    if (!batch) return res.status(404).json({ error: 'Lote no encontrado' });
     if (String(batch.status) === 'creating') {
-      return res.status(400).json({ error: 'Batch sedang diproses (creating). Silakan tunggu hingga selesai.' });
+      return res.status(400).json({ error: 'El lote se está procesando. Esperá a que termine.' });
     }
 
     const stats = db.prepare(`
@@ -6121,7 +6121,7 @@ router.get('/api/mikrotik/monitoring-display-data', requireAdmin, async (req, re
   try {
     const conn = await mikrotikService.getConnection(routerId);
     if (!conn) {
-      return res.status(500).json({ error: 'Gagal terhubung ke router MikroTik.' });
+      return res.status(500).json({ error: 'No se pudo conectar con el router MikroTik.' });
     }
 
     // Parallel execution for performance
@@ -6256,7 +6256,7 @@ router.get('/api/mikrotik/hotspot-user-profiles', requireAdmin, async (req, res)
 router.get('/api/mikrotik/hotspot-user-profiles/:id', requireAdmin, async (req, res) => {
   try {
     const row = await mikrotikService.getHotspotUserProfileById(req.params.id, req.query.routerId);
-    if (!row) return res.status(404).json({ error: 'Profile tidak ditemukan' });
+    if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
     return res.json({ ok: true, row });
   } catch (e) {
     return res.status(500).json({ error: e.message });
@@ -6408,7 +6408,7 @@ router.get('/whatsapp/gowa/qr', requireAdminSession, async (req, res) => {
     const dev = await gowa.ensureDevice();
     if (dev && dev !== getSetting('gowa_device_id', '')) saveSettings({ gowa_device_id: dev });
     const r = await gowa.getLoginQr(dev);
-    if (!r.ok) return res.json({ ok: false, message: 'Gagal membuat QR (' + (r.code || 'pastikan GOWA berjalan') + ').' });
+    if (!r.ok) return res.json({ ok: false, message: 'No se pudo crear el QR (' + (r.code || 'pastikan GOWA berjalan') + ').' });
     return res.json({ ok: true, image: '/admin/whatsapp/gowa/qr.png?v=' + Date.now(), device_id: r.device_id, duration: r.duration });
   } catch (e) { return res.json({ ok: false, message: e.message }); }
 });
@@ -6505,9 +6505,9 @@ router.post('/whatsapp/gateway-settings', requireAdminSession, express.urlencode
       });
     }
 
-    req.session._msg = { type: 'success', text: 'Pengaturan WhatsApp Gateway (Baileys / Fonnte / Meta) berhasil disimpan.' };
+    req.session._msg = { type: 'success', text: 'Configuración del gateway de WhatsApp (Baileys / Fonnte / Meta) guardada.' };
   } catch (e) {
-    req.session._msg = { type: 'danger', text: 'Gagal menyimpan pengaturan: ' + e.message };
+    req.session._msg = { type: 'danger', text: 'No se pudo guardar la configuración:' + e.message };
   }
   res.redirect('/admin/whatsapp');
 });
@@ -6515,10 +6515,10 @@ router.post('/whatsapp/gateway-settings', requireAdminSession, express.urlencode
 router.post('/whatsapp/test-gowa', requireAdminSession, express.json(), async (req, res) => {
   try {
     const { phone, message } = req.body;
-    if (!phone) return res.status(400).json({ success: false, error: 'Nomor HP tujuan wajib diisi.' });
+    if (!phone) return res.status(400).json({ success: false, error: 'El número de destino es obligatorio.' });
     const gowaSvc = require('../services/gowaWhatsappService');
     const result = await gowaSvc.testGowaConnection(phone, message);
-    res.json({ success: true, message: 'Pesan berhasil dikirim via GOWA Gateway!', data: result });
+    res.json({ success: true, message: '¡Mensaje enviado vía GOWA!', data: result });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
@@ -6527,11 +6527,11 @@ router.post('/whatsapp/test-gowa', requireAdminSession, express.json(), async (r
 router.post('/whatsapp/test-fonnte', requireAdminSession, express.json(), async (req, res) => {
   try {
     const { phone, message } = req.body;
-    if (!phone) return res.status(400).json({ success: false, error: 'Nomor HP tujuan wajib diisi.' });
+    if (!phone) return res.status(400).json({ success: false, error: 'El número de destino es obligatorio.' });
 
     const fonnteSvc = require('../services/fonnteWhatsappService');
     const result = await fonnteSvc.testFonnteConnection(phone, message);
-    res.json({ success: true, message: 'Pesan berhasil dikirim via Fonnte Gateway!', data: result });
+    res.json({ success: true, message: '¡Mensaje enviado vía Fonnte!', data: result });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
@@ -6573,10 +6573,10 @@ router.get('/api/whatsapp/messages', requireAdminSession, (req, res) => {
 router.post('/api/whatsapp/send-direct', requireAdminSession, express.json(), async (req, res) => {
   try {
     const { phone, message } = req.body;
-    if (!phone || !message) return res.status(400).json({ success: false, error: 'Nomor dan pesan tidak boleh kosong' });
+    if (!phone || !message) return res.status(400).json({ success: false, error: 'El número y el mensaje no pueden quedar vacíos' });
 
     await waSvc.sendWhatsAppMessage(phone, message);
-    res.json({ success: true, message: 'Pesan WhatsApp terkirim' });
+    res.json({ success: true, message: 'Mensaje de WhatsApp enviado' });
   } catch (e) {
     const errorText = e?.message || (typeof e === 'string' ? e : JSON.stringify(e));
     res.status(500).json({ success: false, error: errorText });
@@ -6585,18 +6585,18 @@ router.post('/api/whatsapp/send-direct', requireAdminSession, express.json(), as
 
 router.get('/whatsapp/templates', requireAdminSession, requireSidebarMenuAccess('whatsapp'), async (req, res) => {
   const comp = company();
-  const defaultAutoBilling = `Yth. Pelanggan {{nama}},\n\nIni adalah pengingat sebelum tanggal jatuh tempo/isolir.\n\n📦 *Paket:* {{paket}}\n💰 *Total Tagihan:* {{moneda}} {{tagihan}}\n📅 *Periode:* {{rincian}}\n\nMohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\nTerima kasih atas kerja samanya.\nSalam,\nAdmin ${comp}`;
+  const defaultAutoBilling = `Estimado/a {{nama}},\n\nLe recordamos que su factura de internet está por vencer.\n\n📦 *Plan:* {{paket}}\n💰 *Monto:* {{moneda}} {{tagihan}}\n📅 *Período:* {{rincian}}\n\nPor favor, realice su pago antes de la fecha de corte. Detalle: {{link}}\n\n¡Gracias!\nSaludos,\n${comp}`;
   
-  const defaultQris = `Yth. Pelanggan {{nama}},\n\nBerikut rincian tagihan manual + Kode Bayar QRIS Anda:\n\n📦 *Paket:* {{paket}}\n📅 *Periode:* {{periode}}\n💰 *Nominal:* {{moneda}} {{qris_nominal}}\n\nSilakan scan QRIS berikut untuk melakukan pembayaran otomatis:\n{{qris_qr}}\n\nTerima kasih.`;
+  const defaultQris = `{Hola|Buenas}, *{{nama}}* 👋\n\nLe enviamos el detalle de su factura:\n\n📦 *Plan:* {{paket}}\n📅 *Período:* {{periode}}\n💰 *Monto:* {{moneda}} {{qris_nominal}}\n\n{{qris_qr}}\n\n¡Gracias!`;
 
   const defaultSuccess = whatsappService.DEFAULT_PAYMENT_SUCCESS_TEMPLATE;
 
-  const defaultIsolir = "{Halo|Salam} Bapak/Ibu *{{nama}}*, 🙏\n\nDengan hormat, layanan internet Anda untuk sementara kami nonaktifkan karena tagihan berikut belum kami terima:\n\n📋 *RINGKASAN TAGIHAN*\n• ID Pelanggan  : *{{id_pelanggan}}*\n• Paket         : {{paket}}\n• Total Tagihan : *{{moneda}} {{tagihan}}*\n\nKami memahami apabila ada kendala. Mohon berkenan menyelesaikan pembayaran agar layanan dapat kami aktifkan kembali:\n{{link}}\n\nApabila membutuhkan bantuan, silakan menghubungi kami. Terima kasih atas perhatian dan kerja samanya. 🙏\n— {{company}}";
+  const defaultIsolir = "{Hola|Buenas}, *{{nama}}*\n\nLe informamos que su servicio de internet fue *suspendido* porque tiene facturas pendientes:\n\n• ID de cliente: *{{id_pelanggan}}*\n• Plan: {{paket}}\n• Total adeudado: *{{moneda}} {{tagihan}}*\n\nAl registrar su pago, el servicio se rehabilita automáticamente.\nDetalle de su deuda: {{link}}\n\nSi ya pagó o necesita ayuda, responda a este mensaje.\n— {{company}}";
 
-  const defaultAutolunas = '✅ *Tagihan LUNAS*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nTerima kasih, tagihan layanan internet Anda telah kami tandai *LUNAS* secara otomatis.\n\n💵 Nominal: *{{moneda}} {{tagihan}}*\n📅 Periode: {{rincian}}\n\nPesan ini kami kirim sebagai validasi & pencatatan. Terima kasih 🙏\n— {{company}}';
-  const defaultDeactivated = '⚠️ *Layanan Dinonaktifkan*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nLayanan internet Anda untuk sementara kami *nonaktifkan* karena tagihan belum diselesaikan selama *{{bulan_nunggak}} bulan berturut-turut*.\n\n💵 Total Tagihan: *{{moneda}} {{tagihan}}*\n\nApabila bulan depan masih belum dibayar, akun Anda akan *DIHAPUS OTOMATIS* dan untuk berlangganan kembali harus *mendaftar dari awal*.\n\nBayar: {{link}}\n— {{company}}';
-  const defaultDeleted = '🗑️ *Akun Dihapus*\n\nYth. *{{nama}}*,\n\nAkun layanan internet Anda telah *DIHAPUS OTOMATIS* karena tagihan tidak dibayar *{{bulan_nunggak}} bulan berturut-turut*.\n\nUntuk berlangganan kembali, silakan *mendaftar dari awal*. Terima kasih.\n— {{company}}';
-  const defaultArrears = "*Pemberitahuan Tagihan Internet*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nSemoga Bapak/Ibu selalu dalam keadaan sehat dan baik. 🙏\n\nDengan hormat, kami menginformasikan bahwa pembayaran tagihan layanan internet Anda belum kami terima selama *{{bulan_nunggak}} bulan* berjalan.\n\n📦 Paket: {{paket}}\n💰 Total Tagihan: {{moneda}} {{tagihan}}\n📅 Periode: {{rincian}}\n\nKami memahami apabila ada kendala. Mohon berkenan menyelesaikan pembayaran agar layanan tetap dapat digunakan dengan nyaman. Apabila hingga {{batas}} bulan tagihan belum diselesaikan, dengan berat hati layanan akan kami nonaktifkan sementara, dan untuk mengaktifkannya kembali diperlukan pendaftaran ulang.\n\nPembayaran dapat dilakukan melalui portal pelanggan:\n{{link}}\n\nApabila ada pertanyaan atau membutuhkan bantuan, silakan menghubungi kami. Terima kasih atas perhatian dan kerja samanya. 🙏\n— {{company}}";
+  const defaultAutolunas = '✅ *Factura saldada*\n\nEstimado/a *{{nama}}* (ID: {{id_pelanggan}}),\n\nSu factura del período {{rincian}} quedó registrada como *PAGADA*.\n\n💵 Monto: *{{moneda}} {{tagihan}}*\n\n¡Gracias!\n— {{company}}';
+  const defaultDeactivated = '⚠️ *Servicio dado de baja*\n\nEstimado/a *{{nama}}* (ID: {{id_pelanggan}}),\n\nSu servicio de internet fue *dado de baja* por registrar *{{bulan_nunggak}} meses* sin pagar.\n\n💵 Total adeudado: *{{moneda}} {{tagihan}}*\n\nPara regularizar su situación, comuníquese con nosotros.\nDetalle de su deuda: {{link}}\n— {{company}}';
+  const defaultDeleted = 'Estimado/a *{{nama}}*,\n\nSu cuenta de internet fue *eliminada* por registrar *{{bulan_nunggak}} meses* sin pagar.\n\nSi desea volver a contratar el servicio, deberá solicitar una nueva instalación.\n— {{company}}';
+  const defaultArrears = "*Aviso de deuda*\n\nEstimado/a *{{nama}}* (ID: {{id_pelanggan}}),\n\nLe informamos que su servicio de internet registra *{{bulan_nunggak}} mes(es)* sin pagar.\n\n📦 Plan: {{paket}}\n💰 Total adeudado: {{moneda}} {{tagihan}}\n📅 Período: {{rincian}}\n\nSi la deuda llega a {{batas}} meses, el servicio será dado de baja y para volver a conectarse deberá solicitar una nueva instalación.\n\nDetalle de su deuda: {{link}}\nAnte cualquier consulta, estamos a su disposición.\n— {{company}}";
 
   const templates = {
     whatsapp_auto_billing_message: db.getAppSetting('whatsapp_auto_billing_message', defaultAutoBilling),
@@ -6610,7 +6610,7 @@ router.get('/whatsapp/templates', requireAdminSession, requireSidebarMenuAccess(
   };
 
   res.render('admin/whatsapp_templates', {
-    title: 'Template Pesan WhatsApp',
+    title: 'Plantillas de WhatsApp',
     company: comp,
     activePage: 'whatsapp',
     msg: flashMsg(req),
@@ -6640,9 +6640,9 @@ router.post('/whatsapp/templates', requireAdminSession, express.urlencoded({ ext
     db.saveAppSetting('whatsapp_deactivated_message', whatsapp_deactivated_message || '');
     db.saveAppSetting('whatsapp_deleted_message', whatsapp_deleted_message || '');
 
-    req.session._msg = { type: 'success', text: 'Template WhatsApp berhasil disimpan ke database.' };
+    req.session._msg = { type: 'success', text: 'Plantillas de WhatsApp guardadas.' };
   } catch (e) {
-    req.session._msg = { type: 'danger', text: 'Gagal menyimpan template: ' + e.message };
+    req.session._msg = { type: 'danger', text: 'No se pudo guardar la plantilla:' + e.message };
   }
   res.redirect('/admin/whatsapp/templates');
 });
@@ -6662,24 +6662,24 @@ function buildWaPreviewMessages() {
     .replace(/{{username}}/gi, 'budi_pppoe').replace(/{{pppoe}}/gi, 'budi_pppoe').replace(/{{otp}}/gi, sample.otp);
   const g = (k, def) => db.getAppSetting(k, def) || def;
   const messages = [
-    { title: 'Pengingat Tagihan (otomatis H-N)', key: 'whatsapp_auto_billing_message', text: rv(g('whatsapp_auto_billing_message', 'Yth. {{nama}}, tagihan {{moneda}} {{tagihan}} periode {{rincian}}. Bayar: {{link}}')) },
-    { title: 'Tagihan QRIS (dengan gambar QR)', key: 'whatsapp_billing_qris_message', text: rv(g('whatsapp_billing_qris_message', 'Yth. {{nama}}, tagihan {{moneda}} {{tagihan}} periode {{rincian}}. Scan QRIS terlampir.')) + '\n\n[gambar QRIS dinamis]' },
-    { title: 'Pembayaran Sukses / LUNAS', key: 'whatsapp_payment_success_message', text: rv(g('whatsapp_payment_success_message', 'PEMBAYARAN LUNAS\n\nYth. {{nama}}, pembayaran tagihan periode {{periode}} sebesar {{moneda}} {{total}} telah kami terima.\n\nNo. Invoice: #INV-{{no_invoice}}\nMetode: {{metode}}\nWaktu: {{waktu}}\n\nInvoice PDF: {{link_pdf}}\nTerima kasih.')) },
-    { title: 'Pemberitahuan Isolir', key: 'whatsapp_isolir_message', text: rv(g('whatsapp_isolir_message', 'Layanan internet Anda ditangguhkan karena tagihan {{moneda}} {{tagihan}} belum dibayar.')) },
-    { title: 'Peringatan Tunggakan', key: 'whatsapp_arrears_warning_message', text: rv(g('whatsapp_arrears_warning_message', 'Tagihan {{moneda}} {{tagihan}} menunggak {{bulan_nunggak}} bulan.')) },
-    { title: 'Auto-Lunas (nominal 0 / auto_isolate=0)', key: 'whatsapp_autolunas_message', text: rv(g('whatsapp_autolunas_message', 'Tagihan LUNAS otomatis.')) },
-    { title: 'Auto-Nonaktif (menunggak N bulan)', key: 'whatsapp_deactivated_message', text: rv(g('whatsapp_deactivated_message', 'Layanan dinonaktifkan.')) },
-    { title: 'Auto-Hapus (bulan ke-N)', key: 'whatsapp_deleted_message', text: rv(g('whatsapp_deleted_message', 'Akun dihapus.')) },
-    { title: 'Kode OTP Login', key: '(pesan sistem)', text: 'Kode OTP Anda: *' + sample.otp + '*\n\nBerlaku 10 menit. Jangan bagikan kode ini ke siapa pun.', note: 'Pesan sistem (OTP) — dikirim saat login.' },
-    { title: 'Perubahan Nama WiFi (SSID)', key: '(pesan sistem)', text: 'PERUBAHAN SSID WIFI\n\nPelanggan: ' + sample.nama + '\nWaktu: ' + sample.waktu + '\n\nSSID WiFi Anda sudah diperbarui menjadi:\n*' + sample.ssid + '*\n\nSilakan pilih SSID baru di perangkat Anda untuk terhubung.', note: 'Pesan sistem — saat pelanggan mengubah nama WiFi.' },
-    { title: 'Perubahan Password WiFi', key: '(pesan sistem)', text: 'PERUBAHAN PASSWORD WIFI\n\nPelanggan: ' + sample.nama + '\nWaktu: ' + sample.waktu + '\n\nPassword WiFi Anda sudah diperbarui menjadi:\n*' + sample.password + '*\n\nSilakan gunakan password baru untuk terhubung.', note: 'Pesan sistem — saat pelanggan mengubah password WiFi.' }
+    { title: 'Recordatorio de pago (automático, X días antes)', key: 'whatsapp_auto_billing_message', text: rv(g('whatsapp_auto_billing_message', 'Estimado/a {{nama}}, factura de {{moneda}} {{tagihan}} del período {{rincian}}. Detalle: {{link}}')) },
+    { title: 'Factura con QR (con imagen)', key: 'whatsapp_billing_qris_message', text: rv(g('whatsapp_billing_qris_message', 'Estimado/a {{nama}}, factura de {{moneda}} {{tagihan}} del período {{rincian}}. QR adjunto.')) + '\n\n[gambar QRIS dinamis]' },
+    { title: 'Comprobante de pago', key: 'whatsapp_payment_success_message', text: rv(g('whatsapp_payment_success_message', 'PAGO RECIBIDO\n\nEstimado/a {{nama}}, recibimos el pago de la factura del período {{periode}} por {{moneda}} {{total}}.\n\nFactura N.º: {{no_invoice}}\nForma de pago: {{metode}}\nFecha: {{waktu}}\n\nFactura PDF: {{link_pdf}}\nGracias.')) },
+    { title: 'Aviso de corte', key: 'whatsapp_isolir_message', text: rv(g('whatsapp_isolir_message', 'Su servicio de internet fue suspendido porque la factura de {{moneda}} {{tagihan}} no está pagada.')) },
+    { title: 'Aviso de deuda', key: 'whatsapp_arrears_warning_message', text: rv(g('whatsapp_arrears_warning_message', 'Factura de {{moneda}} {{tagihan}} con {{bulan_nunggak}} meses de atraso.')) },
+    { title: 'Pago automático (monto 0 / sin corte automático)', key: 'whatsapp_autolunas_message', text: rv(g('whatsapp_autolunas_message', 'Factura saldada automáticamente.')) },
+    { title: 'Baja automática (N meses de deuda)', key: 'whatsapp_deactivated_message', text: rv(g('whatsapp_deactivated_message', 'Servicio dado de baja.')) },
+    { title: 'Eliminación automática (mes N)', key: 'whatsapp_deleted_message', text: rv(g('whatsapp_deleted_message', 'Cuenta eliminada.')) },
+    { title: 'Código de ingreso (OTP)', key: '(mensaje del sistema)', text: 'Su código de ingreso es: *' + sample.otp + '*\n\nVálido por 10 minutos. No comparta este código con nadie.', note: 'Mensaje del sistema (código) — se envía al ingresar.' },
+    { title: 'Cambio de nombre del WiFi (SSID)', key: '(mensaje del sistema)', text: 'CAMBIO DE NOMBRE DEL WIFI\n\nCliente:' + sample.nama + '\nWaktu: ' + sample.waktu + '\n\nEl nombre (SSID) de su WiFi ahora es:\n*' + sample.ssid + '*\n\nSeleccione la nueva red en sus dispositivos para conectarse.', note: 'Mensaje del sistema — cuando el cliente cambia el nombre del WiFi.' },
+    { title: 'Cambio de contraseña del WiFi', key: '(mensaje del sistema)', text: 'CAMBIO DE CONTRASEÑA DEL WIFI\n\nCliente:' + sample.nama + '\nWaktu: ' + sample.waktu + '\n\nLa contraseña de su WiFi ahora es:\n*' + sample.password + '*\n\nUse la nueva contraseña para conectarse.', note: 'Mensaje del sistema — cuando el cliente cambia la contraseña del WiFi.' }
   ];
   return { messages, sample };
 }
 
 router.get('/whatsapp/preview', requireAdminSession, requireSidebarMenuAccess('whatsapp'), (req, res) => {
   const { messages, sample } = buildWaPreviewMessages();
-  res.render('admin/whatsapp_preview', { title: 'Preview Pesan WhatsApp', company: company(), activePage: 'whatsapp', msg: flashMsg(req), messages, sample });
+  res.render('admin/whatsapp_preview', { title: 'Vista previa de mensajes de WhatsApp', company: company(), activePage: 'whatsapp', msg: flashMsg(req), messages, sample });
 });
 
 router.post('/whatsapp/preview/send', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
@@ -6687,11 +6687,11 @@ router.post('/whatsapp/preview/send', requireAdminSession, express.urlencoded({ 
     const idx = parseInt(req.body.index, 10);
     const { messages } = buildWaPreviewMessages();
     const m = messages[idx];
-    if (!m) throw new Error('Pesan tidak ditemukan');
+    if (!m) throw new Error('Mensaje no encontrado');
     const waNotify = require('../services/waNotifyService');
     const txt = '[CONTOH] ' + m.title + '\n\n' + m.text;
     const r = await waNotify.notifyAdmin(txt);
-    return res.json({ ok: true, message: 'Contoh "' + m.title + '" terkirim ke WA admin (sent=' + ((r && r.sent) || 0) + ').' });
+    return res.json({ ok: true, message: 'Contoh "' + m.title + '" enviado al WhatsApp del administrador (enviados=' + ((r && r.sent) || 0) + ').' });
   } catch (e) {
     return res.status(500).json({ ok: false, message: e.message });
   }
@@ -6700,14 +6700,14 @@ router.post('/whatsapp/preview/send', requireAdminSession, express.urlencoded({ 
 router.get('/whatsapp/broadcast', requireAdminSession, requireSidebarMenuAccess('whatsapp'), (req, res) => {
   const comp = company();
   const defaultAutoBillingMsg =
-    `Yth. Pelanggan {{nama}},\n\n` +
-    `Ini adalah pengingat sebelum tanggal jatuh tempo/isolir.\n\n` +
-    `📦 *Paket:* {{paket}}\n` +
-    `💰 *Total Tagihan:* {{moneda}} {{tagihan}}\n` +
-    `📅 *Periode:* {{rincian}}\n\n` +
-    `Mohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\n` +
-    `Terima kasih atas kerja samanya.\n` +
-    `Salam,\nAdmin ${comp}`;
+    `Estimado/a {{nama}},\n\n` +
+    `Le recordamos que su factura de internet está por vencer.\n\n` +
+    `📦 *Plan:* {{paket}}\n` +
+    `💰 *Monto:* {{moneda}} {{tagihan}}\n` +
+    `📅 *Período:* {{rincian}}\n\n` +
+    `Por favor, realice su pago antes de la fecha de corte. Detalle: {{link}}\n\n` +
+    `¡Gracias!\n` +
+    `Saludos,\n${comp}`;
   const autoBillingMsg = db.getAppSetting('whatsapp_auto_billing_message', defaultAutoBillingMsg);
 
   const _bsvc = require('../services/billingSendService');
@@ -6732,10 +6732,10 @@ router.post('/whatsapp/send-billing-now', requireAdminSession, express.urlencode
       intervalMax: req.body.interval_max,
     });
     req.session._msg = r.started
-      ? { type: 'success', text: 'Pengiriman tagihan dimulai: ' + r.total + ' pelanggan (' + r.label + '). Pantau di halaman ini.' }
-      : { type: 'error', text: r.message || 'Tidak ada target.' };
+      ? { type: 'success', text: 'Envío de facturas iniciado:' + r.total + ' clientes (' + r.label + '). Seguí el progreso en esta página.' }
+      : { type: 'error', text: r.message || 'No hay destinatarios.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/whatsapp/broadcast');
 });
@@ -6755,38 +6755,38 @@ router.get('/api/whatsapp/broadcast-status', requireAdminSession, (req, res) => 
 // API: Pause Broadcast
 router.post('/api/whatsapp/broadcast-pause', requireAdminSession, (req, res) => {
   if (!global.broadcastStatus.active) {
-    return res.json({ ok: false, error: 'Tidak ada broadcast yang sedang berjalan.' });
+    return res.json({ ok: false, error: 'No hay ninguna difusión en curso.' });
   }
   global.broadcastStatus.paused = true;
   logger.info('[Broadcast] Broadcast dipause oleh admin.');
-  res.json({ ok: true, message: 'Broadcast berhasil dipause.' });
+  res.json({ ok: true, message: 'Difusión pausada.' });
 });
 
 // API: Resume Broadcast
 router.post('/api/whatsapp/broadcast-resume', requireAdminSession, (req, res) => {
   if (!global.broadcastStatus.active) {
-    return res.json({ ok: false, error: 'Tidak ada broadcast yang sedang berjalan.' });
+    return res.json({ ok: false, error: 'No hay ninguna difusión en curso.' });
   }
   global.broadcastStatus.paused = false;
   logger.info('[Broadcast] Broadcast dilanjutkan oleh admin.');
-  res.json({ ok: true, message: 'Broadcast berhasil dilanjutkan.' });
+  res.json({ ok: true, message: 'Difusión reanudada.' });
 });
 
 // API: Stop Broadcast
 router.post('/api/whatsapp/broadcast-stop', requireAdminSession, (req, res) => {
   if (!global.broadcastStatus.active) {
-    return res.json({ ok: false, error: 'Tidak ada broadcast yang sedang berjalan.' });
+    return res.json({ ok: false, error: 'No hay ninguna difusión en curso.' });
   }
   global.broadcastStatus.stopped = true;
   global.broadcastStatus.paused = false;
   logger.info('[Broadcast] Broadcast dihentikan oleh admin.');
-  res.json({ ok: true, message: 'Broadcast berhasil dihentikan.' });
+  res.json({ ok: true, message: 'Difusión detenida.' });
 });
 
 router.post('/whatsapp/broadcast', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
   try {
     const { target, message, delay: customDelay, batchSize: customBatchSize, hourlyLimit: customHourlyLimit } = req.body;
-    if (!message) throw new Error('Pesan tidak boleh kosong');
+    if (!message) throw new Error('El mensaje no puede quedar vacío');
     
     // Smart Rate Limit Settings
     const baseDelayMs = (parseInt(customDelay) || getSetting('whatsapp_broadcast_delay', 5)) * 1000; // Default 5 detik
@@ -6802,7 +6802,7 @@ router.post('/whatsapp/broadcast', requireAdminSession, express.urlencoded({ ext
     }
 
     if (global.broadcastStatus.active) {
-      throw new Error('Ada proses broadcast yang sedang berjalan. Silakan tunggu hingga selesai.');
+      throw new Error('Ya hay una difusión en curso. Esperá a que termine.');
     }
 
     let customers = [];
@@ -6829,7 +6829,7 @@ router.post('/whatsapp/broadcast', requireAdminSession, express.urlencoded({ ext
     }
 
     if (uniqueCustomers.length === 0) {
-      throw new Error('Tidak ada nomor pelanggan yang valid untuk target tersebut.');
+      throw new Error('No hay números de clientes válidos para ese grupo.');
     }
     
     // Initialize Tracker dengan Smart Rate Limit
@@ -6953,9 +6953,9 @@ router.post('/whatsapp/broadcast', requireAdminSession, express.urlencoded({ ext
     
     sendMessageAsync(); 
 
-    req.session._msg = { type: 'success', text: `Broadcast sedang diproses untuk dikirim ke ${uniqueCustomers.length} pelanggan dengan smart rate limit.` };
+    req.session._msg = { type: 'success', text: `Difusión en proceso para ${uniqueCustomers.length} clientes con control de velocidad.` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal Broadcast: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Falló la difusión:' + e.message };
   }
   res.redirect('/admin/whatsapp/broadcast');
 });
@@ -6981,9 +6981,9 @@ router.post('/whatsapp/auto-billing', requireAdminSession, express.urlencoded({ 
       db.saveAppSetting('whatsapp_auto_billing_message', msg);
     }
     saveSettings(next);
-    req.session._msg = { type: 'success', text: `Pengingat tagihan otomatis ${enabled ? 'diaktifkan' : 'dimatikan'}. Notifikasi tagihan ke pelanggan ${billingEnabled ? 'diaktifkan' : 'dimatikan'}.` };
+    req.session._msg = { type: 'success', text: `Recordatorio automático de pago ${enabled ? 'activado' : 'desactivado'}. Envío de facturas a clientes ${billingEnabled ? 'activado' : 'desactivado'}.` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal menyimpan pengaturan: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo guardar la configuración:' + e.message };
   }
   res.redirect('/admin/whatsapp/broadcast');
 });
@@ -6993,8 +6993,8 @@ router.post('/whatsapp/run-reminder-now', requireAdminSession, async (req, res) 
   try {
     const r = await require('../services/cronService').runAutoBillingReminder();
     const msg = (r && r.skipped)
-      ? ('Pengingat dilewati (' + r.skipped + '). Pastikan opsi otomatis & WA aktif.')
-      : ('Pengingat dijalankan: target ' + ((r && r.target) || 0) + ', terkirim ' + ((r && r.sent) || 0) + ', gagal ' + ((r && r.failed) || 0) + '.');
+      ? ('Pengingat dilewati (' + r.skipped + '). Verificá que el envío automático y WhatsApp estén activos.')
+      : ('Pengingat dijalankan: target ' + ((r && r.target) || 0) + ', enviados' + ((r && r.sent) || 0) + ', fallidos' + ((r && r.failed) || 0) + '.');
     return res.json({ ok: true, message: msg, data: r || null });
   } catch (e) {
     return res.status(500).json({ ok: false, message: e.message });
@@ -7050,21 +7050,21 @@ router.post('/whatsapp/test-notification', requireAdminSession, async (req, res)
       adminPhone = legacyNumbers[0];
     }
     if (!adminPhone) {
-      throw new Error('Nomor WhatsApp admin belum dikonfigurasi di Pengaturan WhatsApp / Perusahaan.');
+      throw new Error('El número de WhatsApp del administrador no está configurado en Configuración de WhatsApp / Empresa.');
     }
 
     logger.info(`[WA Test] Mengirim test notifikasi ke nomor admin: ${adminPhone}`);
     const msg =
       `🧪 *TEST NOTIFIKASI WHATSAPP*\n\n` +
-      `✅ Jika pesan ini masuk, berarti notifikasi WhatsApp dari Billing System sudah berfungsi dengan baik.\n` +
-      `📅 Waktu: ${getNowLocal()}`;
+      `✅ Si recibís este mensaje, las notificaciones de WhatsApp del sistema funcionan correctamente.\n` +
+      `📅 Fecha: ${getNowLocal()}`;
     const ok = await waSvc.sendWhatsAppMessage(adminPhone, msg);
-    if (!ok) throw new Error('Gagal mengirim pesan test WhatsApp.');
+    if (!ok) throw new Error('No se pudo enviar el mensaje de prueba.');
     logger.info(`[WA Test] Test notifikasi sukses terkirim ke ${adminPhone}`);
-    req.session._msg = { type: 'success', text: 'Test notifikasi WhatsApp berhasil dikirim ke ' + adminPhone };
+    req.session._msg = { type: 'success', text: 'Prueba de WhatsApp enviada a' + adminPhone };
   } catch (e) {
     logger.error(`[WA Test] Gagal mengirim test notifikasi: ${e.message}`);
-    req.session._msg = { type: 'error', text: 'Gagal kirim test WhatsApp: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo enviar la prueba de WhatsApp:' + e.message };
   }
   res.redirect('/admin/whatsapp');
 });
@@ -7083,14 +7083,14 @@ router.post('/whatsapp/reset', requireAdminSession, (req, res) => {
         logger.error('Failed to trigger WA restart:', e.message);
       });
 
-      req.session._msg = { text: 'Sesi WhatsApp berhasil dihapus. Bot sedang memulai ulang, silakan tunggu QR Code muncul.', type: 'success' };
+      req.session._msg = { text: 'Sesión de WhatsApp eliminada. El bot se está reiniciando; esperá a que aparezca el código QR.', type: 'success' };
     } else {
-      req.session._msg = { text: 'Folder sesi tidak ditemukan atau sudah dihapus.', type: 'warning' };
+      req.session._msg = { text: 'La carpeta de la sesión no existe o ya fue eliminada.', type: 'warning' };
     }
     res.redirect('/admin/whatsapp');
   } catch (e) {
     logger.error('Failed to reset WA session:', e.message);
-    req.session._msg = { text: 'Gagal menghapus sesi: ' + e.message, type: 'danger' };
+    req.session._msg = { text: 'No se pudo eliminar la sesión:' + e.message, type: 'danger' };
     res.redirect('/admin/whatsapp');
   }
 });
@@ -7101,13 +7101,13 @@ router.post('/whatsapp/repair-keys', requireAdminSession, async (req, res) => {
     const cleaned = cleanStaleSessionKeys();
     await restartWhatsAppBot();
     req.session._msg = {
-      text: `Berhasil membersihkan ${cleaned} cache session/pre-key usang. Bot Baileys telah di-refresh tanpa perlu scan QR ulang.`,
+      text: `Se limpiaron ${cleaned} claves de sesión obsoletas. Baileys se actualizó sin volver a escanear el QR.`,
       type: 'success'
     };
     res.redirect('/admin/whatsapp');
   } catch (e) {
     logger.error('Failed to repair WA session keys:', e.message);
-    req.session._msg = { text: 'Gagal memperbaiki session keys: ' + e.message, type: 'danger' };
+    req.session._msg = { text: 'No se pudieron reparar las claves de sesión:' + e.message, type: 'danger' };
     res.redirect('/admin/whatsapp');
   }
 });
@@ -7136,7 +7136,7 @@ router.get('/promo-slides', requireAdminSession, requireSidebarMenuAccess('setti
       msg: flashMsg(req)
     });
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
     res.redirect('/admin/settings');
   }
 });
@@ -7144,7 +7144,7 @@ router.get('/promo-slides', requireAdminSession, requireSidebarMenuAccess('setti
 router.get('/api/promo-slides/:id', requireAdminSession, (req, res) => {
   try {
     const slide = db.prepare('SELECT * FROM promo_slides WHERE id = ?').get(Number(req.params.id));
-    if (!slide) return res.status(404).json({ error: 'Slide tidak ditemukan' });
+    if (!slide) return res.status(404).json({ error: 'Diapositiva no encontrada' });
     res.json(slide);
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -7155,7 +7155,7 @@ router.post('/promo-slides', requireAdminSession, requireSidebarMenuAccess('sett
   try {
     const { title, description, url, open_in_new_tab, sort_order, start_date, end_date, is_active } = req.body;
     
-    if (!req.file) throw new Error('Gambar harus diupload');
+    if (!req.file) throw new Error('Hay que subir una imagen');
     
     let imagePath = `/uploads/promo_slides/${req.file.filename}`;
     // Konversi otomatis PNG/JPEG -> WebP (lebih ringan)
@@ -7179,9 +7179,9 @@ router.post('/promo-slides', requireAdminSession, requireSidebarMenuAccess('sett
       is_active === 'on' ? 1 : 0
     );
     
-    req.session._msg = { type: 'success', text: 'Promo slide berhasil ditambahkan' };
+    req.session._msg = { type: 'success', text: 'Diapositiva agregada' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/promo-slides');
 });
@@ -7192,7 +7192,7 @@ router.post('/promo-slides/:id/update', requireAdminSession, requireSidebarMenuA
     const slideId = Number(req.params.id);
     
     const slide = db.prepare('SELECT * FROM promo_slides WHERE id = ?').get(slideId);
-    if (!slide) throw new Error('Slide tidak ditemukan');
+    if (!slide) throw new Error('Diapositiva no encontrada');
     
     let imagePath = slide.image_path;
     let oldImagePath = null;
@@ -7239,9 +7239,9 @@ router.post('/promo-slides/:id/update', requireAdminSession, requireSidebarMenuA
       }
     }
     
-    req.session._msg = { type: 'success', text: 'Promo slide berhasil diperbarui' };
+    req.session._msg = { type: 'success', text: 'Diapositiva actualizada' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/promo-slides');
 });
@@ -7270,9 +7270,9 @@ router.post('/promo-slides/:id/delete', requireAdminSession, requireSidebarMenuA
       }
     }
     
-    req.session._msg = { type: 'success', text: 'Promo slide berhasil dihapus' };
+    req.session._msg = { type: 'success', text: 'Diapositiva eliminada' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/promo-slides');
 });
@@ -7280,9 +7280,9 @@ router.post('/promo-slides/:id/delete', requireAdminSession, requireSidebarMenuA
 router.post('/routers', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
   try {
     mikrotikService.createRouter(req.body);
-    req.session._msg = { type: 'success', text: `Router "${req.body.name}" berhasil ditambahkan.` };
+    req.session._msg = { type: 'success', text: `Router "${req.body.name}" agregado.` };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/routers');
 });
@@ -7290,9 +7290,9 @@ router.post('/routers', requireAdminSession, express.urlencoded({ extended: true
 router.post('/routers/:id/update', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
   try {
     mikrotikService.updateRouter(req.params.id, req.body);
-    req.session._msg = { type: 'success', text: 'Router berhasil diperbarui.' };
+    req.session._msg = { type: 'success', text: 'Router actualizado.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/routers');
 });
@@ -7300,9 +7300,9 @@ router.post('/routers/:id/update', requireAdminSession, express.urlencoded({ ext
 router.post('/routers/:id/delete', requireAdminSession, (req, res) => {
   try {
     mikrotikService.deleteRouter(req.params.id);
-    req.session._msg = { type: 'success', text: 'Router berhasil dihapus.' };
+    req.session._msg = { type: 'success', text: 'Router eliminado.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/routers');
 });
@@ -7312,9 +7312,9 @@ router.get('/api/routers/:id/test', requireAdmin, async (req, res) => {
     const conn = await mikrotikService.getConnection(req.params.id);
     if (conn && conn.api) {
       conn.api.close();
-      return res.json({ success: true, message: 'Koneksi ke Router Berhasil!' });
+      return res.json({ success: true, message: '¡Conexión con el router correcta!' });
     }
-    throw new Error('Gagal terhubung ke router');
+    throw new Error('No se pudo conectar con el router');
   } catch (e) {
     res.json({ success: false, error: e.message });
   }
@@ -7324,7 +7324,7 @@ router.get('/api/routers/:id/details', requireAdmin, async (req, res) => {
   try {
     const routerId = req.params.id;
     const routerConfig = mikrotikService.getRouterById(routerId);
-    if (!routerConfig) return res.status(404).json({ success: false, error: 'Router tidak ditemukan' });
+    if (!routerConfig) return res.status(404).json({ success: false, error: 'Router no encontrado' });
 
     let liveData = {
       connected: false,
@@ -7452,13 +7452,13 @@ router.post('/api/system/update', requireAdmin, async (req, res) => {
   exec(cmd, { cwd: projectDir, timeout: 120000 }, (error, stdout, stderr) => {
     if (error) {
       logger.error(`[System Update Error]: ${error.message}`);
-      return res.json({ success: false, message: 'Gagal update: ' + error.message, output: stderr || stdout });
+      return res.json({ success: false, message: 'No se pudo actualizar:' + error.message, output: stderr || stdout });
     }
     logger.info(`[System Update Complete]: ${stdout}`);
     return res.json({ 
       success: true, 
-      message: 'Pembaruan aplikasi berhasil diterapkan (Low-CPU Mode)!', 
-      output: stdout || 'Git pull & reload berhasil.' 
+      message: '¡Actualización aplicada (modo bajo consumo)!', 
+      output: stdout || 'Git pull y recarga completados.' 
     });
   });
 });
@@ -7515,7 +7515,7 @@ router.get('/attendance', requireAdminSession, requireSidebarMenuAccess('attenda
       t: (key, defaultVal) => defaultVal || key
     });
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal memuat data absensi: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo cargar la asistencia:' + e.message };
     res.redirect('/admin');
   }
 });
@@ -7525,7 +7525,7 @@ router.get('/api/attendance/range', requireAdminSession, (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     if (!startDate || !endDate) {
-      return res.json({ success: false, message: 'Start date dan end date wajib diisi' });
+      return res.json({ success: false, message: 'La fecha de inicio y de fin son obligatorias' });
     }
     
     const attendances = attendanceSvc.getAttendanceByDateRange(startDate, endDate);
@@ -7588,9 +7588,9 @@ router.post('/attendance/:id/update', requireAdminSession, express.json(), (req,
     });
     
     auditSvc.log('admin', req.session.username || 'admin', 'update_attendance', `Updated attendance #${id}`);
-    res.json({ success: true, message: 'Absensi berhasil diperbarui' });
+    res.json({ success: true, message: 'Asistencia actualizada' });
   } catch (e) {
-    res.json({ success: false, message: 'Gagal update absensi: ' + e.message });
+    res.json({ success: false, message: 'No se pudo actualizar la asistencia:' + e.message });
   }
 });
 
@@ -7600,10 +7600,10 @@ router.post('/attendance/:id/delete', requireAdminSession, (req, res) => {
     const { id } = req.params;
     attendanceSvc.deleteAttendance(parseInt(id));
     auditSvc.log('admin', req.session.username || 'admin', 'delete_attendance', `Deleted attendance #${id}`);
-    req.session._msg = { type: 'success', text: 'Absensi berhasil dihapus' };
+    req.session._msg = { type: 'success', text: 'Asistencia eliminada' };
     res.redirect('/admin/attendance');
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal hapus absensi: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo eliminar la asistencia:' + e.message };
     res.redirect('/admin/attendance');
   }
 });
@@ -7613,7 +7613,7 @@ router.get('/attendance/export', requireAdminSession, (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     if (!startDate || !endDate) {
-      req.session._msg = { type: 'error', text: 'Tanggal mulai dan akhir wajib diisi' };
+      req.session._msg = { type: 'error', text: 'La fecha de inicio y de fin son obligatorias' };
       return res.redirect('/admin/attendance');
     }
     
@@ -7625,13 +7625,13 @@ router.get('/attendance/export', requireAdminSession, (req, res) => {
       'Tipe Karyawan': a.employee_type,
       'Nama': a.employee_name,
       'Check In': a.check_in_time,
-      'Lokasi Check In': a.check_in_lat && a.check_in_lng ? `${a.check_in_lat}, ${a.check_in_lng}` : '-',
+      'Ubicación de entrada': a.check_in_lat && a.check_in_lng ? `${a.check_in_lat}, ${a.check_in_lng}` : '-',
       'Catatan Check In': a.check_in_note || '-',
-      'Foto Check In': a.check_in_photo || '-',
+      'Foto de entrada': a.check_in_photo || '-',
       'Check Out': a.check_out_time || '-',
-      'Lokasi Check Out': a.check_out_lat && a.check_out_lng ? `${a.check_out_lat}, ${a.check_out_lng}` : '-',
+      'Ubicación de salida': a.check_out_lat && a.check_out_lng ? `${a.check_out_lat}, ${a.check_out_lng}` : '-',
       'Catatan Check Out': a.check_out_note || '-',
-      'Foto Check Out': a.check_out_photo || '-',
+      'Foto de salida': a.check_out_photo || '-',
       'Durasi (menit)': a.work_duration_minutes || 0,
       'Status': a.status
     }));
@@ -7646,7 +7646,7 @@ router.get('/attendance/export', requireAdminSession, (req, res) => {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.send(buffer);
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal export: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo exportar:' + e.message };
     res.redirect('/admin/attendance');
   }
 });
@@ -7664,7 +7664,7 @@ router.get('/payroll', requireAdmin, requireSidebarMenuAccess('payroll'), (req, 
   const summary = payrollSvc.getPayrollSummary(month, year);
 
   res.render('admin/payroll', {
-    title: 'Gaji Karyawan',
+    title: 'Sueldos del personal',
     company: company(),
     employees,
     slips,
@@ -7679,9 +7679,9 @@ router.get('/payroll', requireAdmin, requireSidebarMenuAccess('payroll'), (req, 
 router.post('/payroll/settings', requireAdmin, (req, res) => {
   try {
     payrollSvc.upsertPayrollSetting(req.body);
-    req.session._msg = { type: 'success', text: 'Pengaturan gaji berhasil disimpan.' };
+    req.session._msg = { type: 'success', text: 'Configuración de sueldos guardada.' };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/payroll');
 });
@@ -7690,14 +7690,14 @@ router.post('/payroll/generate', requireAdmin, (req, res) => {
   const month = parseInt(req.body.month);
   const year = parseInt(req.body.year);
   if (!month || !year) {
-    req.session._msg = { type: 'error', text: 'Bulan dan tahun diperlukan' };
+    req.session._msg = { type: 'error', text: 'Se requieren mes y año' };
     return res.redirect('/admin/payroll');
   }
 
   const result = payrollSvc.generateAllSlips(month, year);
   req.session._msg = { 
     type: 'success', 
-    text: `Generate selesai: ${result.generated} berhasil, ${result.skipped} dilewati, ${result.errors.length} error.` 
+    text: `Generación terminada: ${result.generated} creados, ${result.skipped} omitidos, ${result.errors.length} errores.` 
   };
   res.redirect(`/admin/payroll?month=${month}&year=${year}`);
 });
@@ -7706,7 +7706,7 @@ router.post('/payroll/slip/:id/deduction', requireAdmin, express.json(), (req, r
   try {
     const { other_deduction, other_deduction_note } = req.body;
     payrollSvc.updateSlipDeductions(req.params.id, other_deduction, other_deduction_note);
-    res.json({ success: true, message: 'Potongan diperbarui' });
+    res.json({ success: true, message: 'Descuento actualizado' });
   } catch (e) {
     res.json({ success: false, message: e.message });
   }
@@ -7715,7 +7715,7 @@ router.post('/payroll/slip/:id/deduction', requireAdmin, express.json(), (req, r
 router.post('/payroll/slip/:id/approve', requireAdmin, (req, res) => {
   try {
     payrollSvc.approveSlip(req.params.id);
-    req.session._msg = { type: 'success', text: 'Slip berhasil di-approve.' };
+    req.session._msg = { type: 'success', text: 'Recibo aprobado.' };
   } catch (e) {
     req.session._msg = { type: 'error', text: e.message };
   }
@@ -7725,7 +7725,7 @@ router.post('/payroll/slip/:id/approve', requireAdmin, (req, res) => {
 router.post('/payroll/slip/:id/paid', requireAdmin, (req, res) => {
   try {
     payrollSvc.markSlipPaid(req.params.id);
-    req.session._msg = { type: 'success', text: 'Slip ditandai lunas (paid).' };
+    req.session._msg = { type: 'success', text: 'Recibo marcado como pagado.' };
   } catch (e) {
     req.session._msg = { type: 'error', text: e.message };
   }
@@ -7735,7 +7735,7 @@ router.post('/payroll/slip/:id/paid', requireAdmin, (req, res) => {
 router.post('/payroll/slip/:id/delete', requireAdmin, (req, res) => {
   try {
     payrollSvc.deleteSlip(req.params.id);
-    req.session._msg = { type: 'success', text: 'Slip berhasil dihapus.' };
+    req.session._msg = { type: 'success', text: 'Recibo eliminado.' };
   } catch (e) {
     req.session._msg = { type: 'error', text: e.message };
   }
@@ -7745,7 +7745,7 @@ router.post('/payroll/slip/:id/delete', requireAdmin, (req, res) => {
 router.post('/payroll/bulk-approve', requireAdmin, (req, res) => {
   try {
     payrollSvc.bulkApprove(parseInt(req.body.month), parseInt(req.body.year));
-    req.session._msg = { type: 'success', text: 'Semua slip draft berhasil di-approve.' };
+    req.session._msg = { type: 'success', text: 'Todos los borradores fueron aprobados.' };
   } catch (e) {
     req.session._msg = { type: 'error', text: e.message };
   }
@@ -7755,7 +7755,7 @@ router.post('/payroll/bulk-approve', requireAdmin, (req, res) => {
 router.post('/payroll/bulk-paid', requireAdmin, (req, res) => {
   try {
     payrollSvc.bulkMarkPaid(parseInt(req.body.month), parseInt(req.body.year));
-    req.session._msg = { type: 'success', text: 'Semua slip approved ditandai lunas.' };
+    req.session._msg = { type: 'success', text: 'Todos los recibos aprobados se marcaron como pagados.' };
   } catch (e) {
     req.session._msg = { type: 'error', text: e.message };
   }
@@ -7765,7 +7765,7 @@ router.post('/payroll/bulk-paid', requireAdmin, (req, res) => {
 router.post('/payroll/delete-drafts', requireAdmin, (req, res) => {
   try {
     payrollSvc.deleteSlipsByPeriod(parseInt(req.body.month), parseInt(req.body.year));
-    req.session._msg = { type: 'success', text: 'Semua slip draft dihapus.' };
+    req.session._msg = { type: 'success', text: 'Todos los borradores fueron eliminados.' };
   } catch (e) {
     req.session._msg = { type: 'error', text: e.message };
   }
@@ -7774,7 +7774,7 @@ router.post('/payroll/delete-drafts', requireAdmin, (req, res) => {
 
 router.get('/payroll/slip/:id/print', requireAdmin, (req, res) => {
   const slip = payrollSvc.getSlipById(req.params.id);
-  if (!slip) return res.status(404).send('Slip tidak ditemukan');
+  if (!slip) return res.status(404).send('Recibo no encontrado');
   
   res.render('admin/print_payslip', {
     company: company(),
@@ -7785,54 +7785,54 @@ router.get('/payroll/slip/:id/print', requireAdmin, (req, res) => {
 router.get('/payroll/slip/:id/pdf', requireAdmin, async (req, res) => {
   try {
     const slip = payrollSvc.getSlipById(req.params.id);
-    if (!slip) return res.status(404).send('Slip tidak ditemukan');
+    if (!slip) return res.status(404).send('Recibo no encontrado');
     const pdf = await require('../services/payslipPdfService').generatePayslipPdfBuffer(slip, getSettings());
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename="Slip_Gaji_' + (slip.employee_name || slip.id) + '_' + (slip.period_month || '') + '-' + (slip.period_year || '') + '.pdf"');
     res.send(pdf);
-  } catch (e) { res.status(500).send('Gagal membuat PDF: ' + e.message); }
+  } catch (e) { res.status(500).send('No se pudo crear el PDF:' + e.message); }
 });
 
 router.post('/payroll/slip/:id/send-wa', requireAdmin, async (req, res) => {
   try {
     const slip = payrollSvc.getSlipById(req.params.id);
-    if (!slip) throw new Error('Slip tidak ditemukan');
+    if (!slip) throw new Error('Recibo no encontrado');
     
     const phone = payrollSvc.getEmployeePhone(slip.employee_type, slip.employee_id);
-    if (!phone) throw new Error('Nomor HP karyawan tidak diset');
+    if (!phone) throw new Error('El empleado no tiene número de teléfono');
 
     const { getSettingsWithCache } = require('../config/settingsManager');
     const settings = getSettingsWithCache();
-    if (!settings.whatsapp_enabled) throw new Error('WhatsApp bot tidak aktif');
+    if (!settings.whatsapp_enabled) throw new Error('WhatsApp no está activo');
 
     const waNotify = require('../services/waNotifyService');
     if (false) {
-      throw new Error('WhatsApp bot tidak terkoneksi');
+      throw new Error('WhatsApp no está conectado');
     }
 
     const monthNames = ['','Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     
-    const msg = `🧾 *SLIP GAJI KARYAWAN*\n\n` +
-      `👤 *Nama:* ${slip.employee_name}\n` +
-      `📅 *Periode:* ${monthNames[slip.period_month]} ${slip.period_year}\n` +
+    const msg = `🧾 *RECIBO DE SUELDO*\n\n` +
+      `👤 *Nombre:* ${slip.employee_name}\n` +
+      `📅 *Período:* ${monthNames[slip.period_month]} ${slip.period_year}\n` +
       `🏢 *Status:* ${slip.status.toUpperCase()}\n\n` +
       `*PENDAPATAN:*\n` +
-      `- Gaji Pokok: ${regional.currencySymbol()} ${slip.base_salary.toLocaleString(regional.locale())}\n` +
+      `- Sueldo base: ${regional.currencySymbol()} ${slip.base_salary.toLocaleString(regional.locale())}\n` +
       (slip.transport_allowance ? `- Tunj. Transport: ${regional.currencySymbol()} ${slip.transport_allowance.toLocaleString(regional.locale())}\n` : '') +
       (slip.meal_allowance ? `- Tunj. Makan: ${regional.currencySymbol()} ${slip.meal_allowance.toLocaleString(regional.locale())}\n` : '') +
       (slip.phone_allowance ? `- Tunj. Pulsa: ${regional.currencySymbol()} ${slip.phone_allowance.toLocaleString(regional.locale())}\n` : '') +
       (slip.other_allowance ? `- Tunj. Lain: ${regional.currencySymbol()} ${slip.other_allowance.toLocaleString(regional.locale())}\n` : '') +
-      (slip.ticket_bonus ? `- Bonus Tiket: +${regional.currencySymbol()} ${slip.ticket_bonus.toLocaleString(regional.locale())}\n` : '') +
-      (slip.collection_commission ? `- Komisi Tagihan: +${regional.currencySymbol()} ${slip.collection_commission.toLocaleString(regional.locale())}\n` : '') +
+      (slip.ticket_bonus ? `- Bono por tickets: +${regional.currencySymbol()} ${slip.ticket_bonus.toLocaleString(regional.locale())}\n` : '') +
+      (slip.collection_commission ? `- Comisión por cobranza: +${regional.currencySymbol()} ${slip.collection_commission.toLocaleString(regional.locale())}\n` : '') +
       (slip.overtime_bonus ? `- Lembur: +${regional.currencySymbol()} ${slip.overtime_bonus.toLocaleString(regional.locale())}\n` : '') +
       `*Total Pendapatan: ${regional.currencySymbol()} ${slip.gross_salary.toLocaleString(regional.locale())}*\n\n` +
       `*POTONGAN:*\n` +
-      (slip.absence_deduction ? `- Potongan Absen: -${regional.currencySymbol()} ${slip.absence_deduction.toLocaleString(regional.locale())}\n` : '') +
+      (slip.absence_deduction ? `- Descuento por ausencias: -${regional.currencySymbol()} ${slip.absence_deduction.toLocaleString(regional.locale())}\n` : '') +
       (slip.late_deduction ? `- Potongan Terlambat: -${regional.currencySymbol()} ${slip.late_deduction.toLocaleString(regional.locale())}\n` : '') +
       (slip.other_deduction ? `- Potongan Lain: -${regional.currencySymbol()} ${slip.other_deduction.toLocaleString(regional.locale())}\n` : '') +
       `*Total Potongan: ${regional.currencySymbol()} ${slip.total_deductions.toLocaleString(regional.locale())}*\n\n` +
-      `💰 *GAJI BERSIH: ${regional.currencySymbol()} ${slip.net_salary.toLocaleString(regional.locale())}*\n\n` +
-      `Terima kasih atas kerja keras Anda! 🙏`;
+      `💰 *SUELDO NETO: ${regional.currencySymbol()} ${slip.net_salary.toLocaleString(regional.locale())}*\n\n` +
+      `¡Gracias por tu trabajo! 🙏`;
 
     await waNotify.sendText(phone, msg);
     res.json({ success: true, message: 'Terkirim' });
@@ -7878,9 +7878,9 @@ router.post('/onu-provision/configure-olt', requireAdminSession, restrictToAdmin
       try {
         const conn = await onuProvisionSvc.connectSSH(oltConfig);
         conn.end();
-        req.session._msg = { type: 'success', text: `Koneksi ke OLT ${vendor} berhasil!` };
+        req.session._msg = { type: 'success', text: `¡Conexión con la OLT ${vendor} correcta!` };
       } catch (error) {
-        req.session._msg = { type: 'error', text: `Gagal koneksi: ${error.message}` };
+        req.session._msg = { type: 'error', text: `Falló la conexión: ${error.message}` };
       }
     } else if (action === 'save') {
       // Save configuration
@@ -7895,9 +7895,9 @@ router.post('/onu-provision/configure-olt', requireAdminSession, restrictToAdmin
       });
       
       if (success) {
-        req.session._msg = { type: 'success', text: 'Konfigurasi OLT berhasil disimpan.' };
+        req.session._msg = { type: 'success', text: 'Configuración de la OLT guardada.' };
       } else {
-        req.session._msg = { type: 'error', text: 'Gagal menyimpan konfigurasi OLT.' };
+        req.session._msg = { type: 'error', text: 'No se pudo guardar la configuración de la OLT.' };
       }
     }
   } catch (error) {
@@ -7918,7 +7918,7 @@ router.post('/onu-provision/scan-unconfigured', requireAdminSession, restrictToA
     };
     
     if (!oltConfig.host) {
-      return res.json({ success: false, error: 'OLT belum dikonfigurasi' });
+      return res.json({ success: false, error: 'La OLT no está configurada' });
     }
     
     let onus = [];
@@ -7926,7 +7926,7 @@ router.post('/onu-provision/scan-unconfigured', requireAdminSession, restrictToA
     if (oltConfig.vendor === 'ZTE') {
       const { pon } = req.body;
       if (!pon) {
-        return res.json({ success: false, error: 'PON interface harus diisi' });
+        return res.json({ success: false, error: 'La interfaz PON es obligatoria' });
       }
       onus = await onuProvisionSvc.zteGetUnconfiguredONUs(oltConfig, pon);
     } else if (oltConfig.vendor === 'Huawei') {
@@ -7935,11 +7935,11 @@ router.post('/onu-provision/scan-unconfigured', requireAdminSession, restrictToA
     } else if (oltConfig.vendor === 'HSGQ' || oltConfig.vendor === 'Hioso') {
       const { pon } = req.body;
       if (!pon) {
-        return res.json({ success: false, error: 'PON interface harus diisi' });
+        return res.json({ success: false, error: 'La interfaz PON es obligatoria' });
       }
       onus = await onuProvisionSvc.hsgqGetUnconfiguredONUs(oltConfig, pon);
     } else {
-      return res.json({ success: false, error: 'Vendor OLT tidak didukung untuk scanning otomatis' });
+      return res.json({ success: false, error: 'Esta marca de OLT no admite el escaneo automático' });
     }
     
     res.json({ success: true, onus });
@@ -7953,14 +7953,14 @@ router.post('/onu-provision/scan-configured', requireAdminSession, restrictToAdm
   try {
     const host = getSetting('olt_host', '');
     if (!host) {
-      return res.json({ success: false, error: 'OLT belum dikonfigurasi di pengaturan global' });
+      return res.json({ success: false, error: 'La OLT no está configurada en la configuración general' });
     }
     
     const olt = db.prepare('SELECT * FROM olts WHERE host = ? LIMIT 1').get(host);
     if (!olt) {
       return res.json({ 
         success: false, 
-        error: 'OLT dengan IP ' + host + ' belum didaftarkan di halaman "Manajemen OLT". Silakan daftarkan OLT Anda di sana terlebih dahulu agar sistem dapat membaca data monitoring SNMP.' 
+        error: 'La OLT con IP' + host + ' todavía no está registrada en "Gestión de OLT". Registrala ahí primero para que el sistema pueda leer el monitoreo SNMP.' 
       });
     }
     
@@ -7985,7 +7985,7 @@ router.post('/onu-provision/provision', requireAdminSession, restrictToAdmin, ex
     };
     
     if (!oltConfig.host) {
-      throw new Error('OLT belum dikonfigurasi');
+      throw new Error('La OLT no está configurada');
     }
     
     const { vendor, createMikrotikPPPoE, mikrotikPppoeUsername, mikrotikPppoePassword, mikrotikProfile } = req.body;
@@ -7999,7 +7999,7 @@ router.post('/onu-provision/provision', requireAdminSession, restrictToAdmin, ex
       const existingCustomer = db.prepare('SELECT id, name FROM customers WHERE router_id IS ? AND pppoe_username = ? LIMIT 1').get(routerId, mikrotikPppoeUsername);
       
       if (existingCustomer) {
-        throw new Error(`PPPoE Username "${mikrotikPppoeUsername}" sudah digunakan oleh pelanggan: ${existingCustomer.name}`);
+        throw new Error(`El usuario PPPoE "${mikrotikPppoeUsername}" ya lo usa el cliente: ${existingCustomer.name}`);
       }
       
       // Use full provision with MikroTik integration
@@ -8022,16 +8022,16 @@ router.post('/onu-provision/provision', requireAdminSession, restrictToAdmin, ex
         result = await onuProvisionSvc.fullProvision(oltConfig, mikrotikConfig, provisionParams);
         
         if (result.results.onu) {
-          messages.push(`✅ ONU ${req.body.name} berhasil di-provision`);
+          messages.push(`✅ ONU ${req.body.name} dada de alta`);
         }
         if (result.results.pppoe) {
-          messages.push(`✅ PPPoE ${mikrotikPppoeUsername} berhasil dibuat di MikroTik`);
+          messages.push(`✅ PPPoE ${mikrotikPppoeUsername} creado en el MikroTik`);
         }
         if (result.results.errors && result.results.errors.length > 0) {
           messages.push(`⚠️ ${result.results.errors.join(', ')}`);
         }
       } else {
-        throw new Error('MikroTik belum dikonfigurasi di settings');
+        throw new Error('El MikroTik no está configurado');
       }
     } else {
       // Standard provision (ONU only)
@@ -8050,10 +8050,10 @@ router.post('/onu-provision/provision', requireAdminSession, restrictToAdmin, ex
       } else if (vendor === 'Hioso') {
         result = await onuProvisionSvc.hiosoProvisionONU(oltConfig, req.body);
       } else {
-        throw new Error('Vendor tidak didukung');
+        throw new Error('Marca no admitida');
       }
       
-      messages.push(`✅ ONU ${req.body.name} berhasil di-provision`);
+      messages.push(`✅ ONU ${req.body.name} dada de alta`);
     }
     
     if (auditSvc && typeof auditSvc.logAuditTrail === 'function') {
@@ -8077,7 +8077,7 @@ router.post('/onu-provision/provision', requireAdminSession, restrictToAdmin, ex
     req.session._msg = { type: 'success', text: messages.join(' | ') };
   } catch (error) {
     logger.error('Provision ONU error:', error);
-    req.session._msg = { type: 'error', text: 'Gagal provision ONU: ' + error.message };
+    req.session._msg = { type: 'error', text: 'No se pudo dar de alta la ONU:' + error.message };
   }
   
   res.redirect('/admin/onu-provision');
@@ -8231,10 +8231,10 @@ router.post('/radius-settings', requireAdminSession, restrictToAdmin, async (req
       radiusSvc.start();
     }
 
-    req.session._msg = { type: 'success', text: 'Pengaturan RADIUS Server berhasil diperbarui.' };
+    req.session._msg = { type: 'success', text: 'Configuración del servidor RADIUS actualizada.' };
   } catch (error) {
     logger.error('Error saving RADIUS settings:', error);
-    req.session._msg = { type: 'danger', text: 'Gagal menyimpan pengaturan: ' + error.message };
+    req.session._msg = { type: 'danger', text: 'No se pudo guardar la configuración:' + error.message };
   }
   res.redirect('/admin/radius-settings');
 });
@@ -8242,13 +8242,13 @@ router.post('/radius-settings', requireAdminSession, restrictToAdmin, async (req
 router.post('/radius/disconnect', requireAdminSession, restrictToAdmin, async (req, res) => {
   try {
     const { username, session_id, nas_ip } = req.body;
-    if (!username) throw new Error('Username tidak boleh kosong');
+    if (!username) throw new Error('El usuario no puede quedar vacío');
 
     await radiusSvc.disconnectSession(username, session_id, nas_ip);
-    req.session._msg = { type: 'success', text: `Sesi aktif RADIUS untuk user "${username}" berhasil diputus.` };
+    req.session._msg = { type: 'success', text: `Se desconectó la sesión RADIUS del usuario "${username}".` };
   } catch (e) {
     logger.error('Error disconnecting RADIUS session:', e);
-    req.session._msg = { type: 'danger', text: 'Gagal memutus sesi RADIUS: ' + e.message };
+    req.session._msg = { type: 'danger', text: 'No se pudo desconectar la sesión RADIUS:' + e.message };
   }
   res.redirect('/admin/radius-settings');
 });
@@ -8260,10 +8260,10 @@ router.post('/radius/clear-stale', requireAdminSession, restrictToAdmin, async (
       SET status_type = 2, terminate_cause = 10, updated_at = NOW_LOCAL()
       WHERE status_type IN (1, 3) AND updated_at < datetime('now', '-2 hours')
     `).run();
-    req.session._msg = { type: 'success', text: `Berhasil membersihkan ${result.changes} sesi kadaluarsa / ghost.` };
+    req.session._msg = { type: 'success', text: `Se limpiaron ${result.changes} sesiones vencidas / fantasma.` };
   } catch (e) {
     logger.error('Error clearing stale RADIUS sessions:', e);
-    req.session._msg = { type: 'danger', text: 'Gagal membersihkan sesi: ' + e.message };
+    req.session._msg = { type: 'danger', text: 'No se pudieron limpiar las sesiones:' + e.message };
   }
   res.redirect('/admin/radius-settings');
 });
@@ -8273,10 +8273,10 @@ router.post('/radius/restart', requireAdminSession, restrictToAdmin, async (req,
     radiusSvc.stop();
     await new Promise(r => setTimeout(r, 500));
     radiusSvc.start();
-    req.session._msg = { type: 'success', text: 'Layanan RADIUS Server (UDP Port 1812/1813) berhasil direstart.' };
+    req.session._msg = { type: 'success', text: 'Servicio RADIUS (UDP 1812/1813) reiniciado.' };
   } catch (e) {
     logger.error('Error restarting RADIUS service:', e);
-    req.session._msg = { type: 'danger', text: 'Gagal merestart layanan RADIUS: ' + e.message };
+    req.session._msg = { type: 'danger', text: 'No se pudo reiniciar el servicio RADIUS:' + e.message };
   }
   res.redirect('/admin/radius-settings');
 });
@@ -8285,7 +8285,7 @@ router.post('/radius/nas/add', requireAdminSession, restrictToAdmin, async (req,
   try {
     const { nasname, shortname, secret, description } = req.body;
     if (!nasname || !secret) {
-      throw new Error('IP NAS & Shared Secret wajib diisi.');
+      throw new Error('La IP del NAS y el secreto compartido son obligatorios.');
     }
 
     db.prepare(`
@@ -8303,10 +8303,10 @@ router.post('/radius/nas/add', requireAdminSession, restrictToAdmin, async (req,
       String(description || '').trim()
     );
 
-    req.session._msg = { type: 'success', text: `NAS ${nasname} berhasil ditambahkan.` };
+    req.session._msg = { type: 'success', text: `NAS ${nasname} agregado.` };
   } catch (error) {
     logger.error('Error adding NAS:', error);
-    req.session._msg = { type: 'danger', text: 'Gagal menambah NAS: ' + error.message };
+    req.session._msg = { type: 'danger', text: 'No se pudo agregar el NAS:' + error.message };
   }
   res.redirect('/admin/radius-settings');
 });
@@ -8315,7 +8315,7 @@ router.post('/radius/nas/edit', requireAdminSession, restrictToAdmin, async (req
   try {
     const { id, nasname, shortname, secret, description, is_active } = req.body;
     if (!id || !nasname || !secret) {
-      throw new Error('ID, IP NAS & Shared Secret wajib diisi.');
+      throw new Error('El ID, la IP del NAS y el secreto compartido son obligatorios.');
     }
 
     db.prepare(`
@@ -8331,10 +8331,10 @@ router.post('/radius/nas/edit', requireAdminSession, restrictToAdmin, async (req
       id
     );
 
-    req.session._msg = { type: 'success', text: `Data NAS ${nasname} berhasil diperbarui.` };
+    req.session._msg = { type: 'success', text: `Datos del NAS ${nasname} actualizados.` };
   } catch (error) {
     logger.error('Error updating NAS:', error);
-    req.session._msg = { type: 'danger', text: 'Gagal memperbarui NAS: ' + error.message };
+    req.session._msg = { type: 'danger', text: 'No se pudo actualizar el NAS:' + error.message };
   }
   res.redirect('/admin/radius-settings');
 });
@@ -8346,11 +8346,11 @@ router.post('/radius/nas/toggle', requireAdminSession, restrictToAdmin, async (r
     if (nas) {
       const newStatus = nas.is_active ? 0 : 1;
       db.prepare(`UPDATE radius_nas SET is_active = ?, updated_at = (NOW_LOCAL()) WHERE id = ?`).run(newStatus, id);
-      req.session._msg = { type: 'success', text: `Status NAS ${nas.nasname} diubah menjadi ${newStatus ? 'Aktif' : 'Non-Aktif'}.` };
+      req.session._msg = { type: 'success', text: `Estado del NAS ${nas.nasname} cambiado a ${newStatus ? 'Activo' : 'Inactivo'}.` };
     }
   } catch (error) {
     logger.error('Error toggling NAS status:', error);
-    req.session._msg = { type: 'danger', text: 'Gagal mengubah status NAS: ' + error.message };
+    req.session._msg = { type: 'danger', text: 'No se pudo cambiar el estado del NAS:' + error.message };
   }
   res.redirect('/admin/radius-settings');
 });
@@ -8359,10 +8359,10 @@ router.post('/radius/nas/delete', requireAdminSession, restrictToAdmin, async (r
   try {
     const { id } = req.body;
     db.prepare(`DELETE FROM radius_nas WHERE id = ?`).run(id);
-    req.session._msg = { type: 'success', text: 'NAS Client berhasil dihapus.' };
+    req.session._msg = { type: 'success', text: 'NAS eliminado.' };
   } catch (error) {
     logger.error('Error deleting NAS:', error);
-    req.session._msg = { type: 'danger', text: 'Gagal menghapus NAS: ' + error.message };
+    req.session._msg = { type: 'danger', text: 'No se pudo eliminar el NAS:' + error.message };
   }
   res.redirect('/admin/radius-settings');
 });

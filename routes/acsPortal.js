@@ -175,7 +175,7 @@ function describeAddWanTask(task) {
     if (name === 'addObject') {
         const objectName = String(payload.objectName || payload.object || '');
         if (/WANConnectionDevice\.\{\{wanDeviceInstance\}\}\.(WANPPPConnection|WANIPConnection)/.test(objectName)) {
-            return 'Membuat koneksi WAN';
+            return 'Creando conexión WAN';
         }
         if (objectName.includes('WANConnectionDevice')) {
             return 'Membuat slot WAN';
@@ -700,16 +700,16 @@ function requireSidebarMenuAccess(menuKey) {
         if (access.allowed) return next();
 
         if (access.reason === 'hidden') {
-            req.session._msg = { type: 'error', text: `Menu "${access.menu.labelDefault}" sedang disembunyikan dari sidebar.` };
+            req.session._msg = { type: 'error', text: `El menú "${access.menu.labelDefault}" está oculto en la barra lateral.` };
             return res.redirect('/admin');
         }
 
         if (access.reason === 'locked') {
-            req.session._msg = { type: 'error', text: `Menu "${access.menu.labelDefault}" terkunci. Hubungi ${sidebarMenuSvc.getFeatureContactPhone()} untuk mendapatkan password.` };
+            req.session._msg = { type: 'error', text: `El menú "${access.menu.labelDefault}" está bloqueado. Contactá a ${sidebarMenuSvc.getFeatureContactPhone()} para obtener la contraseña.` };
             return res.redirect('/admin/sidebar-settings');
         }
 
-        req.session._msg = { type: 'error', text: 'Anda tidak memiliki akses ke menu ini.' };
+        req.session._msg = { type: 'error', text: 'No tenés acceso a este menú.' };
         return res.redirect('/admin');
     };
 }
@@ -1177,7 +1177,7 @@ router.get('/logs', async (req, res) => {
                         });
                     }
                 } catch (e) {
-                    entries.push({ time: null, device: '-', action: 'connect', status: 'error', message: 'Gagal ambil /faults: ' + e.message });
+                    entries.push({ time: null, device: '-', action: 'connect', status: 'error', message: 'No se pudo leer /faults:' + e.message });
                 }
             }
             out.push({ id: s.id, name: s.name, url: s.url, entries });
@@ -1301,7 +1301,7 @@ router.post('/api/servers', requireAdmin, async (req, res) => {
 router.put('/api/servers/legacy', requireAdmin, express.json(), async (req, res) => {
     try {
         const url = String(req.body?.url || '').trim();
-        if (!url) return res.status(400).json({ success: false, message: 'URL wajib diisi' });
+        if (!url) return res.status(400).json({ success: false, message: 'La URL es obligatoria' });
         if (!/^https?:\/\//i.test(url)) return res.status(400).json({ success: false, message: 'URL harus diawali http:// atau https://' });
 
         const clearUsername = Boolean(req.body?.clear_username);
@@ -1321,7 +1321,7 @@ router.put('/api/servers/legacy', requireAdmin, express.json(), async (req, res)
         const settingsPath = require('../config/paths').settingsPath;
         fs.writeFileSync(settingsPath, JSON.stringify(currentSettings, null, 2), 'utf8');
 
-        res.json({ success: true, message: 'Default ACS berhasil diperbarui.' });
+        res.json({ success: true, message: 'ACS predeterminado actualizado.' });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
     }
@@ -1463,7 +1463,7 @@ router.post('/api/bulk/refresh', requireAdmin, async (req, res) => {
     try {
         const { devices } = req.body;
         if (!Array.isArray(devices) || devices.length === 0) {
-            return res.status(400).json({ success: false, message: 'Daftar perangkat wajib diisi' });
+            return res.status(400).json({ success: false, message: 'La lista de equipos es obligatoria' });
         }
         
         const promises = devices.map(async (d) => {
@@ -1479,7 +1479,7 @@ router.post('/api/bulk/refresh', requireAdmin, async (req, res) => {
         });
         
         await Promise.allSettled(promises);
-        res.json({ success: true, message: `Berhasil mengirim perintah summon untuk ${devices.length} perangkat.` });
+        res.json({ success: true, message: `Orden de consulta enviada a ${devices.length} equipos.` });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
     }
@@ -1490,7 +1490,7 @@ router.post('/api/bulk/delete', requireAdmin, async (req, res) => {
     try {
         const { devices } = req.body;
         if (!Array.isArray(devices) || devices.length === 0) {
-            return res.status(400).json({ success: false, message: 'Daftar perangkat wajib diisi' });
+            return res.status(400).json({ success: false, message: 'La lista de equipos es obligatoria' });
         }
         
         const promises = devices.map(async (d) => {
@@ -1509,7 +1509,7 @@ router.post('/api/bulk/delete', requireAdmin, async (req, res) => {
         });
         
         await Promise.allSettled(promises);
-        res.json({ success: true, message: `Berhasil menghapus ${devices.length} perangkat.` });
+        res.json({ success: true, message: `Se eliminaron ${devices.length} equipos.` });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
     }
@@ -1538,7 +1538,7 @@ router.post('/api/sync/all', requireAdmin, async (req, res) => {
 router.post('/api/sync/tags', requireAdmin, async (req, res) => {
     try {
         const r = require('../services/acsServerService').syncCustomerTagsFromAcs();
-        res.json({ success: true, message: `Sync Tag ONU selesai: ${r.matched} tag cocok, ${r.updated} diperbarui (dari ${r.scanned} device).`, data: r });
+        res.json({ success: true, message: `Sincronización de etiquetas ONU terminada: ${r.matched} coincidencias, ${r.updated} actualizadas (de ${r.scanned} equipos).`, data: r });
     } catch (e) {
         res.json({ success: false, message: e.message });
     }
@@ -1608,7 +1608,7 @@ router.get('/api/add-wan-status/:deviceId', requireAdmin, async (req, res) => {
         const rootTaskId = parseInt(req.query.rootTaskId, 10);
 
         if (!workflowId && !Number.isFinite(rootTaskId)) {
-            return res.status(400).json({ success: false, message: 'workflowId atau rootTaskId wajib diisi' });
+            return res.status(400).json({ success: false, message: 'workflowId o rootTaskId es obligatorio' });
         }
 
         let rows = [];
@@ -1652,10 +1652,10 @@ router.get('/api/add-wan-status/:deviceId', requireAdmin, async (req, res) => {
         const failed = tasks.filter(t => t.status === 'failed').length;
         const done = total > 0 && pending === 0 && inProgress === 0;
         const summary = failed > 0
-            ? `Ada ${failed} task yang gagal dari ${total} task workflow.`
+            ? `Fallaron ${failed} de ${total} tareas del proceso.`
             : done
-                ? `Workflow selesai. ${completed}/${total} task selesai.`
-                : `Workflow berjalan. ${completed}/${total} task selesai.`;
+                ? `Proceso terminado. ${completed}/${total} tareas completadas.`
+                : `Proceso en curso. ${completed}/${total} tareas completadas.`;
 
         return res.json({
             success: true,
@@ -1704,18 +1704,18 @@ router.post('/api/add-wan/:deviceId', requireAdmin, async (req, res) => {
         // 1. Validasi awal
         const normalizedMode = String(mode || '').trim().toLowerCase();
         if (!['pppoe', 'bridge'].includes(normalizedMode)) {
-            return res.json({ success: false, message: 'Mode WAN tidak valid' });
+            return res.json({ success: false, message: 'Modo WAN inválido' });
         }
 
         const parsedVlan = parseInt(vlanId, 10);
         if (isNaN(parsedVlan) || parsedVlan < 1 || parsedVlan > 4094) {
-            return res.json({ success: false, message: 'VLAN ID tidak valid (harus 1-4094)' });
+            return res.json({ success: false, message: 'VLAN ID inválido (debe ser 1-4094)' });
         }
         
         const trimmedPppoeUser = String(pppoeUser || '').trim();
         const trimmedPppoePass = String(pppoePass || '').trim();
         if (normalizedMode === 'pppoe' && (!trimmedPppoeUser || !trimmedPppoePass)) {
-            return res.json({ success: false, message: 'Username dan password PPPoE wajib diisi untuk mode PPPoE' });
+            return res.json({ success: false, message: 'El usuario y la contraseña PPPoE son obligatorios en modo PPPoE' });
         }
         
         const servers = getACSServers(acsId);
@@ -1735,7 +1735,7 @@ router.post('/api/add-wan/:deviceId', requireAdmin, async (req, res) => {
                 });
             } catch (mErr) {
                 console.error('[AddWAN] Failed to create PPPoE Secret in MikroTik:', mErr.message);
-                return res.json({ success: false, message: `Gagal membuat akun PPPoE di MikroTik: ${mErr.message}` });
+                return res.json({ success: false, message: `No se pudo crear la cuenta PPPoE en el MikroTik: ${mErr.message}` });
             }
         }
         
@@ -1749,7 +1749,7 @@ router.post('/api/add-wan/:deviceId', requireAdmin, async (req, res) => {
         });
         
         const deviceData = Array.isArray(getDeviceRes.data) && getDeviceRes.data.length > 0 ? getDeviceRes.data[0] : null;
-        if (!deviceData) return res.json({ success: false, message: 'CPE/Device tidak ditemukan di GenieACS' });
+        if (!deviceData) return res.json({ success: false, message: 'El CPE/equipo no se encontró en GenieACS' });
         
         const manufacturer = (deviceData._deviceId?._Manufacturer || deviceData._deviceId?.Manufacturer || '').toLowerCase();
         const wlanConfig = deviceData.InternetGatewayDevice?.LANDevice?.['1']?.WLANConfiguration || {};
@@ -1783,7 +1783,7 @@ router.post('/api/add-wan/:deviceId', requireAdmin, async (req, res) => {
             const rootTaskId = parseInt(taskRes?.data?._id, 10);
             return res.json({
                 success: true,
-                message: 'Workflow Add WAN built-in berhasil dikirim. Progress akan dimonitor otomatis.',
+                message: 'Se envió el proceso de alta WAN. El progreso se monitorea automáticamente.',
                 trackingSupported: true,
                 workflowId,
                 rootTaskId: Number.isFinite(rootTaskId) ? rootTaskId : null
@@ -1904,7 +1904,7 @@ router.post('/api/add-wan/:deviceId', requireAdmin, async (req, res) => {
         
         res.json({
             success: true,
-            message: 'Semua antrean tugas Add WAN (dan Wi-Fi) berhasil dikirimkan ke GenieACS.',
+            message: 'Todas las tareas de alta WAN (y WiFi) se enviaron a GenieACS.',
             trackingSupported: false
         });
     } catch (err) {

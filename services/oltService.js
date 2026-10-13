@@ -591,7 +591,7 @@ const telnetLoginAndRun = async (host, user, pass, commands, opts = {}) => {
       }
     } catch (e) {
       socket.destroy();
-      throw new Error('Telnet enable gagal: ' + (e.message || String(e)));
+      throw new Error('Falló el modo enable por Telnet:' + (e.message || String(e)));
     }
   }
 
@@ -1475,10 +1475,10 @@ function translateOfflineReason(brand, rawValue) {
       return 'Kabel Fiber Optik Putus (LOS)';
     }
     if (valStr.includes('mpcp') || valStr.includes('timeout') || valStr.includes('unregister')) {
-      return 'Koneksi Terputus / Redaman Drop';
+      return 'Conexión caída / atenuación';
     }
     if (valStr.includes('manual') || valStr.includes('deactive')) {
-      return 'Dimatikan dari OLT (Deactive)';
+      return 'Desactivada desde la OLT';
     }
     return valStr;
   }
@@ -1491,15 +1491,15 @@ function translateOfflineReason(brand, rawValue) {
       case 3:
         return 'Kabel Fiber Optik Putus (LOS)';
       case 4:
-        return 'Loss of Frame (Gangguan Sinyal)';
+        return 'Pérdida de trama (falla de señal)';
       case 5:
-        return 'Signal Failure (Gangguan Sinyal)';
+        return 'Falla de señal';
       case 8:
-        return 'Gagal Otorisasi / Registrasi';
+        return 'Falla de autorización / registro';
       case 9:
         return 'Mati Listrik / Adaptor Dicabut';
       case 10:
-        return 'Dimatikan dari OLT (Deactive)';
+        return 'Desactivada desde la OLT';
       case 12:
         return 'ONU Reboot';
       case 13:
@@ -1515,13 +1515,13 @@ function translateOfflineReason(brand, rawValue) {
       case 2:
         return 'Kabel Fiber Optik Putus (LOS)';
       case 3:
-        return 'Loss of Frame (Gangguan Sinyal)';
+        return 'Pérdida de trama (falla de señal)';
       case 4:
-        return 'Signal Failure (Gangguan Sinyal)';
+        return 'Falla de señal';
       case 7:
-        return 'Gagal Deaktivasi';
+        return 'Falla de desactivación';
       case 8:
-        return 'Dimatikan dari OLT (Deactive)';
+        return 'Desactivada desde la OLT';
       case 9:
         return 'ONU Reboot / Reset';
       case 10:
@@ -1531,7 +1531,7 @@ function translateOfflineReason(brand, rawValue) {
       case 31:
       case 32:
       case 33:
-        return 'Reset oleh Pelanggan (Tombol/Sistem)';
+        return 'Reinicio por el cliente (botón/sistema)';
       case 30:
         return 'Modul Optik Dimatikan';
       default:
@@ -1542,25 +1542,25 @@ function translateOfflineReason(brand, rawValue) {
   if (bKey === 'hioso' || bKey === 'hsgq') {
     switch (valNum) {
       case 2:
-        return 'Normal / Berhasil Terkoneksi';
+        return 'Normal / conectada';
       case 3:
-        return 'Koneksi Terputus (MPCP Down)';
+        return 'Conexión caída (MPCP down)';
       case 4:
-        return 'Gangguan Link (OAM Down)';
+        return 'Falla de enlace (OAM down)';
       case 7:
-        return 'Dimatikan dari OLT (Admin Down)';
+        return 'Desactivada desde la OLT (admin down)';
       case 8:
         return 'Kabel Fiber Optik Putus (Wire Down)';
       case 9:
         return 'Mati Listrik / Adaptor Dicabut (Power Off)';
       case 255:
-        return 'Penyebab tidak diketahui';
+        return 'Causa desconocida';
       default:
         return `Penyebab Lain (${valNum})`;
     }
   }
 
-  return `Kode (${valNum})`;
+  return `Código (${valNum})`;
 }
 
 // ─── MAIN: getOltStats ────────────────────────────────────────────────────────
@@ -1680,7 +1680,7 @@ async function getOltStatsInternal(id, full = false) {
 
     const timeoutMs = full ? 90000 : 20000;
     const globalTimeout = setTimeout(() => {
-      stats.error = `Koneksi Timeout (${Math.round(timeoutMs / 1000)}s) - OLT ${olt.host} tidak merespons SNMP/Telnet`;
+      stats.error = `Tiempo de espera agotado (${Math.round(timeoutMs / 1000)} s) - la OLT ${olt.host} no responde por SNMP/Telnet`;
       safeResolve(stats);
     }, timeoutMs);
 
@@ -1727,7 +1727,7 @@ async function getOltStatsInternal(id, full = false) {
             }
           }
 
-          stats.error = `Tidak dapat terhubung ke OLT ${olt.host}:${olt.snmp_port || 161} (${stats.error || 'Offline / Socket Closed'}). Pastikan IP OLT aktif & Community string ('${community}') benar.`;
+          stats.error = `No se pudo conectar con la OLT ${olt.host}:${olt.snmp_port || 161} (${stats.error || 'sin conexión / socket cerrado'}). Verificá que la IP de la OLT esté activa y que la comunidad ('${community}') sea correcta.`;
           safeResolve(stats);
           return;
         }
@@ -1776,7 +1776,7 @@ async function getOltStatsInternal(id, full = false) {
             }
           }
 
-          stats.error = `Brand/Profile OID tidak cocok dengan perangkat OLT ${olt.host}. Silakan ganti Brand di menu 'Edit OLT'.`;
+          stats.error = `La marca/perfil de OID no coincide con la OLT ${olt.host}. Cambiá la marca en "Editar OLT".`;
           safeResolve(stats);
           return;
         }
@@ -2144,7 +2144,7 @@ function decodeOltSnmpIndex(brand, index) {
 
 async function rebootOnu(oltId, index) {
   const olt = getOltById(oltId);
-  if (!olt) throw new Error('OLT tidak ditemukan');
+  if (!olt) throw new Error('OLT no encontrada');
 
   const brand = (olt.brand || 'hioso').toLowerCase();
   if (brand === 'zte' || brand === 'huawei') {
@@ -2176,7 +2176,7 @@ async function rebootOnu(oltId, index) {
 
 async function renameOnu(oltId, index, newName) {
   const olt = getOltById(oltId);
-  if (!olt) throw new Error('OLT tidak ditemukan');
+  if (!olt) throw new Error('OLT no encontrada');
 
   const brand = (olt.brand || 'hioso').toLowerCase();
   if (brand === 'zte' || brand === 'huawei') {
@@ -2212,7 +2212,7 @@ async function renameOnu(oltId, index, newName) {
  */
 async function authorizeOnu(oltId, data) {
   const olt = getOltById(oltId);
-  if (!olt) throw new Error('OLT tidak ditemukan');
+  if (!olt) throw new Error('OLT no encontrada');
 
   const brand = (olt.brand || 'hioso').toLowerCase();
   const { index, sn, name, vlan } = data;
@@ -2254,7 +2254,7 @@ async function authorizeOnu(oltId, data) {
     if (vlan) cmds.push(`service-port vlan ${vlan} gpon 0/${board}/${port} ont ${onuId} gemport 1 multi-service user-vlan ${vlan}`);
     cmds.push('save');
   } else {
-    throw new Error(`Fitur otorisasi otomatis belum didukung untuk brand ${brand}`);
+    throw new Error(`La autorización automática todavía no está disponible para la marca ${brand}`);
   }
 
   return await telnetLoginAndRun(olt.host, olt.web_user, olt.web_password, cmds, telnetOptsFromOlt(olt));
@@ -2368,7 +2368,7 @@ const telnetOptsFromOlt = (olt) => ({
  */
 async function configureZteWanViaGoApi(oltId, data) {
   const olt = getOltById(oltId);
-  if (!olt) throw new Error('OLT tidak ditemukan');
+  if (!olt) throw new Error('OLT no encontrada');
 
   const base = String(olt.api_base_url || '').trim().replace(/\/+$/, '');
   if (!base) {
@@ -2377,18 +2377,18 @@ async function configureZteWanViaGoApi(oltId, data) {
 
   const mode = String(data.mode || 'Bridge');
   if (mode === 'PPPoE') {
-    throw new Error('Integrasi REST ini memetakan ke VLAN/service-port go-api-c320. Untuk PPPoE gunakan Telnet CLI (OMCI) atau TR069.');
+    throw new Error('Esta integración REST asigna VLAN/service-port de go-api-c320. Para PPPoE usá Telnet CLI (OMCI) o TR-069.');
   }
 
   const { board, port, onuId } = parseZteOnuIndex(data.index);
   const ponPort = `1/${board}/${port}`;
   if (!/^\d+\/\d+\/\d+$/.test(ponPort)) {
-    throw new Error('Indeks ONU tidak valid untuk Go API (butuh slot/port/onu, mis. gpon-onu_1/2/7:5 → pon_port 1/2/7).');
+    throw new Error('Índice de ONU inválido para Go API (requiere slot/port/onu, ej. gpon-onu_1/2/7:5 → pon_port 1/2/7).');
   }
 
   const onu_id = parseInt(String(onuId), 10);
   if (!Number.isFinite(onu_id) || onu_id < 1 || onu_id > 128) {
-    throw new Error('ONU ID tidak valid (1–128).');
+    throw new Error('ONU ID inválido (1–128).');
   }
 
   const svlan = parseInt(String(data.vlan != null ? data.vlan : data.svlan), 10);
@@ -2396,13 +2396,13 @@ async function configureZteWanViaGoApi(oltId, data) {
   const cvlan = Number.isFinite(cvlanIn) ? cvlanIn : svlan;
 
   if (!Number.isFinite(svlan) || svlan < 1 || svlan > 4094) {
-    throw new Error('VLAN / SVLAN harus antara 1 dan 4094.');
+    throw new Error('VLAN / SVLAN debe estar entre 1 y 4094.');
   }
 
   const vlan_mode = String(data.vlan_mode || 'tag').toLowerCase();
   const allowed = ['tag', 'translation', 'transparent'];
   if (!allowed.includes(vlan_mode)) {
-    throw new Error('vlan_mode harus: tag, translation, atau transparent (sesuai go-api-c320).');
+    throw new Error('vlan_mode debe ser: tag, translation o transparent (según go-api-c320).');
   }
 
   if (vlan_mode === 'translation' && (!Number.isFinite(cvlan) || cvlan < 1)) {
@@ -2411,7 +2411,7 @@ async function configureZteWanViaGoApi(oltId, data) {
 
   const priority = Number.isFinite(parseInt(data.priority, 10)) ? parseInt(data.priority, 10) : 0;
   if (priority < 0 || priority > 7) {
-    throw new Error('Priority harus 0–7.');
+    throw new Error('La prioridad debe estar entre 0 y 7.');
   }
 
   const url = `${base}/api/v1/vlan/onu`;
@@ -2448,7 +2448,7 @@ async function configureWanViaAcs(sn, data) {
   const acsDevices = await genieacs.getDevices();
   const acsDev = acsDevices.find(d => d._id.includes(sn) || (d.Device?.DeviceInfo?.SerialNumber?._value && d.Device.DeviceInfo.SerialNumber._value.includes(sn)));
   
-  if (!acsDev) throw new Error(`Perangkat dengan SN ${sn} tidak ditemukan di ACS.`);
+  if (!acsDev) throw new Error(`No se encontró en el ACS el equipo con SN ${sn}.`);
 
   const { mode, vlan, username, password, lans, ssids } = data;
   const params = {};
@@ -2492,13 +2492,13 @@ async function configureWanViaAcs(sn, data) {
  */
  async function configureOnuWan(oltId, data) {
   const olt = getOltById(oltId);
-  if (!olt) throw new Error('OLT tidak ditemukan');
+  if (!olt) throw new Error('OLT no encontrada');
 
   const brand = (olt.brand || 'hioso').toLowerCase();
   const method = String(data.method || 'telnet').toLowerCase();
 
   if (method === 'go-api' && brand !== 'zte') {
-    throw new Error('Metode REST (go-api-c320) hanya untuk OLT brand ZTE.');
+    throw new Error('El método REST (go-api-c320) es solo para OLT marca ZTE.');
   }
   if (brand === 'zte' && method === 'go-api') {
     return configureZteWanViaGoApi(oltId, data);
@@ -2584,7 +2584,7 @@ async function configureWanViaAcs(sn, data) {
      }
      cmds.push('save');
    } else {
-     throw new Error(`Fitur konfigurasi WAN belum didukung untuk brand ${brand}`);
+     throw new Error(`La configuración WAN todavía no está disponible para la marca ${brand}`);
    }
  
    return await telnetLoginAndRun(olt.host, olt.web_user, olt.web_password, cmds, telnetOptsFromOlt(olt));
@@ -2602,7 +2602,7 @@ async function configureWanViaAcs(sn, data) {
        onus: [],
        unauth_onus: [],
        olts_summary: [],
-       error: 'Tidak ada OLT aktif'
+       error: 'No hay OLT activas'
      };
    }
 
@@ -2733,7 +2733,7 @@ async function configureWanViaAcs(sn, data) {
    const enablePassword = data.enable_password ? String(data.enable_password).trim() : null;
 
    if (!host) {
-     return { success: false, message: 'Host/IP OLT harus diisi.' };
+     return { success: false, message: 'El host/IP de la OLT es obligatorio.' };
    }
 
    const result = {
@@ -2784,7 +2784,7 @@ async function configureWanViaAcs(sn, data) {
        }
        result.messages.push(`SNMP OK (Uptime: ${result.snmp.uptime}, Profil: ${result.snmp.profile || 'Standar'}, ${result.snmp.onus} ONU)`);
      } else {
-       result.snmp.error = 'Tidak ada respon SNMP. Pastikan Service SNMP di OLT sudah Aktif dan IP/Community benar.';
+       result.snmp.error = 'Sin respuesta SNMP. Verificá que el SNMP esté activo en la OLT y que la IP/comunidad sean correctas.';
      }
      try { session.close(); } catch (e) {}
    } catch (e) {
@@ -2798,13 +2798,13 @@ async function configureWanViaAcs(sn, data) {
        enablePassword
      });
      result.telnet.ok = true;
-     result.messages.push('Telnet CLI OK (Login Berhasil)');
+     result.messages.push('Telnet CLI OK (ingreso correcto)');
    } catch (e) {
      result.telnet.error = e.message;
    }
 
    result.success = result.snmp.ok || result.telnet.ok;
-   result.message = result.messages.join(' | ') || (result.snmp.error || result.telnet.error || 'Gagal terhubung ke OLT');
+   result.message = result.messages.join(' | ') || (result.snmp.error || result.telnet.error || 'No se pudo conectar con la OLT');
    return result;
  }
 

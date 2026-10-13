@@ -74,7 +74,7 @@ function buildTargets(isolateDay) {
 }
 
 async function start(opts = {}) {
-  if (STATUS.running) throw new Error('Pengiriman sedang berjalan. Tunggu selesai atau hentikan dulu.');
+  if (STATUS.running) throw new Error('Hay un envío en curso. Esperá a que termine o detenelo primero.');
   const isolateDay = parseInt(opts.isolateDay, 10) || 0;
   const templateKey = String(opts.templateKey || 'whatsapp_auto_billing_message');
   const intervalMode = String(opts.intervalMode || 'static').toLowerCase();
@@ -83,13 +83,13 @@ async function start(opts = {}) {
   const intervalMax = Math.max(intervalMin, parseInt(opts.intervalMax, 10) || 40);
   const isQris = /qris/i.test(templateKey) || templateKey === 'whatsapp_billing_qris_message';
 
-  const def = 'Yth. {{nama}},\n\nBerikut tagihan internet Anda:\n📦 {{paket}}\n💰 {{moneda}} {{tagihan}}\n📅 {{rincian}}\n\nBayar: {{link}}';
+  const def = 'Estimado/a {{nama}},\n\nSu factura de internet:\n📦 {{paket}}\n💰 {{moneda}} {{tagihan}}\n📅 {{rincian}}\n\nDetalle: {{link}}';
   const tplRaw = db.getAppSetting(templateKey, def) || def;
 
   const targets = buildTargets(isolateDay);
   if (!targets.length) {
     try { db.prepare("INSERT INTO automation_runs (type, template_key, isolate_day, mode, interval_label, target, sent, failed, status, note) VALUES ('manual',?,?,?,'-',0,0,0,'empty','Tidak ada target')").run(templateKey, isolateDay, intervalMode); } catch (e) {}
-    return { started: false, total: 0, message: 'Tidak ada target (pelanggan belum bayar) untuk tanggal isolir tsb.' };
+    return { started: false, total: 0, message: 'No hay destinatarios (clientes con deuda) para ese día de corte.' };
   }
 
   STATUS = {
@@ -125,7 +125,7 @@ async function start(opts = {}) {
           await waNotify.sendText(c.phone, caption);
         }
         STATUS.sent++; STATUS.last = c.name;
-      } catch (e) { STATUS.failed++; STATUS.last = c.name + ' (gagal)'; }
+      } catch (e) { STATUS.failed++; STATUS.last = c.name + ' (falló)'; }
       if (i < targets.length - 1 && !STATUS.stopped) {
         const d = intervalMode === 'random'
           ? (intervalMin + Math.floor(Math.random() * (intervalMax - intervalMin + 1)))

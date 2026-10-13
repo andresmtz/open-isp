@@ -34,36 +34,36 @@ function computeDiscount(v, amount) {
 }
 function validate(code, amount) {
   const v = getByCode(code);
-  if (!v) return { ok: false, message: 'Kode voucher tidak ditemukan.' };
-  if (!v.active) return { ok: false, message: 'Kode voucher tidak aktif.' };
-  if (Number(v.max_uses) > 0 && Number(v.used_count) >= Number(v.max_uses)) return { ok: false, message: 'Kode voucher sudah habis dipakai.' };
+  if (!v) return { ok: false, message: 'Código de cupón no encontrado.' };
+  if (!v.active) return { ok: false, message: 'El cupón no está activo.' };
+  if (Number(v.max_uses) > 0 && Number(v.used_count) >= Number(v.max_uses)) return { ok: false, message: 'El cupón ya se usó todas las veces permitidas.' };
   const amt = Math.max(0, Math.round(Number(amount) || 0));
   if (Number(v.min_purchase) > 0 && amt < Number(v.min_purchase)) {
-    return { ok: false, message: 'Minimal tagihan ' + regional.currencySymbol() + ' ' + Number(v.min_purchase).toLocaleString(regional.locale()) + ' untuk memakai voucher ini.' };
+    return { ok: false, message: 'Factura mínima de' + regional.currencySymbol() + ' ' + Number(v.min_purchase).toLocaleString(regional.locale()) + ' para usar este cupón.' };
   }
   const discount = computeDiscount(v, amt);
   return { ok: true, voucher: v, discount: discount, message: 'Voucher diterapkan: -' + regional.currencySymbol() + ' ' + discount.toLocaleString(regional.locale()) };
 }
 function create(data) {
   const code = String(data.code || '').trim().toUpperCase();
-  if (!code) throw new Error('Kode voucher wajib diisi');
+  if (!code) throw new Error('El código del cupón es obligatorio');
   const type = data.type === 'percent' ? 'percent' : 'nominal';
   const value = Math.max(0, parseInt(data.value, 10) || 0);
-  if (value <= 0) throw new Error('Nilai voucher harus lebih dari 0');
+  if (value <= 0) throw new Error('El valor del cupón debe ser mayor a 0');
   const maxDiscount = Math.max(0, parseInt(data.max_discount, 10) || 0);
   const minPurchase = Math.max(0, parseInt(data.min_purchase, 10) || 0);
   const maxUses = Math.max(0, parseInt(data.max_uses, 10) || 0);
   const active = Number(data.active) === 0 ? 0 : 1;
   const exists = getByCode(code);
-  if (exists) throw new Error('Kode voucher sudah ada');
+  if (exists) throw new Error('El código del cupón ya existe');
   const r = db.prepare(`INSERT INTO discount_vouchers (code, type, value, max_discount, min_purchase, active, max_uses, note) VALUES (?,?,?,?,?,?,?,?)`)
     .run(code, type, value, maxDiscount, minPurchase, active, maxUses, String(data.note || ''));
   return getById(r.lastInsertRowid);
 }
 function update(id, data) {
-  const v = getById(id); if (!v) throw new Error('Voucher tidak ditemukan');
+  const v = getById(id); if (!v) throw new Error('Cupón no encontrado');
   const code = data.code != null ? String(data.code).trim().toUpperCase() : v.code;
-  if (!code) throw new Error('Kode voucher wajib diisi');
+  if (!code) throw new Error('El código del cupón es obligatorio');
   const dup = getByCode(code);
   if (dup && Number(dup.id) !== Number(id)) throw new Error('Kode voucher sudah dipakai voucher lain');
   const type = (data.type === 'percent') ? 'percent' : (data.type === 'nominal' ? 'nominal' : v.type);

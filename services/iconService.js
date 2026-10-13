@@ -27,7 +27,7 @@ async function writeIcon(srcBuf, size, outPath, opts) {
 }
 
 async function generatePwaIcons(srcBuf) {
-  if (!srcBuf || !srcBuf.length) throw new Error('Sumber logo kosong');
+  if (!srcBuf || !srcBuf.length) throw new Error('No hay logo de origen');
   if (!fs.existsSync(ICON_DIR)) fs.mkdirSync(ICON_DIR, { recursive: true });
   await writeIcon(srcBuf, 192, path.join(ICON_DIR, 'icon-192.png'), {});
   await writeIcon(srcBuf, 512, path.join(ICON_DIR, 'icon-512.png'), {});

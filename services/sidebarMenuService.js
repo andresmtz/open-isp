@@ -27,39 +27,39 @@ const MENU_DEFINITIONS = [
     { key: 'acs_pro', section: 'main', href: '/admin/acs', icon: 'bi bi-hdd-network', labelKey: 'admin.nav.acs_pro', labelDefault: 'GenieACS Pro', roles: ['admin'], activePages: ['acs_pro'] },
     { key: 'onu_provision', section: 'main', href: '/admin/onu-provision', icon: 'bi bi-hdd-network-fill', labelKey: 'admin.nav.onu_provision', labelDefault: 'ONU Provision', roles: ['admin'], activePages: ['onu_provision'] },
     { key: 'olts', section: 'main', href: '/admin/olts', icon: 'bi bi-hdd-fill', labelKey: 'admin.nav.olt_management', labelDefault: 'Manajemen OLT', roles: ['admin'], activePages: ['olts'] },
-    { key: 'monitoring', section: 'main', href: '/admin/monitoring', icon: 'bi bi-activity', labelKey: 'admin.nav.monitoring', labelDefault: 'Monitoring Sistem', roles: ['admin'], activePages: ['monitoring'] }
+    { key: 'monitoring', section: 'main', href: '/admin/monitoring', icon: 'bi bi-activity', labelKey: 'admin.nav.monitoring', labelDefault: 'Monitoreo del sistema', roles: ['admin'], activePages: ['monitoring'] }
   ] },
   { key: 'map', section: 'main', href: '/admin/map', icon: 'bi bi-map', labelKey: 'admin.nav.network_map', labelDefault: 'Peta Jaringan', roles: ['admin', 'cashier'], bottomNav: true, bottomNavOrder: 4, activePages: ['map'] },
   { key: 'whatsapp', section: 'main', href: '/admin/whatsapp', icon: 'bi bi-whatsapp', labelKey: 'admin.nav.whatsapp', labelDefault: 'WhatsApp', roles: ['admin', 'cashier'], activePages: ['whatsapp','broadcast','whatsapp_live_chat','whatsapp_templates'] },
   { key: 'automation', section: 'main', href: '/admin/automation', icon: 'bi bi-robot', labelKey: 'admin.nav.automation', labelDefault: 'Automation', roles: ['admin'], activePages: ['automation'] },
 
   { key: 'grp_customers', section: 'billing', href: '/admin/customers', icon: 'bi bi-people', labelKey: 'admin.nav.customers', labelDefault: 'Pelanggan', roles: ['admin', 'cashier'], bottomNav: true, bottomNavOrder: 2, activePages: ['customers', 'onu_stickers'], children: [
-    { key: 'customers', section: 'billing', href: '/admin/customers', icon: 'bi bi-people', labelKey: 'admin.nav.customers_data', labelDefault: 'Data Pelanggan', roles: ['admin', 'cashier'], activePages: ['customers'] },
+    { key: 'customers', section: 'billing', href: '/admin/customers', icon: 'bi bi-people', labelKey: 'admin.nav.customers_data', labelDefault: 'Datos del cliente', roles: ['admin', 'cashier'], activePages: ['customers'] },
     { key: 'onu_stickers', section: 'billing', href: '/admin/onu-stickers', icon: 'bi bi-qr-code', labelKey: 'admin.nav.onu_stickers', labelDefault: 'Stiker Modem ONU', roles: ['admin', 'cashier'], activePages: ['onu_stickers'] }
   ] },
-  { key: 'grp_packages', section: 'billing', href: '/admin/packages', icon: 'bi bi-box-seam', labelKey: 'admin.nav.grp_packages', labelDefault: 'Paket & Voucher', roles: ['admin', 'cashier'], activePages: ['packages', 'voucher_packages', 'vouchers_discounts', 'discounts', 'promo_slides'], children: [
-    { key: 'packages', section: 'billing', href: '/admin/packages', icon: 'bi bi-box-seam', labelKey: 'admin.nav.internet_packages', labelDefault: 'Paket Internet', roles: ['admin', 'cashier'], activePages: ['packages'] },
-    { key: 'voucher_packages', section: 'billing', href: '/admin/vouchers/packages', icon: 'bi bi-ticket-detailed', labelKey: 'admin.nav.voucher_packages', labelDefault: 'Paket Voucher', roles: ['admin', 'cashier'], activePages: ['voucher_packages'] },
-    { key: 'vouchers_discounts', section: 'billing', href: '/admin/vouchers-discounts', icon: 'bi bi-ticket-perforated', labelKey: 'admin.nav.vouchers_discounts', labelDefault: 'Biaya Pasang', roles: ['admin'], activePages: ['vouchers_discounts'] },
+  { key: 'grp_packages', section: 'billing', href: '/admin/packages', icon: 'bi bi-box-seam', labelKey: 'admin.nav.grp_packages', labelDefault: 'Planes y fichas', roles: ['admin', 'cashier'], activePages: ['packages', 'voucher_packages', 'vouchers_discounts', 'discounts', 'promo_slides'], children: [
+    { key: 'packages', section: 'billing', href: '/admin/packages', icon: 'bi bi-box-seam', labelKey: 'admin.nav.internet_packages', labelDefault: 'Planes de internet', roles: ['admin', 'cashier'], activePages: ['packages'] },
+    { key: 'voucher_packages', section: 'billing', href: '/admin/vouchers/packages', icon: 'bi bi-ticket-detailed', labelKey: 'admin.nav.voucher_packages', labelDefault: 'Planes de fichas', roles: ['admin', 'cashier'], activePages: ['voucher_packages'] },
+    { key: 'vouchers_discounts', section: 'billing', href: '/admin/vouchers-discounts', icon: 'bi bi-ticket-perforated', labelKey: 'admin.nav.vouchers_discounts', labelDefault: 'Costo de instalación', roles: ['admin'], activePages: ['vouchers_discounts'] },
     { key: 'discounts', section: 'billing', href: '/admin/discounts', icon: 'bi bi-percent', labelKey: 'admin.nav.discounts', labelDefault: 'Diskon', roles: ['admin', 'cashier'], activePages: ['discounts'] },
     { key: 'promo_slides', section: 'billing', href: '/admin/promo-slides', icon: 'bi bi-image', labelKey: 'admin.nav.promo_slides', labelDefault: 'Promo Slides', roles: ['admin'], activePages: ['promo_slides'] }
   ] },
   { key: 'grp_billing', section: 'billing', href: '/admin/billing', icon: 'bi bi-receipt', labelKey: 'admin.nav.invoices', labelDefault: 'Tagihan', roles: ['admin', 'cashier'], bottomNav: true, bottomNavOrder: 3, activePages: ['billing', 'collector_payments'], children: [
-    { key: 'billing', section: 'billing', href: '/admin/billing', icon: 'bi bi-receipt', labelKey: 'admin.nav.invoices_list', labelDefault: 'Data Tagihan', roles: ['admin', 'cashier'], activePages: ['billing'] },
-    { key: 'collector_payments', section: 'billing', href: '/admin/collector-payments', icon: 'bi bi-check2-square', labelKey: 'admin.nav.collector_payments', labelDefault: 'Approval Kolektor', roles: ['admin', 'cashier'], activePages: ['collector_payments'] }
+    { key: 'billing', section: 'billing', href: '/admin/billing', icon: 'bi bi-receipt', labelKey: 'admin.nav.invoices_list', labelDefault: 'Facturas', roles: ['admin', 'cashier'], activePages: ['billing'] },
+    { key: 'collector_payments', section: 'billing', href: '/admin/collector-payments', icon: 'bi bi-check2-square', labelKey: 'admin.nav.collector_payments', labelDefault: 'Aprobación de cobradores', roles: ['admin', 'cashier'], activePages: ['collector_payments'] }
   ] },
 
   { key: 'grp_finance', section: 'finance', href: '/admin/reports', icon: 'bi bi-cash-stack', labelKey: 'admin.nav.grp_finance', labelDefault: 'Keuangan', roles: ['admin', 'cashier'], activePages: ['reports', 'cashiers_reports', 'payroll', 'cash_in', 'expenses', 'expense_categories'], children: [
-    { key: 'reports', section: 'finance', href: '/admin/reports', icon: 'bi bi-bar-chart-line', labelKey: 'admin.nav.finance_report', labelDefault: 'Laporan Keuangan', roles: ['admin', 'cashier'], activePages: ['reports'] },
-    { key: 'cashiers_reports', section: 'finance', href: '/admin/cashiers/reports', icon: 'bi bi-journal-text', labelKey: 'admin.nav.cashiers_reports', labelDefault: 'Laporan Kasir', roles: ['admin', 'cashier'], activePages: ['cashiers_reports'] },
-    { key: 'cash_in', section: 'finance', href: '/admin/finance/cash-in', icon: 'bi bi-cash-stack', labelKey: 'admin.nav.cash_in', labelDefault: 'Kas Masuk', roles: ['admin', 'cashier'], activePages: ['cash_in'] },
+    { key: 'reports', section: 'finance', href: '/admin/reports', icon: 'bi bi-bar-chart-line', labelKey: 'admin.nav.finance_report', labelDefault: 'Reporte financiero', roles: ['admin', 'cashier'], activePages: ['reports'] },
+    { key: 'cashiers_reports', section: 'finance', href: '/admin/cashiers/reports', icon: 'bi bi-journal-text', labelKey: 'admin.nav.cashiers_reports', labelDefault: 'Reporte de cajeros', roles: ['admin', 'cashier'], activePages: ['cashiers_reports'] },
+    { key: 'cash_in', section: 'finance', href: '/admin/finance/cash-in', icon: 'bi bi-cash-stack', labelKey: 'admin.nav.cash_in', labelDefault: 'Otros ingresos', roles: ['admin', 'cashier'], activePages: ['cash_in'] },
     { key: 'expenses', section: 'finance', href: '/admin/finance/expenses', icon: 'bi bi-wallet2', labelKey: 'admin.nav.expenses', labelDefault: 'Pengeluaran', roles: ['admin', 'cashier'], activePages: ['expenses'] },
-    { key: 'expense_categories', section: 'finance', href: '/admin/finance/expense-categories', icon: 'bi bi-tags', labelKey: 'admin.nav.expense_categories', labelDefault: 'Kategori Pengeluaran', roles: ['admin'], activePages: ['expense_categories'] },
-    { key: 'payroll', section: 'finance', href: '/admin/payroll', icon: 'bi bi-wallet2', labelKey: 'admin.nav.payroll', labelDefault: 'Gaji & Payroll', roles: ['admin'], activePages: ['payroll'] }
+    { key: 'expense_categories', section: 'finance', href: '/admin/finance/expense-categories', icon: 'bi bi-tags', labelKey: 'admin.nav.expense_categories', labelDefault: 'Categorías de gastos', roles: ['admin'], activePages: ['expense_categories'] },
+    { key: 'payroll', section: 'finance', href: '/admin/payroll', icon: 'bi bi-wallet2', labelKey: 'admin.nav.payroll', labelDefault: 'Sueldos', roles: ['admin'], activePages: ['payroll'] }
   ] },
 
   { key: 'grp_service', section: 'service', href: '/admin/tickets', icon: 'bi bi-headset', labelKey: 'admin.nav.grp_service', labelDefault: 'Layanan', roles: ['admin', 'cashier'], activePages: ['tickets', 'inventory', 'attendance'], children: [
-    { key: 'tickets', section: 'service', href: '/admin/tickets', icon: 'bi bi-headset', labelKey: 'admin.nav.customer_tickets', labelDefault: 'Keluhan Pelanggan', roles: ['admin', 'cashier'], activePages: ['tickets'] },
+    { key: 'tickets', section: 'service', href: '/admin/tickets', icon: 'bi bi-headset', labelKey: 'admin.nav.customer_tickets', labelDefault: 'Reclamos de clientes', roles: ['admin', 'cashier'], activePages: ['tickets'] },
     { key: 'inventory', section: 'service', href: '/admin/inventory', icon: 'bi bi-boxes', labelKey: 'admin.nav.inventory', labelDefault: 'Inventaris (Stok)', roles: ['admin', 'cashier'], activePages: ['inventory'] },
     { key: 'attendance', section: 'service', href: '/admin/attendance', icon: 'bi bi-calendar-check', labelKey: 'admin.nav.attendance', labelDefault: 'Absensi Karyawan', roles: ['admin', 'cashier'], activePages: ['attendance'] }
   ] },
@@ -75,7 +75,7 @@ const MENU_DEFINITIONS = [
 
   { key: 'grp_system', section: 'system', href: '/admin/settings', icon: 'bi bi-gear', labelKey: 'admin.nav.grp_system', labelDefault: 'Sistem', roles: ['admin'], activePages: ['update', 'service_notice', 'settings', 'ewallet_logs', 'backup', 'audit_logs'], children: [
     { key: 'update', section: 'system', href: '/admin/update', icon: 'bi bi-cloud-arrow-down', labelKey: 'admin.nav.update', labelDefault: 'Update GitHub', roles: ['admin'], activePages: ['update'] },
-    { key: 'service_notice', section: 'system', href: '/admin/service-notice', icon: 'bi bi-megaphone-fill', labelKey: 'admin.nav.service_notice', labelDefault: 'Status Layanan', roles: ['admin'], activePages: ['service_notice'] },
+    { key: 'service_notice', section: 'system', href: '/admin/service-notice', icon: 'bi bi-megaphone-fill', labelKey: 'admin.nav.service_notice', labelDefault: 'Estado del servicio', roles: ['admin'], activePages: ['service_notice'] },
     { key: 'settings', section: 'system', href: '/admin/settings', icon: 'bi bi-gear', labelKey: 'admin.nav.settings', labelDefault: 'Pengaturan', roles: ['admin'], activePages: ['settings'] },
     { key: 'ewallet_logs', section: 'system', href: '/admin/ewallet-logs', icon: 'bi bi-journal-text', labelKey: 'admin.nav.log_rekap', labelDefault: 'Log & Rekap', roles: ['admin'], activePages: ['ewallet_logs'] },
     { key: 'backup', section: 'system', href: '/admin/backup', icon: 'bi bi-hdd-stack', labelKey: 'admin.nav.backup', labelDefault: 'Backup & Recovery', roles: ['admin'], activePages: ['backup'] },
@@ -259,7 +259,7 @@ function enrichMenu(menu, states) {
     locked,
     hidden,
     hrefResolved: menu.href,
-    lockedMessage: locked ? `Menu "${menu.labelDefault}" terkunci. Hubungi ${getFeatureContactPhone()} untuk mendapatkan password aktivasi.` : ''
+    lockedMessage: locked ? `El menú "${menu.labelDefault}" está bloqueado. Contactá a ${getFeatureContactPhone()} para obtener el código de activación.` : ''
   };
   if (Array.isArray(menu.children)) {
     out.children = menu.children.map((ch) => enrichMenu(ch, states));

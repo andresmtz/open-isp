@@ -31,7 +31,7 @@ const uploadAttendance = multer({
     if (mimetype && extname) {
       return cb(null, true);
     }
-    cb(new Error('Hanya file gambar yang diperbolehkan (JPEG, PNG, WebP)'));
+    cb(new Error('Solo se permiten imágenes (JPEG, PNG, WebP)'));
   }
 });
 

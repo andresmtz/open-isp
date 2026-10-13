@@ -33,7 +33,7 @@ const server = http.createServer((req, res) => {
   res.end(
     '<!doctype html><meta charset="utf-8"><title>Mengalihkan…</title>' +
     '<meta http-equiv="refresh" content="0;url=' + TARGET + '">' +
-    '<p>Mengalihkan ke portal pembayaran… <a href="' + TARGET + '">Lanjut</a></p>'
+    '<p>Redirigiendo al portal de pagos… <a href="' + TARGET + '">Lanjut</a></p>'
   );
 });
 

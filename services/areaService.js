@@ -27,10 +27,10 @@ function getAreaById(id) {
  */
 function createArea(data) {
   const name = String(data.name || '').trim();
-  if (!name) throw new Error('Nama Area / Wilayah tidak boleh kosong');
+  if (!name) throw new Error('El nombre de la zona no puede quedar vacío');
 
   const existing = db.prepare('SELECT id FROM areas WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))').get(name);
-  if (existing) throw new Error(`Area "${name}" sudah ada.`);
+  if (existing) throw new Error(`La zona "${name}" ya existe.`);
 
   const stmt = db.prepare('INSERT INTO areas (name, description) VALUES (?, ?)');
   return stmt.run(name, String(data.description || '').trim());
@@ -41,13 +41,13 @@ function createArea(data) {
  */
 function updateArea(id, data) {
   const oldArea = getAreaById(id);
-  if (!oldArea) throw new Error('Data Area tidak ditemukan');
+  if (!oldArea) throw new Error('Zona no encontrada');
 
   const newName = String(data.name || '').trim();
-  if (!newName) throw new Error('Nama Area / Wilayah tidak boleh kosong');
+  if (!newName) throw new Error('El nombre de la zona no puede quedar vacío');
 
   const existing = db.prepare('SELECT id FROM areas WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) AND id != ?').get(newName, id);
-  if (existing) throw new Error(`Nama Area "${newName}" sudah digunakan oleh area lain.`);
+  if (existing) throw new Error(`El nombre "${newName}" ya lo usa otra zona.`);
 
   const description = String(data.description || '').trim();
 
@@ -67,7 +67,7 @@ function updateArea(id, data) {
  */
 function deleteArea(id) {
   const area = getAreaById(id);
-  if (!area) throw new Error('Data Area tidak ditemukan');
+  if (!area) throw new Error('Zona no encontrada');
 
   return db.prepare('DELETE FROM areas WHERE id = ?').run(id);
 }

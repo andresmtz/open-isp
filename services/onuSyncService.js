@@ -219,7 +219,7 @@ async function runSyncOnu(opts = {}) {
 async function syncOnuCustomerNames(oltId, opts = {}) {
   const res = await runSyncOnu({ dryRun: !!opts.dryRun, oltId, skipFill: true });
   const s = (res.olts && res.olts[0]) || null;
-  if (!s) throw new Error('OLT tidak ditemukan');
+  if (!s) throw new Error('OLT no encontrada');
   return s;
 }
 

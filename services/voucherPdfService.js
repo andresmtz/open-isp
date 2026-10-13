@@ -33,7 +33,7 @@ function generateVoucherBatchPdfBuffer(batch, vouchers, settings = {}) {
 
       let y = drawHeader() + 14;
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(
-        `Profil: ${batch.profile_name || '-'}   •   Harga: ${fmtRp(price)}   •   Masa aktif: ${batch.validity || '-'}   •   Router: ${batch.router_name || '-'}   •   Jumlah: ${list.length}   •   Dicetak: ${new Date().toLocaleString(regional.locale())}`,
+        `Perfil: ${batch.profile_name || '-'}   •   Precio: ${fmtRp(price)}   •   Vigencia: ${batch.validity || '-'}   •   Router: ${batch.router_name || '-'}   •   Cantidad: ${list.length}   •   Impreso: ${new Date().toLocaleString(regional.locale())}`,
         LEFT, y, { width: W });
       y += 22;
 
@@ -56,7 +56,7 @@ function generateVoucherBatchPdfBuffer(batch, vouchers, settings = {}) {
         if (col >= cols) { col = 0; y += cardH + rowGap; }
       }
       if (list.length === 0) {
-        doc.fillColor(MUTED).fontSize(10).font('Helvetica').text('Belum ada voucher pada batch ini.', LEFT, y, { width: W, align: 'center' });
+        doc.fillColor(MUTED).fontSize(10).font('Helvetica').text('Este lote todavía no tiene fichas.', LEFT, y, { width: W, align: 'center' });
       }
 
       // Footer + nomor halaman

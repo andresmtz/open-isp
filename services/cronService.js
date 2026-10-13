@@ -117,14 +117,14 @@ async function runAutoBillingReminder() {
     let batchCount = 0;
 
     const defaultTemplate =
-      `Yth. Pelanggan {{nama}},\n\n` +
-      `Ini adalah pengingat sebelum tanggal jatuh tempo/isolir.\n\n` +
-      `📦 *Paket:* {{paket}}\n` +
-      `💰 *Total Tagihan:* {{moneda}} {{tagihan}}\n` +
-      `📅 *Periode:* {{rincian}}\n\n` +
-      `Mohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\n` +
-      `Terima kasih atas kerja samanya.\n` +
-      `Salam,\nAdmin ${getSetting('company_header', 'ISP')}`;
+      `Estimado/a {{nama}},\n\n` +
+      `Le recordamos que su factura de internet está por vencer.\n\n` +
+      `📦 *Plan:* {{paket}}\n` +
+      `💰 *Monto:* {{moneda}} {{tagihan}}\n` +
+      `📅 *Período:* {{rincian}}\n\n` +
+      `Por favor, realice su pago antes de la fecha de corte. Detalle: {{link}}\n\n` +
+      `¡Gracias!\n` +
+      `Saludos,\n${getSetting('company_header', 'ISP')}`;
     const _tmplKey = String(getSetting('auto_billing_template_key', 'whatsapp_auto_billing_message') || 'whatsapp_auto_billing_message');
     const template = String(db.getAppSetting(_tmplKey, defaultTemplate) || defaultTemplate);
 
@@ -196,7 +196,7 @@ async function runAutoBillingReminder() {
           const totalTagihan = summary.totalAmount > 0 ? summary.totalAmount : Number(latestUnpaid && latestUnpaid.amount || 0);
           const rincianBulan = summary.periodText || (latestUnpaid ? `${latestUnpaid.period_month}/${latestUnpaid.period_year}` : '');
           const displayPeriode = summary.isMultiple
-            ? `${summary.periodText}\n\n📋 *Rincian Tunggakan:*\n${summary.breakdownText}`
+            ? `${summary.periodText}\n\n📋 *Detalle de la deuda:*\n${summary.breakdownText}`
             : summary.periodText;
 
           // Process Dynamic QRIS if enabled & available
@@ -277,7 +277,7 @@ async function runAutoBillingReminder() {
             .replace(/{{username}}/gi, c.pppoe_username || '-')
             .replace(/{{pppoe}}/gi, c.pppoe_username || '-')
             .replace(/{{tagihan}}/gi, finalTagihanStr)
-            .replace(/{{rincian_detail}}/gi, summary.isMultiple ? `📋 *Rincian Tunggakan:*\n${summary.breakdownText}` : '')
+            .replace(/{{rincian_detail}}/gi, summary.isMultiple ? `📋 *Detalle de la deuda:*\n${summary.breakdownText}` : '')
             .replace(/{{rincian}}/gi, displayPeriode || '-')
             .replace(/{{periode}}/gi, displayPeriode || '-')
             .replace(/{{paket}}/gi, c.package_name || '-')
@@ -316,7 +316,7 @@ async function runAutoBillingReminder() {
             targetCount++;
             batchCount++;
           } else {
-            throw new Error('Gagal kirim pesan');
+            throw new Error('No se pudo enviar el mensaje');
           }
 
           // Batch Processing: Pause setelah N pesan
@@ -824,7 +824,7 @@ async function sendAutoLunasRecap(pMonth, pYear) {
     const waNotify = require('./waNotifyService');
     const list = rows.map(function (r) { return '• ' + r.name + ' (' + regional.currencySymbol() + ' ' + Number(r.amount || 0).toLocaleString(regional.locale()) + ')'; }).join('\n');
     const total = rows.reduce(function (s, r) { return s + Number(r.amount || 0); }, 0);
-    const msg = '📋 *REKAP AUTO-LUNAS — Periode ' + m + '/' + y + '*\n\nJumlah  : *' + rows.length + ' pelanggan*\nNominal : *' + regional.currencySymbol() + ' ' + total.toLocaleString(regional.locale()) + '*\n\nDaftar:\n' + list + '\n\nWaktu   : ' + now.toLocaleString(regional.locale());
+    const msg = '📋 *RESUMEN DE PAGOS AUTOMÁTICOS — Período' + m + '/' + y + '*\n\nJumlah  : *' + rows.length + ' clientes*\nMonto : *' + regional.currencySymbol() + ' ' + total.toLocaleString(regional.locale()) + '*\n\nDaftar:\n' + list + '\n\nWaktu   : ' + now.toLocaleString(regional.locale());
     const to = await waNotify.notifyAdmin(msg);
     logger.info('[CRON] Rekap auto-lunas ' + m + '/' + y + ' terkirim ke admin (' + rows.length + ' pelanggan).');
     return { sent: true, count: rows.length, period: m + '/' + y, to: to };

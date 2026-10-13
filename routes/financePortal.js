@@ -47,9 +47,9 @@ router.post('/expense-categories', express.urlencoded({ extended: true }), (req,
   try {
     const { name, description, icon, color } = req.body;
     db.prepare(`INSERT INTO expense_categories (name, description, icon, color) VALUES (?, ?, ?, ?)`).run(name, description, icon || 'bi bi-tag', color || '#6366f1');
-    req.session._msg = { type: 'success', text: 'Kategori berhasil ditambahkan' };
+    req.session._msg = { type: 'success', text: 'Categoría agregada' };
   } catch(e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + e.message };
+    req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
   res.redirect('/admin/finance/expense-categories');
 });
@@ -57,9 +57,9 @@ router.post('/expense-categories', express.urlencoded({ extended: true }), (req,
 router.post('/expense-categories/:id/delete', (req, res) => {
   try {
     db.prepare('DELETE FROM expense_categories WHERE id = ?').run(req.params.id);
-    req.session._msg = { type: 'success', text: 'Kategori berhasil dihapus' };
+    req.session._msg = { type: 'success', text: 'Categoría eliminada' };
   } catch(e) {
-    req.session._msg = { type: 'error', text: 'Gagal dihapus (mungkin sedang digunakan)' };
+    req.session._msg = { type: 'error', text: 'No se pudo eliminar (puede estar en uso)' };
   }
   res.redirect('/admin/finance/expense-categories');
 });
@@ -94,9 +94,9 @@ router.post('/expenses', express.urlencoded({ extended: true }), (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(date, category, cleanAmount, description, payment_method, receipt_number, vendor, recorded_by_name);
     
-    req.session._msg = { type: 'success', text: 'Pengeluaran berhasil dicatat' };
+    req.session._msg = { type: 'success', text: 'Gasto registrado' };
   } catch(e) {
-    req.session._msg = { type: 'error', text: 'Gagal mencatat pengeluaran: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo registrar el gasto:' + e.message };
   }
   res.redirect('/admin/finance/expenses');
 });
@@ -104,9 +104,9 @@ router.post('/expenses', express.urlencoded({ extended: true }), (req, res) => {
 router.post('/expenses/:id/delete', (req, res) => {
   try {
     db.prepare('DELETE FROM expenses WHERE id = ?').run(req.params.id);
-    req.session._msg = { type: 'success', text: 'Data berhasil dihapus' };
+    req.session._msg = { type: 'success', text: 'Registro eliminado' };
   } catch(e) {
-    req.session._msg = { type: 'error', text: 'Gagal dihapus' };
+    req.session._msg = { type: 'error', text: 'No se pudo eliminar' };
   }
   res.redirect('/admin/finance/expenses');
 });
@@ -132,9 +132,9 @@ router.post('/cash-in', express.urlencoded({ extended: true }), (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(date, category, cleanAmount, description, payment_method, receipt_number, recorded_by_name);
     
-    req.session._msg = { type: 'success', text: 'Kas Masuk berhasil dicatat' };
+    req.session._msg = { type: 'success', text: 'Ingreso registrado' };
   } catch(e) {
-    req.session._msg = { type: 'error', text: 'Gagal mencatat Kas Masuk: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo registrar el ingreso:' + e.message };
   }
   res.redirect('/admin/finance/cash-in');
 });
@@ -142,9 +142,9 @@ router.post('/cash-in', express.urlencoded({ extended: true }), (req, res) => {
 router.post('/cash-in/:id/delete', (req, res) => {
   try {
     db.prepare('DELETE FROM cash_in WHERE id = ?').run(req.params.id);
-    req.session._msg = { type: 'success', text: 'Data berhasil dihapus' };
+    req.session._msg = { type: 'success', text: 'Registro eliminado' };
   } catch(e) {
-    req.session._msg = { type: 'error', text: 'Gagal dihapus' };
+    req.session._msg = { type: 'error', text: 'No se pudo eliminar' };
   }
   res.redirect('/admin/finance/cash-in');
 });

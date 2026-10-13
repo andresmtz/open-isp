@@ -178,7 +178,7 @@ function getAttendanceData(employeeType, employeeId, month, year) {
 function generateSlip(employeeType, employeeId, month, year) {
   const setting = getPayrollSetting(employeeType, employeeId);
   if (!setting) {
-    throw new Error(`Pengaturan gaji belum diset untuk ${employeeType} ID ${employeeId}`);
+    throw new Error(`No hay configuración de sueldo para ${employeeType} ID ${employeeId}`);
   }
 
   // Cek apakah slip sudah ada
@@ -188,7 +188,7 @@ function generateSlip(employeeType, employeeId, month, year) {
   `).get(employeeType, employeeId, month, year);
 
   if (existing) {
-    throw new Error(`Slip gaji sudah ada untuk periode ${month}/${year}. Hapus dulu jika ingin generate ulang.`);
+    throw new Error(`Ya existe un recibo de sueldo para el período ${month}/${year}. Eliminalo primero si querés generarlo de nuevo.`);
   }
 
   const employeeName = getEmployeeName(employeeType, employeeId);
@@ -311,7 +311,7 @@ function getSlipsByEmployee(employeeType, employeeId) {
 
 function updateSlipDeductions(id, otherDeduction, otherDeductionNote) {
   const slip = getSlipById(id);
-  if (!slip) throw new Error('Slip tidak ditemukan');
+  if (!slip) throw new Error('Recibo no encontrado');
   if (slip.status !== 'draft') throw new Error('Hanya slip draft yang bisa diedit');
 
   const od = parseInt(otherDeduction) || 0;
@@ -328,7 +328,7 @@ function updateSlipDeductions(id, otherDeduction, otherDeductionNote) {
 
 function approveSlip(id) {
   const slip = getSlipById(id);
-  if (!slip) throw new Error('Slip tidak ditemukan');
+  if (!slip) throw new Error('Recibo no encontrado');
   if (slip.status !== 'draft') throw new Error('Hanya slip draft yang bisa di-approve');
 
   return db.prepare(`
@@ -338,7 +338,7 @@ function approveSlip(id) {
 
 function markSlipPaid(id) {
   const slip = getSlipById(id);
-  if (!slip) throw new Error('Slip tidak ditemukan');
+  if (!slip) throw new Error('Recibo no encontrado');
   if (slip.status !== 'approved') throw new Error('Hanya slip yang sudah approved yang bisa ditandai paid');
 
   const result = db.prepare(`
@@ -349,7 +349,7 @@ function markSlipPaid(id) {
   try {
     db.prepare(`
       INSERT INTO expenses (date, category, amount, description, payment_method, recorded_by_name)
-      VALUES (date('now', 'localtime'), 'Gaji & Tunjangan', ?, ?, 'transfer', 'Sistem (Payroll)')
+      VALUES (date('now', 'localtime'), 'Sueldos y beneficios', ?, ?, 'transfer', 'Sistema (sueldos)')
     `).run(slip.net_salary, `Gaji ${slip.employee_name} (Periode ${slip.period_month}/${slip.period_year})`);
   } catch (e) {
     logger.error('Gagal mencatat expense dari slip gaji: ' + e.message);
@@ -377,11 +377,11 @@ function bulkMarkPaid(month, year) {
   try {
     const stmt = db.prepare(`
       INSERT INTO expenses (date, category, amount, description, payment_method, recorded_by_name)
-      VALUES (date('now', 'localtime'), 'Gaji & Tunjangan', ?, ?, 'transfer', 'Sistem (Payroll)')
+      VALUES (date('now', 'localtime'), 'Sueldos y beneficios', ?, ?, 'transfer', 'Sistema (sueldos)')
     `);
     
     for (const slip of slipsToPay) {
-      stmt.run(slip.net_salary, `Gaji ${slip.employee_name} (Periode ${slip.period_month}/${slip.period_year})`);
+      stmt.run(slip.net_salary, `Sueldo de ${slip.employee_name} (período ${slip.period_month}/${slip.period_year})`);
     }
   } catch (e) {
     logger.error('Gagal mencatat expense bulk slip gaji: ' + e.message);
@@ -392,7 +392,7 @@ function bulkMarkPaid(month, year) {
 
 function deleteSlip(id) {
   const slip = getSlipById(id);
-  if (!slip) throw new Error('Slip tidak ditemukan');
+  if (!slip) throw new Error('Recibo no encontrado');
   if (slip.status === 'paid') throw new Error('Slip yang sudah paid tidak bisa dihapus');
   return db.prepare('DELETE FROM payroll_slips WHERE id = ?').run(id);
 }

@@ -926,7 +926,7 @@ async function monitorRXPower(threshold = -27) {
         if (criticalDevices.length > 0) {
             // Buat pesan peringatan
             let message = `*PERINGATAN: REDAMAN TINGGI*\n\n`;
-            message += `${criticalDevices.length} perangkat memiliki nilai RX Power lebih buruk dari ${threshold} dBm (semakin negatif = semakin buruk):\n\n`;
+            message += `${criticalDevices.length} equipos tienen una potencia RX peor que ${threshold} dBm (más negativo = peor):\n\n`;
             
             criticalDevices.forEach((device, index) => {
                 message += `${index + 1}. *Device ID:* ${device.id.split('-')[2] || device.id}\n`;
@@ -936,7 +936,7 @@ async function monitorRXPower(threshold = -27) {
                 message += `   🕒 *Last Inform:* ${new Date(device.lastInform).toLocaleString(regional.locale())}\n\n`;
             });
             
-            message += `⚠️ *Mohon segera dicek untuk menghindari koneksi terputus.*`;
+            message += `⚠️ *Revisalos cuanto antes para evitar cortes de conexión.*`;
             
             // Kirim notifikasi WhatsApp jika tersedia
             if (sendMonitoringAlert) {
@@ -962,7 +962,7 @@ async function monitorRXPower(threshold = -27) {
         return {
             success: true,
             criticalDevices,
-            message: `${criticalDevices.length} perangkat memiliki RXPower di atas threshold`
+            message: `${criticalDevices.length} equipos tienen la potencia RX por encima del umbral`
         };
     } catch (error) {
         logger.error(`[RXPower] Error memantau RXPower: ${error.message || String(error)}`);
@@ -1082,8 +1082,8 @@ async function monitorOfflineDevices(thresholdHours = 24) {
         // Jika ada perangkat yang offline
         if (offlineDevices.length > 0) {
             // Buat pesan peringatan
-            let message = `*PERINGATAN: PERANGKAT OFFLINE*\n\n`;
-            message += `${offlineDevices.length} perangkat offline lebih dari ${thresholdHours} jam:\n\n`;
+            let message = `*ALERTA: EQUIPOS DESCONECTADOS*\n\n`;
+            message += `${offlineDevices.length} equipos desconectados hace más de ${thresholdHours} horas:\n\n`;
             
             offlineDevices.forEach((device, index) => {
                 message += `${index + 1}. *Device ID:* ${device.id.split('-')[2] || device.id}\n`;
@@ -1092,7 +1092,7 @@ async function monitorOfflineDevices(thresholdHours = 24) {
                 message += `   🕒 *Last Inform:* ${new Date(device.lastInform).toLocaleString(regional.locale())}\n\n`;
             });
             
-            message += `⚠️ *Mohon segera ditindaklanjuti.*`;
+            message += `⚠️ *Requiere atención inmediata.*`;
             
             // Kirim notifikasi WhatsApp jika tersedia
             if (sendMonitoringAlert) {
@@ -1118,13 +1118,13 @@ async function monitorOfflineDevices(thresholdHours = 24) {
         return {
             success: true,
             offlineDevices,
-            message: `${offlineDevices.length} perangkat offline lebih dari ${thresholdHours} jam`
+            message: `${offlineDevices.length} equipos desconectados hace más de ${thresholdHours} horas`
         };
     } catch (error) {
         logger.error(`[Offline] Error memantau perangkat offline: ${error.message || String(error)}`);
         return {
             success: false,
-            message: `Error memantau perangkat offline: ${error.message}`,
+            message: `Error al monitorear equipos desconectados: ${error.message}`,
             error
         };
     }

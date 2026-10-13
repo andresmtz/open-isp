@@ -12,7 +12,7 @@ function generatePayslipPdfBuffer(slip, settings = {}) {
   return new Promise((resolve, reject) => {
     try {
       const ci = companyInfo(settings);
-      const doc = new PDFDocument({ size: 'A4', margin: 0, info: { Title: `Slip Gaji — ${slip.employee_name}`, Author: ci.name, Subject: 'Slip Gaji' } });
+      const doc = new PDFDocument({ size: 'A4', margin: 0, info: { Title: `Recibo de sueldo — ${slip.employee_name}`, Author: ci.name, Subject: 'Recibo de sueldo' } });
       const bufs = [];
       doc.on('data', b => bufs.push(b)); doc.on('end', () => resolve(Buffer.concat(bufs))); doc.on('error', reject);
 
@@ -26,8 +26,8 @@ function generatePayslipPdfBuffer(slip, settings = {}) {
       if (lp && fs.existsSync(lp)) { try { doc.image(lp, LEFT, y, { fit: [110, 34] }); nx = LEFT + 122; } catch (e) {} }
       doc.fillColor('#ffffff').fontSize(15).font('Helvetica-Bold').text(ci.name, nx, y, { width: 205, lineBreak: false });
       doc.fillColor(LIGHT).fontSize(8).font('Helvetica').text(ci.address, nx, y + 19, { width: 205, height: 11, ellipsis: true });
-      doc.fillColor('#ffffff').fontSize(16).font('Helvetica-Bold').text('SLIP GAJI', LEFT, y, { width: W, align: 'right' });
-      doc.fillColor(ACCENT).fontSize(9).font('Helvetica-Bold').text(`Periode ${MNS[(slip.period_month || 1) - 1]} ${slip.period_year || ''}`, LEFT, y + 23, { width: W, align: 'right' });
+      doc.fillColor('#ffffff').fontSize(16).font('Helvetica-Bold').text('RECIBO DE SUELDO', LEFT, y, { width: W, align: 'right' });
+      doc.fillColor(ACCENT).fontSize(9).font('Helvetica-Bold').text(`Período ${MNS[(slip.period_month || 1) - 1]} ${slip.period_year || ''}`, LEFT, y + 23, { width: W, align: 'right' });
 
       y = 92;
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Dicetak: ${new Date().toLocaleString(regional.locale())}`, LEFT, y);
@@ -39,7 +39,7 @@ function generatePayslipPdfBuffer(slip, settings = {}) {
       doc.rect(LEFT, y, 4, 58).fill(ACCENT);
       doc.fillColor(MUTED).fontSize(7.5).font('Helvetica-Bold').text('KARYAWAN', LEFT + 16, y + 10);
       doc.fillColor(INK).fontSize(13).font('Helvetica-Bold').text(slip.employee_name || '-', LEFT + 16, y + 22);
-      doc.fillColor(MUTED).fontSize(8.5).font('Helvetica').text(`Jabatan: ${role}   •   Hari kerja: ${slip.working_days || 0}   •   Absen: ${slip.absent_days || 0}   •   Terlambat: ${slip.late_days || 0}`, LEFT + 16, y + 40);
+      doc.fillColor(MUTED).fontSize(8.5).font('Helvetica').text(`Cargo: ${role}   •   Días trabajados: ${slip.working_days || 0}   •   Ausencias: ${slip.absent_days || 0}   •   Llegadas tarde: ${slip.late_days || 0}`, LEFT + 16, y + 40);
       doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(`Status: ${String(slip.status || '-').toUpperCase()}`, LEFT, y + 22, { width: W - 16, align: 'right' });
       y += 74;
 
@@ -58,21 +58,21 @@ function generatePayslipPdfBuffer(slip, settings = {}) {
 
       // Pendapatan
       row('PENDAPATAN', '', { section: true });
-      row('Gaji Pokok', fmtRp(slip.base_salary));
+      row('Sueldo base', fmtRp(slip.base_salary));
       if (slip.transport_allowance) row('Tunjangan Transport', fmtRp(slip.transport_allowance));
       if (slip.meal_allowance) row('Tunjangan Makan', fmtRp(slip.meal_allowance));
       if (slip.phone_allowance) row('Tunjangan Pulsa', fmtRp(slip.phone_allowance));
       if (slip.other_allowance) row(`Tunjangan Lain (${slip.other_allowance_note || '-'})`, fmtRp(slip.other_allowance));
-      if (slip.ticket_bonus) row(`Bonus Tiket (${slip.total_tickets_resolved || 0} tiket)`, '+ ' + fmtRp(slip.ticket_bonus), { color: GREEN });
-      if (slip.collection_commission) row('Komisi Tagihan', '+ ' + fmtRp(slip.collection_commission), { color: GREEN });
+      if (slip.ticket_bonus) row(`Bono por tickets (${slip.total_tickets_resolved || 0} tickets)`, '+ ' + fmtRp(slip.ticket_bonus), { color: GREEN });
+      if (slip.collection_commission) row('Comisión por cobranza', '+ ' + fmtRp(slip.collection_commission), { color: GREEN });
       if (slip.overtime_bonus) row(`Lembur (${slip.overtime_hours || 0} jam)`, '+ ' + fmtRp(slip.overtime_bonus), { color: GREEN });
       row('Total Pendapatan', fmtRp(slip.gross_salary), { bold: true });
 
       // Potongan
       if (Number(slip.total_deductions || 0) > 0) {
         y += 4; row('POTONGAN', '', { section: true });
-        if (slip.absence_deduction) row(`Potongan Absen (${slip.absent_days || 0} hari)`, '- ' + fmtRp(slip.absence_deduction), { color: RED });
-        if (slip.late_deduction) row(`Potongan Terlambat (${slip.late_days || 0} hari)`, '- ' + fmtRp(slip.late_deduction), { color: RED });
+        if (slip.absence_deduction) row(`Descuento por ausencias (${slip.absent_days || 0} días)`, '- ' + fmtRp(slip.absence_deduction), { color: RED });
+        if (slip.late_deduction) row(`Descuento por llegadas tarde (${slip.late_days || 0} días)`, '- ' + fmtRp(slip.late_deduction), { color: RED });
         if (slip.other_deduction) row(`Potongan Lain (${slip.other_deduction_note || '-'})`, '- ' + fmtRp(slip.other_deduction), { color: RED });
         row('Total Potongan', '- ' + fmtRp(slip.total_deductions), { bold: true, color: RED });
       }
@@ -80,7 +80,7 @@ function generatePayslipPdfBuffer(slip, settings = {}) {
       // Gaji bersih
       y += 8;
       doc.roundedRect(LEFT, y, W, 34, 8).fill(INK);
-      doc.fillColor('#ffffff').fontSize(11).font('Helvetica-Bold').text('GAJI BERSIH', LEFT + 14, y + 11);
+      doc.fillColor('#ffffff').fontSize(11).font('Helvetica-Bold').text('SUELDO NETO', LEFT + 14, y + 11);
       doc.fillColor(ACCENT).fontSize(16).font('Helvetica-Bold').text(fmtRp(slip.net_salary), LEFT, y + 8, { width: W - 16, align: 'right' });
       y += 48;
 
@@ -97,7 +97,7 @@ function generatePayslipPdfBuffer(slip, settings = {}) {
 
       // Footer
       doc.moveTo(LEFT, sy - 16).lineTo(RIGHT, sy - 16).strokeColor(LINE).stroke();
-      doc.fillColor(MUTED).fontSize(7.5).text(`Dokumen dibuat otomatis oleh ${ci.name} • ${new Date().toLocaleString(regional.locale())}`, LEFT, sy - 12, { width: W });
+      doc.fillColor(MUTED).fontSize(7.5).text(`Documento generado automáticamente por ${ci.name} • ${new Date().toLocaleString(regional.locale())}`, LEFT, sy - 12, { width: W });
 
       doc.end();
     } catch (e) { reject(e); }

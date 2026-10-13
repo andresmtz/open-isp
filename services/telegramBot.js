@@ -207,45 +207,45 @@ function initTelegram() {
     const lines = [];
     lines.push('USER PPPoE OFFLINE');
     lines.push('============================');
-    lines.push(`Waktu : ${now}`);
+    lines.push(`Fecha : ${now}`);
     lines.push('============================');
     lines.push('');
     lines.push('RINGKASAN');
     lines.push(`Total Secret : ${snapshot.secrets.length}`);
-    lines.push(`Total Aktif  : ${snapshot.active.length}`);
+    lines.push(`Total activos : ${snapshot.active.length}`);
     lines.push(`Total Offline: ${offline.length}`);
     lines.push('');
-    lines.push('DAFTAR USER OFFLINE');
+    lines.push('USUARIOS DESCONECTADOS');
 
     if (offline.length === 0) {
-      lines.push('Semua user sedang online.');
+      lines.push('Todos los usuarios están en línea.');
     } else {
       offline.slice(0, 20).forEach((row, index) => {
         lines.push(`${index + 1}. ${row.username}`);
-        lines.push(`   Pelanggan : ${row.customerName}`);
+        lines.push(`   Cliente : ${row.customerName}`);
         lines.push(`   WA        : ${row.phone}`);
-        lines.push(`   Paket     : ${row.profile}`);
-        lines.push(`   Gangguan  : ${row.failCount}x`);
+        lines.push(`   Plan    : ${row.profile}`);
+        lines.push(`   Caídas  : ${row.failCount}x`);
       });
       if (offline.length > 20) {
-        lines.push(`...dan ${offline.length - 20} user offline lainnya.`);
+        lines.push(`...y ${offline.length - 20} usuarios desconectados más.`);
       }
     }
 
     lines.push('');
-    lines.push('Cek detail 1 user: /cekpppoe username');
+    lines.push('Detalle de un usuario: /cekpppoe usuario');
     lines.push('Contoh: /cekpppoe budi001');
     return lines.join('\n');
   };
 
   const buildPppoeUserDetailText = async (username) => {
     const target = String(username || '').trim();
-    if (!target) throw new Error('Username PPPoE wajib diisi');
+    if (!target) throw new Error('El usuario PPPoE es obligatorio');
 
     const snapshot = await loadPppoeSnapshot();
     const secret = snapshot.secrets.find((row) => String(row && row.name ? row.name : '').trim() === target);
     if (!secret) {
-      throw new Error(`PPPoE user "${target}" tidak ditemukan`);
+      throw new Error(`No se encontró el usuario PPPoE "${target}"`);
     }
 
     const activeRow = snapshot.activeMap.get(target) || null;
@@ -256,25 +256,25 @@ function initTelegram() {
     const date = getNowLocal();
     const online = !!activeRow;
     const lines = [];
-    lines.push('DETAIL CEK PPPoE');
+    lines.push('DETALLE PPPoE');
     lines.push('============================');
-    lines.push(`Waktu     : ${date}`);
+    lines.push(`Fecha     : ${date}`);
     lines.push(`Status    : ${online ? 'ONLINE' : 'OFFLINE'}`);
     lines.push('============================');
-    lines.push('INFO LAYANAN');
-    lines.push(`Pelanggan : ${customer && customer.name ? customer.name : '-'}`);
+    lines.push('SERVICIO');
+    lines.push(`Cliente : ${customer && customer.name ? customer.name : '-'}`);
     lines.push(`No. WA    : ${customer && customer.phone ? customer.phone : '-'}`);
     lines.push(`Username  : ${secret.name || '-'}`);
     lines.push(`Password  : ${secret.password || '-'}`);
     lines.push(`Service   : ${secret.service || '-'}`);
     lines.push(`Profile   : ${secret.profile || '-'}`);
     lines.push('');
-    lines.push('INFO PERANGKAT');
-    lines.push(`IP Aktif   : ${activeRow && activeRow.address ? activeRow.address : '-'}`);
+    lines.push('EQUIPO');
+    lines.push(`IP activa  : ${activeRow && activeRow.address ? activeRow.address : '-'}`);
     lines.push(`MAC/Caller : ${activeRow && (activeRow.callerId || activeRow['caller-id']) ? (activeRow.callerId || activeRow['caller-id']) : '-'}`);
     lines.push('');
-    lines.push('STATUS GANGGUAN');
-    lines.push(`Jumlah Gangguan : ${formatGangguanCount(script)}x Terputus`);
+    lines.push('CAÍDAS');
+    lines.push(`Cantidad de caídas : ${formatGangguanCount(script)}x desconectado`);
     lines.push(`Total Secret    : ${snapshot.secrets.length}`);
     lines.push(`Total Active    : ${snapshot.active.length}`);
     lines.push(`Total Offline   : ${offline.length}`);
@@ -285,7 +285,7 @@ function initTelegram() {
       offline.slice(0, 10).forEach((row) => {
         lines.push(`- ${row.username} (${row.failCount}x)`);
       });
-      if (offline.length > 10) lines.push(`...dan ${offline.length - 10} lainnya.`);
+      if (offline.length > 10) lines.push(`...y ${offline.length - 10} más.`);
     }
 
     return lines.join('\n');
@@ -295,20 +295,20 @@ function initTelegram() {
   const mainMenu = {
     reply_markup: {
       inline_keyboard: [
-        [{ text: '📊 Statistik', callback_data: 'menu_stats' }, { text: '👥 Pelanggan', callback_data: 'menu_cust' }],
-        [{ text: '🎫 Voucher', callback_data: 'menu_vouch' }, { text: '💰 Tagihan', callback_data: 'menu_bill' }],
+        [{ text: '📊 Statistik', callback_data: 'menu_stats' }, { text: '👥 Clientes', callback_data: 'menu_cust' }],
+        [{ text: '🎫 Voucher', callback_data: 'menu_vouch' }, { text: '💰 Facturas', callback_data: 'menu_bill' }],
         [{ text: '⚙️ MikroTik Status', callback_data: 'menu_mt' }],
-        [{ text: '🖥️ Sistem', callback_data: 'menu_sys' }, { text: '💰 Tunggakan', callback_data: 'menu_arrears' }],
+        [{ text: '🖥️ Sistema', callback_data: 'menu_sys' }, { text: '💰 Deudas', callback_data: 'menu_arrears' }],
         [{ text: '💰 Pendapatan', callback_data: 'menu_pendapatan' }],
-        [{ text: '🎫 Tiket', callback_data: 'menu_tiket' }, { text: '📡 OLT', callback_data: 'menu_olt' }, { text: '📶 Trafik', callback_data: 'menu_trafik' }],
+        [{ text: '🎫 Tickets', callback_data: 'menu_tiket' }, { text: '📡 OLT', callback_data: 'menu_olt' }, { text: '📶 Trafik', callback_data: 'menu_trafik' }],
         [{ text: '🔄 Refresh', callback_data: 'menu_main' }]
       ]
     }
   };
 
   bot.onText(/\/start|\/menu/i, (msg) => {
-    if (!isAdmin(msg)) return bot.sendMessage(msg.chat.id, `Maaf, Anda tidak memiliki akses admin.\nChat ID Anda: ${msg.from.id}`);
-    bot.sendMessage(msg.chat.id, '🏠 *PANEL ADMIN ' + getSetting('company_header', 'OPEN-ISP') + '*\nSilakan pilih menu di bawah ini:', { parse_mode: 'Markdown', ...mainMenu });
+    if (!isAdmin(msg)) return bot.sendMessage(msg.chat.id, `Lo siento, no tenés acceso de administrador.\nTu Chat ID: ${msg.from.id}`);
+    bot.sendMessage(msg.chat.id, '🏠 *PANEL ADMIN ' + getSetting('company_header', 'OPEN-ISP') + '*\nElegí una opción del menú:', { parse_mode: 'Markdown', ...mainMenu });
   });
 
   bot.on('message', async (msg) => {
@@ -323,10 +323,10 @@ function initTelegram() {
   bot.on('callback_query', async (query) => {
     const chatId = query.message.chat.id;
     const data = query.data;
-    if (!isAdmin(query)) return bot.answerCallbackQuery(query.id, { text: 'Akses Ditolak' });
+    if (!isAdmin(query)) return bot.answerCallbackQuery(query.id, { text: 'Acceso denegado' });
 
     if (data === 'menu_main') {
-      bot.editMessageText('🏠 *PANEL ADMIN ' + getSetting('company_header', 'OPEN-ISP') + '*\nSilakan pilih menu di bawah ini:', {
+      bot.editMessageText('🏠 *PANEL ADMIN ' + getSetting('company_header', 'OPEN-ISP') + '*\nElegí una opción del menú:', {
         chat_id: chatId,
         message_id: query.message.message_id,
         parse_mode: 'Markdown',
@@ -337,41 +337,41 @@ function initTelegram() {
     else if (data === 'menu_stats') {
       const stats = customerSvc.getCustomerStats();
       const billing = billingSvc.getDashboardStats();
-      let res = `*📊 STATISTIK SISTEM*\n\n`;
-      res += `👥 Pelanggan: ${stats.total}\n`;
-      res += `✅ Aktif: ${stats.active}\n`;
+      let res = `*📊 ESTADÍSTICAS DEL SISTEMA*\n\n`;
+      res += `👥 Clientes: ${stats.total}\n`;
+      res += `✅ Activos: ${stats.active}\n`;
       res += `🚫 Terisolir: ${stats.suspended}\n\n`;
-      res += `💰 Pendapatan Bulan Ini: ${regional.currencySymbol()} ${billing.thisMonth.toLocaleString(regional.locale())}\n`;
-      res += `⏳ Belum Dibayar: ${billing.unpaidCount} Tagihan`;
+      res += `💰 Ingresos del mes: ${regional.currencySymbol()} ${billing.thisMonth.toLocaleString(regional.locale())}\n`;
+      res += `⏳ Sin pagar: ${billing.unpaidCount} facturas`;
       
       bot.sendMessage(chatId, res, { 
         parse_mode: 'Markdown',
-        reply_markup: { inline_keyboard: [[{ text: '⬅️ Kembali', callback_data: 'menu_main' }]] }
+        reply_markup: { inline_keyboard: [[{ text: '⬅️ Volver', callback_data: 'menu_main' }]] }
       });
     }
 
     else if (data === 'menu_cust') {
-      bot.sendMessage(chatId, '👥 *MANAJEMEN PELANGGAN*\nPilih aksi:', {
+      bot.sendMessage(chatId, '👥 *CLIENTES*\nElegí una acción:', {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
-            [{ text: '🔍 Cari Pelanggan', callback_data: 'cust_search' }],
-            [{ text: '🚫 Daftar Terisolir', callback_data: 'cust_suspended' }],
+            [{ text: '🔍 Buscar cliente', callback_data: 'cust_search' }],
+            [{ text: '🚫 Clientes suspendidos', callback_data: 'cust_suspended' }],
             [{ text: '📡 List ONU (GenieACS)', callback_data: 'cust_listonu' }],
-            [{ text: '⬅️ Kembali', callback_data: 'menu_main' }]
+            [{ text: '⬅️ Volver', callback_data: 'menu_main' }]
           ]
         }
       });
     }
 
     else if (data === 'menu_bill') {
-      bot.sendMessage(chatId, '💰 *MANAJEMEN TAGIHAN*\nPilih aksi:', {
+      bot.sendMessage(chatId, '💰 *FACTURAS*\nElegí una acción:', {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
-            [{ text: '⏳ Tagihan Belum Bayar', callback_data: 'bill_unpaid' }],
-            [{ text: '📈 Pendapatan Hari Ini', callback_data: 'bill_today' }],
-            [{ text: '⬅️ Kembali', callback_data: 'menu_main' }]
+            [{ text: '⏳ Facturas pendientes', callback_data: 'bill_unpaid' }],
+            [{ text: '📈 Ingresos de hoy', callback_data: 'bill_today' }],
+            [{ text: '⬅️ Volver', callback_data: 'menu_main' }]
           ]
         }
       });
@@ -382,9 +382,9 @@ function initTelegram() {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
-            [{ text: '➕ Buat Voucher Baru', callback_data: 'vouch_create' }],
-            [{ text: '📜 Daftar Hotspot Profile', callback_data: 'vouch_profiles' }],
-            [{ text: '⬅️ Kembali', callback_data: 'menu_main' }]
+            [{ text: '➕ Crear ficha', callback_data: 'vouch_create' }],
+            [{ text: '📜 Perfiles hotspot', callback_data: 'vouch_profiles' }],
+            [{ text: '⬅️ Volver', callback_data: 'menu_main' }]
           ]
         }
       });
@@ -396,40 +396,40 @@ function initTelegram() {
         reply_markup: {
           inline_keyboard: [
             [{ text: '🚀 Resource System', callback_data: 'mt_resource' }],
-            [{ text: '🟢 User Aktif (PPPoE/HS)', callback_data: 'mt_active' }],
+            [{ text: '🟢 Usuarios activos (PPPoE/HS)', callback_data: 'mt_active' }],
             [{ text: '🔴 User Offline (PPPoE)', callback_data: 'mt_offline' }],
             [{ text: '🔑 List PPPoE Secrets', callback_data: 'mt_pppoe' }],
-            [{ text: '⬅️ Kembali', callback_data: 'menu_main' }]
+            [{ text: '⬅️ Volver', callback_data: 'menu_main' }]
           ]
         }
       });
     }
 
     else if (data === 'menu_sys') {
-      try { bot.sendMessage(chatId, tgSistemText(), { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '⬅️ Kembali', callback_data: 'menu_main' }]] } }); }
-      catch (e) { bot.sendMessage(chatId, 'Gagal: ' + e.message); }
+      try { bot.sendMessage(chatId, tgSistemText(), { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '⬅️ Volver', callback_data: 'menu_main' }]] } }); }
+      catch (e) { bot.sendMessage(chatId, 'Error:' + e.message); }
     }
     else if (data === 'menu_arrears') {
-      try { bot.sendMessage(chatId, tgTunggakanText(), { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '⬅️ Kembali', callback_data: 'menu_main' }]] } }); }
-      catch (e) { bot.sendMessage(chatId, 'Gagal: ' + e.message); }
+      try { bot.sendMessage(chatId, tgTunggakanText(), { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '⬅️ Volver', callback_data: 'menu_main' }]] } }); }
+      catch (e) { bot.sendMessage(chatId, 'Error:' + e.message); }
     }
     else if (data === 'menu_tiket') {
-      try { bot.sendMessage(chatId, tgTiketText(), { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '⬅️ Kembali', callback_data: 'menu_main' }]] } }); }
-      catch (e) { bot.sendMessage(chatId, 'Gagal: ' + e.message); }
+      try { bot.sendMessage(chatId, tgTiketText(), { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '⬅️ Volver', callback_data: 'menu_main' }]] } }); }
+      catch (e) { bot.sendMessage(chatId, 'Error:' + e.message); }
     }
     else if (data === 'menu_olt') {
-      bot.sendMessage(chatId, '📡 Mengambil status OLT, mohon tunggu…');
-      try { bot.sendMessage(chatId, await tgOltText(), { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '⬅️ Kembali', callback_data: 'menu_main' }]] } }); }
-      catch (e) { bot.sendMessage(chatId, 'Gagal: ' + e.message); }
+      bot.sendMessage(chatId, '📡 Leyendo el estado de la OLT, esperá…');
+      try { bot.sendMessage(chatId, await tgOltText(), { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '⬅️ Volver', callback_data: 'menu_main' }]] } }); }
+      catch (e) { bot.sendMessage(chatId, 'Error:' + e.message); }
     }
     else if (data === 'menu_trafik') {
-      try { bot.sendMessage(chatId, await tgTrafikText(), { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '⬅️ Kembali', callback_data: 'menu_main' }]] } }); }
-      catch (e) { bot.sendMessage(chatId, 'Gagal: ' + e.message); }
+      try { bot.sendMessage(chatId, await tgTrafikText(), { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '⬅️ Volver', callback_data: 'menu_main' }]] } }); }
+      catch (e) { bot.sendMessage(chatId, 'Error:' + e.message); }
     }
 
     else if (data === 'menu_pendapatan') {
-      try { bot.sendMessage(chatId, tgPendapatanText(), { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '⬅️ Kembali', callback_data: 'menu_main' }]] } }); }
-      catch (e) { bot.sendMessage(chatId, 'Gagal: ' + e.message); }
+      try { bot.sendMessage(chatId, tgPendapatanText(), { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '⬅️ Volver', callback_data: 'menu_main' }]] } }); }
+      catch (e) { bot.sendMessage(chatId, 'Error:' + e.message); }
     }
     else if (data === 'mt_resource') {
       try {
@@ -441,7 +441,7 @@ function initTelegram() {
         txt += `Version: ${res.version}`;
         bot.sendMessage(chatId, txt, { parse_mode: 'Markdown' });
       } catch (e) {
-        bot.sendMessage(chatId, 'Gagal mengambil data MikroTik: ' + e.message);
+        bot.sendMessage(chatId, 'No se pudieron leer los datos del MikroTik:' + e.message);
       }
     }
 
@@ -451,7 +451,7 @@ function initTelegram() {
         const hs = await mikrotikSvc.getHotspotActive();
         const scripts = await mikrotikSvc.getSystemScripts();
         
-        let txt = `*🟢 USER AKTIF*\n\n`;
+        let txt = `*🟢 USUARIOS ACTIVOS*\n\n`;
         txt += `🌐 *PPPoE (${pppoe.length}):*\n`;
         pppoe.slice(0, 15).forEach(a => {
           const s = scripts.find(sc => sc.name === a.name);
@@ -464,7 +464,7 @@ function initTelegram() {
           txt += `• \`${h.user}\` (${h.address})\n`;
         });
         
-        txt += `\n_⚡ = Jumlah Gangguan Terdeteksi_`;
+        txt += `\n_⚡ = caídas detectadas_`;
         bot.sendMessage(chatId, txt, { parse_mode: 'Markdown' });
       } catch (e) {
         bot.sendMessage(chatId, 'Error: ' + e.message);
@@ -487,7 +487,7 @@ function initTelegram() {
         secrets.slice(0, 20).forEach(s => {
           txt += `• \`${s.name}\` (${s.profile})\n`;
         });
-        if (secrets.length > 20) txt += `\n_Menampilkan 20 dari ${secrets.length}..._`;
+        if (secrets.length > 20) txt += `\n_Mostrando 20 de ${secrets.length}..._`;
         bot.sendMessage(chatId, txt, { parse_mode: 'Markdown' });
       } catch (e) {
         bot.sendMessage(chatId, 'Error: ' + e.message);
@@ -495,7 +495,7 @@ function initTelegram() {
     }
 
     else if (data === 'cust_search') {
-      bot.sendMessage(chatId, '🔍 *CARI PELANGGAN*\nKetik perintah `/cari [nama/wa]`\n\nContoh: `/cari budi` atau `/cari 0812`', { parse_mode: 'Markdown' });
+      bot.sendMessage(chatId, '🔍 *BUSCAR CLIENTE*\nEscribí `/cari [nombre/whatsapp]`\n\nEjemplo: `/cari juan` o `/cari 0981`', { parse_mode: 'Markdown' });
     }
 
     else if (data === 'cust_listonu') {
@@ -508,10 +508,10 @@ function initTelegram() {
       }
 
       if (!res.ok || res.devices.length === 0) {
-        return bot.sendMessage(chatId, '📭 Tidak ada perangkat ONU yang terdeteksi di GenieACS.');
+        return bot.sendMessage(chatId, '📭 No se detectaron ONU en GenieACS.');
       }
 
-      let txt = `*📡 DAFTAR ONU (GenieACS)*\n\n`;
+      let txt = `*📡 LISTA DE ONU (GenieACS)*\n\n`;
       res.devices.forEach(d => {
         const id = d._id || 'Unknown ID';
         const tags = Array.isArray(d._tags) ? d._tags.join(', ') : (d._tags || '-');
@@ -523,23 +523,23 @@ function initTelegram() {
     else if (data === 'cust_suspended') {
       const customers = customerSvc.getAllCustomers().filter(c => c.status === 'suspended');
       if (customers.length === 0) return bot.sendMessage(chatId, '✅ Tidak ada pelanggan yang terisolir.');
-      let txt = `*🚫 PELANGGAN TERISOLIR (${customers.length})*\n\n`;
+      let txt = `*🚫 CLIENTES SUSPENDIDOS (${customers.length})*\n\n`;
       customers.slice(0, 15).forEach(c => {
         txt += `• *${c.name}* (${c.phone})\n`;
       });
-      if (customers.length > 15) txt += `\n_...dan ${customers.length - 15} lainnya._`;
+      if (customers.length > 15) txt += `\n_...y ${customers.length - 15} más._`;
       bot.sendMessage(chatId, txt, { parse_mode: 'Markdown' });
     }
 
     else if (data === 'bill_unpaid') {
       const invoices = billingSvc.getAllInvoices().filter(i => i.status === 'unpaid');
       if (invoices.length === 0) return bot.sendMessage(chatId, '✅ Semua tagihan sudah lunas!');
-      let txt = `*⏳ TAGIHAN BELUM BAYAR (${invoices.length})*\n\n`;
+      let txt = `*⏳ FACTURAS PENDIENTES (${invoices.length})*\n\n`;
       invoices.slice(0, 15).forEach(i => {
         const c = customerSvc.getCustomerById(i.customer_id);
         txt += `• ${c ? c.name : 'Unknown'} - ${regional.currencySymbol()} ${i.amount.toLocaleString(regional.locale())}\n`;
       });
-      if (invoices.length > 15) txt += `\n_...dan ${invoices.length - 15} lainnya._`;
+      if (invoices.length > 15) txt += `\n_...y ${invoices.length - 15} más._`;
       bot.sendMessage(chatId, txt, { parse_mode: 'Markdown' });
     }
 
@@ -549,10 +549,10 @@ function initTelegram() {
         const total = stats.total || 0;
         const count = stats.count || 0;
         
-        let txt = `*📈 PENDAPATAN HARI INI*\n\n`;
+        let txt = `*📈 INGRESOS DE HOY*\n\n`;
         txt += `💰 Total: *${regional.currencySymbol()} ${total.toLocaleString(regional.locale())}*\n`;
-        txt += `🧾 Jumlah: ${count} Transaksi\n\n`;
-        txt += `_Data berdasarkan pembayaran yang diverifikasi hari ini (Waktu Lokal)._`;
+        txt += `🧾 Cantidad: ${count} transacciones\n\n`;
+        txt += `_Según los pagos verificados hoy (hora local)._`;
         bot.sendMessage(chatId, txt, { parse_mode: 'Markdown' });
       } catch (e) {
         bot.sendMessage(chatId, 'Error: ' + e.message);
@@ -568,7 +568,7 @@ function initTelegram() {
         const filtered = profiles.filter(p => parseMikhmon(p.onLogin));
 
         if (filtered.length === 0) {
-          return bot.sendMessage(chatId, '⚠️ Tidak ditemukan paket yang memiliki harga jual (Format Mikhmon).');
+          return bot.sendMessage(chatId, '⚠️ No hay planes con precio de venta (formato Mikhmon).');
         }
 
         filtered.forEach((p, index) => {
@@ -576,9 +576,9 @@ function initTelegram() {
           if (index % 2 === 0) buttons.push([]);
           buttons[buttons.length - 1].push({ text: `🎫 ${p.name} (${regional.currencySymbol()} ${meta.price})`, callback_data: `vouch_gen:${p.name}` });
         });
-        buttons.push([{ text: '⬅️ Kembali', callback_data: 'menu_vouch' }]);
+        buttons.push([{ text: '⬅️ Volver', callback_data: 'menu_vouch' }]);
         
-        bot.sendMessage(chatId, '*📜 PILIH PAKET VOUCHER*\nSilakan klik paket untuk langsung membuat PIN:', { 
+        bot.sendMessage(chatId, '*📜 ELEGIR PLAN DE FICHA*\nHacé clic en un plan para crear el PIN:', { 
           parse_mode: 'Markdown',
           reply_markup: { inline_keyboard: buttons }
         });
@@ -592,10 +592,10 @@ function initTelegram() {
       try {
         const profiles = await mikrotikSvc.getHotspotUserProfiles();
         const profile = profiles.find(p => p.name === profileName);
-        if (!profile) throw new Error('Profil tidak ditemukan');
+        if (!profile) throw new Error('Perfil no encontrado');
 
         const meta = parseMikhmon(profile.onLogin);
-        if (!meta) throw new Error('Data harga/durasi profil tidak ditemukan (Format Mikhmon)');
+        if (!meta) throw new Error('No se encontraron precio/duración del perfil (formato Mikhmon)');
 
         const pin = Math.floor(1000 + Math.random() * 9000).toString();
         
@@ -608,16 +608,16 @@ function initTelegram() {
           comment: `vc-${pin}-${profileName}`
         });
         
-        let res = `*🎫 VOUCHER BERHASIL (INSTAN)*\n\n`;
-        res += `🎫 KODE VOUCHER: \`${pin}\`\n`;
+        let res = `*🎫 FICHA CREADA (INMEDIATA)*\n\n`;
+        res += `🎫 CÓDIGO: \`${pin}\`\n`;
         res += `💰 Harga: ${regional.currencySymbol()} ${meta.price}\n`;
         res += `⏳ Durasi: ${meta.validity}\n`;
-        res += `📦 Paket: ${profileName}\n`;
-        res += `\n_Silakan masukkan kode di atas pada halaman login hotspot._`;
+        res += `📦 Plan: ${profileName}\n`;
+        res += `\n_Ingrese el código de arriba en la página de acceso del hotspot._`;
         
         bot.sendMessage(chatId, res, { parse_mode: 'Markdown' });
       } catch (e) {
-        bot.sendMessage(chatId, 'Gagal: ' + e.message);
+        bot.sendMessage(chatId, 'Error:' + e.message);
       }
     }
     
@@ -633,9 +633,9 @@ function initTelegram() {
       await mikrotikSvc.addHotspotUser({
         server: 'all', name: pin, password: pin, profile, 'limit-uptime': limit, comment
       });
-      bot.sendMessage(msg.chat.id, `*🎫 VOUCHER BERHASIL*\n\n🎫 KODE VOUCHER: \`${pin}\`\n📦 Paket: ${profile}\n⏳ Limit: ${limit}`, { parse_mode: 'Markdown' });
+      bot.sendMessage(msg.chat.id, `*🎫 FICHA CREADA*\n\n🎫 CÓDIGO: \`${pin}\`\n📦 Plan: ${profile}\n⏳ Límite: ${limit}`, { parse_mode: 'Markdown' });
     } catch (e) {
-      bot.sendMessage(msg.chat.id, 'Gagal: ' + e.message);
+      bot.sendMessage(msg.chat.id, 'Error:' + e.message);
     }
   });
 
@@ -656,9 +656,9 @@ function initTelegram() {
         comment: comment
       });
 
-      bot.sendMessage(chatId, `✅ Voucher Hotspot *${code}* berhasil dibuat.\n\n👤 User: \`${code}\`\n🔑 Pass: \`${code}\`\n📦 Profile: *${profile}*\n📝 Comment: *${comment}*`, { parse_mode: 'Markdown' });
+      bot.sendMessage(chatId, `✅ Ficha hotspot *${code}* creada.\n\n👤 Usuario: \`${code}\`\n🔑 Clave: \`${code}\`\n📦 Perfil: *${profile}*\n📝 Comentario: *${comment}*`, { parse_mode: 'Markdown' });
     } catch (e) {
-      bot.sendMessage(chatId, '❌ Gagal buat voucher: ' + e.message);
+      bot.sendMessage(chatId, '❌ No se pudo crear la ficha:' + e.message);
     }
   });
 
@@ -668,9 +668,9 @@ function initTelegram() {
       const user = match[1];
       await mikrotikSvc.kickPppoeUser(user);
       await mikrotikSvc.kickHotspotUser(user);
-      bot.sendMessage(msg.chat.id, `✅ Session *${user}* berhasil diputus.`);
+      bot.sendMessage(msg.chat.id, `✅ Sesión *${user}* desconectada.`);
     } catch (e) {
-      bot.sendMessage(msg.chat.id, 'Gagal: ' + e.message);
+      bot.sendMessage(msg.chat.id, 'Error:' + e.message);
     }
   });
 
@@ -679,9 +679,9 @@ function initTelegram() {
     try {
       const [_, user, profile] = match;
       await mikrotikSvc.setPppoeProfile(user, profile);
-      bot.sendMessage(msg.chat.id, `✅ Profile *${user}* diubah ke *${profile}*.`);
+      bot.sendMessage(msg.chat.id, `✅ Perfil de *${user}* cambiado a *${profile}*.`);
     } catch (e) {
-      bot.sendMessage(msg.chat.id, 'Gagal: ' + e.message);
+      bot.sendMessage(msg.chat.id, 'Error:' + e.message);
     }
   });
 
@@ -692,7 +692,7 @@ function initTelegram() {
       const detail = await buildPppoeUserDetailText(username);
       bot.sendMessage(msg.chat.id, detail);
     } catch (e) {
-      bot.sendMessage(msg.chat.id, 'Gagal cek PPPoE: ' + e.message);
+      bot.sendMessage(msg.chat.id, 'No se pudo verificar el PPPoE:' + e.message);
     }
   });
 
@@ -709,7 +709,7 @@ function initTelegram() {
     customers.slice(0, 10).forEach(c => {
       res += `👤 *${c.name}*\n📞 ${c.phone}\n🚦 Status: ${c.status === 'active' ? '✅ Aktif' : '🚫 Terisolir'}\n\n`;
     });
-    if (customers.length > 10) res += `_...dan ${customers.length - 10} lainnya._`;
+    if (customers.length > 10) res += `_...y ${customers.length - 10} más._`;
     bot.sendMessage(msg.chat.id, res, { parse_mode: 'Markdown' });
   });
 
@@ -726,7 +726,7 @@ function initTelegram() {
     const ramTotal = (sys.memory && sys.memory.total) ? sys.memory.total : '-';
     const disk = (m && m.disk && m.disk.percentage) ? m.disk.percentage : '-';
     const la = sys.loadAverage || {};
-    let t = `🖥️ *MONITORING SISTEM*\n\n`;
+    let t = `🖥️ *MONITOREO DEL SISTEMA*\n\n`;
     t += `⚙️ CPU : *${cpu}%* (${cores} core)\n`;
     t += `🧠 RAM : *${ram}%* (${ramUsed}/${ramTotal})\n`;
     t += `📀 Disk: *${disk}*\n`;
@@ -740,7 +740,7 @@ function initTelegram() {
   function tgTunggakanText() {
     const row = db.prepare("SELECT COUNT(*) c, COALESCE(SUM(amount),0) s FROM invoices WHERE status='unpaid'").get();
     const top = db.prepare("SELECT c.name, COALESCE(c.customer_code,'-') code, SUM(i.amount) t FROM invoices i JOIN customers c ON c.id=i.customer_id WHERE i.status='unpaid' GROUP BY i.customer_id ORDER BY t DESC LIMIT 8").all();
-    let t = `💰 *TUNGGAKAN*\n\nTotal: *${row.c} tagihan*\nNominal: *${regional.currencySymbol()} ${Number(row.s).toLocaleString(regional.locale())}*\n`;
+    let t = `💰 *DEUDAS*\n\nTotal: *${row.c} facturas*\nMonto: *${regional.currencySymbol()} ${Number(row.s).toLocaleString(regional.locale())}*\n`;
     if (top.length) { t += `\n*Top ${top.length}:*\n`; top.forEach((r, i) => { t += `${i + 1}. ${r.name} (${r.code}) — ${regional.currencySymbol()} ${Number(r.t).toLocaleString(regional.locale())}\n`; }); }
     return t;
   }
@@ -748,7 +748,7 @@ function initTelegram() {
   function tgTiketText() {
     const s = ticketSvc.getTicketStats();
     const open = ticketSvc.getAllTickets('open') || [];
-    let t = `🎫 *TIKET*\n\nOpen: *${s.open}* · Proses: *${s.inProgress}* · Selesai: *${s.resolved}*\n`;
+    let t = `🎫 *TICKETS*\n\nAbiertos: *${s.open}* · En curso: *${s.inProgress}* · Resueltos: *${s.resolved}*\n`;
     if (open.length) { t += `\n*Open terbaru:*\n`; open.slice(0, 8).forEach(x => { t += `#${x.id} ${x.subject} — ${x.customer_name || '-'}\n`; }); }
     return t;
   }
@@ -763,65 +763,65 @@ function initTelegram() {
   async function tgTrafikText() {
     let count = 0;
     try { const map = await mikrotikSvc.getAllActiveSessionsMap(); count = (map && map.size != null) ? map.size : ((map && map.length) || 0); } catch (e) {}
-    return `📶 *SESI AKTIF*\n\nPPPoE/Hotspot online: *${count}* sesi\n`;
+    return `📶 *SESIONES ACTIVAS*\n\nPPPoE/hotspot en línea: *${count}* sesiones\n`;
   }
 
-  const backBtn = { inline_keyboard: [[{ text: '⬅️ Kembali', callback_data: 'menu_main' }]] };
+  const backBtn = { inline_keyboard: [[{ text: '⬅️ Volver', callback_data: 'menu_main' }]] };
 
   bot.onText(/\/(sistem|monitor|health)/i, async (msg) => {
     if (!isAdmin(msg)) return;
     try { bot.sendMessage(msg.chat.id, tgSistemText(), { parse_mode: 'Markdown', reply_markup: backBtn }); }
-    catch (e) { bot.sendMessage(msg.chat.id, 'Gagal: ' + e.message); }
+    catch (e) { bot.sendMessage(msg.chat.id, 'Error:' + e.message); }
   });
   bot.onText(/\/tunggakan/i, async (msg) => {
     if (!isAdmin(msg)) return;
     try { bot.sendMessage(msg.chat.id, tgTunggakanText(), { parse_mode: 'Markdown', reply_markup: backBtn }); }
-    catch (e) { bot.sendMessage(msg.chat.id, 'Gagal: ' + e.message); }
+    catch (e) { bot.sendMessage(msg.chat.id, 'Error:' + e.message); }
   });
   bot.onText(/\/tiket/i, async (msg) => {
     if (!isAdmin(msg)) return;
     try { bot.sendMessage(msg.chat.id, tgTiketText(), { parse_mode: 'Markdown', reply_markup: backBtn }); }
-    catch (e) { bot.sendMessage(msg.chat.id, 'Gagal: ' + e.message); }
+    catch (e) { bot.sendMessage(msg.chat.id, 'Error:' + e.message); }
   });
   bot.onText(/\/(olt|oltstatus|olt-status)/i, async (msg) => {
     if (!isAdmin(msg)) return;
-    bot.sendMessage(msg.chat.id, '📡 Mengambil status OLT, mohon tunggu…');
+    bot.sendMessage(msg.chat.id, '📡 Leyendo el estado de la OLT, esperá…');
     try { bot.sendMessage(msg.chat.id, await tgOltText(), { parse_mode: 'Markdown', reply_markup: backBtn }); }
-    catch (e) { bot.sendMessage(msg.chat.id, 'Gagal: ' + e.message); }
+    catch (e) { bot.sendMessage(msg.chat.id, 'Error:' + e.message); }
   });
   bot.onText(/\/(trafik|online)/i, async (msg) => {
     if (!isAdmin(msg)) return;
     try { bot.sendMessage(msg.chat.id, await tgTrafikText(), { parse_mode: 'Markdown', reply_markup: backBtn }); }
-    catch (e) { bot.sendMessage(msg.chat.id, 'Gagal: ' + e.message); }
+    catch (e) { bot.sendMessage(msg.chat.id, 'Error:' + e.message); }
   });
 
   bot.onText(/\/(offline|pppoeoffline|pppoe-offline)/i, async (msg) => {
     if (!isAdmin(msg)) return;
     try { const snap = await loadPppoeSnapshot(); bot.sendMessage(msg.chat.id, buildOfflineTelegramText(snap)); }
-    catch (e) { bot.sendMessage(msg.chat.id, 'Gagal: ' + e.message); }
+    catch (e) { bot.sendMessage(msg.chat.id, 'Error:' + e.message); }
   });
   bot.onText(/\/(aktif|pppoeonline|pppoe-online)/i, async (msg) => {
     if (!isAdmin(msg)) return;
     try {
       const snap = await loadPppoeSnapshot();
       const active = snap.active || [];
-      let t = `🟢 *PPPoE ONLINE*\n\nTotal Aktif: *${active.length}*\n`;
+      let t = `🟢 *PPPoE EN LÍNEA*\n\nTotal activos: *${active.length}*\n`;
       active.slice(0, 20).forEach((s, i) => { t += `${i + 1}. ${(s && (s.name || s.user)) || '-'}\n`; });
-      if (active.length > 20) t += `\n_...dan ${active.length - 20} lainnya._`;
+      if (active.length > 20) t += `\n_...y ${active.length - 20} más._`;
       bot.sendMessage(msg.chat.id, t, { parse_mode: 'Markdown', reply_markup: backBtn });
-    } catch (e) { bot.sendMessage(msg.chat.id, 'Gagal: ' + e.message); }
+    } catch (e) { bot.sendMessage(msg.chat.id, 'Error:' + e.message); }
   });
   function tgPendapatanText() {
     const tr = billingSvc.getTodayRevenue();
     const today = Number((tr && tr.total != null) ? tr.total : (tr || 0)) || 0;
     const stats = billingSvc.getDashboardStats() || {};
     const month = Number(stats.thisMonth || 0);
-    return `💰 *PENDAPATAN*\n\n📅 Hari ini: *${regional.currencySymbol()} ${today.toLocaleString(regional.locale())}*\n🗓️ Bulan ini: *${regional.currencySymbol()} ${month.toLocaleString(regional.locale())}*\n⏳ Belum dibayar: *${stats.unpaidCount || 0} tagihan*\n`;
+    return `💰 *INGRESOS*\n\n📅 Hoy: *${regional.currencySymbol()} ${today.toLocaleString(regional.locale())}*\n🗓️ Este mes: *${regional.currencySymbol()} ${month.toLocaleString(regional.locale())}*\n⏳ Sin pagar: *${stats.unpaidCount || 0} facturas*\n`;
   }
   bot.onText(/\/(pendapatan|kas|revenue)/i, async (msg) => {
     if (!isAdmin(msg)) return;
     try { bot.sendMessage(msg.chat.id, tgPendapatanText(), { parse_mode: 'Markdown', reply_markup: backBtn }); }
-    catch (e) { bot.sendMessage(msg.chat.id, 'Gagal: ' + e.message); }
+    catch (e) { bot.sendMessage(msg.chat.id, 'Error:' + e.message); }
   });
 
   bot.onText(/\/cekterhubung\s+(\S+)/i, async (msg, match) => {
@@ -832,16 +832,16 @@ function initTelegram() {
       let dev = null;
       try { dev = await customerDevice.findDeviceByTag(tag); } catch (e) {}
       if (!dev) { try { dev = await customerDevice.findDeviceWithTagVariants(tag); } catch (e) {} }
-      if (!dev) return bot.sendMessage(chatId, '❌ Perangkat/tag "' + tag + '" tidak ditemukan.');
+      if (!dev) return bot.sendMessage(chatId, '❌ Equipo/etiqueta "' + tag + '" no encontrado.');
       const m = customerDevice.mapDeviceData(dev, tag, false) || {};
       const st = String(m.status || '').toLowerCase() === 'online' ? '🟢 Online' : '🔴 Offline';
-      let t = '📶 *CEK TERHUBUNG*\n\n';
+      let t = '📶 *CONECTADOS*\n\n';
       t += '🏷️ Tag: ' + tag + '\n';
       t += '📡 Status: ' + st + '\n';
       if (m.lastInform) t += '🕒 Last Inform: ' + m.lastInform + '\n';
       if (m.ssid && m.ssid !== '-') t += '📶 SSID: ' + m.ssid + '\n';
       bot.sendMessage(chatId, t, { parse_mode: 'Markdown' });
-    } catch (e) { bot.sendMessage(chatId, 'Gagal: ' + e.message); }
+    } catch (e) { bot.sendMessage(chatId, 'Error:' + e.message); }
   });
 
   bot.onText(/\/ringkasan/i, async (msg) => {
@@ -852,13 +852,13 @@ function initTelegram() {
       const formatter = new Intl.NumberFormat(regional.locale(), { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
       let res = `💰 *RINGKASAN BILLING*\n\n` +
         `📈 *Total Pendapatan:* ${formatter.format(stats.totalRevenue)}\n` +
-        `📅 *Bulan Ini:* ${formatter.format(stats.thisMonth)}\n` +
+        `📅 *Este mes:* ${formatter.format(stats.thisMonth)}\n` +
         `⏳ *Piutang (Pending):* ${formatter.format(stats.pendingAmount)}\n` +
-        `🧾 *Tagihan Belum Lunas:* ${stats.unpaidCount} invoice\n\n` +
-        `💡 _Gunakan perintah lain untuk detail._`;
+        `🧾 *Facturas pendientes:* ${stats.unpaidCount}\n\n` +
+        `💡 _Usá los otros comandos para ver el detalle._`;
       bot.sendMessage(chatId, res, { parse_mode: 'Markdown' });
     } catch (e) {
-      bot.sendMessage(chatId, '❌ Gagal mengambil ringkasan billing: ' + e.message);
+      bot.sendMessage(chatId, '❌ No se pudo obtener el resumen de facturación:' + e.message);
     }
   });
 
@@ -866,7 +866,7 @@ function initTelegram() {
     if (!isAdmin(msg)) return;
     const chatId = msg.chat.id;
     const keyRaw = String(match[1] || '').trim();
-    if (!keyRaw) return bot.sendMessage(chatId, '❌ Format: `/lunas IDTAGIHAN` atau `/lunas nama/nohp/pppoe/tag`', { parse_mode: 'Markdown' });
+    if (!keyRaw) return bot.sendMessage(chatId, '❌ Formato: `/lunas IDFACTURA` o `/lunas nombre/teléfono/pppoe/etiqueta`', { parse_mode: 'Markdown' });
 
     try {
       let targetInvId = null;
@@ -891,7 +891,7 @@ function initTelegram() {
             const top = unique.slice(0, 5).map(c =>
               `- ID:${c.id} • ${c.name || '-'} • ${c.phone || '-'} • PPPoE:${c.pppoe_username || '-'}`
             ).join('\n');
-            return bot.sendMessage(chatId, `⚠️ Nama/ID tidak spesifik. Ditemukan ${unique.length} pelanggan:\n\n${top}\n\nKirim ulang: \`/lunas IDPELANGGAN\``);
+            return bot.sendMessage(chatId, `⚠️ Nombre/ID poco específico. Se encontraron ${unique.length} clientes:\n\n${top}\n\nVolvé a enviar: \`/lunas IDCLIENTE\``);
           }
         }
 
@@ -901,18 +901,18 @@ function initTelegram() {
             targetInv = unpaid[0];
             targetInvId = targetInv.id;
           } else {
-            return bot.sendMessage(chatId, `✅ Pelanggan *${cust.name}* tidak memiliki tagihan menunggak.`, { parse_mode: 'Markdown' });
+            return bot.sendMessage(chatId, `✅ El cliente *${cust.name}* no tiene facturas pendientes.`, { parse_mode: 'Markdown' });
           }
         }
       }
 
-      if (!targetInv) return bot.sendMessage(chatId, `❌ Tagihan atau Pelanggan *${keyRaw}* tidak ditemukan.`, { parse_mode: 'Markdown' });
+      if (!targetInv) return bot.sendMessage(chatId, `❌ No se encontró la factura o el cliente *${keyRaw}*.`, { parse_mode: 'Markdown' });
       if (targetInvId != null) {
         const enriched = billingSvc.getInvoiceById(targetInvId);
         if (enriched) targetInv = enriched;
       }
       if (targetInv && targetInv.status === 'paid') {
-        return bot.sendMessage(chatId, `✅ Invoice *#${targetInv.id}* sudah berstatus LUNAS.`, { parse_mode: 'Markdown' });
+        return bot.sendMessage(chatId, `✅ La factura *#${targetInv.id}* ya está PAGADA.`, { parse_mode: 'Markdown' });
       }
 
       billingSvc.markAsPaid(targetInvId, 'Telegram Bot Admin', 'Paid via Telegram Command');
@@ -945,7 +945,7 @@ function initTelegram() {
       
       // Dynamic import of whatsappBot
       const waBot = await import('./whatsappBot.mjs').catch(() => null);
-      let waNotifStatus = 'tidak dikirim (WA offline)';
+      let waNotifStatus = 'no enviado (WhatsApp desconectado)';
 
       if (customer && customer.status === 'suspended') {
         const freshCustomer = customerSvc.getAllCustomers().find(c => c.id === targetInv.customer_id);
@@ -953,26 +953,26 @@ function initTelegram() {
         if (unpaidCount === 0) {
           await customerSvc.activateCustomer(targetInv.customer_id);
           if (waBot && waBot.currentSock) {
-            const ok = await waBot.notifyCustomer(waBot.currentSock, null, notifyTag, waMessage + `\n\n🟢 Layanan internet Anda sudah aktif kembali.`);
+            const ok = await waBot.notifyCustomer(waBot.currentSock, null, notifyTag, waMessage + `\n\n🟢 Su servicio de internet ya está activo nuevamente.`);
             waNotifStatus = ok ? 'terkirim' : 'gagal';
           }
-          await bot.sendMessage(chatId, `✅ Invoice *#${targetInvId}* LUNAS. Pelanggan *${customerName}* otomatis diaktifkan kembali.\n📩 Notif WA pelanggan: ${waNotifStatus}`);
+          await bot.sendMessage(chatId, `✅ Factura *#${targetInvId}* PAGADA. El cliente *${customerName}* fue rehabilitado automáticamente.\n📩 WhatsApp al cliente: ${waNotifStatus}`);
         } else {
           if (waBot && waBot.currentSock) {
-            const ok = await waBot.notifyCustomer(waBot.currentSock, null, notifyTag, waMessage + `\n\n⚠️ Masih ada ${unpaidCount} tagihan lain yang belum dibayar.`);
+            const ok = await waBot.notifyCustomer(waBot.currentSock, null, notifyTag, waMessage + `\n\n⚠️ Todavía tiene ${unpaidCount} facturas pendientes.`);
             waNotifStatus = ok ? 'terkirim' : 'gagal';
           }
-          await bot.sendMessage(chatId, `✅ Invoice *#${targetInvId}* LUNAS. Masih ada ${unpaidCount} tagihan lain.\n📩 Notif WA pelanggan: ${waNotifStatus}`);
+          await bot.sendMessage(chatId, `✅ Factura *#${targetInvId}* PAGADA. Quedan ${unpaidCount} facturas pendientes.\n📩 WhatsApp al cliente: ${waNotifStatus}`);
         }
       } else {
         if (waBot && waBot.currentSock) {
           const ok = await waBot.notifyCustomer(waBot.currentSock, null, notifyTag, waMessage);
           waNotifStatus = ok ? 'terkirim' : 'gagal';
         }
-        await bot.sendMessage(chatId, `✅ Invoice *#${targetInvId}* (a.n ${customerName}) berhasil ditandai LUNAS.\n📩 Notif WA pelanggan: ${waNotifStatus}`);
+        await bot.sendMessage(chatId, `✅ Factura *#${targetInvId}* (de ${customerName}) marcada como PAGADA.\n📩 WhatsApp al cliente: ${waNotifStatus}`);
       }
     } catch (e) {
-      bot.sendMessage(chatId, '❌ Gagal update status: ' + e.message);
+      bot.sendMessage(chatId, '❌ No se pudo actualizar el estado:' + e.message);
     }
   });
 
@@ -983,9 +983,9 @@ function initTelegram() {
     const year = Number(match[2]);
     try {
       const res = billingSvc.generateMonthlyInvoices(month, year);
-      bot.sendMessage(chatId, `✅ Berhasil generate tagihan untuk periode *${month}/${year}*.\n🧾 Jumlah: ${res.generatedCount} tagihan baru.`, { parse_mode: 'Markdown' });
+      bot.sendMessage(chatId, `✅ Facturas generadas para el período *${month}/${year}*.\n🧾 Cantidad: ${res.generatedCount} facturas nuevas.`, { parse_mode: 'Markdown' });
     } catch (e) {
-      bot.sendMessage(chatId, '❌ Gagal generate tagihan: ' + e.message);
+      bot.sendMessage(chatId, '❌ No se pudieron generar las facturas:' + e.message);
     }
   });
 
@@ -993,14 +993,14 @@ function initTelegram() {
     if (!isAdmin(msg)) return;
     const chatId = msg.chat.id;
     const targetId = String(match[1] || '').trim();
-    if (!targetId) return bot.sendMessage(chatId, '❌ Format: `/isolir ID/Nama/PPPoE/NoHP`');
+    if (!targetId) return bot.sendMessage(chatId, '❌ Formato: `/isolir ID/Nombre/PPPoE/Teléfono`');
     try {
       const cust = customerSvc.findCustomerByAny(targetId);
-      if (!cust) return bot.sendMessage(chatId, `❌ Pelanggan *${targetId}* tidak ditemukan.`, { parse_mode: 'Markdown' });
+      if (!cust) return bot.sendMessage(chatId, `❌ No se encontró el cliente *${targetId}*.`, { parse_mode: 'Markdown' });
       await customerSvc.suspendCustomer(cust.id);
-      bot.sendMessage(chatId, `✅ Pelanggan *${cust.name}* (ID: ${cust.id}) berhasil di-isolir.`, { parse_mode: 'Markdown' });
+      bot.sendMessage(chatId, `✅ Se cortó el servicio de *${cust.name}* (ID: ${cust.id}).`, { parse_mode: 'Markdown' });
     } catch (e) {
-      bot.sendMessage(chatId, '❌ Gagal isolir: ' + e.message);
+      bot.sendMessage(chatId, '❌ No se pudo cortar:' + e.message);
     }
   });
 
@@ -1008,14 +1008,14 @@ function initTelegram() {
     if (!isAdmin(msg)) return;
     const chatId = msg.chat.id;
     const targetId = String(match[1] || '').trim();
-    if (!targetId) return bot.sendMessage(chatId, '❌ Format: `/buka ID/Nama/PPPoE/NoHP`');
+    if (!targetId) return bot.sendMessage(chatId, '❌ Formato: `/buka ID/Nombre/PPPoE/Teléfono`');
     try {
       const cust = customerSvc.findCustomerByAny(targetId);
-      if (!cust) return bot.sendMessage(chatId, `❌ Pelanggan *${targetId}* tidak ditemukan.`, { parse_mode: 'Markdown' });
+      if (!cust) return bot.sendMessage(chatId, `❌ No se encontró el cliente *${targetId}*.`, { parse_mode: 'Markdown' });
       await customerSvc.activateCustomer(cust.id);
-      bot.sendMessage(chatId, `✅ Pelanggan *${cust.name}* (ID: ${cust.id}) berhasil diaktifkan kembali.`, { parse_mode: 'Markdown' });
+      bot.sendMessage(chatId, `✅ Se rehabilitó el servicio de *${cust.name}* (ID: ${cust.id}).`, { parse_mode: 'Markdown' });
     } catch (e) {
-      bot.sendMessage(chatId, '❌ Gagal mengaktifkan pelanggan: ' + e.message);
+      bot.sendMessage(chatId, '❌ No se pudo rehabilitar al cliente:' + e.message);
     }
   });
 
@@ -1028,9 +1028,9 @@ function initTelegram() {
         res = await customerDevice.listAllDevices(50);
       }
       if (!res.ok || res.devices.length === 0) {
-        return bot.sendMessage(chatId, '📭 Tidak ada perangkat ONU terdeteksi di GenieACS.');
+        return bot.sendMessage(chatId, '📭 No se detectaron ONU en GenieACS.');
       }
-      let txt = `*📡 DAFTAR ONU (GenieACS)*\n\n`;
+      let txt = `*📡 LISTA DE ONU (GenieACS)*\n\n`;
       res.devices.forEach(d => {
         const id = d._id || 'Unknown ID';
         const tags = Array.isArray(d._tags) ? d._tags.join(', ') : (d._tags || '-');
@@ -1038,7 +1038,7 @@ function initTelegram() {
       });
       bot.sendMessage(chatId, txt, { parse_mode: 'Markdown' });
     } catch (e) {
-      bot.sendMessage(chatId, '❌ Gagal list ONU: ' + e.message);
+      bot.sendMessage(chatId, '❌ No se pudo listar las ONU:' + e.message);
     }
   });
 
@@ -1052,11 +1052,11 @@ function initTelegram() {
       
       const targetDevice = await customerDevice.resolveDeviceToken(targetTag);
       if (!targetDevice) {
-        return bot.sendMessage(chatId, `❌ Target *${inputTag}* tidak ditemukan di GenieACS.`);
+        return bot.sendMessage(chatId, `❌ No se encontró *${inputTag}* en GenieACS.`);
       }
       
       const data = await customerDevice.getCustomerDeviceData(targetTag);
-      let t = `*📡 DETAIL ONU: ${data.lokasi || targetTag}*\n\n`;
+      let t = `*📡 DETALLE DE ONU: ${data.lokasi || targetTag}*\n\n`;
       t += `🟢 Status: ${data.status || '-'}\n`;
       t += `📶 SSID: ${data.ssid || '-'}\n`;
       t += `⏱️ Last Inform: ${data.lastInform || '-'}\n`;
@@ -1071,7 +1071,7 @@ function initTelegram() {
       t += `💾 Firmware: ${data.softwareVersion || '-'}`;
       bot.sendMessage(chatId, t, { parse_mode: 'Markdown' });
     } catch (e) {
-      bot.sendMessage(chatId, '❌ Gagal cek status ONU: ' + e.message);
+      bot.sendMessage(chatId, '❌ No se pudo verificar el estado de la ONU:' + e.message);
     }
   });
 
@@ -1085,18 +1085,18 @@ function initTelegram() {
 
       const targetDevice = await customerDevice.resolveDeviceToken(targetTag);
       if (!targetDevice) {
-        return bot.sendMessage(chatId, `❌ Target *${inputTag}* tidak ditemukan di GenieACS.`);
+        return bot.sendMessage(chatId, `❌ No se encontró *${inputTag}* en GenieACS.`);
       }
 
       await bot.sendMessage(chatId, `⏳ Mencoba me-reboot ONU *${targetTag}*...`, { parse_mode: 'Markdown' });
       const ok = await customerDevice.rebootDevice(targetTag);
       if (ok) {
-        bot.sendMessage(chatId, `✅ ONU *${targetTag}* berhasil diperintahkan untuk reboot.`, { parse_mode: 'Markdown' });
+        bot.sendMessage(chatId, `✅ Se envió la orden de reinicio a la ONU *${targetTag}*.`, { parse_mode: 'Markdown' });
       } else {
-        bot.sendMessage(chatId, `❌ Gagal reboot ONU *${targetTag}*.`, { parse_mode: 'Markdown' });
+        bot.sendMessage(chatId, `❌ No se pudo reiniciar la ONU *${targetTag}*.`, { parse_mode: 'Markdown' });
       }
     } catch (e) {
-      bot.sendMessage(chatId, '❌ Gagal reboot ONU: ' + e.message);
+      bot.sendMessage(chatId, '❌ No se pudo reiniciar la ONU:' + e.message);
     }
   });
 
@@ -1111,18 +1111,18 @@ function initTelegram() {
 
       const targetDevice = await customerDevice.resolveDeviceToken(targetTag);
       if (!targetDevice) {
-        return bot.sendMessage(chatId, `❌ Target *${inputTag}* tidak ditemukan di GenieACS.`);
+        return bot.sendMessage(chatId, `❌ No se encontró *${inputTag}* en GenieACS.`);
       }
 
-      await bot.sendMessage(chatId, `⏳ Mengubah SSID untuk *${targetTag}* menjadi *${newSSID}*...`, { parse_mode: 'Markdown' });
+      await bot.sendMessage(chatId, `⏳ Cambiando el SSID de *${targetTag}* a *${newSSID}*...`, { parse_mode: 'Markdown' });
       const ok = await customerDevice.updateSSID(targetTag, newSSID);
       if (ok) {
-        bot.sendMessage(chatId, `✅ SSID untuk *${targetTag}* berhasil diubah menjadi *${newSSID}*.`, { parse_mode: 'Markdown' });
+        bot.sendMessage(chatId, `✅ SSID de *${targetTag}* cambiado a *${newSSID}*.`, { parse_mode: 'Markdown' });
       } else {
-        bot.sendMessage(chatId, `❌ Gagal mengubah SSID untuk *${targetTag}*.`, { parse_mode: 'Markdown' });
+        bot.sendMessage(chatId, `❌ No se pudo cambiar el SSID de *${targetTag}*.`, { parse_mode: 'Markdown' });
       }
     } catch (e) {
-      bot.sendMessage(chatId, '❌ Gagal ganti SSID: ' + e.message);
+      bot.sendMessage(chatId, '❌ No se pudo cambiar el SSID:' + e.message);
     }
   });
 
@@ -1137,22 +1137,22 @@ function initTelegram() {
 
       const targetDevice = await customerDevice.resolveDeviceToken(targetTag);
       if (!targetDevice) {
-        return bot.sendMessage(chatId, `❌ Target *${inputTag}* tidak ditemukan di GenieACS.`);
+        return bot.sendMessage(chatId, `❌ No se encontró *${inputTag}* en GenieACS.`);
       }
 
       if (newPass.length < 8) {
-        return bot.sendMessage(chatId, `⚠️ Password WiFi minimal harus 8 karakter.`);
+        return bot.sendMessage(chatId, `⚠️ La contraseña del WiFi debe tener al menos 8 caracteres.`);
       }
 
-      await bot.sendMessage(chatId, `⏳ Mengubah sandi WiFi untuk *${targetTag}*...`);
+      await bot.sendMessage(chatId, `⏳ Cambiando la contraseña del WiFi de *${targetTag}*...`);
       const ok = await customerDevice.updatePassword(targetTag, newPass);
       if (ok) {
-        bot.sendMessage(chatId, `✅ Sandi WiFi untuk *${targetTag}* berhasil diubah menjadi: \`${newPass}\``, { parse_mode: 'Markdown' });
+        bot.sendMessage(chatId, `✅ Contraseña del WiFi de *${targetTag}* cambiada a: \`${newPass}\``, { parse_mode: 'Markdown' });
       } else {
-        bot.sendMessage(chatId, `❌ Gagal mengubah sandi WiFi untuk *${targetTag}*.`);
+        bot.sendMessage(chatId, `❌ No se pudo cambiar la contraseña del WiFi de *${targetTag}*.`);
       }
     } catch (e) {
-      bot.sendMessage(chatId, '❌ Gagal ganti sandi WiFi: ' + e.message);
+      bot.sendMessage(chatId, '❌ No se pudo cambiar la contraseña del WiFi:' + e.message);
     }
   });
 

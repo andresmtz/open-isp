@@ -63,14 +63,14 @@ function applyVars(tpl, customer, d) {
 
 function buildArrearsMessage(customer) {
   const d = info(customer);
-  const def = "*Pemberitahuan Tagihan Internet*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nSemoga Bapak/Ibu selalu dalam keadaan sehat dan baik. 🙏\n\nDengan hormat, kami menginformasikan bahwa pembayaran tagihan layanan internet Anda belum kami terima selama *{{bulan_nunggak}} bulan* berjalan.\n\n📦 Paket: {{paket}}\n💰 Total Tagihan: {{moneda}} {{tagihan}}\n📅 Periode: {{rincian}}\n\nKami memahami apabila ada kendala. Mohon berkenan menyelesaikan pembayaran agar layanan tetap dapat digunakan dengan nyaman. Apabila hingga {{batas}} bulan tagihan belum diselesaikan, dengan berat hati layanan akan kami nonaktifkan sementara, dan untuk mengaktifkannya kembali diperlukan pendaftaran ulang.\n\nPembayaran dapat dilakukan melalui portal pelanggan:\n{{link}}\n\nApabila ada pertanyaan atau membutuhkan bantuan, silakan menghubungi kami. Terima kasih atas perhatian dan kerja samanya. 🙏\n— {{company}}";
+  const def = "*Aviso de deuda*\n\nEstimado/a *{{nama}}* (ID: {{id_pelanggan}}),\n\nLe informamos que su servicio de internet registra *{{bulan_nunggak}} mes(es)* sin pagar.\n\n📦 Plan: {{paket}}\n💰 Total adeudado: {{moneda}} {{tagihan}}\n📅 Período: {{rincian}}\n\nSi la deuda llega a {{batas}} meses, el servicio será dado de baja y para volver a conectarse deberá solicitar una nueva instalación.\n\nDetalle de su deuda: {{link}}\nAnte cualquier consulta, estamos a su disposición.\n— {{company}}";
   const tpl = db.getAppSetting('whatsapp_arrears_warning_message', def) || def;
   return spintax(applyVars(tpl, customer, d));
 }
 
 function buildBillMessage(customer) {
   const d = info(customer);
-  const def = `Yth. {{nama}},\n\nBerikut tagihan internet Anda:\n\n📦 Paket: {{paket}}\n💰 Total Tagihan: {{moneda}} {{tagihan}}\n📅 Periode: {{rincian}}\n\nSilakan lakukan pembayaran melalui portal: {{link}}\n\nTerima kasih.\n— {{company}}`;
+  const def = `Estimado/a {{nama}},\n\nLe enviamos el detalle de su factura de internet:\n\n📦 Plan: {{paket}}\n💰 Monto: {{moneda}} {{tagihan}}\n📅 Período: {{rincian}}\n\nDetalle y pago: {{link}}\n\nGracias.\n— {{company}}`;
   const tpl = db.getAppSetting('whatsapp_auto_billing_message', def) || def;
   return spintax(applyVars(tpl, customer, d));
 }

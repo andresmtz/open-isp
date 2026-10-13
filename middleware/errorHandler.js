@@ -112,7 +112,7 @@ function errorHandler(err, req, res, next) {
     });
   } else {
     // HTML response for web requests
-    const errorMessage = err.message || 'Terjadi kesalahan. Silakan coba lagi atau hubungi admin.';
+    const errorMessage = err.message || 'Ocurrió un error. Intente de nuevo o comuníquese con la administración.';
     const errorTitle = err.name || 'Error';
 
     // Set flash message for web pages
@@ -156,12 +156,12 @@ function notFoundHandler(req, res, next) {
     if (req.session) {
       req.session._msg = {
         type: 'error',
-        text: 'Halaman tidak ditemukan'
+        text: 'Página no encontrada'
       };
     }
     res.status(404).render('error', {
       title: '404 - Not Found',
-      error: 'Halaman yang Anda cari tidak ditemukan',
+      error: 'La página que busca no existe',
       statusCode: 404,
       path: req.path
     });

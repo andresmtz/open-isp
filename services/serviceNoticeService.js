@@ -63,10 +63,10 @@ function computeNotice(nowInput) {
   }
 
   const isMass = mode === MODE_GANGGUAN;
-  const label = isMass ? 'Gangguan Masal' : 'Perbaikan Sistem';
+  const label = isMass ? 'Caída general' : 'Mantenimiento del sistema';
   const defaultText = isMass
-    ? 'Sedang terjadi gangguan pada jaringan kami. Tim teknis sedang menangani dan akan segera memulihkan layanan.'
-    : 'Sedang ada sedikit perbaikan sistem. Mohon kesabarannya ya, layanan akan kembali normal secepatnya.';
+    ? 'Hay una falla en nuestra red. El equipo técnico ya está trabajando para restablecer el servicio lo antes posible.'
+    : 'Estamos realizando un mantenimiento menor. Disculpe las molestias, el servicio se normalizará en breve.';
   const note = String(getSetting('notice_note', '') || '').trim();
   const text = note || defaultText;
 
@@ -88,7 +88,7 @@ function computeNotice(nowInput) {
     active: true,
     tone: isMass ? 'danger' : 'primary',
     label,
-    badgeLabel: isMass ? 'Gamas' : 'Perbaikan Sistem',
+    badgeLabel: isMass ? 'Gamas' : 'Mantenimiento del sistema',
     text,
     intervalHours,
     start,

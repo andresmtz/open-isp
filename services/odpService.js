@@ -47,7 +47,7 @@ function updateOdp(id, data) {
   const capacity = parseCapacity(data.port_capacity);
   const usage = getOdpPortUsage(id);
   if (usage && capacity < usage.usedCount) {
-    throw new Error('Kapasitas port (' + capacity + ') lebih kecil dari jumlah port yang sudah terpakai (' + usage.usedCount + ').');
+    throw new Error('Kapasitas port (' + capacity + ') es menor que la cantidad de puertos ya usados (' + usage.usedCount + ').');
   }
   const stmt = db.prepare(`
     UPDATE odps 
@@ -99,19 +99,19 @@ function validateOdpPort(odpId, ponPort, excludeCustomerId) {
   if (!/^\d+$/.test(portStr)) return;
 
   const odp = getOdpById(Number(odpId));
-  if (!odp) throw new Error('ODP tidak ditemukan.');
+  if (!odp) throw new Error('NAP no encontrada.');
 
   const capacity = parseCapacity(odp.port_capacity);
   const portNo = parseInt(portStr, 10);
   if (portNo < 1 || portNo > capacity) {
-    throw new Error('Port ODP ' + portNo + ' melebihi kapasitas ODP "' + odp.name + '" (maksimal ' + capacity + ' port). Ubah kapasitas ODP bila perlu.');
+    throw new Error('Port ODP ' + portNo + ' melebihi kapasitas ODP "' + odp.name + '" (máximo' + capacity + ' puertos). Cambiá la capacidad de la NAP si hace falta.');
   }
 
   const ex = (excludeCustomerId === undefined || excludeCustomerId === null || excludeCustomerId === '') ? null : Number(excludeCustomerId);
   const dup = ex
     ? db.prepare("SELECT id, name FROM customers WHERE odp_id = ? AND TRIM(COALESCE(pon_port,'')) = ? AND id != ? LIMIT 1").get(Number(odpId), portStr, ex)
     : db.prepare("SELECT id, name FROM customers WHERE odp_id = ? AND TRIM(COALESCE(pon_port,'')) = ? LIMIT 1").get(Number(odpId), portStr);
-  if (dup) throw new Error('Port ODP ' + portNo + ' sudah dipakai oleh pelanggan "' + dup.name + '".');
+  if (dup) throw new Error('Port ODP ' + portNo + ' ya lo usa el cliente "' + dup.name + '".');
 }
 
 module.exports = {

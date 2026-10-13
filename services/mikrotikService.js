@@ -306,7 +306,7 @@ async function getConnection(routerId = null) {
   const now = Date.now();
   const cached = connectionProbeCache.get(cacheKey);
   if (cached && cached.failUntil && now < cached.failUntil) {
-    const e = new Error(cached.failMessage || `Tidak bisa konek ke MikroTik ${host}:${configuredPort}.`);
+    const e = new Error(cached.failMessage || `No se pudo conectar con el MikroTik ${host}:${configuredPort}.`);
     e.code = 'ECONNREFUSED';
     throw e;
   }
@@ -320,7 +320,7 @@ async function getConnection(routerId = null) {
       }
     }
     if (!selectedPort) {
-      const failMessage = `Tidak bisa konek ke MikroTik ${host}:${configuredPort} (juga sudah coba ${fallbackPort}). Pastikan IP/port benar dan service API (8728) atau API-SSL (8729) aktif di MikroTik.`;
+      const failMessage = `No se pudo conectar con el MikroTik ${host}:${configuredPort} (también se probó ${fallbackPort}). Verificá la IP/puerto y que el servicio API (8728) o API-SSL (8729) esté activo en el MikroTik.`;
       connectionProbeCache.set(cacheKey, { port: 0, okUntil: 0, failUntil: now + 5000, failMessage });
       const e = new Error(failMessage);
       e.code = 'ECONNREFUSED';
@@ -382,7 +382,7 @@ async function getConnection(routerId = null) {
         port: 0,
         okUntil: 0,
         failUntil: Date.now() + 5000,
-        failMessage: `Tidak bisa konek ke MikroTik ${host}:${selectedPort}. ${msg}`
+        failMessage: `No se pudo conectar con el MikroTik ${host}:${selectedPort}. ${msg}`
       });
     }
     logger.error(`Failed to connect to MikroTik (${host}): ${err?.message || err}`);
@@ -1118,7 +1118,7 @@ async function addHotspotUserProfile(data, routerId = null) {
   try {
     conn = await getConnection(routerId);
     const name = String(data?.name || '').trim();
-    if (!name) throw new Error('Nama profile hotspot wajib diisi');
+    if (!name) throw new Error('El nombre del perfil hotspot es obligatorio');
     logger.info(`[MikroTik] add hotspot user profile start name="${name}" routerId=${routerId || ''}`);
     const menu = conn.client.menu('/ip/hotspot/user/profile');
 
@@ -1323,7 +1323,7 @@ async function deleteHotspotUser(id, routerId = null) {
 
 async function getHotspotUserByName(username, routerId = null) {
   const normalizedUsername = String(username || '').trim();
-  if (!normalizedUsername) throw new Error('Hotspot username wajib diisi');
+  if (!normalizedUsername) throw new Error('El usuario hotspot es obligatorio');
   let conn = null;
   try {
     conn = await getConnection(routerId);
@@ -1339,7 +1339,7 @@ async function getHotspotUserByName(username, routerId = null) {
 
 async function setHotspotUserDisabled(username, disabled, routerId = null) {
   const normalizedUsername = String(username || '').trim();
-  if (!normalizedUsername) throw new Error('Hotspot username wajib diisi');
+  if (!normalizedUsername) throw new Error('El usuario hotspot es obligatorio');
   let conn = null;
   try {
     conn = await getConnection(routerId);
@@ -1348,7 +1348,7 @@ async function setHotspotUserDisabled(username, disabled, routerId = null) {
     if (!Array.isArray(rows) || rows.length === 0) throw new Error(`Hotspot user "${normalizedUsername}" tidak ditemukan di MikroTik`);
     const row = rows[0] || null;
     const id = row ? (row['.id'] || row.id) : null;
-    if (!id) throw new Error('ID hotspot user tidak ditemukan');
+    if (!id) throw new Error('No se encontró el ID del usuario hotspot');
     await userMenu.set({ disabled: disabled ? 'true' : 'false' }, id);
     listCache.delete(cacheKey(routerId, 'hotspotUsers'));
     if (disabled) {
@@ -1371,7 +1371,7 @@ async function setHotspotUserDisabled(username, disabled, routerId = null) {
 
 async function upsertHotspotUser(data, routerId = null) {
   const username = String(data?.username || '').trim();
-  if (!username) throw new Error('Hotspot username wajib diisi');
+  if (!username) throw new Error('El usuario hotspot es obligatorio');
   const password = data?.password != null ? String(data.password) : '';
   const profile = data?.profile != null ? String(data.profile).trim() : '';
   const macAddress = data?.macAddress != null ? String(data.macAddress).trim() : '';
@@ -1580,21 +1580,21 @@ async function generateIsolirPortalScript() {
 
   const lines = [
     '# ============================================================',
-    '# Script halaman isolir / portal penagihan (generate Billing)',
+    '# Script de página de corte / portal de cobro (generado por el sistema)',
     `# Sumber URL: ${normalized || '(atur app_url di Pengaturan)'}`,
     `# Host: ${hostname}  →  IP NAT: ${billingIp}`,
-    '# Address-list: LIST_ISOLIR — saat isolir, billing memasang on-up di profil PPPoE (nama = isolir_profile pelanggan).',
-    '# Hapus rule lama dengan comment=BILLING_ISOLIR_* sebelum import ulang.',
+    '# Address-list: LIST_ISOLIR — al cortar, el sistema agrega un on-up al perfil PPPoE (nombre = perfil de corte del cliente).',
+    '# Borrar las reglas anteriores con comment=BILLING_ISOLIR_* antes de volver a importar.',
     '# ============================================================',
     '',
     '# --- DNS ---',
     '/ip firewall filter add chain=forward src-address-list=LIST_ISOLIR protocol=udp dst-port=53 action=accept comment="BILLING_ISOLIR_DNS"',
     '/ip firewall filter add chain=forward src-address-list=LIST_ISOLIR protocol=tcp dst-port=53 action=accept comment="BILLING_ISOLIR_DNS_TCP"',
     '',
-    '# --- Izinkan akses ke server portal billing ---',
+    '# --- Permitir acceso al servidor del portal de cobro ---',
     '/ip firewall filter add chain=forward src-address-list=LIST_ISOLIR dst-address-list=BILLING action=accept comment="BILLING_ISOLIR_ALLOW"',
     '',
-    '# --- Walled garden WhatsApp (agar pelanggan isolir tetap bisa terima OTP WhatsApp) ---',
+    '# --- Walled garden de WhatsApp (para que los clientes cortados reciban el código por WhatsApp) ---',
     '/ip firewall address-list add list=WHATSAPP address=57.144.0.0/14 comment="Meta/WhatsApp" disabled=no',
     '/ip firewall address-list add list=WHATSAPP address=157.240.0.0/16 comment="Meta/WhatsApp" disabled=no',
     '/ip firewall address-list add list=WHATSAPP address=31.13.24.0/21 comment="Meta/WhatsApp" disabled=no',
@@ -1605,19 +1605,19 @@ async function generateIsolirPortalScript() {
     '/ip firewall address-list add list=WHATSAPP address=185.60.216.0/22 comment="Meta/WhatsApp" disabled=no',
     '/ip firewall filter add chain=forward src-address-list=LIST_ISOLIR dst-address-list=WHATSAPP action=accept comment="BILLING_ISOLIR_WHATSAPP"',
     '',
-    '# --- (Gateway legacy Tripay/Midtrans/Xendit/Duitku dihapus; pembayaran kini Mayar / QRIS statis) ---',
+    '# --- (Las pasarelas antiguas Tripay/Midtrans/Xendit/Duitku se quitaron; los pagos ahora son Mayar / QR estático) ---',
     '',
-    '# --- NAT: HTTP/HTTPS pelanggan isolir dialihkan ke redirector (302 -> /isolated) ---',
-    '#     dst-address-list=!BILLING agar trafik ke server portal tidak ikut di-NAT (cegah loop).',
+    '# --- NAT: el HTTP/HTTPS de clientes cortados se redirige al redirector (302 -> /isolated) ---',
+    '#     dst-address-list=!BILLING para que el tráfico al servidor del portal no pase por el NAT (evita bucles).',
     `/ip firewall nat add chain=dstnat protocol=tcp dst-port=80 src-address-list=LIST_ISOLIR dst-address-list=!BILLING action=dst-nat to-addresses=${billingIp} to-ports=${isolirRedirectPort} comment="BILLING_ISOLIR_HTTP"`,
     '',
     `/ip firewall nat add chain=dstnat protocol=tcp dst-port=443 src-address-list=LIST_ISOLIR dst-address-list=!BILLING action=dst-nat to-addresses=${billingIp} to-ports=${isolirRedirectPort} comment="BILLING_ISOLIR_HTTPS"`,
     '',
-    '# --- Blokir sisa traffic forward dari pelanggan terisolir (opsional; sesuaikan urutan) ---',
+    '# --- Bloquear el resto del tráfico forward de clientes cortados (opcional; ajustar el orden) ---',
     '/ip firewall filter add chain=forward src-address-list=LIST_ISOLIR action=drop comment="BILLING_ISOLIR_BLOCK_REST" disabled=yes',
     '',
-    '# --- PPPoE: contoh memasukkan IP ke LIST_ISOLIR saat login (nama profil = isolir) ---',
-    '# Jalankan sekali, atau salin ke on-up profil isolir di Winbox:',
+    '# --- PPPoE: ejemplo para agregar la IP a LIST_ISOLIR al conectar (nombre del perfil = isolir) ---',
+    '# Ejecutar una vez, o copiar al on-up del perfil de corte en Winbox:',
     '# /ppp profile set [find name=isolir] on-up="/ip firewall address-list add list=LIST_ISOLIR address=$remote-address comment=$user timeout=23h"',
     '',
   ];
@@ -1671,13 +1671,13 @@ async function ensurePppProfileIsolirAddressListHook(profileName, routerId = nul
     const list = Array.isArray(rows) ? rows : [];
     const prof = list.find((r) => String(r.name || '') === name);
     if (!prof) {
-      const msg = `Profil PPPoE "${name}" tidak ada di router (buat profil isolir di MikroTik atau samakan nama dengan isolir_profile pelanggan).`;
+      const msg = `El perfil PPPoE "${name}" no existe en el router (creá el perfil de corte en el MikroTik o usá el mismo nombre que el perfil de corte del cliente).`;
       logger.warn(`[MikroTik] ${msg}`);
       return { ok: false, profile: name, message: msg };
     }
     const id = prof['.id'] || prof.id;
     if (!id) {
-      return { ok: false, profile: name, message: 'ID profil tidak ditemukan' };
+      return { ok: false, profile: name, message: 'ID de perfil no encontrado' };
     }
 
     let onUp = prof['on-up'] != null ? String(prof['on-up']) : (prof.onUp != null ? String(prof.onUp) : '');
@@ -1830,7 +1830,7 @@ async function setupIsolirFirewall(routerId = null) {
 
     return {
       success: true,
-      message: `Firewall isolir + NAT siap. Profil PPPoE di-hook ke ${ISOLIR_ADDR_LIST}: ${okNames || '-'}.${warn}`,
+      message: `Firewall de corte + NAT listos. Perfiles PPPoE vinculados a ${ISOLIR_ADDR_LIST}: ${okNames || '-'}.${warn}`,
       hooks: hookResults,
     };
   } catch (e) {
@@ -1928,7 +1928,7 @@ async function getLiveMikrotikExportViaSsh(host, user, password, port = 22, time
       if (!settled) {
         settled = true;
         try { conn.end(); } catch {}
-        reject(new Error(`Timeout (${timeoutMs}ms) saat mengambil export langsung dari MikroTik`));
+        reject(new Error(`Tiempo de espera agotado (${timeoutMs} ms) al obtener el export directo del MikroTik`));
       }
     }, timeoutMs);
 
@@ -1961,7 +1961,7 @@ async function getLiveMikrotikExportViaSsh(host, user, password, port = 22, time
             if (cleaned.length > 200) {
               resolve(cleaned);
             } else {
-              reject(new Error('Hasil export MikroTik terlalu pendek atau kosong'));
+              reject(new Error('El export del MikroTik es demasiado corto o está vacío'));
             }
           }
         });
@@ -2040,7 +2040,7 @@ async function getBackup(routerId = null) {
     rscLines.push(`# ===================================================`);
     rscLines.push(`# OPEN-ISP MIKROTIK RSC BACKUP EXPORT`);
     rscLines.push(`# Router   : ${routerName} (${routerHost})`);
-    rscLines.push(`# Tanggal  : ${nowStr}`);
+    rscLines.push(`# Fecha    : ${nowStr}`);
     rscLines.push(`# Format   : RouterOS Script (.rsc) ROS7 Ready`);
     rscLines.push(`# Generator: OPEN-ISP Billing System`);
     rscLines.push(`# ===================================================\n`);
@@ -2124,7 +2124,7 @@ async function getBackup(routerId = null) {
     return rscLines.join('\r\n');
   } catch (err) {
     logger.error(`[getBackup] Error generating backup: ${err.message}`);
-    return `# Gagal generate backup RSC: ${err.message}\r\n`;
+    return `# No se pudo generar el respaldo RSC: ${err.message}\r\n`;
   }
 }
 

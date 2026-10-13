@@ -72,7 +72,7 @@ async function processWebhookEvent(req, res) {
             } else if (msg.type === 'interactive' && msg.interactive) {
               msgText = msg.interactive.button_reply?.title || msg.interactive.list_reply?.title || 'Interactive response';
             } else {
-              msgText = `[Pesan ${msg.type}]`;
+              msgText = `[Mensaje ${msg.type}]`;
             }
 
             logger.info(`[Meta WA Webhook] Pesan masuk dari ${senderPhone}: "${msgText}"`);
@@ -127,13 +127,13 @@ async function processWebhookEvent(req, res) {
  */
 async function sendMetaTextMessage(toPhone, messageText) {
   const phone = normalizePhone(toPhone);
-  if (!phone) throw new Error('Nomor tujuan tidak valid.');
+  if (!phone) throw new Error('Número de destino inválido.');
 
   const phoneNumberId = getSetting('meta_phone_number_id', '');
   const accessToken = getSetting('meta_access_token', '');
 
   if (!phoneNumberId || !accessToken) {
-    throw new Error('Meta Cloud API belum dikonfigurasi. Harap isi Phone Number ID dan Access Token di Pengaturan WA.');
+    throw new Error('Meta Cloud API no está configurada. Cargá el Phone Number ID y el Access Token en Configuración de WhatsApp.');
   }
 
   const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
@@ -197,13 +197,13 @@ async function sendMetaTextMessage(toPhone, messageText) {
  */
 async function sendMetaTemplateMessage(toPhone, templateName, languageCode = 'id', parameters = []) {
   const phone = normalizePhone(toPhone);
-  if (!phone) throw new Error('Nomor tujuan tidak valid.');
+  if (!phone) throw new Error('Número de destino inválido.');
 
   const phoneNumberId = getSetting('meta_phone_number_id', '');
   const accessToken = getSetting('meta_access_token', '');
 
   if (!phoneNumberId || !accessToken) {
-    throw new Error('Meta Cloud API belum dikonfigurasi. Harap isi Phone Number ID dan Access Token di Pengaturan WA.');
+    throw new Error('Meta Cloud API no está configurada. Cargá el Phone Number ID y el Access Token en Configuración de WhatsApp.');
   }
 
   const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;

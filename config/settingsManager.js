@@ -102,7 +102,7 @@ function startSettingsWatcher() {
         const s = getSettingsWithCache();
         const port = s.server_port ?? 3001;
         const host = s.server_host || 'localhost';
-        const gurl = s.genieacs_url || '(tidak diatur)';
+        const gurl = s.genieacs_url || '(sin configurar)';
         const company = s.company_header || '(default)';
         logger.info(`[settings] settings.json dimuat ulang — port ${port}, host ${host}, company: ${company}, GenieACS: ${gurl}`);
       } catch (error) {

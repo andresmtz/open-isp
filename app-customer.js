@@ -505,15 +505,15 @@ async function notifyAdminUnmatchedPayment(amount, rawText, service) {
     let waktu = '';
     try { waktu = new Date().toLocaleString(regional.locale(), { timeZone: getSetting('timezone', 'America/Asuncion') }); } catch (e) { waktu = new Date().toISOString(); }
     const lines = [
-      '⚠️ *Pembayaran belum cocok*',
+      '⚠️ *Pago sin coincidencia*',
       '',
-      '💰 Nominal: *' + regional.currencySymbol() + ' ' + Number(amount || 0).toLocaleString(regional.locale()) + '*',
+      '💰 Monto: *' + regional.currencySymbol() + ' ' + Number(amount || 0).toLocaleString(regional.locale()) + '*',
       '🏦 Sumber: ' + (service || '-'),
       '🕒 ' + waktu,
       '',
       '📩 "' + String(rawText || '').slice(0, 160) + '"',
       '',
-      'Belum ada tagihan yang cocok. Cocokkan jam notif dengan bukti transfer pelanggan, lalu tandai lunas manual.'
+      'Todavía no hay una factura que coincida. Compará la hora de la notificación con el comprobante del cliente y marcala como pagada a mano.'
     ];
     await waNotify.notifyAdmin(lines.join('\n'));
   } catch (e) {}
@@ -568,12 +568,12 @@ function crc16CcittFalse(input) {
 
 function parseEmvTlvString(input) {
   const raw = String(input || '').replace(/[\r\n\t]+/g, '').trim();
-  if (!raw) throw new Error('QRIS payload kosong');
+  if (!raw) throw new Error('El payload QRIS está vacío');
   if (raw.length < 8) throw new Error('QRIS payload terlalu pendek');
   const items = [];
   let i = 0;
   while (i < raw.length) {
-    if (i + 4 > raw.length) throw new Error('QRIS payload TLV tidak valid');
+    if (i + 4 > raw.length) throw new Error('El payload QRIS (TLV) no es válido');
     const tag = raw.slice(i, i + 2);
     const lenStr = raw.slice(i + 2, i + 4);
     if (!/^\d{2}$/.test(lenStr)) throw new Error('QRIS payload TLV length tidak valid');
@@ -596,7 +596,7 @@ function buildEmvTlvString(items) {
     const value = String(it?.value ?? '');
     const len = value.length;
     if (!/^\d{2}$/.test(tag)) throw new Error('Tag TLV tidak valid');
-    if (len > 99) throw new Error('TLV length > 99 tidak didukung');
+    if (len > 99) throw new Error('No se admite una longitud TLV > 99');
     out += tag + String(len).padStart(2, '0') + value;
   }
   return out;
@@ -604,7 +604,7 @@ function buildEmvTlvString(items) {
 
 function convertStaticQrisToDynamic(staticPayload, amount) {
   const amt = Math.max(0, Math.floor(Number(amount || 0) || 0));
-  if (!amt) throw new Error('Nominal QRIS dinamis tidak valid');
+  if (!amt) throw new Error('El monto del QRIS dinámico no es válido');
   const source = parseEmvTlvString(staticPayload)
     .filter(x => x && x.tag)
     .map(x => ({ tag: String(x.tag), value: String(x.value ?? '') }));
@@ -633,7 +633,7 @@ function convertStaticQrisToDynamic(staticPayload, amount) {
 async function buildQrisJpgFromSettings(settings, amount) {
   const payloadRaw = String(settings?.qris_static_payload || '');
   const payload = normalizeQrisPayload(payloadRaw);
-  if (!payload) throw new Error('QRIS payload belum diatur');
+  if (!payload) throw new Error('El payload QRIS no está configurado');
   const dynamic = convertStaticQrisToDynamic(payload, amount);
   const png = await QRCode.toBuffer(dynamic, { errorCorrectionLevel: 'M', margin: 1, width: 420, type: 'png' });
   return await Jimp.read(png).then(img => img.quality(90).background(0xffffffff).getBufferAsync(Jimp.MIME_JPEG));
@@ -694,7 +694,7 @@ async function trySendWaPaymentSuccess(settings, invoiceId, methodLabel) {
 
 async function fulfillVoucherOrder(settings, orderId) {
   const ord = selectVoucherOrderById.get(orderId);
-  if (!ord) throw new Error('Order tidak ditemukan');
+  if (!ord) throw new Error('Pedido no encontrado');
   if (String(ord.status) === 'fulfilled' && ord.voucher_code) return { ok: true, already: true };
   if (String(ord.status) !== 'paid') return { ok: false, reason: 'not_paid' };
 
@@ -740,18 +740,18 @@ async function fulfillVoucherOrder(settings, orderId) {
       throw e;
     }
   }
-  if (!created) throw new Error('Gagal membuat voucher (kode duplikat terlalu sering)');
+  if (!created) throw new Error('No se pudo crear la ficha (código duplicado demasiadas veces)');
 
   markVoucherFulfilled.run(created.code, created.pass, created.comment, orderId);
 
   const msg =
     `🎫 *VOUCHER HOTSPOT*\n\n` +
-    `✅ Pembayaran diterima via *QRIS Statis*\n` +
-    `📦 Paket: *${ord.profile_name}* (${ord.validity || '-'})\n` +
+    `✅ Pago recibido vía *QR estático*\n` +
+    `📦 Plan: *${ord.profile_name}* (${ord.validity || '-'})\n` +
     `💰 Harga: ${regional.currencySymbol()} ${Number(ord.price || 0).toLocaleString(regional.locale())}\n\n` +
     `👤 User: *${created.code}*\n` +
     `🔑 Pass: *${created.pass}*\n\n` +
-    `Terima kasih.`;
+    `Gracias.`;
 
   await trySendWaToBuyer(settings, ord.buyer_phone, msg, orderId);
   return { ok: true, created };
@@ -759,7 +759,7 @@ async function fulfillVoucherOrder(settings, orderId) {
 
 async function fulfillDonationOrder(settings, donationOrderId) {
   const ord = selectDonationOrderById.get(donationOrderId);
-  if (!ord) return { ok: false, error: 'Order donasi tidak ditemukan' };
+  if (!ord) return { ok: false, error: 'Pedido de donación no encontrado' };
 
   const donorName = String(ord.donor_name || 'Hamba Allah').trim();
   const donorPhone = String(ord.donor_phone || '').trim();
@@ -861,7 +861,7 @@ app.post('/api/webhook/mayar', express.json({ limit: '2mb' }), async (req, res) 
       const customer = customerSvc.getCustomerById(inv.customer_id);
       if (settings.whatsapp_enabled && customer && customer.phone && (await waNotify.isConnected())) {
         const full = billingSvc.getInvoiceById(inv.id);
-        const msg = '✅ *PEMBAYARAN DITERIMA*\n\nTagihan periode *' + full.period_month + '/' + full.period_year + '* sebesar ' + regional.currencySymbol() + ' ' + Number(full.amount || 0).toLocaleString(regional.locale()) + ' telah *LUNAS* via Mayar.\n\nTerima kasih. 🙏';
+        const msg = '✅ *PAGO RECIBIDO*\n\nLa factura del período *' + full.period_month + '/' + full.period_year + '* sebesar ' + regional.currencySymbol() + ' ' + Number(full.amount || 0).toLocaleString(regional.locale()) + ' quedó *PAGADA* vía Mayar.\n\nGracias. 🙏';
         await waNotify.sendText(customer.phone, msg);
       }
     } catch (e) { logger.warn('[WEBHOOK][mayar] WA gagal: ' + e.message); }
@@ -923,7 +923,7 @@ app.post('/api/webhook/v1/payment-notif', multer().any(), async (req, res) => {
 
   if (!isSecretValid) {
     logger.warn(`[WEBHOOK][payment-notif] Forbidden: secret_key mismatch. service=${String(service || '-')} (gotLen=${gotTrim.length}${gotTrim ? ', ***' + gotTrim.slice(-3) : ', empty'}, expectedLen=${expectedTrim.length}, ***${expectedTrim.slice(-3)})`);
-    return res.status(403).json({ ok: false, error: 'Forbidden', reason: 'secret_key_mismatch', hint: 'Kirim header X-Webhook-Token: <webhook_secret> (atau query ?secret_key=<webhook_secret>). Salin nilainya dari Admin > Settings.' });
+    return res.status(403).json({ ok: false, error: 'Forbidden', reason: 'secret_key_mismatch', hint: 'Enviá la cabecera X-Webhook-Token: <webhook_secret> (o el parámetro ?secret_key=<webhook_secret>). Copiá el valor desde Administración > Configuración.' });
   }
 
   // Tolak langsung aplikasi chat / pesan instan (WhatsApp, Telegram, SMS chat pribadi)
@@ -1218,15 +1218,15 @@ app.get('/', (req, res) => {
     let waNumber = phoneRaw;
     waNumber = regional.normalizePhone(waNumber);
     const waLink = waNumber
-      ? 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent('Halo, saya ingin bertanya tentang pemasangan internet.')
+      ? 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent('Hola, quisiera consultar por una instalación de internet.')
       : '';
 
     const brand = settings.landing_brand || settings.company_header || 'OPEN-ISP';
 
     const testimonials = [
-      { name: 'Andi Pratama', role: 'Pelanggan Rumah', text: 'Koneksinya stabil, kerja dari rumah dan streaming lancar tanpa buffering. Recommended!' },
-      { name: 'Siti Rahayu', role: 'Usaha Kecil', text: 'Harga terjangkau dan upload cepat. Toko online saya jadi lebih lancar melayani pesanan.' },
-      { name: 'Budi Santoso', role: 'Pelanggan Gaming', text: 'Ping rendah, main game online nyaman. Kalau ada kendala, tim support cepat merespon.' }
+      { name: 'Andi Pratama', role: 'Cliente residencial', text: 'La conexión es estable; trabajo desde casa y veo series sin cortes. ¡Recomendado!' },
+      { name: 'Siti Rahayu', role: 'Usaha Kecil', text: 'Precio accesible y buena subida. Mi tienda en línea atiende los pedidos mucho mejor.' },
+      { name: 'Budi Santoso', role: 'Cliente gamer', text: 'Ping bajo, se juega muy cómodo en línea. Si hay algún problema, el soporte responde rápido.' }
     ];
 
     const featuredIndex = packages.length ? Math.min(2, packages.length - 1) : 0;
@@ -1394,7 +1394,7 @@ app.get('/isolated/status', (req, res) => {
       return res.json({ 
         status: 'unknown',
         unpaid_count: 0,
-        message: 'Pelanggan tidak ditemukan'
+        message: 'Cliente no encontrado'
       });
     }
     
@@ -1407,8 +1407,8 @@ app.get('/isolated/status', (req, res) => {
       customer_id: customer.id,
       customer_name: customer.name,
       message: isClean 
-        ? 'Layanan aktif, pembayaran telah selesai'
-        : `Tersisa ${unpaidInvoices.length} tagihan belum dibayar`
+        ? 'Servicio activo, pago completado'
+        : `Quedan ${unpaidInvoices.length} facturas sin pagar`
     });
   } catch (e) {
     logger.error(`[ISOLATED-STATUS] Error: ${e.message}`);
@@ -1425,20 +1425,20 @@ app.post('/isolated/quick-qris/:invoiceId', async (req, res) => {
     const payload = tokenUtil.verifyPublicToken(token, settings.session_secret);
     
     if (!payload || String(payload.invoiceId) !== String(req.params.invoiceId)) {
-      return res.status(401).json({ success: false, message: 'Token pembayaran tidak valid atau sudah kadaluarsa. Silakan refresh halaman.' });
+      return res.status(401).json({ success: false, message: 'El enlace de pago no es válido o venció. Actualice la página.' });
     }
     
     const inv = billingSvc.getInvoiceById(req.params.invoiceId);
-    if (!inv) return res.status(404).json({ success: false, message: 'Tagihan tidak ditemukan' });
+    if (!inv) return res.status(404).json({ success: false, message: 'Factura no encontrada' });
     if (inv.status === 'paid') return res.json({ success: false, paid: true, message: 'Tagihan ini sudah lunas!' });
     
     const cust = customerSvc.getCustomerById(inv.customer_id);
-    if (!cust) return res.status(404).json({ success: false, message: 'Pelanggan tidak ditemukan' });
+    if (!cust) return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
 
     const paymentSvc = require('./services/paymentService');
     const gateway = paymentSvc.resolveConfiguredGatewayForAmount(settings, inv.amount);
     if (!gateway) {
-      return res.status(400).json({ success: false, message: 'Metode pembayaran QRIS belum dikonfigurasi di server.' });
+      return res.status(400).json({ success: false, message: 'El pago por QR no está configurado en el servidor.' });
     }
 
     const protocol = req.headers['x-forwarded-proto'] || req.protocol;
@@ -1480,7 +1480,7 @@ app.post('/isolated/quick-qris/:invoiceId', async (req, res) => {
         qrDataUrl: qrDataUrl,
         periodText,
         customerName: cust.name,
-        helpText: 'Pastikan mentransfer sesuai nominal tepat (termasuk kode unik) agar pembayaran langsung terdeteksi.'
+        helpText: 'Transfiera el monto exacto (incluido el código único) para que el pago se detecte de inmediato.'
       });
     }
 
@@ -1517,7 +1517,7 @@ app.post('/isolated/quick-qris/:invoiceId', async (req, res) => {
         reference: result.reference,
         periodText,
         customerName: cust.name,
-        helpText: 'Scan kode QRIS di atas dengan m-Banking (BCA, BRI, Mandiri, dll) atau E-Wallet (DANA, OVO, GoPay, ShopeePay).'
+        helpText: 'Escanee el código QR de arriba con la app de su banco o billetera.'
       });
     }
 
@@ -1546,7 +1546,7 @@ app.post('/isolated/quick-qris/:invoiceId', async (req, res) => {
         reference: result.reference,
         periodText,
         customerName: cust.name,
-        helpText: 'Buka link checkout Midtrans untuk menyelesaikan pembayaran via QRIS / GoPay.'
+        helpText: 'Abra el enlace de pago de Midtrans para completar el pago.'
       });
     }
 
@@ -1580,7 +1580,7 @@ app.post('/isolated/quick-qris/:invoiceId', async (req, res) => {
         qrDataUrl: qrDataUrl,
         periodText,
         customerName: cust.name,
-        helpText: 'Scan QRIS di atas melalui m-Banking atau aplikasi E-Wallet Anda.'
+        helpText: 'Escanee el QR de arriba con la app de su banco o billetera.'
       });
     }
 
@@ -1608,14 +1608,14 @@ app.post('/isolated/quick-qris/:invoiceId', async (req, res) => {
         checkoutUrl: result.link,
         periodText,
         customerName: cust.name,
-        helpText: 'Klik tombol bayar untuk membuka halaman pembayaran resmi Xendit.'
+        helpText: 'Haga clic en el botón de pago para abrir la página de pago oficial de Xendit.'
       });
     }
 
-    return res.status(400).json({ success: false, message: 'Gateway ' + gateway + ' belum didukung untuk Quick QRIS.' });
+    return res.status(400).json({ success: false, message: 'Gateway ' + gateway + ' todavía no está disponible para el pago rápido con QR.' });
   } catch (err) {
     logger.error(`[QuickQRIS] Error: ${err.message}`);
-    res.status(500).json({ success: false, message: err.message || 'Gagal memproses pembayaran QRIS' });
+    res.status(500).json({ success: false, message: err.message || 'No se pudo procesar el pago por QR' });
   }
 });
 
@@ -1675,7 +1675,7 @@ function buildPwaManifest(scope, startUrl, desc, orientation) {
     lang: 'id',
     name: name,
     short_name: name,
-    description: desc || ('Portal pelanggan ' + name + ' \u2014 tagihan, pembayaran, dan pengaturan WiFi.'),
+    description: desc || ('Portal del cliente' + name + ' — facturas, pagos y configuración del WiFi.'),
     start_url: startUrl,
     scope: scope,
     display: 'standalone',
@@ -1711,7 +1711,7 @@ app.get('/manifest-landing.webmanifest', (req, res) => {
   // aplikasi terpasang KONSISTEN dari halaman mana pun — mencegah Chrome menganggap
   // app "berbeda" dan memunculkan notifikasi "Tap to copy the URL for this app".
   res.type('application/manifest+json');
-  res.send(buildPwaManifest('/customer/', '/customer/login?source=pwa', 'Internet fiber optic cepat, stabil, dan tanpa batas untuk rumah dan usaha.', 'portrait'));
+  res.send(buildPwaManifest('/customer/', '/customer/login?source=pwa', 'Internet por fibra óptica rápido, estable y sin límites para su hogar y su negocio.', 'portrait'));
 });
 // Service Worker selalu di-revalidate agar update (ikon/branding) cepat diterapkan
 app.get('/sw.js', (req, res) => {
@@ -1849,7 +1849,7 @@ app.get(['/download/app', '/download/apk', '/downloads/billing-rtrw.apk', '/down
 
   return res.status(404).json({
     success: false,
-    message: 'File APK belum di-upload ke server VPS. Silakan upload file billing-rtrw.apk ke folder public/downloads/ di server.'
+    message: 'El archivo APK todavía no se subió al servidor. Suba el archivo billing-rtrw.apk a la carpeta public/downloads/ del servidor.'
   });
 });
 
@@ -1860,7 +1860,7 @@ app.get('/uploads/qris/:filename', async (req, res) => {
     const baseUrl = String(getSetting('app_url', '') || `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
     const loginLink = `${baseUrl}/customer/login`;
     res.set('Content-Type', 'text/html; charset=utf-8');
-    return res.status(status).send(`<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font-family:system-ui,Segoe UI,Arial; margin:0; background:#0b1220; color:#e5e7eb} .wrap{max-width:520px;margin:0 auto;padding:24px} .card{background:#0f172a;border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:18px} h1{font-size:18px;margin:0 0 8px} p{margin:0 0 12px;color:#cbd5e1;line-height:1.45} a{display:inline-block;background:#1d4ed8;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px}</style></head><body><div class="wrap"><div class="card"><h1>${title}</h1><p>${detail || ''}</p><a href="${loginLink}">Buka Portal Pelanggan</a></div></div></body></html>`);
+    return res.status(status).send(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font-family:system-ui,Segoe UI,Arial; margin:0; background:#0b1220; color:#e5e7eb} .wrap{max-width:520px;margin:0 auto;padding:24px} .card{background:#0f172a;border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:18px} h1{font-size:18px;margin:0 0 8px} p{margin:0 0 12px;color:#cbd5e1;line-height:1.45} a{display:inline-block;background:#1d4ed8;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px}</style></head><body><div class="wrap"><div class="card"><h1>${title}</h1><p>${detail || ''}</p><a href="${loginLink}">Abrir portal del cliente</a></div></div></body></html>`);
   };
   try {
     const filename = String(req.params.filename || '');
@@ -1886,9 +1886,9 @@ app.get('/uploads/qris/:filename', async (req, res) => {
 
     const url = String(settings?.qris_static_qr_url || '').trim();
     if (url && !url.endsWith(`/uploads/qris/${safeName}`)) return res.redirect(url);
-    return sendPretty(404, 'QRIS tidak ditemukan', 'Gambar QRIS upload tidak tersedia. Silakan gunakan link QRIS terbaru dari portal pelanggan.');
+    return sendPretty(404, 'QRIS tidak ditemukan', 'La imagen del QR no está disponible. Use el enlace de QR más reciente del portal del cliente.');
   } catch {
-    return sendPretty(404, 'QRIS tidak ditemukan', 'Gagal memuat QRIS.');
+    return sendPretty(404, 'QRIS tidak ditemukan', 'No se pudo cargar el QR.');
   }
 });
 
@@ -1899,7 +1899,7 @@ app.get('/qris/static.jpg', async (req, res) => {
     const baseUrl = String(getSetting('app_url', '') || `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
     const loginLink = `${baseUrl}/customer/login`;
     res.set('Content-Type', 'text/html; charset=utf-8');
-    return res.status(status).send(`<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font-family:system-ui,Segoe UI,Arial; margin:0; background:#0b1220; color:#e5e7eb} .wrap{max-width:520px;margin:0 auto;padding:24px} .card{background:#0f172a;border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:18px} h1{font-size:18px;margin:0 0 8px} p{margin:0 0 12px;color:#cbd5e1;line-height:1.45} a{display:inline-block;background:#1d4ed8;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px}</style></head><body><div class="wrap"><div class="card"><h1>${title}</h1><p>${detail || ''}</p><a href="${loginLink}">Buka Portal Pelanggan</a></div></div></body></html>`);
+    return res.status(status).send(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font-family:system-ui,Segoe UI,Arial; margin:0; background:#0b1220; color:#e5e7eb} .wrap{max-width:520px;margin:0 auto;padding:24px} .card{background:#0f172a;border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:18px} h1{font-size:18px;margin:0 0 8px} p{margin:0 0 12px;color:#cbd5e1;line-height:1.45} a{display:inline-block;background:#1d4ed8;color:#fff;text-decoration:none;padding:10px 14px;border-radius:10px}</style></head><body><div class="wrap"><div class="card"><h1>${title}</h1><p>${detail || ''}</p><a href="${loginLink}">Abrir portal del cliente</a></div></div></body></html>`);
   };
   try {
     const amount = Math.max(0, Math.floor(Number(req.query.amount || 0) || 0));
@@ -1952,10 +1952,10 @@ app.get('/qris/static.jpg', async (req, res) => {
       return res.redirect(url);
     }
 
-    return sendPretty(404, 'QRIS tidak ditemukan', 'QRIS belum diatur oleh admin atau payload QRIS tidak valid.');
+    return sendPretty(404, 'QRIS tidak ditemukan', 'El administrador todavía no configuró el QR o el payload no es válido.');
   } catch (e) {
     logger.error(`[QRIS /qris/static.jpg] Error: ${e.message}`);
-    return sendPretty(404, 'QRIS tidak ditemukan', 'Gagal memproses QRIS: ' + e.message);
+    return sendPretty(404, 'QRIS tidak ditemukan', 'No se pudo procesar el QR:' + e.message);
   }
 });
 
@@ -2024,7 +2024,7 @@ app.post(['/donasi/create', '/api/donasi/create'], (req, res) => {
     const donorNotes = String(notes || '').trim();
 
     if (!donorPhone || donorPhone.length < 8) {
-      return res.status(400).json({ success: false, message: 'Nomor WhatsApp wajib diisi (minimal 8 digit).' });
+      return res.status(400).json({ success: false, message: 'El número de WhatsApp es obligatorio (mínimo 8 dígitos).' });
     }
 
     const result = ensureDonationOrderQrisUnique(baseAmount, donorPhone, donorName, donorNotes);
@@ -2047,7 +2047,7 @@ app.get(['/donasi/status/:orderId', '/api/donasi/status/:orderId'], (req, res) =
   try {
     const orderId = Number(req.params.orderId || 0);
     const order = selectDonationOrderById.get(orderId);
-    if (!order) return res.status(404).json({ success: false, message: 'Order donasi tidak ditemukan' });
+    if (!order) return res.status(404).json({ success: false, message: 'Pedido de donación no encontrado' });
 
     return res.json({
       success: true,
@@ -2076,7 +2076,7 @@ app.post(['/donasi/confirm', '/api/donasi/confirm'], async (req, res) => {
       const donorPhone = String(phone || '').trim();
       const baseAmount = Math.max(1000, parseInt(amount, 10) || 50000);
       if (!donorPhone || donorPhone.length < 8) {
-        return res.status(400).json({ success: false, message: 'Nomor WhatsApp tidak valid' });
+        return res.status(400).json({ success: false, message: 'Número de WhatsApp inválido' });
       }
       const created = ensureDonationOrderQrisUnique(baseAmount, donorPhone, donorName, notes);
       donId = created.orderId;

@@ -46,7 +46,7 @@ try {
 
 router.get('/login', (req, res) => {
   if (req.session && req.session.isCollector) return res.redirect('/collector');
-  res.render('collector/login', { title: 'Login Kolektor', company: company(), error: null });
+  res.render('collector/login', { title: 'Ingreso de cobradores', company: company(), error: null });
 });
 
 router.post('/login', loginRateLimiter, express.urlencoded({ extended: true }), (req, res) => {
@@ -61,7 +61,7 @@ router.post('/login', loginRateLimiter, express.urlencoded({ extended: true }), 
     req.session.collectorArea = collector.area || '';
     return res.redirect('/collector');
   }
-  return res.render('collector/login', { title: 'Login Kolektor', company: company(), error: 'Username atau password salah!' });
+  return res.render('collector/login', { title: 'Ingreso de cobradores', company: company(), error: '¡Usuario o contraseña incorrectos!' });
 });
 
 router.get('/logout', (req, res) => {
@@ -97,7 +97,7 @@ router.get('/attendance', requireCollectorSession, (req, res) => {
       msg: flashMsg(req)
     });
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal memuat absensi: ' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo cargar la asistencia:' + e.message };
     res.redirect('/collector');
   }
 });
@@ -108,13 +108,13 @@ router.post('/attendance/checkin', requireCollectorSession, uploadAttendance.sin
     const collectorName = req.session.collectorName;
 
     if (!req.file) {
-      return res.json({ success: false, message: 'Foto check-in wajib diunggah' });
+      return res.json({ success: false, message: 'La foto de entrada es obligatoria' });
     }
     
     const today = attendanceSvc.getTodayAttendance('collector', collectorId);
     if (today) {
       removeAttendanceFile(req.file);
-      return res.json({ success: false, message: 'Anda sudah melakukan check-in hari ini' });
+      return res.json({ success: false, message: 'Ya registraste tu entrada hoy' });
     }
     
     const result = attendanceSvc.checkIn({
@@ -127,10 +127,10 @@ router.post('/attendance/checkin', requireCollectorSession, uploadAttendance.sin
       photo: req.file ? '/uploads/attendance/' + req.file.filename : ''
     });
     
-    res.json({ success: true, message: 'Check-in berhasil!', id: result.lastInsertRowid });
+    res.json({ success: true, message: '¡Entrada registrada!', id: result.lastInsertRowid });
   } catch (e) {
     removeAttendanceFile(req.file);
-    res.json({ success: false, message: 'Gagal check-in: ' + e.message });
+    res.json({ success: false, message: 'No se pudo registrar la entrada:' + e.message });
   }
 });
 
@@ -139,18 +139,18 @@ router.post('/attendance/checkout', requireCollectorSession, uploadAttendance.si
     const collectorId = req.session.collectorId;
 
     if (!req.file) {
-      return res.json({ success: false, message: 'Foto check-out wajib diunggah' });
+      return res.json({ success: false, message: 'La foto de salida es obligatoria' });
     }
     
     const today = attendanceSvc.getTodayAttendance('collector', collectorId);
     if (!today) {
       removeAttendanceFile(req.file);
-      return res.json({ success: false, message: 'Anda belum check-in hari ini' });
+      return res.json({ success: false, message: 'Todavía no registraste tu entrada hoy' });
     }
     
     if (today.status === 'checked_out') {
       removeAttendanceFile(req.file);
-      return res.json({ success: false, message: 'Anda sudah check-out hari ini' });
+      return res.json({ success: false, message: 'Ya registraste tu salida hoy' });
     }
     
     attendanceSvc.checkOut(today.id, {
@@ -160,10 +160,10 @@ router.post('/attendance/checkout', requireCollectorSession, uploadAttendance.si
       photo: req.file ? '/uploads/attendance/' + req.file.filename : ''
     });
     
-    res.json({ success: true, message: 'Check-out berhasil!' });
+    res.json({ success: true, message: '¡Salida registrada!' });
   } catch (e) {
     removeAttendanceFile(req.file);
-    res.json({ success: false, message: 'Gagal check-out: ' + e.message });
+    res.json({ success: false, message: 'No se pudo registrar la salida:' + e.message });
   }
 });
 
@@ -315,7 +315,7 @@ router.get('/', requireCollectorSession, (req, res) => {
   `).all(collectorId);
 
   res.render('collector/dashboard', {
-    title: 'Dashboard Kolektor',
+    title: 'Panel del cobrador',
     company: company(),
     month,
     year,
@@ -345,10 +345,10 @@ router.post('/payment-request', requireCollectorSession, express.urlencoded({ ex
       invoiceId = Number(genResult.invoiceId || 0);
     }
 
-    if (!Number.isFinite(invoiceId) || invoiceId <= 0) throw new Error('Tagihan / Invoice tidak valid');
+    if (!Number.isFinite(invoiceId) || invoiceId <= 0) throw new Error('Factura inválida');
 
     const inv = billingSvc.getInvoiceById(invoiceId);
-    if (!inv) throw new Error('Tagihan tidak ditemukan');
+    if (!inv) throw new Error('Factura no encontrada');
     if (String(inv.status || '').toLowerCase() === 'paid') throw new Error('Tagihan sudah lunas');
 
     const existingPending = db.prepare(`
@@ -356,11 +356,11 @@ router.post('/payment-request', requireCollectorSession, express.urlencoded({ ex
       WHERE invoice_id = ? AND status = 'pending'
       ORDER BY id DESC LIMIT 1
     `).get(invoiceId);
-    if (existingPending) throw new Error('Tagihan ini sudah pernah diajukan dan masih menunggu approval');
+    if (existingPending) throw new Error('Esta factura ya fue enviada y sigue esperando aprobación');
 
     const collectorId = Number(req.session.collectorId || 0);
     const amount = Math.max(0, Number(inv.amount || 0) || 0);
-    if (amount <= 0) throw new Error('Nominal tagihan tidak valid');
+    if (amount <= 0) throw new Error('Monto de la factura inválido');
 
     // Check if auto-approve is enabled for this collector
     const collector = db.prepare('SELECT auto_approve FROM collectors WHERE id = ?').get(collectorId);
@@ -370,12 +370,12 @@ router.post('/payment-request', requireCollectorSession, express.urlencoded({ ex
       // Auto-approve: directly mark invoice as paid
       const collectorName = String(req.session.collectorName || '').trim();
       const collectorUsername = String(req.session.collectorUsername || '').trim();
-      const collectorLabel = `Kolektor ${collectorName}${collectorUsername ? ` (@${collectorUsername})` : ''}`;
+      const collectorLabel = `Kolektor ${collectorName}${collectorUsername ?` (@${collectorUsername})` : ''}`;
       
       const notesParts = [
         'Via Kolektor',
         collectorLabel,
-        'Auto-Approved (Kolektor Setting Aktif)'
+        'Aprobado automáticamente (configuración del cobrador)'
       ];
       if (note) notesParts.push(note);
       const notes = notesParts.join(' | ');
@@ -386,7 +386,7 @@ router.post('/payment-request', requireCollectorSession, express.urlencoded({ ex
       // Insert request with approved status
       db.prepare(`
         INSERT INTO collector_payment_requests (collector_id, invoice_id, customer_id, amount, note, status, decided_by_role, decided_by_name, decided_note, decided_at)
-        VALUES (?, ?, ?, ?, ?, 'approved', 'system', 'Auto-Approve', 'Otomatis disetujui (kolektor setting aktif)', (NOW_LOCAL()))
+        VALUES (?, ?, ?, ?, ?, 'approved', 'system', 'Auto-Approve', 'Aprobado automáticamente (configuración del cobrador)', (NOW_LOCAL()))
       `).run(collectorId, invoiceId, Number(inv.customer_id || 0), amount, note);
 
       // Auto-unisolate if customer status is currently suspended and NO MORE unpaid invoices remain
@@ -397,7 +397,7 @@ router.post('/payment-request', requireCollectorSession, express.urlencoded({ ex
         if (unpaidCount === 0) {
           try {
             await customerSvc.activateCustomer(customer.id);
-            unisolatedText = ' dan layanan pelanggan di-unisolate';
+            unisolatedText = ' y el servicio del cliente fue rehabilitado';
             logger.info(`[Collector Auto-Approve] Customer ${customer.id} (${customer.name}) auto-unisolated on payment.`);
           } catch (actErr) {
             logger.error(`[Collector Auto-Approve] Failed to auto-activate customer ${customer.id}:`, actErr);
@@ -441,7 +441,7 @@ router.post('/payment-request', requireCollectorSession, express.urlencoded({ ex
         }
       }
 
-      req.session._msg = { type: 'success', text: `Pembayaran berhasil diproses, tagihan lunas${unisolatedText}. <a href="/collector/invoice/${invoiceId}/print-thermal" target="_blank" class="btn btn-sm btn-dark ms-2 fw-bold"><i class="bi bi-printer"></i> Cetak Struk (Bluetooth Thermal)</a>` };
+      req.session._msg = { type: 'success', text: `Pago procesado, factura pagada${unisolatedText}. <a href="/collector/invoice/${invoiceId}/print-thermal" target="_blank" class="btn btn-sm btn-dark ms-2 fw-bold"><i class="bi bi-printer"></i> Imprimir recibo (térmica Bluetooth)</a>` };
     } else {
       // Manual approval: insert as pending
       db.prepare(`
@@ -449,10 +449,10 @@ router.post('/payment-request', requireCollectorSession, express.urlencoded({ ex
         VALUES (?, ?, ?, ?, ?, 'pending')
       `).run(collectorId, invoiceId, Number(inv.customer_id || 0), amount, note);
 
-      req.session._msg = { type: 'success', text: 'Berhasil. Status pembayaran menunggu approval Admin/Kasir.' };
+      req.session._msg = { type: 'success', text: 'Listo. El pago espera la aprobación del administrador o cajero.' };
     }
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'Gagal: ' + (e.message || String(e)) };
+    req.session._msg = { type: 'error', text: 'Error:' + (e.message || String(e)) };
   }
   const qs = new URLSearchParams();
   if (req.body.month) qs.set('month', String(req.body.month));
@@ -468,10 +468,10 @@ router.get('/invoice/:id/print-thermal', requireCollectorSession, (req, res) => 
   try {
     const invoiceId = Number(req.params.id || 0);
     const invoice = billingSvc.getInvoiceById(invoiceId);
-    if (!invoice) return res.status(404).send('Invoice tidak ditemukan');
+    if (!invoice) return res.status(404).send('Factura no encontrada');
 
     const customer = customerSvc.getCustomerById(invoice.customer_id);
-    if (!customer) return res.status(404).send('Data pelanggan tidak ditemukan');
+    if (!customer) return res.status(404).send('Cliente no encontrado');
     const settings = getSettings();
 
     res.render('collector/print_thermal', {
@@ -494,22 +494,22 @@ router.post('/invoice/:id/send-pdf-wa', requireCollectorSession, async (req, res
   try {
     const invoiceId = Number(req.params.id || 0);
     const inv = billingSvc.getInvoiceById(invoiceId);
-    if (!inv) return res.json({ success: false, message: 'Invoice tidak ditemukan' });
+    if (!inv) return res.json({ success: false, message: 'Factura no encontrada' });
 
     const customer = customerSvc.getCustomerById(inv.customer_id);
-    if (!customer || !customer.phone) return res.json({ success: false, message: 'Nomor HP pelanggan tidak valid' });
+    if (!customer || !customer.phone) return res.json({ success: false, message: 'Número de teléfono del cliente inválido' });
 
     const settings = getSettings();
     const pdfBuffer = await pdfSvc.generateInvoicePdfBuffer(inv, customer, settings);
     const filename = `Invoice_INV-${String(inv.id).padStart(4, '0')}.pdf`;
-    const caption = `🧾 *FAKTUR / INVOICE LUNAS*\n\nYth. Bpk/Ibu *${customer.name}*,\nBerikut kami lampirkan dokumen Invoice LUNAS periode ${inv.period_month}/${inv.period_year}.\n\nTerima kasih atas pembayaran Anda.`;
+    const caption = `🧾 *FACTURA PAGADA*\n\nEstimado/a *${customer.name}*,\nLe enviamos adjunta la factura PAGADA del período ${inv.period_month}/${inv.period_year}.\n\nGracias por su pago.`;
 
     const waBot = require('../services/whatsappBot.mjs');
     const result = await waBot.waNotify.sendDocument(customer.phone, pdfBuffer, filename, caption);
     if (result && result.success) {
-      return res.json({ success: true, message: 'Dokumen Invoice PDF berhasil dikirim via WhatsApp ke pelanggan!' });
+      return res.json({ success: true, message: '¡Factura PDF enviada al cliente por WhatsApp!' });
     } else {
-      return res.json({ success: false, message: result?.message || 'Gagal mengirim WA PDF' });
+      return res.json({ success: false, message: result?.message || 'No se pudo enviar el PDF por WhatsApp' });
     }
   } catch (e) {
     return res.json({ success: false, message: 'Error: ' + e.message });

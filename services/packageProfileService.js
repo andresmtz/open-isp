@@ -67,13 +67,13 @@ async function ensureIpPool(pkg, routerId) {
     const ex = (pools || []).find((p) => String(p.name || '').trim().toLowerCase() === poolName.toLowerCase());
     if (ex) {
       await mikrotikService.updateIpPool(ex.id || ex['.id'], { ranges: poolRanges, comment: MANAGE_COMMENT }, routerId);
-      return 'IP pool "' + poolName + '" diperbarui';
+      return 'IP pool "' + poolName + '" actualizado';
     }
     await mikrotikService.addIpPool({ name: poolName, ranges: poolRanges, comment: MANAGE_COMMENT }, routerId);
-    return 'IP pool "' + poolName + '" dibuat';
+    return 'IP pool "' + poolName + '" creado';
   } catch (e) {
     logger.warn('[PackageProfile] Gagal sinkron IP pool "' + poolName + '": ' + e.message);
-    return 'IP pool GAGAL: ' + e.message;
+    return 'FALLÓ el pool de IP:' + e.message;
   }
 }
 
@@ -84,9 +84,9 @@ async function ensureIpPool(pkg, routerId) {
 async function ensurePppProfileForPackage(pkg) {
   const mode = currentProfileMode();
   if (mode === 'radius-attributes') {
-    return { needed: false, mode, message: 'Mode RADIUS (rate-limit & IP dari atribut) — pool/profil MikroTik tidak dibuat.' };
+    return { needed: false, mode, message: 'Modo RADIUS (velocidad e IP por atributos): no se crea pool/perfil en el MikroTik.' };
   }
-  if (!pkg || !pkg.name) return { needed: true, mode, message: 'Nama paket kosong.' };
+  if (!pkg || !pkg.name) return { needed: true, mode, message: 'Nombre de plan vacío.' };
 
   const routerId = pkg.router_id || null;
   const parts = [];
@@ -95,20 +95,20 @@ async function ensurePppProfileForPackage(pkg) {
   if (poolMsg) parts.push(poolMsg);
 
   const { data, rl } = buildProfileFields(pkg);
-  if (!rl) parts.push('speed 0 → rate-limit tidak dibuat');
+  if (!rl) parts.push('velocidad 0 → no se crea límite de velocidad');
   try {
     const profiles = await mikrotikService.getPppoeProfiles(routerId);
     const ex = (profiles || []).find((p) => String(p.name || '').trim().toLowerCase() === String(pkg.name).trim().toLowerCase());
     if (ex) {
       await mikrotikService.updatePppoeProfile(ex.id || ex['.id'], data, routerId);
-      parts.push('profil PPP diperbarui');
+      parts.push('perfil PPP actualizado');
     } else {
       await mikrotikService.addPppoeProfile(data, routerId);
-      parts.push('profil PPP dibuat');
+      parts.push('perfil PPP creado');
     }
   } catch (e) {
     logger.warn('[PackageProfile] Gagal sinkron profil "' + pkg.name + '": ' + e.message);
-    parts.push('profil GAGAL: ' + e.message);
+    parts.push('FALLÓ el perfil:' + e.message);
   }
 
   // Profil isolir paket (dibuat bila belum ada)
@@ -119,9 +119,9 @@ async function ensurePppProfileForPackage(pkg) {
       const ex2 = (profs2 || []).find((p) => String(p.name || '').trim().toLowerCase() === isolirP.toLowerCase());
       if (!ex2) {
         await mikrotikService.addPppoeProfile({ name: isolirP, 'rate-limit': '512k/512k', comment: MANAGE_COMMENT }, routerId);
-        parts.push('profil isolir "' + isolirP + '" dibuat (512k/512k)');
+        parts.push('perfil de corte "' + isolirP + '" creado (512k/512k)');
       }
-    } catch (e) { parts.push('profil isolir GAGAL: ' + e.message); }
+    } catch (e) { parts.push('FALLÓ el perfil de corte:' + e.message); }
   }
 
   const prefix = (mode === 'radius-profile') ? '[RADIUS profil] ' : '';
@@ -142,11 +142,11 @@ async function removePppProfileForPackage(pkg, opts) {
       const ex = (profiles || []).find((p) => String(p.name || '').trim().toLowerCase() === name.toLowerCase());
       if (ex && String(ex.comment || '').trim() === MANAGE_COMMENT) {
         await mikrotikService.deletePppoeProfile(ex.id || ex['.id'], routerId);
-        out.push('profil PPP "' + name + '" dihapus');
+        out.push('profil PPP "' + name + '" eliminado');
       } else if (ex) {
         out.push('profil PPP "' + name + '" dibiarkan (bukan dikelola aplikasi)');
       }
-    } catch (e) { out.push('profil gagal dihapus: ' + e.message); }
+    } catch (e) { out.push('no se pudo eliminar el perfil:' + e.message); }
   }
   const poolName = String(pkg.pool_name || '').trim();
   if (opts.removePool && poolName && mode !== 'radius-attributes') {
@@ -155,9 +155,9 @@ async function removePppProfileForPackage(pkg, opts) {
       const pex = (pools || []).find((p) => String(p.name || '').trim().toLowerCase() === poolName.toLowerCase());
       if (pex && String(pex.comment || '').trim() === MANAGE_COMMENT) {
         await mikrotikService.deleteIpPool(pex.id || pex['.id'], routerId);
-        out.push('IP pool "' + poolName + '" dihapus');
+        out.push('IP pool "' + poolName + '" eliminado');
       }
-    } catch (e) { out.push('pool gagal dihapus: ' + e.message); }
+    } catch (e) { out.push('no se pudo eliminar el pool:' + e.message); }
   }
   return { mode, message: out.join('; ') };
 }

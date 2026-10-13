@@ -95,7 +95,7 @@ function addStock(data, actor = 'Admin') {
     db.prepare(`
       INSERT INTO inventory_logs (item_id, stock_id, type, quantity, actor, note)
       VALUES (?, ?, 'in', ?, ?, ?)
-    `).run(item_id, result.lastInsertRowid, quantity, actor, note || 'Stock Masuk');
+    `).run(item_id, result.lastInsertRowid, quantity, actor, note || 'Entrada de stock');
 
     return result;
   });
@@ -105,7 +105,7 @@ function addStock(data, actor = 'Admin') {
 
 function assignStockToCustomer(stockId, customerId, actor = 'Admin', note = '') {
   const stock = db.prepare('SELECT * FROM inventory_stock WHERE id = ?').get(stockId);
-  if (!stock) throw new Error('Stock tidak ditemukan');
+  if (!stock) throw new Error('Stock no encontrado');
   if (stock.status === 'assigned') throw new Error('Stock sudah terpasang di pelanggan lain');
 
   const run = db.transaction(() => {
@@ -126,7 +126,7 @@ function assignStockToCustomer(stockId, customerId, actor = 'Admin', note = '') 
 
 function adjustStock(stockId, newQuantity, note, actor = 'Admin') {
   const stock = db.prepare('SELECT * FROM inventory_stock WHERE id = ?').get(stockId);
-  if (!stock) throw new Error('Stock tidak ditemukan');
+  if (!stock) throw new Error('Stock no encontrado');
 
   const run = db.transaction(() => {
     const diff = newQuantity - stock.quantity;

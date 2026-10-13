@@ -307,9 +307,9 @@ function getHealthStatus() {
   const load1 = parseFloat(metrics.system.loadAverage['1min']);
   const cores = metrics.system.cpu.cores;
   if (load1 > cores * 2) {
-    issues.push(`Beban sistem (Load Average) tinggi: ${load1} (${cores} cores)`);
+    issues.push(`Carga del sistema (load average) alta: ${load1} (${cores} núcleos)`);
   } else if (load1 > cores) {
-    warnings.push(`Beban sistem (Load Average) agak tinggi: ${load1} (${cores} cores)`);
+    warnings.push(`Carga del sistema (load average) algo alta: ${load1} (${cores} núcleos)`);
   }
   
   // Check disk usage

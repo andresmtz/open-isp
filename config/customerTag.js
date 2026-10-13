@@ -16,7 +16,7 @@ async function addCustomerTag(remoteJid, params) {
         // Ekstrak parameter
         if (params.length < 2) {
             await sock.sendMessage(remoteJid, {
-                text: `❌ *Format Salah*\n\nFormat yang benar:\naddtag [device_id] [nomor_pelanggan]\n\nContoh:\naddtag 202BC1-BM632w-000000 081234567890`
+                text: `❌ *Formato incorrecto*\n\nFormato correcto:\naddtag [device_id] [numero_cliente]\n\nEjemplo:\naddtag 202BC1-BM632w-000000 0981123456`
             });
             return;
         }
@@ -26,7 +26,7 @@ async function addCustomerTag(remoteJid, params) {
         // Validasi nomor pelanggan
         if (!customerNumber || !/^\d{8,}$/.test(customerNumber)) {
             await sock.sendMessage(remoteJid, {
-                text: `❌ *Nomor Pelanggan Tidak Valid*\n\nNomor pelanggan harus berupa angka minimal 8 digit.`
+                text: `❌ *Número de cliente inválido*\n\nEl número de cliente debe tener al menos 8 dígitos.`
             });
             return;
         }
@@ -35,14 +35,14 @@ async function addCustomerTag(remoteJid, params) {
         const genieacsUrl = global.appSettings.genieacsUrl || process.env.GENIEACS_URL;
         if (!genieacsUrl) {
             await sock.sendMessage(remoteJid, {
-                text: `❌ *Konfigurasi tidak lengkap*\n\nURL GenieACS tidak dikonfigurasi`
+                text: `❌ *Configuración incompleta*\n\nLa URL de GenieACS no está configurada`
             });
             return;
         }
         
         // Kirim pesan bahwa proses sedang berlangsung
         await sock.sendMessage(remoteJid, {
-            text: `⏳ *Proses penambahan tag*\n\nSedang menambahkan nomor ${customerNumber} ke perangkat ${deviceId}...`
+            text: `⏳ *Agregando etiqueta*\n\nAgregando el número ${customerNumber} al equipo ${deviceId}...`
         });
         
         // Persiapkan URL untuk menambahkan tag
@@ -64,20 +64,20 @@ async function addCustomerTag(remoteJid, params) {
             logger.info(`Tag response: ${response.status}`);
             
             // Kirim pesan sukses
-            let successMessage = `✅ *Tag berhasil ditambahkan*\n\n`;
-            successMessage += `📱 *Nomor Pelanggan:* ${customerNumber}\n`;
+            let successMessage = `✅ *Etiqueta agregada*\n\n`;
+            successMessage += `📱 *Número de cliente:* ${customerNumber}\n`;
             successMessage += `🖥️ *Device ID:* ${deviceId}\n\n`;
-            successMessage += `Pelanggan sekarang dapat menggunakan WhatsApp dan Web Portal dengan nomor tersebut.`;
+            successMessage += `El cliente ya puede usar WhatsApp y el portal web con ese número.`;
             
             await sock.sendMessage(remoteJid, { text: successMessage });
             
         } catch (error) {
             logger.error('Error adding tag to GenieACS:', error);
             
-            let errorMessage = `❌ *Gagal menambahkan tag*\n\n`;
+            let errorMessage = `❌ *No se pudo agregar la etiqueta*\n\n`;
             if (error.response) {
                 errorMessage += `Status: ${error.response.status}\n`;
-                errorMessage += `Pesan: ${JSON.stringify(error.response.data)}\n`;
+                errorMessage += `Mensaje: ${JSON.stringify(error.response.data)}\n`;
             } else {
                 errorMessage += `Error: ${error.message}\n`;
             }
@@ -137,7 +137,7 @@ async function addTagByPPPoE(remoteJid, params, sock) {
         // Ekstrak parameter
         if (params.length < 2) {
             await sock.sendMessage(remoteJid, {
-                text: `❌ *Format Salah*\n\nFormat yang benar:\naddpppoe_tag [pppoe_username] [nomor_pelanggan]\n\nContoh:\naddpppoe_tag user123 081234567890`
+                text: `❌ *Formato incorrecto*\n\nFormato correcto:\naddpppoe_tag [usuario_pppoe] [numero_cliente]\n\nEjemplo:\naddpppoe_tag user123 0981123456`
             });
             return;
         }
@@ -147,7 +147,7 @@ async function addTagByPPPoE(remoteJid, params, sock) {
         // Validasi nomor pelanggan
         if (!customerNumber || !/^\d{8,}$/.test(customerNumber)) {
             await sock.sendMessage(remoteJid, {
-                text: `❌ *Nomor Pelanggan Tidak Valid*\n\nNomor pelanggan harus berupa angka minimal 8 digit.`
+                text: `❌ *Número de cliente inválido*\n\nEl número de cliente debe tener al menos 8 dígitos.`
             });
             return;
         }
@@ -156,14 +156,14 @@ async function addTagByPPPoE(remoteJid, params, sock) {
         const genieacsUrl = global.appSettings.genieacsUrl || process.env.GENIEACS_URL;
         if (!genieacsUrl) {
             await sock.sendMessage(remoteJid, {
-                text: `❌ *Konfigurasi tidak lengkap*\n\nURL GenieACS tidak dikonfigurasi`
+                text: `❌ *Configuración incompleta*\n\nLa URL de GenieACS no está configurada`
             });
             return;
         }
         
         // Kirim pesan bahwa proses sedang berlangsung
         await sock.sendMessage(remoteJid, {
-            text: `⏳ *Proses pencarian perangkat*\n\nSedang mencari perangkat dengan PPPoE Username ${pppoeUsername}...`
+            text: `⏳ *Buscando equipo*\n\nBuscando el equipo con usuario PPPoE ${pppoeUsername}...`
         });
         
         // Cari perangkat berdasarkan PPPoE Username
@@ -171,7 +171,7 @@ async function addTagByPPPoE(remoteJid, params, sock) {
         
         if (!device) {
             await sock.sendMessage(remoteJid, {
-                text: `❌ *Perangkat Tidak Ditemukan*\n\nTidak dapat menemukan perangkat dengan PPPoE Username ${pppoeUsername}`
+                text: `❌ *Equipo no encontrado*\n\nNo se encontró ningún equipo con usuario PPPoE ${pppoeUsername}`
             });
             return;
         }
@@ -181,7 +181,7 @@ async function addTagByPPPoE(remoteJid, params, sock) {
         
         // Kirim pesan bahwa proses sedang berlangsung
         await sock.sendMessage(remoteJid, {
-            text: `⏳ *Proses penambahan tag*\n\nSedang menambahkan nomor ${customerNumber} ke perangkat ${deviceId}...`
+            text: `⏳ *Agregando etiqueta*\n\nAgregando el número ${customerNumber} al equipo ${deviceId}...`
         });
         
         // Persiapkan URL untuk menambahkan tag
@@ -203,21 +203,21 @@ async function addTagByPPPoE(remoteJid, params, sock) {
             logger.info(`Tag response: ${response.status}`);
             
             // Kirim pesan sukses
-            let successMessage = `✅ *Tag berhasil ditambahkan*\n\n`;
-            successMessage += `📱 *Nomor Pelanggan:* ${customerNumber}\n`;
+            let successMessage = `✅ *Etiqueta agregada*\n\n`;
+            successMessage += `📱 *Número de cliente:* ${customerNumber}\n`;
             successMessage += `👤 *PPPoE Username:* ${pppoeUsername}\n`;
             successMessage += `🖥️ *Device ID:* ${deviceId}\n\n`;
-            successMessage += `Pelanggan sekarang dapat menggunakan WhatsApp dan Web Portal dengan nomor tersebut.`;
+            successMessage += `El cliente ya puede usar WhatsApp y el portal web con ese número.`;
             
             await sock.sendMessage(remoteJid, { text: successMessage });
             
         } catch (error) {
             logger.error('Error adding tag to GenieACS:', error);
             
-            let errorMessage = `❌ *Gagal menambahkan tag*\n\n`;
+            let errorMessage = `❌ *No se pudo agregar la etiqueta*\n\n`;
             if (error.response) {
                 errorMessage += `Status: ${error.response.status}\n`;
-                errorMessage += `Pesan: ${JSON.stringify(error.response.data)}\n`;
+                errorMessage += `Mensaje: ${JSON.stringify(error.response.data)}\n`;
             } else {
                 errorMessage += `Error: ${error.message}\n`;
             }

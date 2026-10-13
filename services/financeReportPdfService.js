@@ -15,7 +15,7 @@ function generateFinanceReportPdfBuffer(o) {
   const { company = 'OPEN-ISP', settings = {}, filterYear, filterMonth = 0, finance = {}, ply = {}, pm = {}, monthlyFinance = [], mode = 'after' } = o;
   return new Promise((resolve, reject) => {
     try {
-      const doc = new PDFDocument({ size: 'A4', margin: 0, info: { Title: `Laporan Keuangan ${filterYear}`, Author: company, Subject: 'Laporan Laba / Rugi' } });
+      const doc = new PDFDocument({ size: 'A4', margin: 0, info: { Title: `Reporte financiero ${filterYear}`, Author: company, Subject: 'Estado de resultados' } });
       const bufs = [];
       doc.on('data', b => bufs.push(b));
       doc.on('end', () => resolve(Buffer.concat(bufs)));
@@ -28,7 +28,7 @@ function generateFinanceReportPdfBuffer(o) {
       const modeLabel = (mode === 'before') ? 'SEBELUM PAJAK' : 'SESUDAH PAJAK';
       const periodStr = filterMonth ? `${MNS[filterMonth - 1]} ${filterYear}` : `Tahun ${filterYear}`;
       const companyPhone = settings.company_phone || (settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers[0]) || '-';
-      const companyAddress = settings.company_address || 'Pusat Layanan Internet';
+      const companyAddress = settings.company_address || 'Proveedor de servicios de internet';
 
       // ── Header band ──
       doc.rect(0, 0, 595.28, 74).fill(INK);
@@ -39,7 +39,7 @@ function generateFinanceReportPdfBuffer(o) {
       if (logoPath && fs.existsSync(logoPath)) { try { doc.image(logoPath, LEFT, y, { fit: [110, 34] }); nx = LEFT + 122; } catch (e) {} }
       doc.fillColor('#ffffff').fontSize(15).font('Helvetica-Bold').text(company, nx, y, { width: 205, lineBreak: false });
       doc.fillColor('#94a3b8').fontSize(8).font('Helvetica').text(companyAddress, nx, y + 19, { width: 205, height: 11, ellipsis: true });
-      doc.fillColor('#ffffff').fontSize(17).font('Helvetica-Bold').text('LAPORAN KEUANGAN', LEFT, y, { width: W, align: 'right' });
+      doc.fillColor('#ffffff').fontSize(17).font('Helvetica-Bold').text('REPORTE FINANCIERO', LEFT, y, { width: W, align: 'right' });
       doc.fillColor(LIME).fontSize(9).font('Helvetica-Bold').text(periodStr + '  •  ' + modeLabel, LEFT, y + 23, { width: W, align: 'right' });
 
       // ── Meta ──
@@ -58,10 +58,10 @@ function generateFinanceReportPdfBuffer(o) {
 
       // ── A. Laporan Laba/Rugi ──
       y += 18;
-      doc.fillColor(INK).fontSize(11).font('Helvetica-Bold').text('A.  LAPORAN LABA / RUGI', LEFT, y);
+      doc.fillColor(INK).fontSize(11).font('Helvetica-Bold').text('A.  ESTADO DE RESULTADOS', LEFT, y);
       doc.moveTo(LEFT, y + 15).lineTo(RIGHT, y + 15).strokeColor(LINE).stroke();
       y += 22;
-      y = statRow(y, 'Pemasukan (Bruto)', fmtRp(ply.bruto));
+      y = statRow(y, 'Ingresos (brutos)', fmtRp(ply.bruto));
       y = statRow(y, `DPP — Dasar Pengenaan Pajak`, fmtRp(ply.dpp));
       y = statRow(y, `PPN Keluaran (${finance.ppn}%)  — disetor, bukan pendapatan`, fmtRp(ply.ppn), { color: BLUE });
       y = statRow(y, 'Pengeluaran', '- ' + fmtRp(ply.keluar), { color: RED });
@@ -81,7 +81,7 @@ function generateFinanceReportPdfBuffer(o) {
       y += 42;
 
       // ── B. Rekap per bulan ──
-      doc.fillColor(INK).fontSize(11).font('Helvetica-Bold').text('B.  REKAP PER BULAN', LEFT, y);
+      doc.fillColor(INK).fontSize(11).font('Helvetica-Bold').text('B.  RESUMEN POR MES', LEFT, y);
       doc.moveTo(LEFT, y + 15).lineTo(RIGHT, y + 15).strokeColor(LINE).stroke();
       y += 22;
 
@@ -125,8 +125,8 @@ function generateFinanceReportPdfBuffer(o) {
       doc.moveTo(LEFT, fy - 12).lineTo(RIGHT, fy - 12).strokeColor(LINE).stroke();
       doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(company, LEFT, fy);
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(companyAddress, LEFT, fy + 13, { width: 330 });
-      doc.fillColor(MUTED).fontSize(7.5).text(`Dokumen dibuat otomatis • ${new Date().toLocaleString(regional.locale())}`, LEFT, fy + 32);
-      doc.fillColor(MUTED).fontSize(8).font('Helvetica').text('Dibuat oleh,', 440, fy, { width: 115, align: 'center' });
+      doc.fillColor(MUTED).fontSize(7.5).text(`Documento generado automáticamente • ${new Date().toLocaleString(regional.locale())}`, LEFT, fy + 32);
+      doc.fillColor(MUTED).fontSize(8).font('Helvetica').text('Elaborado por,', 440, fy, { width: 115, align: 'center' });
       doc.moveTo(420, fy + 30).lineTo(555, fy + 30).strokeColor(INK).stroke();
       doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(settings.company_manager || 'Bagian Keuangan', 420, fy + 34, { width: 135, align: 'center' });
 

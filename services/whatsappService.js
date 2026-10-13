@@ -75,7 +75,7 @@ function formatPaymentSuccessMessage({
   let tunggakanInfo = '';
   if (remainingList && Array.isArray(remainingList) && remainingList.length > 0) {
     const summary = formatUnpaidInvoicesSummary(remainingList);
-    tunggakanInfo = `\n⚠️ *Perhatian Tunggakan Lain:*\nMasih ada *${summary.count} tagihan lain* belum lunas:\n${summary.breakdownText}\n💰 *Total Sisa Tunggakan:* *${regional.currencySymbol()} ${summary.totalAmountStr}*\n_Mohon segera diselesaikan agar layanan tetap lancar._\n`;
+    tunggakanInfo = `\n⚠️ *Otras deudas:*\nTodavía hay *${summary.count} facturas* pendientes:\n${summary.breakdownText}\n💰 *Total adeudado:* *${regional.currencySymbol()} ${summary.totalAmountStr}*\n_Por favor, regularícelas para mantener el servicio activo._\n`;
   }
 
   const _invIdMatch = String(invoiceId || '').match(/\d+/);

@@ -968,11 +968,11 @@ db.exec(`
 try {
   db.exec(`
     INSERT OR IGNORE INTO expense_categories (name, parent_id, description, icon, color) VALUES
-    ('Perangkat', NULL, 'Pembelian perangkat jaringan', 'bi bi-router', '#3b82f6'),
-    ('Utilitas', NULL, 'Biaya utilitas (listrik, internet, dll)', 'bi bi-lightning-charge', '#f59e0b'),
-    ('Gaji & Tunjangan', NULL, 'Gaji karyawan dan tunjangan', 'bi bi-wallet2', '#10b981'),
-    ('Maintenance', NULL, 'Biaya perawatan dan perbaikan', 'bi bi-tools', '#ef4444'),
-    ('Operasional', NULL, 'Biaya operasional lainnya', 'bi bi-briefcase', '#8b5cf6');
+    ('Perangkat', NULL, 'Compra de equipos de red', 'bi bi-router', '#3b82f6'),
+    ('Utilitas', NULL, 'Servicios (electricidad, internet, etc.)', 'bi bi-lightning-charge', '#f59e0b'),
+    ('Sueldos y beneficios', NULL, 'Sueldos y beneficios del personal', 'bi bi-wallet2', '#10b981'),
+    ('Maintenance', NULL, 'Mantenimiento y reparaciones', 'bi bi-tools', '#ef4444'),
+    ('Operasional', NULL, 'Otros gastos operativos', 'bi bi-briefcase', '#8b5cf6');
   `);
 } catch (e) {}
 

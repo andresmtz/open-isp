@@ -1182,7 +1182,7 @@ async function deleteMonDevice(deviceId, acsId) {
 (function () {
   var el = document.getElementById('revenueChart');
   if (!el || typeof Chart === 'undefined') return;
-  var rows = <%- JSON.stringify(revenueMonthly || []).split('<').join('\\u003c') %>;
+  var rows = <%- JSON.stringify((typeof revenueMonthly !== 'undefined' && revenueMonthly) || []).split('<').join('\\u003c') %>;
   var months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   var byM = {}; (rows || []).forEach(function (r) { byM[r.month] = Number(r.revenue || 0); });
   var labels = [], vals = [];

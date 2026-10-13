@@ -7,6 +7,7 @@ import qrcode from 'qrcode-terminal';
 import makeWASocket, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers } from '@whiskeysockets/baileys';
 
 const require = createRequire(import.meta.url);
+const regional = require('../config/regional.js');
 const QRCodeNode = require('qrcode');
 const { logger } = require('../config/logger.js');
 const { getSetting, getNowLocal, formatDateLocal, getCurrentDateInTimezone } = require('../config/settingsManager.js');
@@ -464,7 +465,7 @@ function formatCekTerhubung(data) {
 }
 
 function formatBillingSummary(stats) {
-  const formatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
+  const formatter = new Intl.NumberFormat(regional.locale(), { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
 
   return waWrap(
     '💰 *RINGKASAN BILLING*',
@@ -480,7 +481,7 @@ function formatCustomerInvoices(invoices, name) {
   const title = `🧾 *STATUS TAGIHAN*\n👤 *${name}*`;
   if (!invoices || invoices.length === 0) return waWrap(title, "✅ Tidak ada data tagihan. Terima kasih!");
 
-  const formatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
+  const formatter = new Intl.NumberFormat(regional.locale(), { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
 
   const unpaid = invoices.filter(inv => inv.status !== 'paid');
 
@@ -488,9 +489,9 @@ function formatCustomerInvoices(invoices, name) {
   if (unpaid.length > 0) {
     const summary = formatUnpaidInvoicesSummary(unpaid);
     if (summary.isMultiple) {
-      summaryHeader = `⚠️ *TOTAL TUNGGAKAN:* *Rp ${summary.totalAmountStr}*\n📌 *Tunggakan:* ${summary.periodText}\n\n`;
+      summaryHeader = `⚠️ *TOTAL TUNGGAKAN:* *${regional.currencySymbol()} ${summary.totalAmountStr}*\n📌 *Tunggakan:* ${summary.periodText}\n\n`;
     } else {
-      summaryHeader = `⚠️ *TOTAL BELUM BAYAR:* *Rp ${summary.totalAmountStr}*\n📌 *Periode:* ${summary.periodText}\n\n`;
+      summaryHeader = `⚠️ *TOTAL BELUM BAYAR:* *${regional.currencySymbol()} ${summary.totalAmountStr}*\n📌 *Periode:* ${summary.periodText}\n\n`;
     }
   } else {
     summaryHeader = `🟢 *STATUS:* Semua tagihan sudah *LUNAS* ✅\n\n`;
@@ -1681,7 +1682,7 @@ export async function processIncomingCommand({
             billingSvc.markAsPaid(targetInvId, 'WA Bot Admin', 'Paid via WhatsApp Command');
 
             const customer = customerSvc.getCustomerById(targetInv.customer_id);
-            const formatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
+            const formatter = new Intl.NumberFormat(regional.locale(), { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
             const customerName = String(targetInv.customer_name || customer?.name || '-');
             const notifyTag = customer?.genieacs_tag || customer?.pppoe_username || customer?.phone || targetInv.customer_phone || targetInv.genieacs_tag || '';
             const custIdDisplay = customer?.id || targetInv.customer_id || '-';
@@ -1689,7 +1690,7 @@ export async function processIncomingCommand({
             const periodStr = formatIndonesianPeriod(targetInv.period_month, targetInv.period_year);
             const totalBayarStr = formatter.format(Number(targetInv.amount || 0));
 
-            const tz = getSetting('timezone', 'Asia/Jakarta');
+            const tz = getSetting('timezone', 'America/Asuncion');
             let tzSuffix = 'WIB';
             if (/Makassar|Ujung_Pandang|Bali|Pontianak|Banjarmasin|Manado|Mataram|Kupang/i.test(tz)) tzSuffix = 'WITA';
             else if (/Jayapura|Ambon|Papua|Maluku/i.test(tz)) tzSuffix = 'WIT';
@@ -1728,7 +1729,7 @@ export async function processIncomingCommand({
               tunggakanBlock = `⚠️ *SISA TUNGGAKAN LAIN:*\n` +
                 `Masih terdapat *${remainingSummary.count} tagihan* yang belum dibayar:\n` +
                 `${remainingSummary.breakdownText}\n` +
-                `💰 *Total Sisa Tunggakan:* *Rp ${remainingSummary.totalAmountStr}*\n` +
+                `💰 *Total Sisa Tunggakan:* *${regional.currencySymbol()} ${remainingSummary.totalAmountStr}*\n` +
                 `_Mohon segera diselesaikan agar layanan tidak terisolir._\n\n`;
             }
 
@@ -1760,7 +1761,7 @@ export async function processIncomingCommand({
             await reply(
               `✅ Invoice *#${targetInvId}* (Periode: *${periodStr}* a.n *${customerName}*) berhasil ditandai LUNAS.\n` +
               (adminReplyNote ? `${adminReplyNote}\n` : '') +
-              (remainingSummary.count > 0 ? `⚠️ Sisa tunggakan: ${remainingSummary.count} bulan (Rp ${remainingSummary.totalAmountStr})\n` : '') +
+              (remainingSummary.count > 0 ? `⚠️ Sisa tunggakan: ${remainingSummary.count} bulan (${regional.currencySymbol()} ${remainingSummary.totalAmountStr})\n` : '') +
               `📩 Notif pelanggan: ${ok ? 'terkirim' : 'gagal'}`
             );
           } catch (e) {
@@ -1861,8 +1862,8 @@ export async function processIncomingCommand({
             await reply(
               `✅ *TOPUP AGENT BERHASIL*\n\n` +
               `👤 Agent: *${agent.name}* (@${agent.username})\n` +
-              `💸 Nominal: Rp ${Number(amount || 0).toLocaleString('id-ID')}\n` +
-              `💳 Saldo: Rp ${Number(r.before || 0).toLocaleString('id-ID')} ➜ Rp ${Number(r.after || 0).toLocaleString('id-ID')}\n` +
+              `💸 Nominal: ${regional.currencySymbol()} ${Number(amount || 0).toLocaleString(regional.locale())}\n` +
+              `💳 Saldo: ${regional.currencySymbol()} ${Number(r.before || 0).toLocaleString(regional.locale())} ➜ ${regional.currencySymbol()} ${Number(r.after || 0).toLocaleString(regional.locale())}\n` +
               `📝 Catatan: ${note}`
             );
           } catch (e) {
@@ -1893,8 +1894,8 @@ export async function processIncomingCommand({
               `${sep}\n` +
               `👤 Agent: *${fresh.name}* (@${fresh.username})\n` +
               `📞 No HP: *${fresh.phone || '-'}*\n` +
-              `💰 *Sisa Saldo: Rp ${balance.toLocaleString('id-ID')}*\n` +
-              `🎁 Komisi Tagihan: *Rp ${fee.toLocaleString('id-ID')} / transaksi*\n` +
+              `💰 *Sisa Saldo: ${regional.currencySymbol()} ${balance.toLocaleString(regional.locale())}*\n` +
+              `🎁 Komisi Tagihan: *${regional.currencySymbol()} ${fee.toLocaleString(regional.locale())} / transaksi*\n` +
               `${sep}\n` +
               `📋 *Perintah Transaksi:*\n` +
               `• \`bayar <nama/nohp/id>\` — Bayar tagihan pelanggan\n` +
@@ -1989,10 +1990,10 @@ export async function processIncomingCommand({
             if (currentBalance < cost) {
               await reply(
                 `❌ *SALDO AGENT TIDAK MENCUKUPI*\n\n` +
-                `🧾 Tagihan: Rp ${invoiceAmount.toLocaleString('id-ID')}\n` +
-                `🎁 Komisi Agent: Rp ${fee.toLocaleString('id-ID')}\n` +
-                `💰 Potong Saldo: *Rp ${cost.toLocaleString('id-ID')}*\n` +
-                `💳 Sisa Saldo Anda: *Rp ${currentBalance.toLocaleString('id-ID')}*\n\n` +
+                `🧾 Tagihan: ${regional.currencySymbol()} ${invoiceAmount.toLocaleString(regional.locale())}\n` +
+                `🎁 Komisi Agent: ${regional.currencySymbol()} ${fee.toLocaleString(regional.locale())}\n` +
+                `💰 Potong Saldo: *${regional.currencySymbol()} ${cost.toLocaleString(regional.locale())}*\n` +
+                `💳 Sisa Saldo Anda: *${regional.currencySymbol()} ${currentBalance.toLocaleString(regional.locale())}*\n\n` +
                 `Silakan hubungi Admin untuk top up saldo agent.`
               );
               return true;
@@ -2012,11 +2013,11 @@ export async function processIncomingCommand({
               `🧾 No. Invoice: *#${targetInv.id}*\n` +
               `📦 Paket: *${targetInv.package_name || customer?.package_name || '-'}*\n` +
               `📅 Periode: *${periodStr}*\n` +
-              `💵 Total Tagihan: Rp ${invoiceAmount.toLocaleString('id-ID')}\n` +
-              `🎁 Komisi Agent: Rp ${fee.toLocaleString('id-ID')}\n` +
+              `💵 Total Tagihan: ${regional.currencySymbol()} ${invoiceAmount.toLocaleString(regional.locale())}\n` +
+              `🎁 Komisi Agent: ${regional.currencySymbol()} ${fee.toLocaleString(regional.locale())}\n` +
               `${sep}\n` +
-              `💰 *Potong Saldo:* Rp ${cost.toLocaleString('id-ID')}\n` +
-              `💳 *SISA SALDO AGENT: Rp ${remainingBalance.toLocaleString('id-ID')}*\n` +
+              `💰 *Potong Saldo:* ${regional.currencySymbol()} ${cost.toLocaleString(regional.locale())}\n` +
+              `💳 *SISA SALDO AGENT: ${regional.currencySymbol()} ${remainingBalance.toLocaleString(regional.locale())}*\n` +
               `${sep}\n` +
               `Terima kasih telah bertransaksi.`;
 
@@ -2025,8 +2026,8 @@ export async function processIncomingCommand({
             // Notifikasi ke pelanggan jika ada nomor kontak
             const notifyTag = customer?.genieacs_tag || customer?.pppoe_username || customer?.phone || targetInv.customer_phone || '';
             if (notifyTag) {
-              const formatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
-              const tz = getSetting('timezone', 'Asia/Jakarta');
+              const formatter = new Intl.NumberFormat(regional.locale(), { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
+              const tz = getSetting('timezone', 'America/Asuncion');
               let tzSuffix = 'WIB';
               if (/Makassar|Ujung_Pandang|Bali|Pontianak|Banjarmasin|Manado|Mataram|Kupang/i.test(tz)) tzSuffix = 'WITA';
               else if (/Jayapura|Ambon|Papua|Maluku/i.test(tz)) tzSuffix = 'WIT';
@@ -2041,7 +2042,7 @@ export async function processIncomingCommand({
                 tunggakanBlock = `⚠️ *SISA TUNGGAKAN LAIN:*\n` +
                   `Masih terdapat *${remainingSummary.count} tagihan* yang belum dibayar:\n` +
                   `${remainingSummary.breakdownText}\n` +
-                  `💰 *Total Sisa Tunggakan:* *Rp ${remainingSummary.totalAmountStr}*\n` +
+                  `💰 *Total Sisa Tunggakan:* *${regional.currencySymbol()} ${remainingSummary.totalAmountStr}*\n` +
                   `_Mohon segera diselesaikan agar layanan tidak terisolir._\n\n`;
               }
 
@@ -2099,7 +2100,7 @@ export async function processIncomingCommand({
               let listStr =
                 `🎟️ *DAFTAR PAKET VOUCHER HOTSPOT*\n` +
                 `${sep}\n` +
-                `💳 *Sisa Saldo Anda: Rp ${currentBalance.toLocaleString('id-ID')}*\n\n` +
+                `💳 *Sisa Saldo Anda: ${regional.currencySymbol()} ${currentBalance.toLocaleString(regional.locale())}*\n\n` +
                 `Pilih paket di bawah ini:\n`;
 
               prices.forEach((p, idx) => {
@@ -2109,8 +2110,8 @@ export async function processIncomingCommand({
                 listStr +=
                   `\n*${idx + 1}. ${p.profile_name}* (ID: \`${p.id}\`)` +
                   `\n   ⏳ Masa Aktif: ${p.validity || '24 Jam'}` +
-                  `\n   💰 Potong Saldo: Rp ${buyPrice.toLocaleString('id-ID')}` +
-                  `\n   🏷️ Harga Jual: Rp ${sellPrice.toLocaleString('id-ID')} (Untung: Rp ${profit.toLocaleString('id-ID')})` +
+                  `\n   💰 Potong Saldo: ${regional.currencySymbol()} ${buyPrice.toLocaleString(regional.locale())}` +
+                  `\n   🏷️ Harga Jual: ${regional.currencySymbol()} ${sellPrice.toLocaleString(regional.locale())} (Untung: ${regional.currencySymbol()} ${profit.toLocaleString(regional.locale())})` +
                   `\n   👉 Ketik: \`vcr ${p.id}\` atau \`vcr ${p.profile_name}\`\n`;
               });
 
@@ -2143,8 +2144,8 @@ export async function processIncomingCommand({
               await reply(
                 `❌ *SALDO AGENT TIDAK MENCUKUPI*\n\n` +
                 `🎟️ Paket: *${matchedPrice.profile_name}*\n` +
-                `💰 Potong Saldo: *Rp ${buyPrice.toLocaleString('id-ID')}*\n` +
-                `💳 Sisa Saldo Anda: *Rp ${currentBalance.toLocaleString('id-ID')}*\n\n` +
+                `💰 Potong Saldo: *${regional.currencySymbol()} ${buyPrice.toLocaleString(regional.locale())}*\n` +
+                `💳 Sisa Saldo Anda: *${regional.currencySymbol()} ${currentBalance.toLocaleString(regional.locale())}*\n\n` +
                 `Silakan hubungi Admin untuk top up saldo agent.`
               );
               return true;
@@ -2162,10 +2163,10 @@ export async function processIncomingCommand({
               `🔑 *Password:* \`${voucher.password}\`\n` +
               `🏷️ *Paket:* ${matchedPrice.profile_name}\n` +
               `⏳ *Masa Aktif:* ${result.receipt?.validity || matchedPrice.validity || '24 Jam'}\n` +
-              `💵 *Harga Jual:* Rp ${sellPrice.toLocaleString('id-ID')}\n` +
+              `💵 *Harga Jual:* ${regional.currencySymbol()} ${sellPrice.toLocaleString(regional.locale())}\n` +
               `${sep}\n` +
-              `💰 *Potong Saldo:* Rp ${buyPrice.toLocaleString('id-ID')}\n` +
-              `💳 *SISA SALDO AGENT: Rp ${remainingBalance.toLocaleString('id-ID')}*\n` +
+              `💰 *Potong Saldo:* ${regional.currencySymbol()} ${buyPrice.toLocaleString(regional.locale())}\n` +
+              `💳 *SISA SALDO AGENT: ${regional.currencySymbol()} ${remainingBalance.toLocaleString(regional.locale())}*\n` +
               `${sep}\n` +
               `_Voucher siap digunakan pelanggan._`;
 

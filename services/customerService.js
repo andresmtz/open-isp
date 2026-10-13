@@ -5,6 +5,7 @@ const db = require('../config/database');
 const { logger } = require('../config/logger');
 const { getCurrentDateInTimezone, getSetting } = require('../config/settingsManager');
 const { generateCustomerCode, backfillCustomerCodes } = require('./customerIdService');
+const regional = require('../config/regional');
 
 // Backfill ID Pelanggan (customer_code) yang masih kosong saat startup
 try { const n = backfillCustomerCodes(); if (n > 0) logger.info('[CustomerID] Backfill ' + n + ' customer_code'); } catch (e) {}
@@ -717,7 +718,7 @@ async function suspendCustomer(id) {
       if (getSetting('whatsapp_enabled', false)) {
         const { sendWA, whatsappStatus } = await import('./whatsappBot.mjs');
         if (true) {
-          const defaultIsolir = `Yth. Pelanggan {{nama}},\n\nLayanan internet Anda (Paket {{paket}}) saat ini ditangguhkan (Terisolir) karena belum melunasi tagihan sebesar *Rp {{tagihan}}*.\n\nSilakan lakukan pembayaran segera melalui portal pelanggan: {{link}}\n\nTerima kasih.`;
+          const defaultIsolir = `Yth. Pelanggan {{nama}},\n\nLayanan internet Anda (Paket {{paket}}) saat ini ditangguhkan (Terisolir) karena belum melunasi tagihan sebesar *{{moneda}} {{tagihan}}*.\n\nSilakan lakukan pembayaran segera melalui portal pelanggan: {{link}}\n\nTerima kasih.`;
           const template = db.getAppSetting('whatsapp_isolir_message', defaultIsolir);
 
           // Get unpaid invoices & calculate total amount
@@ -749,7 +750,7 @@ async function suspendCustomer(id) {
             .replace(/{{username}}/gi, customer.pppoe_username || '-')
             .replace(/{{pppoe}}/gi, customer.pppoe_username || '-')
             .replace(/{{paket}}/gi, customer.package_name || '-')
-            .replace(/{{tagihan}}/gi, summary.totalAmountStr || totalTagihan.toLocaleString('id-ID'))
+            .replace(/{{tagihan}}/gi, summary.totalAmountStr || totalTagihan.toLocaleString(regional.locale()))
             .replace(/{{rincian_detail}}/gi, summary.isMultiple ? `📋 *Rincian Tunggakan:*\n${summary.breakdownText}` : '')
             .replace(/{{rincian}}/gi, displayPeriode || '-')
             .replace(/{{periode}}/gi, displayPeriode || '-')

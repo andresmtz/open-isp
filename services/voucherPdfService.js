@@ -4,6 +4,7 @@
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const { THEME, resolveLogoPath, companyInfo, fmtRp } = require('./pdfBranding');
+const regional = require('../config/regional');
 
 function generateVoucherBatchPdfBuffer(batch, vouchers, settings = {}) {
   return new Promise((resolve, reject) => {
@@ -32,7 +33,7 @@ function generateVoucherBatchPdfBuffer(batch, vouchers, settings = {}) {
 
       let y = drawHeader() + 14;
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(
-        `Profil: ${batch.profile_name || '-'}   •   Harga: ${fmtRp(price)}   •   Masa aktif: ${batch.validity || '-'}   •   Router: ${batch.router_name || '-'}   •   Jumlah: ${list.length}   •   Dicetak: ${new Date().toLocaleString('id-ID')}`,
+        `Profil: ${batch.profile_name || '-'}   •   Harga: ${fmtRp(price)}   •   Masa aktif: ${batch.validity || '-'}   •   Router: ${batch.router_name || '-'}   •   Jumlah: ${list.length}   •   Dicetak: ${new Date().toLocaleString(regional.locale())}`,
         LEFT, y, { width: W });
       y += 22;
 

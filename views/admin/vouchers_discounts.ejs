@@ -126,9 +126,9 @@
               <tr>
                 <td class="mono fw6"><%= v.code %></td>
                 <td><%= v.type === 'percent' ? 'Persen' : 'Nominal' %></td>
-                <td class="num"><%= v.type === 'percent' ? (v.value + ' %') : ('Rp ' + Number(v.value).toLocaleString('id-ID')) %></td>
-                <td class="num"><%= Number(v.max_discount) > 0 ? ('Rp ' + Number(v.max_discount).toLocaleString('id-ID')) : '-' %></td>
-                <td class="num"><%= Number(v.min_purchase) > 0 ? ('Rp ' + Number(v.min_purchase).toLocaleString('id-ID')) : '-' %></td>
+                <td class="num"><%= v.type === 'percent' ? (v.value + ' %') : (APP_CUR + ' ' + Number(v.value).toLocaleString(APP_LOCALE)) %></td>
+                <td class="num"><%= Number(v.max_discount) > 0 ? (APP_CUR + ' ' + Number(v.max_discount).toLocaleString(APP_LOCALE)) : '-' %></td>
+                <td class="num"><%= Number(v.min_purchase) > 0 ? (APP_CUR + ' ' + Number(v.min_purchase).toLocaleString(APP_LOCALE)) : '-' %></td>
                 <td class="num"><%= v.used_count %><%= Number(v.max_uses) > 0 ? (' / ' + v.max_uses) : '' %></td>
                 <td><span class="badge <%= v.active ? 'bs' : 'bd' %>"><%= v.active ? 'Aktif' : 'Nonaktif' %></span></td>
                 <td style="font-size:12px;color:var(--muted)"><%= v.note || '' %></td>

@@ -322,7 +322,7 @@
             <% } %>
             <div class="fg">
               <label class="fl"><%= t('admin.onustickers.cs_label', 'No. CS / WA Bantuan (Tampil di Stiker)') %></label>
-              <input class="fc" type="text" name="cs_phone" value="<%= csPhone %>" placeholder="08xxxxxxxxxx" onchange="document.getElementById('filterForm').submit()" />
+              <input class="fc" type="text" name="cs_phone" value="<%= csPhone %>" placeholder="<%= regional.phoneExample %>" onchange="document.getElementById('filterForm').submit()" />
             </div>
           </div>
           <button type="submit" class="btn btn-g btn-sm"><i class="bi bi-funnel"></i> <%= t('common.apply', 'Terapkan') %></button>

@@ -190,7 +190,7 @@
           <tr>
             <td>${routerName}</td>
             <td class="fw6">${p.profile_name}</td>
-            <td class="fw6" style="color:var(--success)">Rp ${Number(p.price).toLocaleString('id-ID')}</td>
+            <td class="fw6" style="color:var(--success)">${APP_CUR} ${Number(p.price).toLocaleString(APP_LOCALE)}</td>
             <td><span class="badge bp">${p.validity}</span></td>
             <td class="mono">${p.prefix || '<span class="text-muted">—</span>'}</td>
             <td class="text-center">${p.code_length} digit</td>
@@ -270,7 +270,7 @@
     if (meta) {
       document.getElementById('form_price').value = meta.price;
       document.getElementById('form_validity').value = meta.validity;
-      hintEl.innerHTML = `<span style="color:var(--success)"><b>Terdeteksi:</b> Harga Rp ${meta.price.toLocaleString('id-ID')} • Durasi ${meta.validity}</span>`;
+      hintEl.innerHTML = `<span style="color:var(--success)"><b>Terdeteksi:</b> Harga ${APP_CUR} ${meta.price.toLocaleString(APP_LOCALE)} • Durasi ${meta.validity}</span>`;
     } else {
       hintEl.innerHTML = '<span class="text-muted"><%= t('admin.vp.no_meta','Profil tidak memiliki metadata Mikhmon. Isi harga dan masa aktif manual.') %></span>';
     }

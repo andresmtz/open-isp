@@ -15,6 +15,7 @@
  * Contoh: start 07:00, interval 5 jam -> 12:00, 17:00, 22:00, ...
  */
 const { getSetting } = require('../config/settingsManager');
+const regional = require('../config/regional');
 
 const MODE_NORMAL = 'NORMAL';
 const MODE_GANGGUAN = 'GANGGUAN_MASAL';
@@ -23,7 +24,7 @@ const MODE_PERBAIKAN = 'PERBAIKAN';
 let _cache = { at: 0, value: null };
 
 function getTimezone() {
-  return getSetting('timezone', 'Asia/Jakarta') || 'Asia/Jakarta';
+  return getSetting('timezone', 'America/Asuncion') || 'America/Asuncion';
 }
 
 function fmtDateTime(d) {
@@ -32,8 +33,8 @@ function fmtDateTime(d) {
     const date = d instanceof Date ? d : new Date(d);
     if (!date || isNaN(date.getTime())) return '-';
     const timeZone = getTimezone();
-    const tgl = date.toLocaleDateString('id-ID', { timeZone, day: '2-digit', month: '2-digit', year: 'numeric' });
-    const jam = date.toLocaleTimeString('id-ID', { timeZone, hour: '2-digit', minute: '2-digit' });
+    const tgl = date.toLocaleDateString(regional.locale(), { timeZone, day: '2-digit', month: '2-digit', year: 'numeric' });
+    const jam = date.toLocaleTimeString(regional.locale(), { timeZone, hour: '2-digit', minute: '2-digit' });
     return `${jam} ${tgl}`;
   } catch (e) {
     return '-';

@@ -74,7 +74,7 @@
                     <div class="bill-sub">ID: <%= m.customer_id %><% if (m.customer_phone) { %> • WA: <%= m.customer_phone %><% } %></div>
                   </td>
                   <td class="num" style="font-weight:700"><%= Number(m.unpaid_count || 0) %></td>
-                  <td class="num" style="font-weight:700">Rp <%= Number(m.total_amount || 0).toLocaleString('id-ID') %></td>
+                  <td class="num" style="font-weight:700"><%= APP_CUR %> <%= Number(m.total_amount || 0).toLocaleString(APP_LOCALE) %></td>
                   <td style="text-align:right"><a class="lbtn lbtn-ghost lbtn-sm" href="/customer/check-billing?q=<%= encodeURIComponent(String(m.customer_id)) %>"><%= t('customer.check_billing.view', 'Lihat') %></a></td>
                 </tr>
               <% }); %>
@@ -115,7 +115,7 @@
                       <div style="font-weight:700"><%= monthNames[Number(inv.period_month)] %> <%= inv.period_year %></div>
                       <div class="bill-sub">INV-<%= inv.id %></div>
                     </td>
-                    <td class="num" style="font-weight:700">Rp <%= Number(inv.amount || 0).toLocaleString('id-ID') %></td>
+                    <td class="num" style="font-weight:700"><%= APP_CUR %> <%= Number(inv.amount || 0).toLocaleString(APP_LOCALE) %></td>
                     <td class="num">
                       <input class="inv-radio" type="radio" name="inv_select" value="<%= inv.id %>"
                         data-inv-id="<%= inv.id %>" data-amount="<%= Number(inv.amount || 0) %>"
@@ -180,7 +180,7 @@
                 payToken.value = token;
                 payMethod.value = 'QRIS_STATIC';
                 if (invText) invText.textContent = invId ? ('INV-' + invId + ' • ') : '';
-                if (amtText) amtText.textContent = amount ? ('Rp ' + amount.toLocaleString('id-ID')) : '';
+                if (amtText) amtText.textContent = amount ? (APP_CUR + ' ' + amount.toLocaleString(APP_LOCALE)) : '';
                 payBtn.disabled = !invId || !token;
               }
               invRadios.forEach(function(r){ r.addEventListener('change', updatePaymentForm); });
@@ -201,8 +201,8 @@
                 <% paidInvoices.slice(0, 10).forEach(function(inv){ %>
                   <tr>
                     <td><div style="font-weight:700"><%= monthNames[Number(inv.period_month)] %> <%= inv.period_year %></div><div class="bill-sub">INV-<%= inv.id %></div></td>
-                    <td class="num">Rp <%= Number(inv.amount || 0).toLocaleString('id-ID') %></td>
-                    <td class="bill-sub"><%= inv.paid_at ? new Date(inv.paid_at).toLocaleString('id-ID') : '-' %></td>
+                    <td class="num"><%= APP_CUR %> <%= Number(inv.amount || 0).toLocaleString(APP_LOCALE) %></td>
+                    <td class="bill-sub"><%= inv.paid_at ? new Date(inv.paid_at).toLocaleString(APP_LOCALE) : '-' %></td>
                   </tr>
                 <% }); %>
               </tbody>

@@ -118,13 +118,13 @@
         <div class="sc s" style="cursor:pointer" onclick="location.href='/admin/billing'">
           <i class="bi bi-cash-stack sc-icon"></i>
           <div class="sc-label"><%= t('admin.dashboard.revenue_month','Pendapatan Bulan Ini') %></div>
-          <div class="sc-val" style="font-size:20px">Rp <%= billing.thisMonth.toLocaleString('id-ID') %></div>
+          <div class="sc-val" style="font-size:20px"><%= APP_CUR %> <%= billing.thisMonth.toLocaleString(APP_LOCALE) %></div>
           <div class="sc-sub"><%= t('admin.dashboard.collected','Sudah terkumpul') %></div>
         </div>
         <div class="sc i" style="cursor:pointer" onclick="location.href='/admin/billing'">
           <i class="bi bi-graph-up-arrow sc-icon"></i>
           <div class="sc-label"><%= t('admin.dashboard.revenue_today','Pendapatan Hari Ini') %></div>
-          <div class="sc-val" style="font-size:20px">Rp <%= ((typeof todayRevenue!=='undefined' && todayRevenue && todayRevenue.total) || 0).toLocaleString('id-ID') %></div>
+          <div class="sc-val" style="font-size:20px"><%= APP_CUR %> <%= ((typeof todayRevenue!=='undefined' && todayRevenue && todayRevenue.total) || 0).toLocaleString(APP_LOCALE) %></div>
           <div class="sc-sub"><%= t('admin.dashboard.transactions','Transaksi') %>: <%= (typeof todayRevenue!=='undefined' && todayRevenue && todayRevenue.count) || 0 %></div>
         </div>
         <div class="sc d" style="cursor:pointer" onclick="location.href='/admin/billing?status=unpaid'">
@@ -136,7 +136,7 @@
         <div class="sc w" style="cursor:pointer" onclick="location.href='/admin/reports'">
           <i class="bi bi-wallet2 sc-icon"></i>
           <div class="sc-label"><%= t('admin.dashboard.total_receivable','Total Piutang') %></div>
-          <div class="sc-val" style="font-size:20px">Rp <%= billing.pendingAmount.toLocaleString('id-ID') %></div>
+          <div class="sc-val" style="font-size:20px"><%= APP_CUR %> <%= billing.pendingAmount.toLocaleString(APP_LOCALE) %></div>
           <div class="sc-sub"><%= t('admin.dashboard.not_collected','Belum tertagih') %></div>
         </div>
       </div>
@@ -538,7 +538,7 @@ async function loadStats() {
     document.getElementById('donut-pct').textContent  = pct + '%';
     document.getElementById('leg-online').textContent  = online;
     document.getElementById('leg-offline').textContent = offline;
-    document.getElementById('last-update-time').textContent = I18N.updatePrefix + ' ' + new Date().toLocaleTimeString('id-ID', { timeZone: '<%= settings.timezone %>' });
+    document.getElementById('last-update-time').textContent = I18N.updatePrefix + ' ' + new Date().toLocaleTimeString(APP_LOCALE, { timeZone: '<%= settings.timezone %>' });
 
     updateDonut(online, offline);
   } catch(e) { console.error('Stats error:', e); }
@@ -635,21 +635,21 @@ async function loadDevices() {
       const monitorSyncEl = document.getElementById('monitor-sync-time');
       if (monitorSyncEl) {
         monitorSyncEl.textContent = latestSyncRaw
-          ? new Date(latestSyncRaw).toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
+          ? new Date(latestSyncRaw).toLocaleString(APP_LOCALE, { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
           : '-';
       }
       const lastUpdateEl = document.getElementById('last-update-time');
       if (lastUpdateEl) {
-        const uiTime = new Date().toLocaleTimeString('id-ID', { timeZone: '<%= settings.timezone %>' });
+        const uiTime = new Date().toLocaleTimeString(APP_LOCALE, { timeZone: '<%= settings.timezone %>' });
         lastUpdateEl.textContent = latestSyncRaw
-          ? `TR-069: ${new Date(latestSyncRaw).toLocaleString('id-ID', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })} | UI: ${uiTime}`
+          ? `TR-069: ${new Date(latestSyncRaw).toLocaleString(APP_LOCALE, { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })} | UI: ${uiTime}`
           : `${I18N.updatePrefix} ${uiTime}`;
       }
       tbody.innerHTML = devicesData.map((d, i) => {
         const isOn = d.status === 'online';
         const tagStr = (d.pppoeUsername && d.pppoeUsername !== 'N/A' && d.pppoeUsername !== '-') ? d.pppoeUsername : (d.tags.join(', ') || '-');
-        const lastInformStr = d.lastInform ? new Date(d.lastInform).toLocaleString('id-ID', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
-        const lastSyncStr = d.lastSync ? new Date(d.lastSync).toLocaleString('id-ID', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : (d.lastSyncLabel || '-');
+        const lastInformStr = d.lastInform ? new Date(d.lastInform).toLocaleString(APP_LOCALE, {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-';
+        const lastSyncStr = d.lastSync ? new Date(d.lastSync).toLocaleString(APP_LOCALE, {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : (d.lastSyncLabel || '-');
         const syncBadge = d.syncInProgress
           ? `<div style="font-size:11px;color:var(--warning);margin-top:4px"><i class="bi bi-arrow-repeat"></i> ${I18N.syncRunning} (${d.syncPendingCount || 0})</div>`
           : `<div style="font-size:11px;color:var(--muted);margin-top:4px"><i class="bi bi-check2-circle"></i> ${d.syncStatusLabel || '-'}</div>`;
@@ -770,8 +770,8 @@ async function showDetail(tag) {
     const res = await fetch('/admin/api/device/' + encodeURIComponent(tag));
     const d   = await res.json();
     const isOn = String(d.status || '').toLowerCase() === 'online';
-    const lastInformText = d.lastInform ? new Date(d.lastInform).toLocaleString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '-';
-    const lastSyncText = d.lastSync ? new Date(d.lastSync).toLocaleString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '-';
+    const lastInformText = d.lastInform ? new Date(d.lastInform).toLocaleString(APP_LOCALE, { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '-';
+    const lastSyncText = d.lastSync ? new Date(d.lastSync).toLocaleString(APP_LOCALE, { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '-';
     const syncStateText = d.syncInProgress ? `${I18N.syncRunning} (${d.syncPendingCount || 0})` : (d.syncStatusLabel || '-');
     const connected = Array.isArray(d.connectedUsers) ? d.connectedUsers : [];
     document.getElementById('device-detail').innerHTML = `
@@ -1195,8 +1195,8 @@ async function deleteMonDevice(deviceId, acsId) {
     data: { labels: labels, datasets: [{ label: 'Pendapatan', data: vals, backgroundColor: 'rgba(173,255,47,.5)', borderColor: '#ADFF2F', borderWidth: 1, borderRadius: 5, maxBarThickness: 34 }] },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return 'Rp ' + Number(c.raw || 0).toLocaleString('id-ID'); } } } },
-      scales: { x: { ticks: { color: tick }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: tick, callback: function (v) { return 'Rp ' + (v >= 1000 ? (v / 1000) + 'k' : v); } }, grid: { color: grid } } }
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return APP_CUR + ' ' + Number(c.raw || 0).toLocaleString(APP_LOCALE); } } } },
+      scales: { x: { ticks: { color: tick }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: tick, callback: function (v) { return APP_CUR + ' ' + (v >= 1000 ? (v / 1000) + 'k' : v); } }, grid: { color: grid } } }
     }
   });
 })();

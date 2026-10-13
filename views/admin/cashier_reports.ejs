@@ -44,9 +44,9 @@
           <span class="badge bm"><%= cashiers[0].name %><%= cashiers[0].username ? (' (@' + cashiers[0].username + ')') : '' %></span>
         <% } %>
         <span class="badge bm"><%= Number(summary?.count || 0) %> <%= t('admin.cr.tx','transaksi') %></span>
-        <span class="badge bs">Rp <%= Number(summary?.total || 0).toLocaleString('id-ID') %></span>
-        <span class="badge bm"><%= t('admin.cr.invoice','Tagihan:') %> <%= Number(summary?.invoice_count || 0) %> (Rp <%= Number(summary?.invoice_total || 0).toLocaleString('id-ID') %>)</span>
-        <span class="badge bm"><%= t('admin.cr.topup','Deposit Agent:') %> <%= Number(summary?.topup_count || 0) %> (Rp <%= Number(summary?.topup_total || 0).toLocaleString('id-ID') %>)</span>
+        <span class="badge bs"><%= APP_CUR %> <%= Number(summary?.total || 0).toLocaleString(APP_LOCALE) %></span>
+        <span class="badge bm"><%= t('admin.cr.invoice','Tagihan:') %> <%= Number(summary?.invoice_count || 0) %> (<%= APP_CUR %> <%= Number(summary?.invoice_total || 0).toLocaleString(APP_LOCALE) %>)</span>
+        <span class="badge bm"><%= t('admin.cr.topup','Deposit Agent:') %> <%= Number(summary?.topup_count || 0) %> (<%= APP_CUR %> <%= Number(summary?.topup_total || 0).toLocaleString(APP_LOCALE) %>)</span>
       </div>
     </div>
 
@@ -73,7 +73,7 @@
             <% } else { %>
               <% rows.forEach(r => { %>
                 <tr>
-                  <td style="font-size:11px;color:var(--muted)"><%= r.at ? new Date(r.at).toLocaleString((lang || 'id') === 'en' ? 'en-US' : 'id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '-' %></td>
+                  <td style="font-size:11px;color:var(--muted)"><%= r.at ? new Date(r.at).toLocaleString((lang || 'id') === 'en' ? 'en-US' : APP_LOCALE,{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '-' %></td>
                   <td class="fw6"><%= r.actor_name || '-' %></td>
                   <td>
                     <% if (r.kind === 'agent_topup') { %>
@@ -92,7 +92,7 @@
                       </div>
                     <% } %>
                   </td>
-                  <td class="num fw6" style="color:var(--success)">Rp <%= Number(r.amount||0).toLocaleString('id-ID') %></td>
+                  <td class="num fw6" style="color:var(--success)"><%= APP_CUR %> <%= Number(r.amount||0).toLocaleString(APP_LOCALE) %></td>
                   <td style="font-size:11px;color:var(--muted)"><%= r.notes ? r.notes : '-' %></td>
                   <td class="num"><code>#<%= r.ref_id %></code></td>
                 </tr>

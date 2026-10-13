@@ -83,7 +83,7 @@
                     'bm';
                 %>
                 <tr data-process="<%= r.status === 'pending' ? 'pending' : (decidedRole === 'system' ? 'auto' : (decidedRole === 'admin' ? 'admin' : (decidedRole === 'cashier' ? 'cashier' : (r.status === 'rejected' ? 'rejected' : 'manual')))) %>">
-                  <td style="font-size:11px;color:var(--muted)"><%= r.created_at ? new Date(r.created_at).toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '-' %></td>
+                  <td style="font-size:11px;color:var(--muted)"><%= r.created_at ? new Date(r.created_at).toLocaleString(APP_LOCALE,{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '-' %></td>
                   <td class="fw6"><%= r.collector_name %> <span class="text-muted" style="font-size:11px"><%= r.collector_username ? '(@'+r.collector_username+')' : '' %></span></td>
                   <td>
                     <div class="fw6"><%= r.customer_name %></div>
@@ -91,11 +91,11 @@
                   </td>
                   <td style="font-size:12px">
                     <div>Invoice <code>#<%= r.invoice_id %></code> • <span class="badge bm"><%= r.period_month %>/<%= r.period_year %></span></div>
-                    <div style="font-size:11px;color:var(--muted)"><%= r.invoice_status %> • Rp <%= Number(r.invoice_amount||0).toLocaleString('id-ID') %></div>
+                    <div style="font-size:11px;color:var(--muted)"><%= r.invoice_status %> • <%= APP_CUR %> <%= Number(r.invoice_amount||0).toLocaleString(APP_LOCALE) %></div>
                     <% if (r.customer_address) { %><div style="font-size:11px;color:var(--muted)"><%= r.customer_address %></div><% } %>
                     <% if (r.lat && r.lng) { %><div><a target="_blank" href="https://www.google.com/maps?q=<%= encodeURIComponent(r.lat + ',' + r.lng) %>">Map</a></div><% } %>
                   </td>
-                  <td class="num fw6">Rp <%= Number(r.amount||0).toLocaleString('id-ID') %></td>
+                  <td class="num fw6"><%= APP_CUR %> <%= Number(r.amount||0).toLocaleString(APP_LOCALE) %></td>
                   <td>
                     <span class="badge <%= processBadge %>"><%= processLabel %></span>
                     <% if (decidedRole === 'system') { %>

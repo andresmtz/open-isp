@@ -24,7 +24,7 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
-      - TZ=Asia/Jakarta
+      - TZ=America/Asuncion
     volumes:
       - ./docker-data/settings.json:/app/settings.json
       - ./docker-data/database:/app/database

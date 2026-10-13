@@ -1061,7 +1061,7 @@
           <div class="bill-card"<% if (portal.bill) { %> style="background:linear-gradient(135deg,#FCA5A5 0%,#EF4444 55%,#B91C1C 100%);color:#fff;box-shadow:0 14px 32px -16px rgba(239,68,68,.6),inset 0 1px 0 rgba(255,255,255,.35)"<% } %>>
             <div class="min-w-0 relative z-10">
               <p class="bill-label"><%= portal.bill ? portal.bill.label : t('pwa.home.no_bill','Tidak ada tagihan') %></p>
-              <p class="bill-amount"><%= portal.bill ? portal.bill.amount : 'Rp 0' %></p>
+              <p class="bill-amount"><%= portal.bill ? portal.bill.amount : (APP_CUR + ' 0') %></p>
               <p class="bill-meta"><i class="ph-fill <%= portal.bill ? 'ph-warning-circle' : 'ph-check-circle' %>"></i> <%= portal.bill ? portal.bill.metaText : t('pwa.home.paid','Lunas') %></p>
               <p class="bill-meta" style="margin-top:3px;opacity:.92;"><i class="bi bi-calendar-x"></i> <%= t('pwa.isolir','Isolir:') %> <%= portal.isolirText %></p>
             </div>
@@ -1193,7 +1193,7 @@
             <div style="position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:240px;height:120px;background:radial-gradient(ellipse,rgba(173,255,47,0.08),transparent 70%);pointer-events:none;"></div>
             <div class="relative z-10 text-center p-8">
               <p class="text-xs font-medium mb-2" style="color:var(--muted);"><%= portal.bill ? (t('pwa.total','Total') + ' ' + portal.bill.label + ' ' + t('pwa.billing.total_unique','(termasuk kode unik)')) : t('pwa.home.no_bill','Tidak ada tagihan') %></p>
-              <h1 class="text-5xl font-black mb-2" style="font-family:'Space Grotesk',sans-serif;color:var(--text);"><%= portal.bill ? portal.bill.amountUnique : 'Rp 0' %></h1>
+              <h1 class="text-5xl font-black mb-2" style="font-family:'Space Grotesk',sans-serif;color:var(--text);"><%= portal.bill ? portal.bill.amountUnique : (APP_CUR + ' 0') %></h1>
               <% if (portal.bill && portal.bill.uniqueCode) { %>
               <p class="text-[11px] mb-2" style="color:var(--muted);"><%= t('pwa.billing.nominal_note_pre','Harga paket') %> <%= portal.bill.amount %> <%= t('pwa.billing.nominal_note_mid','+ kode unik') %> <b style="color:var(--lime);"><%= portal.bill.uniqueCode %></b></p>
               <% } %>
@@ -2069,7 +2069,7 @@
     if (!h.length) { box.innerHTML = '<div class="list-row"><p class="text-sm" style="color:var(--muted)"><%= t('pwa.speedtest.no_history','Belum ada riwayat tes.') %></p></div>'; return; }
     box.innerHTML = h.map(function (r, i) {
       const d = new Date(r.t || Date.now());
-      const when = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' · ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      const when = d.toLocaleDateString(APP_LOCALE, { day: '2-digit', month: 'short', year: 'numeric' }) + ' · ' + d.toLocaleTimeString(APP_LOCALE, { hour: '2-digit', minute: '2-digit' });
       const val = Number(r.d) || 0;
       const label = val >= 40 ? 'SANGAT BAIK' : val >= 15 ? 'BAIK' : 'CUKUP';
       return '<div class="list-row"' + (i < h.length - 1 ? ' style="border-bottom:1px solid var(--border);"' : '') + '>'

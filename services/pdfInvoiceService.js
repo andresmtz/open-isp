@@ -6,11 +6,12 @@ const PDFDocument = require('pdfkit');
 const { THEME, resolveLogoPath } = require('./pdfBranding');
 const path = require('path');
 const fs = require('fs');
+const regional = require('../config/regional');
 
 const MNS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 function fmtRp(n) {
-  return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
+  return regional.currencySymbol() + ' ' + Number(n || 0).toLocaleString(regional.locale());
 }
 
 function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
@@ -34,7 +35,7 @@ function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
       const companySub = settings.company_subheader || 'PT Artha Mega Data';
       const companyAddress = settings.company_address || 'Pusat Layanan Internet Terpercaya';
       const companyPhone = (settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers.length > 0)
-        ? '+' + String(settings.whatsapp_admin_numbers[0]).replace(/^0/, '62')
+        ? '+' + regional.normalizePhone(settings.whatsapp_admin_numbers[0])
         : (settings.company_phone || '-');
       const companyEmail = settings.company_email || '';
       const managerName = settings.company_manager || 'Admin Pusat';
@@ -196,7 +197,7 @@ function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
       doc.moveTo(LEFT, fy - 12).lineTo(RIGHT, fy - 12).strokeColor(LINE).stroke();
       doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(companyName, LEFT, fy);
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(companyAddress, LEFT, fy + 13, { width: 330, height: 22 });
-      doc.fillColor(MUTED).fontSize(7.5).text(`Dokumen dibuat otomatis • ${new Date().toLocaleString('id-ID')}`, LEFT, fy + 40);
+      doc.fillColor(MUTED).fontSize(7.5).text(`Dokumen dibuat otomatis • ${new Date().toLocaleString(regional.locale())}`, LEFT, fy + 40);
 
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text('Hormat Kami,', 430, fy, { width: 125, align: 'center' });
       doc.moveTo(430, fy + 34).lineTo(555, fy + 34).strokeColor(INK).stroke();

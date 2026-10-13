@@ -18,6 +18,7 @@ const CACHE_DURATION = 2000; // 2 detik
 
 // File system watcher untuk auto-reload settings
 const { settingsPath } = require('./paths');
+const regional = require('./regional');
 let watcher = null;
 
 // Helper untuk baca settings.json secara dinamis
@@ -31,7 +32,7 @@ function getSettings() {
       settings.session_secret = getSecureSessionSecretFallback();
     }
 
-    const fallbackTz = 'Asia/Jakarta';
+    const fallbackTz = 'America/Asuncion';
     const tz = typeof settings.timezone === 'string' ? settings.timezone.trim() : '';
 
     if (!tz) {
@@ -146,7 +147,7 @@ function saveSettings(newSettings) {
  * sesuai timezone yang diatur di settings.json
  */
 function getNowLocal() {
-  const tz = getSetting('timezone', 'Asia/Jakarta');
+  const tz = getSetting('timezone', 'America/Asuncion');
   const now = new Date();
   const options = {
     timeZone: tz,
@@ -170,7 +171,7 @@ function getNowLocal() {
  * Mengembalikan objek Date yang "angkanya" sudah sesuai dengan waktu lokal.
  */
 function getCurrentDateInTimezone() {
-  const tz = getSetting('timezone', 'Asia/Jakarta');
+  const tz = getSetting('timezone', 'America/Asuncion');
   const now = new Date();
   
   // Ambil string format ISO lokal
@@ -193,7 +194,7 @@ function getCurrentDateInTimezone() {
  * Mendapatkan info waktu sekarang (year, month, day, dll) dalam timezone yang diatur.
  */
 function getCurrentTimeInfo() {
-  const tz = getSetting('timezone', 'Asia/Jakarta');
+  const tz = getSetting('timezone', 'America/Asuncion');
   const now = new Date();
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: tz,
@@ -233,7 +234,7 @@ function getNowLocalISO() {
  */
 function parseDateInTimezone(dateStr) {
   if (!dateStr) return null;
-  const tz = getSetting('timezone', 'Asia/Jakarta');
+  const tz = getSetting('timezone', 'America/Asuncion');
   
   const date = new Date(dateStr.replace(' ', 'T'));
   if (isNaN(date.getTime())) return null;
@@ -247,7 +248,7 @@ function parseDateInTimezone(dateStr) {
 
 function formatDateLocal(date) {
   if (!date) return '-';
-  const tz = getSetting('timezone', 'Asia/Jakarta');
+  const tz = getSetting('timezone', 'America/Asuncion');
   let d;
   if (typeof date === 'string') {
     d = parseDateInTimezone(date);
@@ -255,7 +256,7 @@ function formatDateLocal(date) {
     d = typeof date === 'number' ? new Date(date) : date;
   }
   if (!d || isNaN(d.getTime())) return '-';
-  return d.toLocaleString('id-ID', { timeZone: tz });
+  return d.toLocaleString(regional.locale(), { timeZone: tz });
 }
 
 /**
@@ -263,7 +264,7 @@ function formatDateLocal(date) {
  */
 function formatTimeLocal(date) {
   if (!date) return '-';
-  const tz = getSetting('timezone', 'Asia/Jakarta');
+  const tz = getSetting('timezone', 'America/Asuncion');
   let d;
   if (typeof date === 'string') {
     d = parseDateInTimezone(date);
@@ -271,7 +272,7 @@ function formatTimeLocal(date) {
     d = typeof date === 'number' ? new Date(date) : date;
   }
   if (!d || isNaN(d.getTime())) return '-';
-  return d.toLocaleTimeString('id-ID', { timeZone: tz, hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString(regional.locale(), { timeZone: tz, hour: '2-digit', minute: '2-digit' });
 }
 
 /**

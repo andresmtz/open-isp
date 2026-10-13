@@ -12,6 +12,7 @@ const { getSetting } = require('../config/settingsManager');
 const db = require('../config/database');
 const qrisUtil = require('../utils/qrisUtil');
 const { formatUnpaidInvoicesSummary } = require('./whatsappService');
+const regional = require('../config/regional');
 
 // Helper: Random delay generator untuk smart rate limiting
 function getRandomDelay(baseDelayMs, varianceMs = 3000) {
@@ -119,7 +120,7 @@ async function runAutoBillingReminder() {
       `Yth. Pelanggan {{nama}},\n\n` +
       `Ini adalah pengingat sebelum tanggal jatuh tempo/isolir.\n\n` +
       `📦 *Paket:* {{paket}}\n` +
-      `💰 *Total Tagihan:* Rp {{tagihan}}\n` +
+      `💰 *Total Tagihan:* {{moneda}} {{tagihan}}\n` +
       `📅 *Periode:* {{rincian}}\n\n` +
       `Mohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\n` +
       `Terima kasih atas kerja samanya.\n` +
@@ -135,7 +136,7 @@ async function runAutoBillingReminder() {
       if (!phone || phone.length < 9) continue;
       let digits = phone.replace(/\D/g, '');
       if (!digits) continue;
-      if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+      digits = regional.normalizePhone(digits);
       if (seenPhones.has(digits)) continue;
 
       const isPrepaid = c.package_billing_type === 'prepaid';
@@ -201,7 +202,7 @@ async function runAutoBillingReminder() {
           // Process Dynamic QRIS if enabled & available
           let qrisImageBuffer = null;
           let qrisCodeVal = 0;
-          let finalTagihanStr = totalTagihan.toLocaleString('id-ID');
+          let finalTagihanStr = totalTagihan.toLocaleString(regional.locale());
 
           if (unpaidInvoices.length > 0) {
             try {
@@ -254,7 +255,7 @@ async function runAutoBillingReminder() {
               }
 
               if (amt > 0) {
-                finalTagihanStr = amt.toLocaleString('id-ID');
+                finalTagihanStr = amt.toLocaleString(regional.locale());
                 qrisCodeVal = code;
                 const qrisPayload = String(getSetting('qris_static_payload', '') || '').trim();
                 const qrisEnabledRaw = getSetting('qris_static_enabled', true);
@@ -442,7 +443,7 @@ function startCronJobs() {
 
   // Auto-PERINGATAN TUNGGAKAN (menuju nonaktif/hapus) — sekali per kenaikan streak
   // Rekap bulanan auto-lunas (mitra) ke admin — tgl 1 jam 00:30
-  cron.schedule('30 0 1 * *', () => { sendAutoLunasRecap().catch(function (e) { logger.error('[CRON] recap error: ' + (e && e.message)); }); }, { timezone: getSetting('timezone', 'Asia/Jakarta') });
+  cron.schedule('30 0 1 * *', () => { sendAutoLunasRecap().catch(function (e) { logger.error('[CRON] recap error: ' + (e && e.message)); }); }, { timezone: getSetting('timezone', 'America/Asuncion') });
 
   cron.schedule('10 9 * * *', async () => {
     try {
@@ -469,7 +470,7 @@ function startCronJobs() {
         await new Promise(r => setTimeout(r, 1500));
       }
     } catch (e) { logger.error('[CRON] arrears notice error: ' + (e && e.message)); }
-  }, { timezone: getSetting('timezone', 'Asia/Jakarta') });
+  }, { timezone: getSetting('timezone', 'America/Asuncion') });
 
   // 4. Jam Kalong (Night Speed) Start - Jam 00:00
   cron.schedule('0 0 * * *', async () => {
@@ -770,7 +771,7 @@ function startCronJobs() {
     } catch (e) {
       logger.error('[CRON][Notice] Error: ' + e.message);
     }
-  }, { timezone: getSetting('timezone', 'Asia/Jakarta') });
+  }, { timezone: getSetting('timezone', 'America/Asuncion') });
 
   // Auto-nonaktif: pelanggan menunggak >= N bulan (default 3)
   cron.schedule('30 3 * * *', async () => {
@@ -785,7 +786,7 @@ function startCronJobs() {
     } catch (e) {
       logger.error(`[CRON] Auto-nonaktif error: ${e.message}`);
     }
-  }, { timezone: getSetting('timezone', 'Asia/Jakarta') });
+  }, { timezone: getSetting('timezone', 'America/Asuncion') });
 
   // Bersihkan sampah ACS (device DISCOVERYSERVICE + task macet/lama)
   cron.schedule('15 4 * * *', () => {
@@ -795,7 +796,7 @@ function startCronJobs() {
         logger.info('[CRON] ACS cleanup: devices=' + r.junkDevices + ' junkTasks=' + r.junkTasks + ' staleTasks=' + r.staleTasks + ' oldTasks=' + r.oldTasks);
       }
     } catch (e) { logger.error('[CRON] ACS cleanup error: ' + e.message); }
-  }, { timezone: getSetting('timezone', 'Asia/Jakarta') });
+  }, { timezone: getSetting('timezone', 'America/Asuncion') });
 
   // Otomasi retensi: hapus notif webhook lama agar daftar tidak menumpuk
   cron.schedule('45 4 * * *', () => {
@@ -806,7 +807,7 @@ function startCronJobs() {
       const r = db.prepare("DELETE FROM webhook_payment_notifs WHERE created_at < datetime(NOW_LOCAL(), ?)").run('-' + days + ' days');
       if (r.changes) logger.info('[CRON] Retensi notif webhook: ' + r.changes + ' notif > ' + days + ' hari dihapus.');
     } catch (e) { logger.error('[CRON] Retensi notif webhook error: ' + e.message); }
-  }, { timezone: getSetting('timezone', 'Asia/Jakarta') });
+  }, { timezone: getSetting('timezone', 'America/Asuncion') });
 
   logger.info('[CRON] Semua tugas penjadwalan telah aktif.');
 }
@@ -821,9 +822,9 @@ async function sendAutoLunasRecap(pMonth, pYear) {
     const rows = db.prepare("SELECT i.id, i.amount, c.name FROM invoices i JOIN customers c ON c.id=i.customer_id WHERE i.paid_by_name='Sistem (Auto)' AND i.period_month=? AND i.period_year=? ORDER BY c.name").all(m, y);
     if (!rows.length) return { sent: false, count: 0, period: m + '/' + y };
     const waNotify = require('./waNotifyService');
-    const list = rows.map(function (r) { return '• ' + r.name + ' (Rp ' + Number(r.amount || 0).toLocaleString('id-ID') + ')'; }).join('\n');
+    const list = rows.map(function (r) { return '• ' + r.name + ' (' + regional.currencySymbol() + ' ' + Number(r.amount || 0).toLocaleString(regional.locale()) + ')'; }).join('\n');
     const total = rows.reduce(function (s, r) { return s + Number(r.amount || 0); }, 0);
-    const msg = '📋 *REKAP AUTO-LUNAS — Periode ' + m + '/' + y + '*\n\nJumlah  : *' + rows.length + ' pelanggan*\nNominal : *Rp ' + total.toLocaleString('id-ID') + '*\n\nDaftar:\n' + list + '\n\nWaktu   : ' + now.toLocaleString('id-ID');
+    const msg = '📋 *REKAP AUTO-LUNAS — Periode ' + m + '/' + y + '*\n\nJumlah  : *' + rows.length + ' pelanggan*\nNominal : *' + regional.currencySymbol() + ' ' + total.toLocaleString(regional.locale()) + '*\n\nDaftar:\n' + list + '\n\nWaktu   : ' + now.toLocaleString(regional.locale());
     const to = await waNotify.notifyAdmin(msg);
     logger.info('[CRON] Rekap auto-lunas ' + m + '/' + y + ' terkirim ke admin (' + rows.length + ' pelanggan).');
     return { sent: true, count: rows.length, period: m + '/' + y, to: to };

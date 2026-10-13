@@ -193,7 +193,7 @@
   <% history.forEach(item => { %>
     <div class="t-card">
       <div class="fw-bold mb-2" style="font-size: 14px; color: #f8fafc;">
-        <%= parseDateInTimezone(item.check_in_time).toLocaleDateString('id-ID', { 
+        <%= parseDateInTimezone(item.check_in_time).toLocaleDateString(APP_LOCALE, { 
           weekday: 'long', 
           day: 'numeric',
           month: 'long'
@@ -467,7 +467,7 @@
   }
 
   function buildWatermarkLines(location) {
-    const timestamp = new Date().toLocaleString('id-ID', {
+    const timestamp = new Date().toLocaleString(APP_LOCALE, {
       timeZone: '<%= settings.timezone %>',
       weekday: 'long',
       year: 'numeric',

@@ -160,7 +160,7 @@
               <% } else { %>—<% } %>
               <small>Mbps</small>
             </div>
-            <div class="price"><b>Rp <%= Number(p.price||0).toLocaleString('id-ID') %></b> / bulan</div>
+            <div class="price"><b><%= APP_CUR %> <%= Number(p.price||0).toLocaleString(APP_LOCALE) %></b> / bulan</div>
             <ul>
               <li><i class="bi bi-check-circle-fill"></i> Unlimited tanpa FUP</li>
               <li><i class="bi bi-check-circle-fill"></i> <%= t('login.f1d','Fiber optic dedicated') %></li>

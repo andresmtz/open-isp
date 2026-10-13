@@ -1,6 +1,7 @@
 const { logger } = require('../config/logger');
 const { getSetting } = require('../config/settingsManager');
 const db = require('../config/database');
+const regional = require('../config/regional');
 
 /**
  * Service untuk Meta WhatsApp Cloud API (Official Meta Graph API)
@@ -12,10 +13,7 @@ const db = require('../config/database');
 function normalizePhone(phone) {
   let cleaned = String(phone || '').replace(/\D/g, '');
   if (!cleaned) return '';
-  if (cleaned.startsWith('0')) {
-    cleaned = '62' + cleaned.slice(1);
-  }
-  return cleaned;
+  return regional.normalizePhone(cleaned);
 }
 
 /**

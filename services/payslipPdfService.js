@@ -4,6 +4,7 @@
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const { THEME, resolveLogoPath, companyInfo, fmtRp } = require('./pdfBranding');
+const regional = require('../config/regional');
 
 const MNS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
@@ -29,7 +30,7 @@ function generatePayslipPdfBuffer(slip, settings = {}) {
       doc.fillColor(ACCENT).fontSize(9).font('Helvetica-Bold').text(`Periode ${MNS[(slip.period_month || 1) - 1]} ${slip.period_year || ''}`, LEFT, y + 23, { width: W, align: 'right' });
 
       y = 92;
-      doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Dicetak: ${new Date().toLocaleString('id-ID')}`, LEFT, y);
+      doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Dicetak: ${new Date().toLocaleString(regional.locale())}`, LEFT, y);
 
       // Info karyawan
       y += 16;
@@ -96,7 +97,7 @@ function generatePayslipPdfBuffer(slip, settings = {}) {
 
       // Footer
       doc.moveTo(LEFT, sy - 16).lineTo(RIGHT, sy - 16).strokeColor(LINE).stroke();
-      doc.fillColor(MUTED).fontSize(7.5).text(`Dokumen dibuat otomatis oleh ${ci.name} • ${new Date().toLocaleString('id-ID')}`, LEFT, sy - 12, { width: W });
+      doc.fillColor(MUTED).fontSize(7.5).text(`Dokumen dibuat otomatis oleh ${ci.name} • ${new Date().toLocaleString(regional.locale())}`, LEFT, sy - 12, { width: W });
 
       doc.end();
     } catch (e) { reject(e); }

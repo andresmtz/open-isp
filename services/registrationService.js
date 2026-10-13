@@ -11,7 +11,7 @@ const { getSetting } = require('../config/settingsManager');
 const voucherService = require('./voucherService');
 
 function localParts(date) {
-  const tz = getSetting('timezone', 'Asia/Jakarta');
+  const tz = getSetting('timezone', 'America/Asuncion');
   try {
     const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
     const o = {};

@@ -891,7 +891,7 @@
       }
       tbody.innerHTML = hotspotProfilesData.map((p, i) => {
         const meta = parseMikhmonOnLogin(p.onLogin || p['on-login'] || '');
-        const price = meta ? `Rp ${Number(meta.price || 0).toLocaleString('id-ID')}` : '-';
+        const price = meta ? `${APP_CUR} ${Number(meta.price || 0).toLocaleString(APP_LOCALE)}` : '-';
         const validity = meta ? (meta.validity || '-') : '-';
         return `
         <tr>

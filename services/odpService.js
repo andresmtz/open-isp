@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const regional = require('../config/regional');
 
 /**
  * ODP SERVICE
@@ -78,7 +79,7 @@ function getOdpPortUsage(odpId) {
     const p = String(r.pon_port).trim();
     if (p && usedBy[p] === undefined) usedBy[p] = { name: r.name || '', pppoe: String(r.pppoe_username || '').toLowerCase() };
   }
-  const usedPorts = Object.keys(usedBy).sort((a, b) => a.localeCompare(b, 'id-ID', { numeric: true }));
+  const usedPorts = Object.keys(usedBy).sort((a, b) => a.localeCompare(b, regional.locale(), { numeric: true }));
   const capacity = parseCapacity(odp.port_capacity);
   const usedCount = usedPorts.length;
   const remaining = Math.max(0, capacity - usedCount);

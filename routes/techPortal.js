@@ -14,6 +14,7 @@ const fs = require('fs');
 const { uploadAttendance, removeAttendanceFile } = require('../middleware/attendanceUpload');
 const genieacsApi = require('../config/genieacs');
 const rawAxios = require('axios');
+const regional = require('../config/regional');
 
 const axios = {
   get: async (url, config = {}) => {
@@ -84,7 +85,7 @@ const waSendDedup = new Map();
 function normalizeWaDigits(input) {
   let digits = String(input || '').replace(/\D/g, '');
   if (!digits) return '';
-  if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+  digits = regional.normalizePhone(digits);
   if (digits.length < 8) return '';
   return digits;
 }

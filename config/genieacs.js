@@ -3,6 +3,7 @@ require('dotenv').config();
 const { logger } = require('./logger');
 const db = require('./database');
 const { getSetting } = require('./settingsManager');
+const regional = require('./regional');
 
 // ─── Built-in ACS Helpers ────────────────────────────────────────────────────
 
@@ -932,7 +933,7 @@ async function monitorRXPower(threshold = -27) {
                 message += `   📱 *S/N:* ${device.serialNumber}\n`;
                 message += `   👤 *PPPoE:* ${device.pppoeUsername}\n`;
                 message += `   📡 *RX Power:* ${device.rxPower} dBm\n`;
-                message += `   🕒 *Last Inform:* ${new Date(device.lastInform).toLocaleString('id-ID')}\n\n`;
+                message += `   🕒 *Last Inform:* ${new Date(device.lastInform).toLocaleString(regional.locale())}\n\n`;
             });
             
             message += `⚠️ *Mohon segera dicek untuk menghindari koneksi terputus.*`;
@@ -1088,7 +1089,7 @@ async function monitorOfflineDevices(thresholdHours = 24) {
                 message += `${index + 1}. *Device ID:* ${device.id.split('-')[2] || device.id}\n`;
                 message += `   📱 *S/N:* ${device.serialNumber}\n`;
                 message += `   ⏱️ *Offline:* ${device.offlineHours} jam\n`;
-                message += `   🕒 *Last Inform:* ${new Date(device.lastInform).toLocaleString('id-ID')}\n\n`;
+                message += `   🕒 *Last Inform:* ${new Date(device.lastInform).toLocaleString(regional.locale())}\n\n`;
             });
             
             message += `⚠️ *Mohon segera ditindaklanjuti.*`;

@@ -56,6 +56,7 @@ const session = require('express-session');
 const createSqliteSessionStore = require('./config/sqliteSessionStore');
 const { getSetting, getSettingsWithCache, ensureDefaultSettings, getNowLocal, formatDateLocal, formatTimeLocal, parseDateInTimezone } = require('./config/settingsManager');
 const { SUPPORTED_LANGS, FALLBACK_LANG, normalizeLang, t } = require('./config/i18n');
+const regional = require('./config/regional');
 
 // Pastikan semua default settings ada (untuk migrasi/update dari GitHub)
 if (typeof ensureDefaultSettings === 'function') {
@@ -155,6 +156,32 @@ app.use((req, res, next) => {
   next();
 });
 
+// Configuración regional (moneda, locale, teléfono): disponible en vistas EJS y en el navegador
+app.use((req, res, next) => {
+  const cfg = regional.clientConfig();
+  res.locals.APP_LOCALE = cfg.locale;
+  res.locals.APP_CUR = cfg.currencySymbol;
+  res.locals.fmtMoney = regional.formatMoney;
+  res.locals.fmtNum = regional.formatNumber;
+  res.locals.regional = cfg;
+
+  // Las ~80 vistas tienen su propio <head>: se inyectan los globales del navegador
+  // (APP_LOCALE, APP_CUR, APP_CFG, fmtMoney) al inicio de cada respuesta HTML.
+  const send = res.send.bind(res);
+  res.send = (body) => {
+    if (typeof body === 'string' && /<head[\s>]/i.test(body) && !body.includes('window.APP_CFG=')) {
+      const json = JSON.stringify(cfg).replace(/</g, '\\u003c');
+      const cssCur = JSON.stringify(cfg.currencySymbol + ' ').replace(/</g, '\\u003c');
+      const snippet = `<script>window.APP_CFG=${json};var APP_LOCALE=APP_CFG.locale,APP_CUR=APP_CFG.currencySymbol;` +
+        `function fmtMoney(n){n=Number(n)||0;return (n<0?'-':'')+APP_CUR+' '+Math.abs(n).toLocaleString(APP_LOCALE,{minimumFractionDigits:APP_CFG.currencyDecimals,maximumFractionDigits:APP_CFG.currencyDecimals});}` +
+        `document.documentElement.style.setProperty('--currency-prefix',${JSON.stringify(cssCur)});</script>`;
+      body = body.replace(/<head([^>]*)>/i, (m) => m + snippet);
+    }
+    return send(body);
+  };
+  next();
+});
+
 // i18n middleware (aman: hanya teks UI, tidak mengubah logic fitur)
 app.use((req, res, next) => {
   if (req.query && typeof req.query.lang === 'string') {
@@ -163,7 +190,7 @@ app.use((req, res, next) => {
   }
   const saved = req.session?.lang || getSetting('default_lang', FALLBACK_LANG);
   const lang = normalizeLang(saved);
-  const tz = getSetting('timezone', 'Asia/Jakarta');
+  const tz = getSetting('timezone', 'America/Asuncion');
   res.locals.lang = lang;
   res.locals.availableLangs = Array.from(SUPPORTED_LANGS);
   res.locals.t = (key, fallback = '') => t(lang, key, fallback);
@@ -471,11 +498,11 @@ async function notifyAdminUnmatchedPayment(amount, rawText, service) {
     if (recentUnmatchedAlerts.size > 500) { for (const kv of recentUnmatchedAlerts) { if (now - kv[1] > 1200000) recentUnmatchedAlerts.delete(kv[0]); } }
     const waNotify = require('./services/waNotifyService');
     let waktu = '';
-    try { waktu = new Date().toLocaleString('id-ID', { timeZone: getSetting('timezone', 'Asia/Jakarta') }); } catch (e) { waktu = new Date().toISOString(); }
+    try { waktu = new Date().toLocaleString(regional.locale(), { timeZone: getSetting('timezone', 'America/Asuncion') }); } catch (e) { waktu = new Date().toISOString(); }
     const lines = [
       '⚠️ *Pembayaran belum cocok*',
       '',
-      '💰 Nominal: *Rp ' + Number(amount || 0).toLocaleString('id-ID') + '*',
+      '💰 Nominal: *' + regional.currencySymbol() + ' ' + Number(amount || 0).toLocaleString(regional.locale()) + '*',
       '🏦 Sumber: ' + (service || '-'),
       '🕒 ' + waktu,
       '',
@@ -716,7 +743,7 @@ async function fulfillVoucherOrder(settings, orderId) {
     `🎫 *VOUCHER HOTSPOT*\n\n` +
     `✅ Pembayaran diterima via *QRIS Statis*\n` +
     `📦 Paket: *${ord.profile_name}* (${ord.validity || '-'})\n` +
-    `💰 Harga: Rp ${Number(ord.price || 0).toLocaleString('id-ID')}\n\n` +
+    `💰 Harga: ${regional.currencySymbol()} ${Number(ord.price || 0).toLocaleString(regional.locale())}\n\n` +
     `👤 User: *${created.code}*\n` +
     `🔑 Pass: *${created.pass}*\n\n` +
     `Terima kasih.`;
@@ -740,7 +767,7 @@ async function fulfillDonationOrder(settings, donationOrderId) {
 `🙏 *TERIMA KASIH ATAS DONASI ANDA!*
 
 Halo *${donorName}*,
-Alhamdulillah, transaksi donasi Anda sebesar *Rp ${amount.toLocaleString('id-ID')}* telah *BERHASIL DITERIMA* oleh sistem kami.
+Alhamdulillah, transaksi donasi Anda sebesar *${regional.currencySymbol()} ${amount.toLocaleString(regional.locale())}* telah *BERHASIL DITERIMA* oleh sistem kami.
 
 🔑 *KODE AKTIVASI SIDEBAR:*
 *${activationCode}*
@@ -829,7 +856,7 @@ app.post('/api/webhook/mayar', express.json({ limit: '2mb' }), async (req, res) 
       const customer = customerSvc.getCustomerById(inv.customer_id);
       if (settings.whatsapp_enabled && customer && customer.phone && (await waNotify.isConnected())) {
         const full = billingSvc.getInvoiceById(inv.id);
-        const msg = '✅ *PEMBAYARAN DITERIMA*\n\nTagihan periode *' + full.period_month + '/' + full.period_year + '* sebesar Rp ' + Number(full.amount || 0).toLocaleString('id-ID') + ' telah *LUNAS* via Mayar.\n\nTerima kasih. 🙏';
+        const msg = '✅ *PEMBAYARAN DITERIMA*\n\nTagihan periode *' + full.period_month + '/' + full.period_year + '* sebesar ' + regional.currencySymbol() + ' ' + Number(full.amount || 0).toLocaleString(regional.locale()) + ' telah *LUNAS* via Mayar.\n\nTerima kasih. 🙏';
         await waNotify.sendText(customer.phone, msg);
       }
     } catch (e) { logger.warn('[WEBHOOK][mayar] WA gagal: ' + e.message); }
@@ -1010,7 +1037,7 @@ app.post('/api/webhook/v1/payment-notif', multer().any(), async (req, res) => {
           const invId = Number(inv.id || 0);
           const custId = Number(inv.customer_id || 0);
           if (invId > 0) {
-            const noteLine = `AUTO-QRIS: cocok nominal unik Rp ${amount} (service=${String(service || '-')}, notif=${notifId || '-'})`;
+            const noteLine = `AUTO-QRIS: cocok nominal unik ${regional.currencySymbol()} ${amount} (service=${String(service || '-')}, notif=${notifId || '-'})`;
             markInvoicePaidAppendNote.run('QRIS', noteLine, noteLine, notifId || null, invId);
             matchedInvoiceId = invId;
 
@@ -1152,7 +1179,7 @@ app.get('/', (req, res) => {
             id: p.id,
             name: p.name || 'Paket',
             speedText: String(mbps),
-            priceText: Number(p.price || 0).toLocaleString('id-ID'),
+            priceText: Number(p.price || 0).toLocaleString(regional.locale()),
             description: p.description || ''
           };
         })
@@ -1184,7 +1211,7 @@ app.get('/', (req, res) => {
     // Nomor WhatsApp
     const phoneRaw = String(settings.company_phone || settings.meta_business_phone || '').replace(/[^0-9]/g, '');
     let waNumber = phoneRaw;
-    if (waNumber.startsWith('0')) waNumber = '62' + waNumber.slice(1);
+    waNumber = regional.normalizePhone(waNumber);
     const waLink = waNumber
       ? 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent('Halo, saya ingin bertanya tentang pemasangan internet.')
       : '';

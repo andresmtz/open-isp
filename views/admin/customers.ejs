@@ -259,7 +259,7 @@
               <td>
                 <% if (c.package_name) { %>
                   <div style="font-weight:600;"><%= c.package_name %></div>
-                  <div style="font-size:11px;color:var(--muted)"><%= (c.speed_down/1000).toFixed(0) %>/<%= (c.speed_up/1000).toFixed(0) %> Mbps &bull; Rp <%= c.package_price ? c.package_price.toLocaleString('id-ID') : '-' %></div>
+                  <div style="font-size:11px;color:var(--muted)"><%= (c.speed_down/1000).toFixed(0) %>/<%= (c.speed_up/1000).toFixed(0) %> Mbps &bull; <%= APP_CUR %> <%= c.package_price ? c.package_price.toLocaleString(APP_LOCALE) : '-' %></div>
                   <% if (c.package_billing_type === 'prepaid' || c.expired_at) { %>
                     <% 
                       const expDateStr = c.expired_at ? String(c.expired_at).slice(0, 10) : '-';
@@ -322,7 +322,7 @@
                 <% } else { %><span class="badge bm"><%= t('admin.customers.filter.inactive', 'Nonaktif') %></span><% } %>
                 <% if (c.status === 'inactive' && (c.reg_total || c.reg_due_date || c.reg_voucher_code)) { %>
                   <div style="font-size:10px;margin-top:4px;color:var(--muted)">
-                    <i class="bi bi-calculator"></i> Est: <b style="color:var(--primary)">Rp <%= Number(c.reg_total||0).toLocaleString('id-ID') %></b>
+                    <i class="bi bi-calculator"></i> Est: <b style="color:var(--primary)"><%= APP_CUR %> <%= Number(c.reg_total||0).toLocaleString(APP_LOCALE) %></b>
                     <% if (c.reg_due_date) { %> • JT <%= c.reg_due_date %><% } %>
                     <% if (c.reg_voucher_code) { %> • <i class="bi bi-ticket-perforated"></i> <%= c.reg_voucher_code %><% } %>
                   </div>
@@ -473,7 +473,7 @@
               <select class="fs" name="package_id" required>
                 <option value=""><%= t('tech.cc.ph_pkg','-- Pilih Paket --') %></option>
                 <% packages.forEach(p => { %>
-                <option value="<%= p.id %>"><%= p.name %> — Rp <%= p.price.toLocaleString('id-ID') %></option>
+                <option value="<%= p.id %>"><%= p.name %> — <%= APP_CUR %> <%= p.price.toLocaleString(APP_LOCALE) %></option>
                 <% }) %>
               </select>
             </div>
@@ -775,7 +775,7 @@
               <select class="fs" name="package_id" id="e_package" required>
                 <option value=""><%= t('tech.cc.ph_pkg','-- Pilih Paket --') %></option>
                 <% packages.forEach(p => { %>
-                <option value="<%= p.id %>"><%= p.name %> — Rp <%= p.price.toLocaleString('id-ID') %></option>
+                <option value="<%= p.id %>"><%= p.name %> — <%= APP_CUR %> <%= p.price.toLocaleString(APP_LOCALE) %></option>
                 <% }) %>
               </select>
             </div>
@@ -1187,10 +1187,10 @@
           <div class="fg"><label class="fl"><%= t('admin.cust.f_days','Jumlah Hari') %></label><input class="fc" id="rc_days" readonly></div>
         </div>
         <div style="background:rgba(173,255,47,.08);border:1px solid var(--primary-glow);border-radius:12px;padding:12px;margin-top:6px">
-          <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span>Prorata Paket</span><span id="rc_prorata">Rp 0</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span><%= t('admin.cust.f_install_fee','Biaya Pasang') %></span><span id="rc_install_out">Rp 0</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;color:var(--danger)"><span><%= t('admin.cust.f_voucher_disc','Diskon Voucher') %></span><span id="rc_disc_out">- Rp 0</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;padding:8px 0 2px;border-top:1px solid var(--border);margin-top:6px"><span>Total Bayar Awal</span><span id="rc_total" style="color:var(--primary)">Rp 0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span>Prorata Paket</span><span id="rc_prorata"><%= APP_CUR %> 0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span><%= t('admin.cust.f_install_fee','Biaya Pasang') %></span><span id="rc_install_out"><%= APP_CUR %> 0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;color:var(--danger)"><span><%= t('admin.cust.f_voucher_disc','Diskon Voucher') %></span><span id="rc_disc_out">- <%= APP_CUR %> 0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;padding:8px 0 2px;border-top:1px solid var(--border);margin-top:6px"><span>Total Bayar Awal</span><span id="rc_total" style="color:var(--primary)"><%= APP_CUR %> 0</span></div>
         </div>
         <div class="hint" id="rc_hint" style="margin-top:8px"></div>
         <input type="hidden" name="final_total" id="rc_final">
@@ -1362,9 +1362,9 @@ function viewCustDetail(idx) {
     const totalBytes = rxBytes + txBytes;
 
     if (document.getElementById('v_rx_fmt')) document.getElementById('v_rx_fmt').textContent = formatBytesVal(rxBytes);
-    if (document.getElementById('v_rx_bytes')) document.getElementById('v_rx_bytes').textContent = Number(rxBytes).toLocaleString('id-ID') + ' Bytes';
+    if (document.getElementById('v_rx_bytes')) document.getElementById('v_rx_bytes').textContent = Number(rxBytes).toLocaleString(APP_LOCALE) + ' Bytes';
     if (document.getElementById('v_tx_fmt')) document.getElementById('v_tx_fmt').textContent = formatBytesVal(txBytes);
-    if (document.getElementById('v_tx_bytes')) document.getElementById('v_tx_bytes').textContent = Number(txBytes).toLocaleString('id-ID') + ' Bytes';
+    if (document.getElementById('v_tx_bytes')) document.getElementById('v_tx_bytes').textContent = Number(txBytes).toLocaleString(APP_LOCALE) + ' Bytes';
     
     const limitGB = c.fup_limit_gb || 0;
     const useFup = c.use_fup === 1;
@@ -1374,7 +1374,7 @@ function viewCustDetail(idx) {
     if (document.getElementById('v_nik')) document.getElementById('v_nik').textContent = c.nik || '-';
     if (document.getElementById('v_phone')) document.getElementById('v_phone').textContent = c.phone || '-';
     if (document.getElementById('v_address_area')) document.getElementById('v_address_area').textContent = (c.address || '-') + (c.area ? ` [Area: ${c.area}]` : '');
-    if (document.getElementById('v_package')) document.getElementById('v_package').textContent = c.package_name ? `${c.package_name} (Rp ${Number(c.package_price||0).toLocaleString('id-ID')})` : '-';
+    if (document.getElementById('v_package')) document.getElementById('v_package').textContent = c.package_name ? `${c.package_name} (${APP_CUR} ${Number(c.package_price||0).toLocaleString(APP_LOCALE)})` : '-';
     if (document.getElementById('v_expired_at')) {
       if (c.package_billing_type === 'prepaid' || c.expired_at) {
         const expStr = c.expired_at ? String(c.expired_at).slice(0, 10) : '-';
@@ -1453,9 +1453,9 @@ function updateDetailModalLive(idx) {
     const totalBytes = rxBytes + txBytes;
 
     if (document.getElementById('v_rx_fmt')) document.getElementById('v_rx_fmt').textContent = formatBytesVal(rxBytes);
-    if (document.getElementById('v_rx_bytes')) document.getElementById('v_rx_bytes').textContent = Number(rxBytes).toLocaleString('id-ID') + ' Bytes';
+    if (document.getElementById('v_rx_bytes')) document.getElementById('v_rx_bytes').textContent = Number(rxBytes).toLocaleString(APP_LOCALE) + ' Bytes';
     if (document.getElementById('v_tx_fmt')) document.getElementById('v_tx_fmt').textContent = formatBytesVal(txBytes);
-    if (document.getElementById('v_tx_bytes')) document.getElementById('v_tx_bytes').textContent = Number(txBytes).toLocaleString('id-ID') + ' Bytes';
+    if (document.getElementById('v_tx_bytes')) document.getElementById('v_tx_bytes').textContent = Number(txBytes).toLocaleString(APP_LOCALE) + ' Bytes';
     if (document.getElementById('v_uptime')) document.getElementById('v_uptime').textContent = session.uptime || 'Active';
     if (document.getElementById('v_ip')) document.getElementById('v_ip').textContent = session.ip || (c.static_ip || '-');
     if (document.getElementById('v_mac')) document.getElementById('v_mac').textContent = session.callerId || (c.mac_address || '-');
@@ -1683,7 +1683,7 @@ function editCust(idx) {
   loadRouterLists('edit', c.router_id || '', c.id || '');
 }
 
-function rcFmt(n){ return 'Rp ' + Math.round(Number(n)||0).toLocaleString('id-ID'); }
+function rcFmt(n){ return APP_CUR + ' ' + Math.round(Number(n)||0).toLocaleString(APP_LOCALE); }
 function rcCompute(){
   var fee = parseFloat(document.getElementById('rc_fee').value)||0;
   var install = parseFloat(document.getElementById('rc_install').value)||0;
@@ -1750,7 +1750,7 @@ function openPayInvoice(idx) {
 
 function toRupiah(n) {
   const v = Number(n) || 0;
-  return 'Rp ' + v.toLocaleString('id-ID');
+  return APP_CUR + ' ' + v.toLocaleString(APP_LOCALE);
 }
 
 function monthsRangesText(months) {

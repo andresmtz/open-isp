@@ -9,6 +9,7 @@
 const db = require('../config/database');
 const { getSetting } = require('../config/settingsManager');
 const billingSvc = require('./billingService');
+const regional = require('../config/regional');
 
 function portalLink() {
   let base = String(getSetting('public_base_url', '') || '').trim();
@@ -49,7 +50,7 @@ function applyVars(tpl, customer, d) {
     .replace(/{{id_pelanggan}}/gi, customer.customer_code || ('ID:' + customer.id))
     .replace(/{{nama}}/gi, customer.name || 'Pelanggan')
     .replace(/{{paket}}/gi, d.pkgName)
-    .replace(/{{tagihan}}/gi, d.amount.toLocaleString('id-ID'))
+    .replace(/{{tagihan}}/gi, d.amount.toLocaleString(regional.locale()))
     .replace(/{{rincian}}/gi, d.period)
     .replace(/{{periode}}/gi, d.period)
     .replace(/{{bulan_nunggak}}/gi, String(d.streak))
@@ -62,14 +63,14 @@ function applyVars(tpl, customer, d) {
 
 function buildArrearsMessage(customer) {
   const d = info(customer);
-  const def = "*Pemberitahuan Tagihan Internet*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nSemoga Bapak/Ibu selalu dalam keadaan sehat dan baik. 🙏\n\nDengan hormat, kami menginformasikan bahwa pembayaran tagihan layanan internet Anda belum kami terima selama *{{bulan_nunggak}} bulan* berjalan.\n\n📦 Paket: {{paket}}\n💰 Total Tagihan: Rp {{tagihan}}\n📅 Periode: {{rincian}}\n\nKami memahami apabila ada kendala. Mohon berkenan menyelesaikan pembayaran agar layanan tetap dapat digunakan dengan nyaman. Apabila hingga {{batas}} bulan tagihan belum diselesaikan, dengan berat hati layanan akan kami nonaktifkan sementara, dan untuk mengaktifkannya kembali diperlukan pendaftaran ulang.\n\nPembayaran dapat dilakukan melalui portal pelanggan:\n{{link}}\n\nApabila ada pertanyaan atau membutuhkan bantuan, silakan menghubungi kami. Terima kasih atas perhatian dan kerja samanya. 🙏\n— {{company}}";
+  const def = "*Pemberitahuan Tagihan Internet*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nSemoga Bapak/Ibu selalu dalam keadaan sehat dan baik. 🙏\n\nDengan hormat, kami menginformasikan bahwa pembayaran tagihan layanan internet Anda belum kami terima selama *{{bulan_nunggak}} bulan* berjalan.\n\n📦 Paket: {{paket}}\n💰 Total Tagihan: {{moneda}} {{tagihan}}\n📅 Periode: {{rincian}}\n\nKami memahami apabila ada kendala. Mohon berkenan menyelesaikan pembayaran agar layanan tetap dapat digunakan dengan nyaman. Apabila hingga {{batas}} bulan tagihan belum diselesaikan, dengan berat hati layanan akan kami nonaktifkan sementara, dan untuk mengaktifkannya kembali diperlukan pendaftaran ulang.\n\nPembayaran dapat dilakukan melalui portal pelanggan:\n{{link}}\n\nApabila ada pertanyaan atau membutuhkan bantuan, silakan menghubungi kami. Terima kasih atas perhatian dan kerja samanya. 🙏\n— {{company}}";
   const tpl = db.getAppSetting('whatsapp_arrears_warning_message', def) || def;
   return spintax(applyVars(tpl, customer, d));
 }
 
 function buildBillMessage(customer) {
   const d = info(customer);
-  const def = `Yth. {{nama}},\n\nBerikut tagihan internet Anda:\n\n📦 Paket: {{paket}}\n💰 Total Tagihan: Rp {{tagihan}}\n📅 Periode: {{rincian}}\n\nSilakan lakukan pembayaran melalui portal: {{link}}\n\nTerima kasih.\n— {{company}}`;
+  const def = `Yth. {{nama}},\n\nBerikut tagihan internet Anda:\n\n📦 Paket: {{paket}}\n💰 Total Tagihan: {{moneda}} {{tagihan}}\n📅 Periode: {{rincian}}\n\nSilakan lakukan pembayaran melalui portal: {{link}}\n\nTerima kasih.\n— {{company}}`;
   const tpl = db.getAppSetting('whatsapp_auto_billing_message', def) || def;
   return spintax(applyVars(tpl, customer, d));
 }

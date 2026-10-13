@@ -438,7 +438,7 @@
         });
 
         const marker = L.marker([lat, lng], { icon });
-        const cleanPhone = String(cust.phone || '').replace(/\D/g, '').replace(/^0/, '62');
+        const cleanPhone = String(cust.phone || '').replace(/\D/g, '').replace(new RegExp('^' + (APP_CFG.phoneTrunkPrefix || '0')), APP_CFG.phoneCountryCode);
         const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent('Halo ' + cust.name + ', info dari admin jaringan:')}` : '#';
         const dirUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 

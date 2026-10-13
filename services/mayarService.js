@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { getSetting } = require('../config/settingsManager');
+const regional = require('../config/regional');
 
 /**
  * MAYAR.id payment gateway (Mode 1).
@@ -20,7 +21,7 @@ function headers() {
 function toWaMobile(phone) {
   let d = String(phone || '').replace(/\D/g, '');
   if (!d) return '';
-  if (d.startsWith('0')) d = '62' + d.slice(1);
+  d = regional.normalizePhone(d);
   return d;
 }
 

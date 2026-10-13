@@ -58,6 +58,7 @@ const monitoringSvc = require('../services/monitoringService');
 const inventorySvc = require('../services/inventoryService');
 const auditSvc = require('../services/auditTrailService');
 const whatsappService = require('../services/whatsappService');
+const regional = require('../config/regional');
 const { parseMikhmonOnLogin } = require('../utils/mikhmonParser');
 const diagnosticsSvc = require('../services/diagnosticsService');
 const attendanceSvc = require('../services/attendanceService');
@@ -1162,7 +1163,7 @@ router.post('/collector-payments/:id/approve', requireAdminSession, express.urle
         customer.phone,
         customer.name,
         `${inv.period_month}/${inv.period_year}`,
-        Number(inv.amount || 0).toLocaleString('id-ID'),
+        Number(inv.amount || 0).toLocaleString(regional.locale()),
         collectorLabel,
         {
           customerId: customer.id,
@@ -2416,7 +2417,7 @@ router.post('/customers/:id/billing/install-prorata', requireAdminSession, restr
     const out = billingSvc.createInstallProrataCatchUpInvoice(req.params.id);
     req.session._msg = {
       type: 'success',
-      text: `Tagihan susulan prorata untuk "${out.customerName}" periode ${String(out.periodMonth).padStart(2, '0')}/${out.periodYear} sebesar Rp ${Number(out.amount).toLocaleString('id-ID')} (${out.billableDays}/${out.daysInMonth} hari).`
+      text: `Tagihan susulan prorata untuk "${out.customerName}" periode ${String(out.periodMonth).padStart(2, '0')}/${out.periodYear} sebesar ${regional.currencySymbol()} ${Number(out.amount).toLocaleString(regional.locale())} (${out.billableDays}/${out.daysInMonth} hari).`
     };
   } catch (e) {
     req.session._msg = { type: 'error', text: e.message || String(e) };
@@ -2437,7 +2438,7 @@ router.post('/customers/:id/billing/pay', requireAdminSession, express.urlencode
       const already = sum.alreadyPaidMonths.length;
       const created = sum.createdMonths.length;
       const total = Number(sum.totalAmount) || 0;
-      req.session._msg = { type: 'success', text: `Pembayaran berhasil untuk "${sum.customerName}" tahun ${sum.year}. Total: Rp ${total.toLocaleString('id-ID')} (${sum.totalMonths || 0} bulan). Dibayar: ${done} bulan, dibuat: ${created}, sudah lunas: ${already}.` };
+      req.session._msg = { type: 'success', text: `Pembayaran berhasil untuk "${sum.customerName}" tahun ${sum.year}. Total: ${regional.currencySymbol()} ${total.toLocaleString(regional.locale())} (${sum.totalMonths || 0} bulan). Dibayar: ${done} bulan, dibuat: ${created}, sudah lunas: ${already}.` };
 
       if (customer && customer.phone && done > 0) {
         const monthsText = (sum.paidMonths || []).join(', ');
@@ -2446,7 +2447,7 @@ router.post('/customers/:id/billing/pay', requireAdminSession, express.urlencode
           customer.phone,
           customer.name,
           `${monthsText} / ${sum.year}`,
-          Number(total || 0).toLocaleString('id-ID'),
+          Number(total || 0).toLocaleString(regional.locale()),
           paidBy,
           {
             customerId: customer.id,
@@ -2476,7 +2477,7 @@ router.post('/customers/:id/billing/pay', requireAdminSession, express.urlencode
             customer.phone,
             customer.name,
             `${m}/${y}`,
-            amount.toLocaleString('id-ID'),
+            amount.toLocaleString(regional.locale()),
             paidBy,
             {
               customerId: customer.id,
@@ -2725,7 +2726,7 @@ router.post('/discounts/apply', requireAdminSession, requireSidebarMenuAccess('d
     else if (applyMode === 'single') { const cid = parseInt(req.body.customer_id, 10); if (cid) customerIds = [cid]; }
     else { const arr = Array.isArray(req.body.customer_ids) ? req.body.customer_ids : (req.body.customer_ids ? [req.body.customer_ids] : []); customerIds = arr.map(x => parseInt(x, 10)).filter(Boolean); }
     const result = discSvc.applyDiscountBatch({ customerIds, all, periodMonth: pMonth, periodYear: pYear, type: req.body.discount_type, value: req.body.discount_value, note: req.body.note, actor: adminActorFromReq(req) });
-    req.session._msg = { type: 'success', text: `Diskon diterapkan ke ${result.applied.length} tagihan (total potongan Rp ${Number(result.totalDiscount || 0).toLocaleString('id-ID')}). ${result.skipped.length} pelanggan dilewati (tidak ada tagihan belum bayar pada periode tsb).` };
+    req.session._msg = { type: 'success', text: `Diskon diterapkan ke ${result.applied.length} tagihan (total potongan ${regional.currencySymbol()} ${Number(result.totalDiscount || 0).toLocaleString(regional.locale())}). ${result.skipped.length} pelanggan dilewati (tidak ada tagihan belum bayar pada periode tsb).` };
   } catch (e) {
     req.session._msg = { type: 'error', text: 'Gagal menerapkan diskon: ' + e.message };
   }
@@ -2736,7 +2737,7 @@ router.post('/billing/:id/discount', requireAdminSession, express.urlencoded({ e
   try {
     const discSvc = require('../services/discountService');
     const r = discSvc.applyDiscountToInvoice(req.params.id, { type: req.body.discount_type, value: req.body.discount_value, note: req.body.note }, adminActorFromReq(req));
-    req.session._msg = { type: 'success', text: `Diskon diterapkan: Rp ${Number(r.amountBefore).toLocaleString('id-ID')} -> Rp ${Number(r.amountAfter).toLocaleString('id-ID')} (potongan Rp ${Number(r.discountAmount).toLocaleString('id-ID')}).` };
+    req.session._msg = { type: 'success', text: `Diskon diterapkan: ${regional.currencySymbol()} ${Number(r.amountBefore).toLocaleString(regional.locale())} -> ${regional.currencySymbol()} ${Number(r.amountAfter).toLocaleString(regional.locale())} (potongan ${regional.currencySymbol()} ${Number(r.discountAmount).toLocaleString(regional.locale())}).` };
   } catch (e) {
     req.session._msg = { type: 'error', text: 'Gagal diskon: ' + e.message };
   }
@@ -2839,7 +2840,7 @@ router.post('/billing/:id/send-pdf-wa', requireAdminSession, async (req, res) =>
     const filename = `Invoice_${inv.id}_${safeName}.pdf`;
     const statusText = inv.status === 'paid' ? 'LUNAS' : 'BELUM BAYAR';
     
-    const caption = `📄 *INVOICE PEMBAYARAN INTERNET*\n\nYth. *${customer.name}*,\nBerikut kami lampirkan dokumen resmi Invoice Pembayaran Internet untuk periode *${periodStr}*.\n\n💰 *Total Tagihan:* Rp ${Number(inv.amount || 0).toLocaleString('id-ID')}\n📌 *Status:* *${statusText}*\n\nTerima kasih telah menggunakan layanan *${settings.company_header || 'OPEN-ISP'}*!`;
+    const caption = `📄 *INVOICE PEMBAYARAN INTERNET*\n\nYth. *${customer.name}*,\nBerikut kami lampirkan dokumen resmi Invoice Pembayaran Internet untuk periode *${periodStr}*.\n\n💰 *Total Tagihan:* ${regional.currencySymbol()} ${Number(inv.amount || 0).toLocaleString(regional.locale())}\n📌 *Status:* *${statusText}*\n\nTerima kasih telah menggunakan layanan *${settings.company_header || 'OPEN-ISP'}*!`;
 
     const waNotify = require('../services/waNotifyService');
     if (false) {
@@ -2951,7 +2952,7 @@ router.post('/billing/pay-bulk', requireAdminSession, express.urlencoded({ exten
           customer.phone,
           customer.name,
           periods,
-          Number(total || 0).toLocaleString('id-ID'),
+          Number(total || 0).toLocaleString(regional.locale()),
           paidBy,
           {
             customerId: customer.id,
@@ -3015,7 +3016,7 @@ router.post('/billing/:id/pay', requireAdminSession, express.urlencoded({ extend
         customer.phone,
         customer.name,
         `${inv.period_month}/${inv.period_year}`,
-        Number(inv.amount || 0).toLocaleString('id-ID'),
+        Number(inv.amount || 0).toLocaleString(regional.locale()),
         paidBy,
         {
           customerId: customer.id,
@@ -3103,7 +3104,7 @@ router.post('/billing/:id/qris-assign', requireAdminSession, (req, res) => {
     if (!chosenAmount) throw new Error('Gagal membuat nominal unik (slot 1-999 penuh).');
 
     update.run(chosenCode, chosenAmount, invId);
-    req.session._msg = { type: 'success', text: `Kode QRIS dibuat: Rp ${Number(chosenAmount).toLocaleString('id-ID')} (kode ${chosenCode}).` };
+    req.session._msg = { type: 'success', text: `Kode QRIS dibuat: ${regional.currencySymbol()} ${Number(chosenAmount).toLocaleString(regional.locale())} (kode ${chosenCode}).` };
   } catch (e) {
     req.session._msg = { type: 'error', text: 'Gagal membuat kode QRIS: ' + e.message };
   }
@@ -3350,16 +3351,16 @@ router.post('/billing/:id/whatsapp', requireAdminSession, async (req, res) => {
     const loginLink = `${baseUrl}/customer/login`;
 
     const comp = company();
-    const defaultAutoBilling = "{Halo|Salam} Bapak/Ibu *{{nama}}*, 🙏\n\nBerikut kami sampaikan rincian tagihan layanan internet Anda:\n\n📋 *RINGKASAN TAGIHAN*\n• ID Pelanggan  : *{{id_pelanggan}}*\n• Paket         : {{paket}}\n• Total Tagihan : *Rp {{tagihan}}*\n• Periode       : {{rincian}}\n\n{Mohon|Silakan} melakukan pembayaran melalui portal pelanggan:\n{{link}}\n\nTerima kasih atas perhatian dan kerja samanya. Semoga harinya menyenangkan. 🙏\n— Admin {{company}}";
+    const defaultAutoBilling = "{Halo|Salam} Bapak/Ibu *{{nama}}*, 🙏\n\nBerikut kami sampaikan rincian tagihan layanan internet Anda:\n\n📋 *RINGKASAN TAGIHAN*\n• ID Pelanggan  : *{{id_pelanggan}}*\n• Paket         : {{paket}}\n• Total Tagihan : *{{moneda}} {{tagihan}}*\n• Periode       : {{rincian}}\n\n{Mohon|Silakan} melakukan pembayaran melalui portal pelanggan:\n{{link}}\n\nTerima kasih atas perhatian dan kerja samanya. Semoga harinya menyenangkan. 🙏\n— Admin {{company}}";
     
-    const defaultQris = `{Halo|Selamat Pagi|Yth.} Pelanggan {{nama}},\n\n{Berikut|Ini adalah} rincian tagihan manual + Kode Bayar QRIS Anda:\n\n📦 *Paket:* {{paket}}\n📅 *Periode:* {{periode}}\n💰 *Nominal:* Rp {{qris_nominal}}\n\n{Silakan scan|Mohon scan} QRIS terlampir untuk melakukan pembayaran otomatis:\n{{qris_qr}}\n\nTerima kasih.`;
+    const defaultQris = `{Halo|Selamat Pagi|Yth.} Pelanggan {{nama}},\n\n{Berikut|Ini adalah} rincian tagihan manual + Kode Bayar QRIS Anda:\n\n📦 *Paket:* {{paket}}\n📅 *Periode:* {{periode}}\n💰 *Nominal:* {{moneda}} {{qris_nominal}}\n\n{Silakan scan|Mohon scan} QRIS terlampir untuk melakukan pembayaran otomatis:\n{{qris_qr}}\n\nTerima kasih.`;
 
     const templateQris = db.getAppSetting('whatsapp_billing_qris_message', defaultQris);
     const template = db.getAppSetting('whatsapp_auto_billing_message', defaultAutoBilling);
 
     const isQrisCase = (qrisAmountUnique > 0 && qrisCode > 0);
     const finalNominal = qrisAmountUnique > 0 ? qrisAmountUnique : totalTagihan;
-    const finalNominalStr = Number(finalNominal).toLocaleString('id-ID');
+    const finalNominalStr = Number(finalNominal).toLocaleString(regional.locale());
     const displayPeriode = summary.isMultiple
       ? `${rincianBulan}\n\n${rincianDetail}`.trim()
       : rincianBulan;
@@ -3501,7 +3502,7 @@ router.post('/tickets/create', requireAdminSession, express.urlencoded({ extende
         const custPhone = cust ? cust.phone : '-';
         const custAddr = cust ? cust.address : '-';
 
-        const _waDigits = String(custPhone || '').replace(/\D/g, '').replace(/^0/, '62');
+        const _waDigits = regional.normalizePhone(custPhone || '');
         const _mapQ = (cust && cust.lat && cust.lng) ? (cust.lat + ',' + cust.lng) : String(custAddr || '');
         const _base = (getSetting('public_base_url', '') || getSetting('app_url', '') || ('http://' + (req.get('host') || ''))).replace(/\/+$/, '');
         const _links = `\n🔗 *Tautan Cepat:*\n` +
@@ -3519,13 +3520,13 @@ router.post('/tickets/create', requireAdminSession, express.urlencoded({ extende
         // Send to assigned technician or broadcast to all active technicians if not assigned
         if (tech && tech.phone) {
           let digits = String(tech.phone).replace(/\D/g, '');
-          if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+          digits = regional.normalizePhone(digits);
           await waNotify.sendText(digits, waMsg);
         } else if (!techId) {
           const technicians = techSvc.getAllTechnicians().filter(t => t.is_active === 1 && t.phone);
           for (const t of technicians) {
             let digits = String(t.phone).replace(/\D/g, '');
-            if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+            digits = regional.normalizePhone(digits);
             await waNotify.sendText(digits, waMsg);
           }
         }
@@ -3561,7 +3562,7 @@ router.post('/tickets/:id/update', requireAdminSession, express.urlencoded({ ext
 
           if (newTech && newTech.phone && updatedTicket) {
             let digits = String(newTech.phone).replace(/\D/g, '');
-            if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+            digits = regional.normalizePhone(digits);
             
             const waMsg = `📌 *PENUGASAN TIKET OLEH ADMIN*\n\n` +
                          `🎫 *ID Tiket:* #${updatedTicket.id}\n` +
@@ -3612,7 +3613,7 @@ router.post('/tickets/:id/update', requireAdminSession, express.urlencoded({ ext
               for (const adminPhone of settings.whatsapp_admin_numbers) {
                 let digits = String(adminPhone || '').replace(/\D/g, '');
                 if (!digits) continue;
-                if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+                digits = regional.normalizePhone(digits);
                 if (seen.has(digits)) continue;
                 seen.add(digits);
                 await waNotify.sendText(digits, adminMsg);
@@ -3908,7 +3909,7 @@ router.get('/reports/export-csv', requireAdminSession, requireSidebarMenuAccess(
     const keluar = q("SELECT COALESCE(SUM(amount),0) t FROM expenses WHERE strftime('%Y', date)=? AND strftime('%m', date)=?", yStr, mStr);
     const L = labaRugi(bruto, keluar, fin);
     csvContent += `Laporan Laba/Rugi ${company()} - Bulan ${mStr}/${filterYear}\n\n`;
-    csvContent += "Keterangan,Nilai (Rp)\n";
+    csvContent += `Keterangan,Nilai (${regional.currencySymbol()})\n`;
     csvContent += `Pemasukan (Bruto),${num(L.bruto)}\nDPP,${num(L.dpp)}\nPPN Keluaran (${fin.ppn}%),${num(L.ppn)}\nPengeluaran,${num(L.keluar)}\nUSO (${fin.uso}%),${num(L.uso)}\nBHP (${fin.bhp}%),${num(L.bhp)}\nLaba Sebelum PPh,${num(L.sebelumPph)}\nPPh Badan (${fin.pph}%),${num(L.pph)}\nLaba Bersih,${num(L.bersih)}\n\n`;
     const invs = db.prepare("SELECT i.paid_at, c.name, i.amount FROM invoices i LEFT JOIN customers c ON c.id=i.customer_id WHERE i.status='paid' AND strftime('%Y', i.paid_at)=? AND strftime('%m', i.paid_at)=? ORDER BY i.paid_at").all(yStr, mStr);
     csvContent += "=== Pemasukan (Invoice Lunas) ===\nTanggal,Pelanggan,Nominal\n";
@@ -3925,7 +3926,7 @@ router.get('/reports/export-csv', requireAdminSession, requireSidebarMenuAccess(
     const keluar = q("SELECT COALESCE(SUM(amount),0) t FROM expenses WHERE strftime('%Y', date)=?", yStr);
     const L = labaRugi(bruto, keluar, fin);
     csvContent += `Laporan Keuangan ${company()} - Tahun ${filterYear}\n\n`;
-    csvContent += "=== RINGKASAN LABA/RUGI ===\nKeterangan,Nilai (Rp)\n";
+    csvContent += `=== RINGKASAN LABA/RUGI ===\nKeterangan,Nilai (${regional.currencySymbol()})\n`;
     csvContent += `Pemasukan (Bruto),${num(L.bruto)}\nDPP,${num(L.dpp)}\nPPN Keluaran (${fin.ppn}%),${num(L.ppn)}\nPengeluaran,${num(L.keluar)}\nUSO (${fin.uso}%),${num(L.uso)}\nBHP (${fin.bhp}%),${num(L.bhp)}\nLaba Sebelum PPh,${num(L.sebelumPph)}\nPPh Badan (${fin.pph}%),${num(L.pph)}\nLaba Bersih,${num(L.bersih)}\n\n`;
     csvContent += "=== DATA PENGELUARAN ===\nTanggal,Kategori,Nominal,Deskripsi\n";
     expenses.forEach(e => { csvContent += `${e.date},"${e.category}",${e.amount},"${(e.description || '').replace(/"/g, '""')}"\n`; });
@@ -4094,7 +4095,7 @@ router.post('/registrations/:id/approve', requireAdminSession, express.urlencode
           '📋 *RINGKASAN TAGIHAN*\n' +
           '• ID Pelanggan  : *' + (cust.customer_code || '-') + '*\n' +
           '• Paket         : ' + (pkg ? pkg.name : (cust.package_name || '-')) + '\n' +
-          '• Total Tagihan : *Rp ' + Number(invRow.amount || 0).toLocaleString('id-ID') + '*\n' +
+          '• Total Tagihan : *' + regional.currencySymbol() + ' ' + Number(invRow.amount || 0).toLocaleString(regional.locale()) + '*\n' +
           '• Periode       : ' + periodStr + '\n\n' +
           'Silakan scan QRIS di atas untuk melakukan pembayaran.\n\n' +
           'Terima kasih.\n— ' + comp;
@@ -4125,7 +4126,7 @@ router.post('/registrations/:id/approve', requireAdminSession, express.urlencode
       }
     } catch (e) { try { logger.error('[RegApprove] staff cred error: ' + e.message); } catch (_) {} }
 
-    req.session._msg = { type: 'success', text: 'Pendaftar ' + cust.name + ' disetujui (aktif) + tagihan pertama dibuat (Rp ' + total.toLocaleString('id-ID') + ', periode ' + pMonth + '/' + pYear + ').' };
+    req.session._msg = { type: 'success', text: 'Pendaftar ' + cust.name + ' disetujui (aktif) + tagihan pertama dibuat (' + regional.currencySymbol() + ' ' + total.toLocaleString(regional.locale()) + ', periode ' + pMonth + '/' + pYear + ').' };
   } catch (e) { req.session._msg = { type: 'error', text: 'Gagal menyetujui: ' + e.message }; }
   res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
 });
@@ -4190,7 +4191,7 @@ router.post('/vouchers-discounts/settings', requireAdminSession, express.urlenco
       pppoe_domain: String(req.body.pppoe_domain || 'sky.id').replace(/^@/, '').trim() || 'sky.id',
       pppoe_default_password: String(req.body.pppoe_default_password || 'openisp').trim() || 'openisp'
     });
-    req.session._msg = { type: 'success', text: 'Biaya pasang disimpan: Rp ' + fee.toLocaleString('id-ID') + '.' };
+    req.session._msg = { type: 'success', text: 'Biaya pasang disimpan: ' + regional.currencySymbol() + ' ' + fee.toLocaleString(regional.locale()) + '.' };
   } catch (e) { req.session._msg = { type: 'error', text: 'Gagal: ' + e.message }; }
   res.redirect('/admin/vouchers-discounts');
 });
@@ -4202,7 +4203,7 @@ function waTemplateDefaults(comp) {
 Ini adalah pengingat sebelum tanggal jatuh tempo/isolir.
 
 📦 *Paket:* {{paket}}
-💰 *Total Tagihan:* Rp {{tagihan}}
+💰 *Total Tagihan:* {{moneda}} {{tagihan}}
 📅 *Periode:* {{rincian}}
 
 Mohon segera melakukan pembayaran melalui portal pelanggan: {{link}}
@@ -4216,7 +4217,7 @@ Berikut rincian tagihan manual + Kode Bayar QRIS Anda:
 
 📦 *Paket:* {{paket}}
 📅 *Periode:* {{periode}}
-💰 *Nominal:* Rp {{qris_nominal}}
+💰 *Nominal:* {{moneda}} {{qris_nominal}}
 
 Silakan scan QRIS berikut untuk melakukan pembayaran otomatis:
 {{qris_qr}}
@@ -4229,7 +4230,7 @@ Dengan hormat, layanan internet Anda untuk sementara kami nonaktifkan karena tag
 
 ID Pelanggan: *{{id_pelanggan}}*
 Paket: {{paket}}
-Total Tagihan: *Rp {{tagihan}}*
+Total Tagihan: *{{moneda}} {{tagihan}}*
 
 Mohon berkenan menyelesaikan pembayaran agar layanan dapat kami aktifkan kembali:
 {{link}}
@@ -4242,7 +4243,7 @@ Yth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),
 Dengan hormat, pembayaran tagihan layanan internet Anda belum kami terima selama *{{bulan_nunggak}} bulan*.
 
 Paket: {{paket}}
-Total Tagihan: Rp {{tagihan}}
+Total Tagihan: {{moneda}} {{tagihan}}
 Periode: {{rincian}}
 
 Mohon berkenan menyelesaikan pembayaran sebelum {{batas}} bulan agar layanan tetap aktif:
@@ -4255,7 +4256,7 @@ Yth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),
 
 Terima kasih, tagihan layanan internet Anda telah kami tandai *LUNAS* secara otomatis.
 
-💵 Nominal: *Rp {{tagihan}}*
+💵 Nominal: *{{moneda}} {{tagihan}}*
 📅 Periode: {{rincian}}
 
 Terima kasih 🙏
@@ -4299,7 +4300,7 @@ router.get('/automation', requireAdminSession, requireSidebarMenuAccess('automat
     'Yth. Pelanggan {{nama}},\n\n' +
     'Ini adalah pengingat sebelum tanggal jatuh tempo/isolir.\n\n' +
     '📦 *Paket:* {{paket}}\n' +
-    '💰 *Total Tagihan:* Rp {{tagihan}}\n' +
+    '💰 *Total Tagihan:* {{moneda}} {{tagihan}}\n' +
     '📅 *Periode:* {{rincian}}\n\n' +
     'Mohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\n' +
     'Terima kasih atas kerja samanya.\n' +
@@ -5713,7 +5714,7 @@ router.get('/vouchers/batches/:id/print', requireAdminSession, (req, res) => {
     const companyName = settings.company_header || company();
     const timeStamp = new Date().toISOString();
     const priceNumber = Number(batch.price || 0);
-    const priceText = priceNumber.toLocaleString('id-ID');
+    const priceText = priceNumber.toLocaleString(regional.locale());
     const validityText = formatValidity(batch.validity);
 
     const rows = (vouchers || []).map((v, i) => {
@@ -5729,7 +5730,7 @@ router.get('/vouchers/batches/:id/print', requireAdminSession, (req, res) => {
         company: escapeHtml(companyName),
         phone: escapeHtml(phone),
         timeStamp: escapeHtml(timeStamp),
-        currency: 'Rp',
+        currency: regional.currencySymbol(),
         price: escapeHtml(String(priceNumber)),
         priceText: escapeHtml(priceText),
         validity: escapeHtml(batch.validity || ''),
@@ -5833,7 +5834,7 @@ body{margin:0;font-family:Arial,sans-serif;color:#0f172a}
         : String(settings.company_phone || '');
       const timeStamp = new Date().toISOString();
       const priceNumber = Number(batch.price || 0);
-      const priceText = priceNumber.toLocaleString('id-ID');
+      const priceText = priceNumber.toLocaleString(regional.locale());
       const validityText = formatValidity(batch.validity);
 
       const parts = [];
@@ -5841,7 +5842,7 @@ body{margin:0;font-family:Arial,sans-serif;color:#0f172a}
         company: escapeHtml(settings.company_header || company()),
         phone: escapeHtml(phone),
         timeStamp: escapeHtml(timeStamp),
-        currency: 'Rp',
+        currency: regional.currencySymbol(),
         validityText: escapeHtml(validityText),
         priceText: escapeHtml(priceText)
       })));
@@ -5858,7 +5859,7 @@ body{margin:0;font-family:Arial,sans-serif;color:#0f172a}
           validityText: escapeHtml(validityText),
           price: escapeHtml(String(priceNumber)),
           priceText: escapeHtml(priceText),
-          currency: 'Rp',
+          currency: regional.currencySymbol(),
           company: escapeHtml(settings.company_header || company()),
           phone: escapeHtml(phone),
           timeStamp: escapeHtml(timeStamp),
@@ -5872,7 +5873,7 @@ body{margin:0;font-family:Arial,sans-serif;color:#0f172a}
         company: escapeHtml(settings.company_header || company()),
         phone: escapeHtml(phone),
         timeStamp: escapeHtml(timeStamp),
-        currency: 'Rp',
+        currency: regional.currencySymbol(),
         validityText: escapeHtml(validityText),
         priceText: escapeHtml(priceText)
       })));
@@ -6513,7 +6514,7 @@ router.get('/whatsapp', requireAdminSession, requireSidebarMenuAccess('whatsapp'
   const fonnteSettings = {
     fonnte_token: getSetting('fonnte_token', ''),
     fonnte_api_url: getSetting('fonnte_api_url', 'https://api.fonnte.com/send'),
-    fonnte_country_code: getSetting('fonnte_country_code', '62')
+    fonnte_country_code: getSetting('fonnte_country_code', regional.phoneCountryCode())
   };
   const gowaSettings = {
     gowa_base_url: getSetting('gowa_base_url', 'http://127.0.0.1:3000'),
@@ -6569,7 +6570,7 @@ router.post('/whatsapp/gateway-settings', requireAdminSession, express.urlencode
       meta_business_phone: String(meta_business_phone || '').trim(),
       fonnte_token: String(fonnte_token || '').trim(),
       fonnte_api_url: String(fonnte_api_url || 'https://api.fonnte.com/send').trim(),
-      fonnte_country_code: String(fonnte_country_code || '62').trim(),
+      fonnte_country_code: String(fonnte_country_code || regional.phoneCountryCode()).trim(),
       gowa_base_url: String(gowa_base_url || 'http://127.0.0.1:3000').trim(),
       gowa_username: String(gowa_username || '').trim(),
       gowa_password: String(gowa_password || '').trim(),
@@ -6663,18 +6664,18 @@ router.post('/api/whatsapp/send-direct', requireAdminSession, express.json(), as
 
 router.get('/whatsapp/templates', requireAdminSession, requireSidebarMenuAccess('whatsapp'), async (req, res) => {
   const comp = company();
-  const defaultAutoBilling = `Yth. Pelanggan {{nama}},\n\nIni adalah pengingat sebelum tanggal jatuh tempo/isolir.\n\n📦 *Paket:* {{paket}}\n💰 *Total Tagihan:* Rp {{tagihan}}\n📅 *Periode:* {{rincian}}\n\nMohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\nTerima kasih atas kerja samanya.\nSalam,\nAdmin ${comp}`;
+  const defaultAutoBilling = `Yth. Pelanggan {{nama}},\n\nIni adalah pengingat sebelum tanggal jatuh tempo/isolir.\n\n📦 *Paket:* {{paket}}\n💰 *Total Tagihan:* {{moneda}} {{tagihan}}\n📅 *Periode:* {{rincian}}\n\nMohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\nTerima kasih atas kerja samanya.\nSalam,\nAdmin ${comp}`;
   
-  const defaultQris = `Yth. Pelanggan {{nama}},\n\nBerikut rincian tagihan manual + Kode Bayar QRIS Anda:\n\n📦 *Paket:* {{paket}}\n📅 *Periode:* {{periode}}\n💰 *Nominal:* Rp {{qris_nominal}}\n\nSilakan scan QRIS berikut untuk melakukan pembayaran otomatis:\n{{qris_qr}}\n\nTerima kasih.`;
+  const defaultQris = `Yth. Pelanggan {{nama}},\n\nBerikut rincian tagihan manual + Kode Bayar QRIS Anda:\n\n📦 *Paket:* {{paket}}\n📅 *Periode:* {{periode}}\n💰 *Nominal:* {{moneda}} {{qris_nominal}}\n\nSilakan scan QRIS berikut untuk melakukan pembayaran otomatis:\n{{qris_qr}}\n\nTerima kasih.`;
 
   const defaultSuccess = whatsappService.DEFAULT_PAYMENT_SUCCESS_TEMPLATE;
 
-  const defaultIsolir = "{Halo|Salam} Bapak/Ibu *{{nama}}*, 🙏\n\nDengan hormat, layanan internet Anda untuk sementara kami nonaktifkan karena tagihan berikut belum kami terima:\n\n📋 *RINGKASAN TAGIHAN*\n• ID Pelanggan  : *{{id_pelanggan}}*\n• Paket         : {{paket}}\n• Total Tagihan : *Rp {{tagihan}}*\n\nKami memahami apabila ada kendala. Mohon berkenan menyelesaikan pembayaran agar layanan dapat kami aktifkan kembali:\n{{link}}\n\nApabila membutuhkan bantuan, silakan menghubungi kami. Terima kasih atas perhatian dan kerja samanya. 🙏\n— {{company}}";
+  const defaultIsolir = "{Halo|Salam} Bapak/Ibu *{{nama}}*, 🙏\n\nDengan hormat, layanan internet Anda untuk sementara kami nonaktifkan karena tagihan berikut belum kami terima:\n\n📋 *RINGKASAN TAGIHAN*\n• ID Pelanggan  : *{{id_pelanggan}}*\n• Paket         : {{paket}}\n• Total Tagihan : *{{moneda}} {{tagihan}}*\n\nKami memahami apabila ada kendala. Mohon berkenan menyelesaikan pembayaran agar layanan dapat kami aktifkan kembali:\n{{link}}\n\nApabila membutuhkan bantuan, silakan menghubungi kami. Terima kasih atas perhatian dan kerja samanya. 🙏\n— {{company}}";
 
-  const defaultAutolunas = '✅ *Tagihan LUNAS*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nTerima kasih, tagihan layanan internet Anda telah kami tandai *LUNAS* secara otomatis.\n\n💵 Nominal: *Rp {{tagihan}}*\n📅 Periode: {{rincian}}\n\nPesan ini kami kirim sebagai validasi & pencatatan. Terima kasih 🙏\n— {{company}}';
-  const defaultDeactivated = '⚠️ *Layanan Dinonaktifkan*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nLayanan internet Anda untuk sementara kami *nonaktifkan* karena tagihan belum diselesaikan selama *{{bulan_nunggak}} bulan berturut-turut*.\n\n💵 Total Tagihan: *Rp {{tagihan}}*\n\nApabila bulan depan masih belum dibayar, akun Anda akan *DIHAPUS OTOMATIS* dan untuk berlangganan kembali harus *mendaftar dari awal*.\n\nBayar: {{link}}\n— {{company}}';
+  const defaultAutolunas = '✅ *Tagihan LUNAS*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nTerima kasih, tagihan layanan internet Anda telah kami tandai *LUNAS* secara otomatis.\n\n💵 Nominal: *{{moneda}} {{tagihan}}*\n📅 Periode: {{rincian}}\n\nPesan ini kami kirim sebagai validasi & pencatatan. Terima kasih 🙏\n— {{company}}';
+  const defaultDeactivated = '⚠️ *Layanan Dinonaktifkan*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nLayanan internet Anda untuk sementara kami *nonaktifkan* karena tagihan belum diselesaikan selama *{{bulan_nunggak}} bulan berturut-turut*.\n\n💵 Total Tagihan: *{{moneda}} {{tagihan}}*\n\nApabila bulan depan masih belum dibayar, akun Anda akan *DIHAPUS OTOMATIS* dan untuk berlangganan kembali harus *mendaftar dari awal*.\n\nBayar: {{link}}\n— {{company}}';
   const defaultDeleted = '🗑️ *Akun Dihapus*\n\nYth. *{{nama}}*,\n\nAkun layanan internet Anda telah *DIHAPUS OTOMATIS* karena tagihan tidak dibayar *{{bulan_nunggak}} bulan berturut-turut*.\n\nUntuk berlangganan kembali, silakan *mendaftar dari awal*. Terima kasih.\n— {{company}}';
-  const defaultArrears = "*Pemberitahuan Tagihan Internet*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nSemoga Bapak/Ibu selalu dalam keadaan sehat dan baik. 🙏\n\nDengan hormat, kami menginformasikan bahwa pembayaran tagihan layanan internet Anda belum kami terima selama *{{bulan_nunggak}} bulan* berjalan.\n\n📦 Paket: {{paket}}\n💰 Total Tagihan: Rp {{tagihan}}\n📅 Periode: {{rincian}}\n\nKami memahami apabila ada kendala. Mohon berkenan menyelesaikan pembayaran agar layanan tetap dapat digunakan dengan nyaman. Apabila hingga {{batas}} bulan tagihan belum diselesaikan, dengan berat hati layanan akan kami nonaktifkan sementara, dan untuk mengaktifkannya kembali diperlukan pendaftaran ulang.\n\nPembayaran dapat dilakukan melalui portal pelanggan:\n{{link}}\n\nApabila ada pertanyaan atau membutuhkan bantuan, silakan menghubungi kami. Terima kasih atas perhatian dan kerja samanya. 🙏\n— {{company}}";
+  const defaultArrears = "*Pemberitahuan Tagihan Internet*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nSemoga Bapak/Ibu selalu dalam keadaan sehat dan baik. 🙏\n\nDengan hormat, kami menginformasikan bahwa pembayaran tagihan layanan internet Anda belum kami terima selama *{{bulan_nunggak}} bulan* berjalan.\n\n📦 Paket: {{paket}}\n💰 Total Tagihan: {{moneda}} {{tagihan}}\n📅 Periode: {{rincian}}\n\nKami memahami apabila ada kendala. Mohon berkenan menyelesaikan pembayaran agar layanan tetap dapat digunakan dengan nyaman. Apabila hingga {{batas}} bulan tagihan belum diselesaikan, dengan berat hati layanan akan kami nonaktifkan sementara, dan untuk mengaktifkannya kembali diperlukan pendaftaran ulang.\n\nPembayaran dapat dilakukan melalui portal pelanggan:\n{{link}}\n\nApabila ada pertanyaan atau membutuhkan bantuan, silakan menghubungi kami. Terima kasih atas perhatian dan kerja samanya. 🙏\n— {{company}}";
 
   const templates = {
     whatsapp_auto_billing_message: db.getAppSetting('whatsapp_auto_billing_message', defaultAutoBilling),
@@ -6728,7 +6729,7 @@ router.post('/whatsapp/templates', requireAdminSession, express.urlencoded({ ext
 function buildWaPreviewMessages() {
   const comp = company();
   const base = (getSetting('app_url', '') || getSetting('public_base_url', '') || 'http://localhost:3001').replace(/\/+$/, '');
-  const nowTxt = new Date().toLocaleString('id-ID', { timeZone: getSetting('timezone', 'Asia/Jakarta') });
+  const nowTxt = new Date().toLocaleString(regional.locale(), { timeZone: getSetting('timezone', 'America/Asuncion') });
   const sample = { nama: 'Budi Santoso', id: 'SKY-12345', paket: 'Home 20 Mbps', tagihan: '250.000', periode: '10/2026', link: base + '/customer', otp: '482913', ssid: 'OPEN-ISP-BUDI', password: 'wifi-ku-2026', waktu: nowTxt, bulan: '3', batas: '3' };
   const rv = (t) => String(t || '')
     .replace(/{{nama}}/gi, sample.nama).replace(/{{id_pelanggan}}/gi, sample.id).replace(/{{paket}}/gi, sample.paket)
@@ -6740,11 +6741,11 @@ function buildWaPreviewMessages() {
     .replace(/{{username}}/gi, 'budi_pppoe').replace(/{{pppoe}}/gi, 'budi_pppoe').replace(/{{otp}}/gi, sample.otp);
   const g = (k, def) => db.getAppSetting(k, def) || def;
   const messages = [
-    { title: 'Pengingat Tagihan (otomatis H-N)', key: 'whatsapp_auto_billing_message', text: rv(g('whatsapp_auto_billing_message', 'Yth. {{nama}}, tagihan Rp {{tagihan}} periode {{rincian}}. Bayar: {{link}}')) },
-    { title: 'Tagihan QRIS (dengan gambar QR)', key: 'whatsapp_billing_qris_message', text: rv(g('whatsapp_billing_qris_message', 'Yth. {{nama}}, tagihan Rp {{tagihan}} periode {{rincian}}. Scan QRIS terlampir.')) + '\n\n[gambar QRIS dinamis]' },
-    { title: 'Pembayaran Sukses / LUNAS', key: 'whatsapp_payment_success_message', text: rv(g('whatsapp_payment_success_message', 'PEMBAYARAN LUNAS\n\nYth. {{nama}}, pembayaran tagihan periode {{periode}} sebesar Rp {{total}} telah kami terima.\n\nNo. Invoice: #INV-{{no_invoice}}\nMetode: {{metode}}\nWaktu: {{waktu}}\n\nInvoice PDF: {{link_pdf}}\nTerima kasih.')) },
-    { title: 'Pemberitahuan Isolir', key: 'whatsapp_isolir_message', text: rv(g('whatsapp_isolir_message', 'Layanan internet Anda ditangguhkan karena tagihan Rp {{tagihan}} belum dibayar.')) },
-    { title: 'Peringatan Tunggakan', key: 'whatsapp_arrears_warning_message', text: rv(g('whatsapp_arrears_warning_message', 'Tagihan Rp {{tagihan}} menunggak {{bulan_nunggak}} bulan.')) },
+    { title: 'Pengingat Tagihan (otomatis H-N)', key: 'whatsapp_auto_billing_message', text: rv(g('whatsapp_auto_billing_message', 'Yth. {{nama}}, tagihan {{moneda}} {{tagihan}} periode {{rincian}}. Bayar: {{link}}')) },
+    { title: 'Tagihan QRIS (dengan gambar QR)', key: 'whatsapp_billing_qris_message', text: rv(g('whatsapp_billing_qris_message', 'Yth. {{nama}}, tagihan {{moneda}} {{tagihan}} periode {{rincian}}. Scan QRIS terlampir.')) + '\n\n[gambar QRIS dinamis]' },
+    { title: 'Pembayaran Sukses / LUNAS', key: 'whatsapp_payment_success_message', text: rv(g('whatsapp_payment_success_message', 'PEMBAYARAN LUNAS\n\nYth. {{nama}}, pembayaran tagihan periode {{periode}} sebesar {{moneda}} {{total}} telah kami terima.\n\nNo. Invoice: #INV-{{no_invoice}}\nMetode: {{metode}}\nWaktu: {{waktu}}\n\nInvoice PDF: {{link_pdf}}\nTerima kasih.')) },
+    { title: 'Pemberitahuan Isolir', key: 'whatsapp_isolir_message', text: rv(g('whatsapp_isolir_message', 'Layanan internet Anda ditangguhkan karena tagihan {{moneda}} {{tagihan}} belum dibayar.')) },
+    { title: 'Peringatan Tunggakan', key: 'whatsapp_arrears_warning_message', text: rv(g('whatsapp_arrears_warning_message', 'Tagihan {{moneda}} {{tagihan}} menunggak {{bulan_nunggak}} bulan.')) },
     { title: 'Auto-Lunas (nominal 0 / auto_isolate=0)', key: 'whatsapp_autolunas_message', text: rv(g('whatsapp_autolunas_message', 'Tagihan LUNAS otomatis.')) },
     { title: 'Auto-Nonaktif (menunggak N bulan)', key: 'whatsapp_deactivated_message', text: rv(g('whatsapp_deactivated_message', 'Layanan dinonaktifkan.')) },
     { title: 'Auto-Hapus (bulan ke-N)', key: 'whatsapp_deleted_message', text: rv(g('whatsapp_deleted_message', 'Akun dihapus.')) },
@@ -6781,7 +6782,7 @@ router.get('/whatsapp/broadcast', requireAdminSession, requireSidebarMenuAccess(
     `Yth. Pelanggan {{nama}},\n\n` +
     `Ini adalah pengingat sebelum tanggal jatuh tempo/isolir.\n\n` +
     `📦 *Paket:* {{paket}}\n` +
-    `💰 *Total Tagihan:* Rp {{tagihan}}\n` +
+    `💰 *Total Tagihan:* {{moneda}} {{tagihan}}\n` +
     `📅 *Periode:* {{rincian}}\n\n` +
     `Mohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\n` +
     `Terima kasih atas kerja samanya.\n` +
@@ -7895,21 +7896,21 @@ router.post('/payroll/slip/:id/send-wa', requireAdmin, async (req, res) => {
       `📅 *Periode:* ${monthNames[slip.period_month]} ${slip.period_year}\n` +
       `🏢 *Status:* ${slip.status.toUpperCase()}\n\n` +
       `*PENDAPATAN:*\n` +
-      `- Gaji Pokok: Rp ${slip.base_salary.toLocaleString('id-ID')}\n` +
-      (slip.transport_allowance ? `- Tunj. Transport: Rp ${slip.transport_allowance.toLocaleString('id-ID')}\n` : '') +
-      (slip.meal_allowance ? `- Tunj. Makan: Rp ${slip.meal_allowance.toLocaleString('id-ID')}\n` : '') +
-      (slip.phone_allowance ? `- Tunj. Pulsa: Rp ${slip.phone_allowance.toLocaleString('id-ID')}\n` : '') +
-      (slip.other_allowance ? `- Tunj. Lain: Rp ${slip.other_allowance.toLocaleString('id-ID')}\n` : '') +
-      (slip.ticket_bonus ? `- Bonus Tiket: +Rp ${slip.ticket_bonus.toLocaleString('id-ID')}\n` : '') +
-      (slip.collection_commission ? `- Komisi Tagihan: +Rp ${slip.collection_commission.toLocaleString('id-ID')}\n` : '') +
-      (slip.overtime_bonus ? `- Lembur: +Rp ${slip.overtime_bonus.toLocaleString('id-ID')}\n` : '') +
-      `*Total Pendapatan: Rp ${slip.gross_salary.toLocaleString('id-ID')}*\n\n` +
+      `- Gaji Pokok: ${regional.currencySymbol()} ${slip.base_salary.toLocaleString(regional.locale())}\n` +
+      (slip.transport_allowance ? `- Tunj. Transport: ${regional.currencySymbol()} ${slip.transport_allowance.toLocaleString(regional.locale())}\n` : '') +
+      (slip.meal_allowance ? `- Tunj. Makan: ${regional.currencySymbol()} ${slip.meal_allowance.toLocaleString(regional.locale())}\n` : '') +
+      (slip.phone_allowance ? `- Tunj. Pulsa: ${regional.currencySymbol()} ${slip.phone_allowance.toLocaleString(regional.locale())}\n` : '') +
+      (slip.other_allowance ? `- Tunj. Lain: ${regional.currencySymbol()} ${slip.other_allowance.toLocaleString(regional.locale())}\n` : '') +
+      (slip.ticket_bonus ? `- Bonus Tiket: +${regional.currencySymbol()} ${slip.ticket_bonus.toLocaleString(regional.locale())}\n` : '') +
+      (slip.collection_commission ? `- Komisi Tagihan: +${regional.currencySymbol()} ${slip.collection_commission.toLocaleString(regional.locale())}\n` : '') +
+      (slip.overtime_bonus ? `- Lembur: +${regional.currencySymbol()} ${slip.overtime_bonus.toLocaleString(regional.locale())}\n` : '') +
+      `*Total Pendapatan: ${regional.currencySymbol()} ${slip.gross_salary.toLocaleString(regional.locale())}*\n\n` +
       `*POTONGAN:*\n` +
-      (slip.absence_deduction ? `- Potongan Absen: -Rp ${slip.absence_deduction.toLocaleString('id-ID')}\n` : '') +
-      (slip.late_deduction ? `- Potongan Terlambat: -Rp ${slip.late_deduction.toLocaleString('id-ID')}\n` : '') +
-      (slip.other_deduction ? `- Potongan Lain: -Rp ${slip.other_deduction.toLocaleString('id-ID')}\n` : '') +
-      `*Total Potongan: Rp ${slip.total_deductions.toLocaleString('id-ID')}*\n\n` +
-      `💰 *GAJI BERSIH: Rp ${slip.net_salary.toLocaleString('id-ID')}*\n\n` +
+      (slip.absence_deduction ? `- Potongan Absen: -${regional.currencySymbol()} ${slip.absence_deduction.toLocaleString(regional.locale())}\n` : '') +
+      (slip.late_deduction ? `- Potongan Terlambat: -${regional.currencySymbol()} ${slip.late_deduction.toLocaleString(regional.locale())}\n` : '') +
+      (slip.other_deduction ? `- Potongan Lain: -${regional.currencySymbol()} ${slip.other_deduction.toLocaleString(regional.locale())}\n` : '') +
+      `*Total Potongan: ${regional.currencySymbol()} ${slip.total_deductions.toLocaleString(regional.locale())}*\n\n` +
+      `💰 *GAJI BERSIH: ${regional.currencySymbol()} ${slip.net_salary.toLocaleString(regional.locale())}*\n\n` +
       `Terima kasih atas kerja keras Anda! 🙏`;
 
     await waNotify.sendText(phone, msg);

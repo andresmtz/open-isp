@@ -93,7 +93,7 @@
 
           <div class="iso-amt-box">
             <div class="l"><%= t('donate.total_transfer','Total Nominal Transfer (beserta kode unik)') %></div>
-            <div class="v" id="displayAmount">Rp 50.000</div>
+            <div class="v" id="displayAmount"><%= APP_CUR %> 50.000</div>
             <div id="uniqueBadgeContainer" style="display:none"><span class="iso-unique" id="uniqueBadge"><%= t('donate.unique_incl','Termasuk Kode Unik') %></span></div>
           </div>
 
@@ -218,7 +218,7 @@
     document.getElementById('inputAmount').value = amt;
     document.querySelectorAll('.preset-btn').forEach(function(btn){
       btn.classList.remove('active');
-      if (btn.textContent.trim() === amt.toLocaleString('id-ID')) btn.classList.add('active');
+      if (btn.textContent.trim() === amt.toLocaleString(APP_LOCALE)) btn.classList.add('active');
     });
     generateQris();
   }
@@ -237,7 +237,7 @@
       var data = await res.json();
       if (data.success && data.orderId) {
         currentOrderId = data.orderId; currentAmount = data.amountUnique || amt;
-        document.getElementById('displayAmount').textContent = 'Rp ' + currentAmount.toLocaleString('id-ID');
+        document.getElementById('displayAmount').textContent = APP_CUR + ' ' + currentAmount.toLocaleString(APP_LOCALE);
         updateAltAmounts();
         if (data.uniqueCode) { document.getElementById('uniqueBadgeContainer').style.display = 'block'; document.getElementById('uniqueBadge').textContent = '<%= t('donate.unique_code','Kode Unik: +') %>' + data.uniqueCode; }
         var img = document.getElementById('qrImage');
@@ -248,7 +248,7 @@
   }
   function fallbackGenerate(amt) {
     currentAmount = Math.max(1000, amt);
-    document.getElementById('displayAmount').textContent = 'Rp ' + currentAmount.toLocaleString('id-ID');
+    document.getElementById('displayAmount').textContent = APP_CUR + ' ' + currentAmount.toLocaleString(APP_LOCALE);
     updateAltAmounts();
     document.getElementById('qrImage').src = '/qris/static.jpg?amount=' + currentAmount + '&t=' + Date.now();
   }
@@ -277,7 +277,7 @@
     }
     var ph = document.getElementById('activationPlaceholder'); if (ph) ph.style.display = 'none';
     var card = document.getElementById('activationCard'); if (card) { card.style.display = 'block'; card.scrollIntoView({ behavior:'smooth', block:'center' }); }
-    document.getElementById('modalMsg').innerHTML = 'Alhamdulillah, donasi dari <strong>' + (data.donorName || 'Sahabat') + '</strong> sebesar <strong>Rp ' + Number(currentAmount).toLocaleString('id-ID') + '</strong> telah diverifikasi.<br><span style="color:var(--success);font-weight:700"><i class="bi bi-whatsapp"></i> <%= t('donate.notif_wa','Notifikasi & kode aktivasi dikirim ke WhatsApp Anda!') %></span>';
+    document.getElementById('modalMsg').innerHTML = 'Alhamdulillah, donasi dari <strong>' + (data.donorName || 'Sahabat') + '</strong> sebesar <strong>' + APP_CUR + ' ' + Number(currentAmount).toLocaleString(APP_LOCALE) + '</strong> telah diverifikasi.<br><span style="color:var(--success);font-weight:700"><i class="bi bi-whatsapp"></i> <%= t('donate.notif_wa','Notifikasi & kode aktivasi dikirim ke WhatsApp Anda!') %></span>';
     document.getElementById('successModal').classList.add('active');
   }
   function handleQrError() { document.getElementById('qrImage').src = '/qris/static.jpg?t=' + Date.now(); }
@@ -285,7 +285,7 @@
     var el = document.getElementById('altMethods');
     if (!el) return;
     el.style.display = 'block';
-    var txt = 'Rp ' + Number(currentAmount || 0).toLocaleString('id-ID');
+    var txt = APP_CUR + ' ' + Number(currentAmount || 0).toLocaleString(APP_LOCALE);
     var b = document.getElementById('bankAmountText'); if (b) b.textContent = txt;
     var e = document.getElementById('ewalletAmountText'); if (e) e.textContent = txt;
   }
@@ -294,8 +294,8 @@
     catch (e) { var ta = document.createElement('textarea'); ta.value = String(text); document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('Disalin: ' + text); }
   };
   async function copyNominal() {
-    try { await navigator.clipboard.writeText(String(currentAmount)); alert('Nominal Rp ' + currentAmount.toLocaleString('id-ID') + ' disalin!'); }
-    catch (e) { var ta=document.createElement('textarea'); ta.value=String(currentAmount); document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('Nominal Rp ' + currentAmount.toLocaleString('id-ID') + ' disalin!'); }
+    try { await navigator.clipboard.writeText(String(currentAmount)); alert('Nominal ' + APP_CUR + ' ' + currentAmount.toLocaleString(APP_LOCALE) + ' disalin!'); }
+    catch (e) { var ta=document.createElement('textarea'); ta.value=String(currentAmount); document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('Nominal ' + APP_CUR + ' ' + currentAmount.toLocaleString(APP_LOCALE) + ' disalin!'); }
   }
   async function copyActivationCode() {
     var code = (document.getElementById('activationCode') ? document.getElementById('activationCode').textContent.trim() : '') || '';

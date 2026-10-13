@@ -10,6 +10,7 @@ const db = require('../config/database');
 const monitoringSvc = require('./monitoringService');
 const oltSvc = require('./oltService');
 const ticketSvc = require('./ticketService');
+const regional = require('../config/regional');
 
 let bot = null;
 
@@ -340,7 +341,7 @@ function initTelegram() {
       res += `👥 Pelanggan: ${stats.total}\n`;
       res += `✅ Aktif: ${stats.active}\n`;
       res += `🚫 Terisolir: ${stats.suspended}\n\n`;
-      res += `💰 Pendapatan Bulan Ini: Rp ${billing.thisMonth.toLocaleString('id-ID')}\n`;
+      res += `💰 Pendapatan Bulan Ini: ${regional.currencySymbol()} ${billing.thisMonth.toLocaleString(regional.locale())}\n`;
       res += `⏳ Belum Dibayar: ${billing.unpaidCount} Tagihan`;
       
       bot.sendMessage(chatId, res, { 
@@ -536,7 +537,7 @@ function initTelegram() {
       let txt = `*⏳ TAGIHAN BELUM BAYAR (${invoices.length})*\n\n`;
       invoices.slice(0, 15).forEach(i => {
         const c = customerSvc.getCustomerById(i.customer_id);
-        txt += `• ${c ? c.name : 'Unknown'} - Rp ${i.amount.toLocaleString('id-ID')}\n`;
+        txt += `• ${c ? c.name : 'Unknown'} - ${regional.currencySymbol()} ${i.amount.toLocaleString(regional.locale())}\n`;
       });
       if (invoices.length > 15) txt += `\n_...dan ${invoices.length - 15} lainnya._`;
       bot.sendMessage(chatId, txt, { parse_mode: 'Markdown' });
@@ -549,7 +550,7 @@ function initTelegram() {
         const count = stats.count || 0;
         
         let txt = `*📈 PENDAPATAN HARI INI*\n\n`;
-        txt += `💰 Total: *Rp ${total.toLocaleString('id-ID')}*\n`;
+        txt += `💰 Total: *${regional.currencySymbol()} ${total.toLocaleString(regional.locale())}*\n`;
         txt += `🧾 Jumlah: ${count} Transaksi\n\n`;
         txt += `_Data berdasarkan pembayaran yang diverifikasi hari ini (Waktu Lokal)._`;
         bot.sendMessage(chatId, txt, { parse_mode: 'Markdown' });
@@ -573,7 +574,7 @@ function initTelegram() {
         filtered.forEach((p, index) => {
           const meta = parseMikhmon(p.onLogin);
           if (index % 2 === 0) buttons.push([]);
-          buttons[buttons.length - 1].push({ text: `🎫 ${p.name} (Rp ${meta.price})`, callback_data: `vouch_gen:${p.name}` });
+          buttons[buttons.length - 1].push({ text: `🎫 ${p.name} (${regional.currencySymbol()} ${meta.price})`, callback_data: `vouch_gen:${p.name}` });
         });
         buttons.push([{ text: '⬅️ Kembali', callback_data: 'menu_vouch' }]);
         
@@ -609,7 +610,7 @@ function initTelegram() {
         
         let res = `*🎫 VOUCHER BERHASIL (INSTAN)*\n\n`;
         res += `🎫 KODE VOUCHER: \`${pin}\`\n`;
-        res += `💰 Harga: Rp ${meta.price}\n`;
+        res += `💰 Harga: ${regional.currencySymbol()} ${meta.price}\n`;
         res += `⏳ Durasi: ${meta.validity}\n`;
         res += `📦 Paket: ${profileName}\n`;
         res += `\n_Silakan masukkan kode di atas pada halaman login hotspot._`;
@@ -739,8 +740,8 @@ function initTelegram() {
   function tgTunggakanText() {
     const row = db.prepare("SELECT COUNT(*) c, COALESCE(SUM(amount),0) s FROM invoices WHERE status='unpaid'").get();
     const top = db.prepare("SELECT c.name, COALESCE(c.customer_code,'-') code, SUM(i.amount) t FROM invoices i JOIN customers c ON c.id=i.customer_id WHERE i.status='unpaid' GROUP BY i.customer_id ORDER BY t DESC LIMIT 8").all();
-    let t = `💰 *TUNGGAKAN*\n\nTotal: *${row.c} tagihan*\nNominal: *Rp ${Number(row.s).toLocaleString('id-ID')}*\n`;
-    if (top.length) { t += `\n*Top ${top.length}:*\n`; top.forEach((r, i) => { t += `${i + 1}. ${r.name} (${r.code}) — Rp ${Number(r.t).toLocaleString('id-ID')}\n`; }); }
+    let t = `💰 *TUNGGAKAN*\n\nTotal: *${row.c} tagihan*\nNominal: *${regional.currencySymbol()} ${Number(row.s).toLocaleString(regional.locale())}*\n`;
+    if (top.length) { t += `\n*Top ${top.length}:*\n`; top.forEach((r, i) => { t += `${i + 1}. ${r.name} (${r.code}) — ${regional.currencySymbol()} ${Number(r.t).toLocaleString(regional.locale())}\n`; }); }
     return t;
   }
 
@@ -815,7 +816,7 @@ function initTelegram() {
     const today = Number((tr && tr.total != null) ? tr.total : (tr || 0)) || 0;
     const stats = billingSvc.getDashboardStats() || {};
     const month = Number(stats.thisMonth || 0);
-    return `💰 *PENDAPATAN*\n\n📅 Hari ini: *Rp ${today.toLocaleString('id-ID')}*\n🗓️ Bulan ini: *Rp ${month.toLocaleString('id-ID')}*\n⏳ Belum dibayar: *${stats.unpaidCount || 0} tagihan*\n`;
+    return `💰 *PENDAPATAN*\n\n📅 Hari ini: *${regional.currencySymbol()} ${today.toLocaleString(regional.locale())}*\n🗓️ Bulan ini: *${regional.currencySymbol()} ${month.toLocaleString(regional.locale())}*\n⏳ Belum dibayar: *${stats.unpaidCount || 0} tagihan*\n`;
   }
   bot.onText(/\/(pendapatan|kas|revenue)/i, async (msg) => {
     if (!isAdmin(msg)) return;
@@ -848,7 +849,7 @@ function initTelegram() {
     const chatId = msg.chat.id;
     try {
       const stats = billingSvc.getDashboardStats();
-      const formatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
+      const formatter = new Intl.NumberFormat(regional.locale(), { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
       let res = `💰 *RINGKASAN BILLING*\n\n` +
         `📈 *Total Pendapatan:* ${formatter.format(stats.totalRevenue)}\n` +
         `📅 *Bulan Ini:* ${formatter.format(stats.thisMonth)}\n` +
@@ -917,7 +918,7 @@ function initTelegram() {
       billingSvc.markAsPaid(targetInvId, 'Telegram Bot Admin', 'Paid via Telegram Command');
 
       const customer = customerSvc.getCustomerById(targetInv.customer_id);
-      const formatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
+      const formatter = new Intl.NumberFormat(regional.locale(), { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
       const customerName = String(targetInv.customer_name || customer?.name || targetInv.customer_name || '-');
       const notifyTag = customer?.genieacs_tag || customer?.pppoe_username || customer?.phone || targetInv.customer_phone || targetInv.genieacs_tag || '';
       

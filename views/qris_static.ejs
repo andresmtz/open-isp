@@ -76,7 +76,7 @@
       <!-- Nominal (tampil untuk semua metode) -->
       <div class="iso-amt-box" style="text-align:center;margin-bottom:14px">
         <div class="l">Nominal yang harus dibayar (WAJIB tepat)</div>
-        <div class="v">Rp <%= Number(amountUnique || 0).toLocaleString('id-ID') %></div>
+        <div class="v"><%= APP_CUR %> <%= Number(amountUnique || 0).toLocaleString(APP_LOCALE) %></div>
         <% if (uniqueCode) { %><div class="iso-unique">Kode unik <span class="mono"><%= String(uniqueCode).padStart(3, '0') %></span></div><% } %>
         <div class="iso-actions" style="margin-top:12px">
           <button class="iso-btn ghost" type="button" id="copyAmountBtn"><i class="bi bi-clipboard"></i> Salin Nominal</button>
@@ -106,7 +106,7 @@
       <div class="pay-panel <%= defaultMethod === 'bank' ? 'active' : '' %>" data-panel="bank">
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px">
           <div style="font-weight:700"><i class="bi bi-bank" style="color:var(--primary)"></i> Transfer Bank</div>
-          <div class="muted" style="font-size:12.5px;margin-top:3px">Transfer <b>tepat</b> sebesar <b>Rp <%= Number(amountUnique || 0).toLocaleString('id-ID') %></b> (sudah termasuk kode unik) ke salah satu rekening:</div>
+          <div class="muted" style="font-size:12.5px;margin-top:3px">Transfer <b>tepat</b> sebesar <b><%= APP_CUR %> <%= Number(amountUnique || 0).toLocaleString(APP_LOCALE) %></b> (sudah termasuk kode unik) ke salah satu rekening:</div>
           <% bankAccounts.forEach(function(a){ %>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px">
             <div>
@@ -126,7 +126,7 @@
       <div class="pay-panel <%= defaultMethod === 'ewallet' ? 'active' : '' %>" data-panel="ewallet">
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px">
           <div style="font-weight:700"><i class="bi bi-phone" style="color:var(--primary)"></i> E-Wallet</div>
-          <div class="muted" style="font-size:12.5px;margin-top:3px">Kirim <b>tepat</b> sebesar <b>Rp <%= Number(amountUnique || 0).toLocaleString('id-ID') %></b> ke salah satu e-wallet:</div>
+          <div class="muted" style="font-size:12.5px;margin-top:3px">Kirim <b>tepat</b> sebesar <b><%= APP_CUR %> <%= Number(amountUnique || 0).toLocaleString(APP_LOCALE) %></b> ke salah satu e-wallet:</div>
           <% ewalletAccounts.forEach(function(a){ %>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px">
             <div>
@@ -167,7 +167,7 @@
             isVoucher ? 'Konfirmasi pembayaran Voucher' : 'Konfirmasi pembayaran',
             `${refPrefix}-${invoiceId}${periodText ? ' • ' + periodText : ''}`,
             `Nama: ${customerName || (isVoucher ? 'Pembeli Voucher' : 'Pelanggan')}`,
-            `Nominal: Rp ${Number(amountUnique || 0).toLocaleString('id-ID')} (kode ${String(uniqueCode || 0).padStart(3, '0')})`,
+            `Nominal: ${APP_CUR} ${Number(amountUnique || 0).toLocaleString(APP_LOCALE)} (kode ${String(uniqueCode || 0).padStart(3, '0')})`,
             proofUrl ? `Bukti: ${proofUrl}` : 'Bukti: (sudah diupload / akan dikirim)',
           ];
           const waLink = adminWa ? `https://wa.me/${adminWa}?text=${encodeURIComponent(msgLines.join('\n'))}` : '';

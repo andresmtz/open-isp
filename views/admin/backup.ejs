@@ -166,7 +166,7 @@
                   <td class="num"><%= backup.sizeKB %> KB</td>
                   <td>
                     <% if (backup.createdDate) { %>
-                      <%= backup.createdDate.toLocaleString('id-ID', { 
+                      <%= backup.createdDate.toLocaleString(APP_LOCALE, { 
                         year: 'numeric', 
                         month: 'short', 
                         day: 'numeric',

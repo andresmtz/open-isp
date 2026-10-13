@@ -785,7 +785,7 @@ function radiusOnlineEnabled() {
 function buildRadiusOnlineMap() {
   const map = new Map();
   try {
-    const tz = (getSettingsWithCache().timezone) || 'Asia/Jakarta';
+    const tz = (getSettingsWithCache().timezone) || 'America/Asuncion';
     const d = new Date(Date.now() - 20 * 60 * 1000);
     let cutoff;
     try {

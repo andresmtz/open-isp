@@ -5,6 +5,7 @@ const db = require('../config/database');
 const auditTrail = require('./auditTrailService');
 const { getCurrentDateInTimezone, getSetting } = require('../config/settingsManager');
 const { logger } = require('../config/logger');
+const regional = require('../config/regional');
 
 function daysInMonth(year, month1to12) {
   return new Date(year, month1to12, 0).getDate();
@@ -64,7 +65,7 @@ function computeInvoiceAmountAndMeta(customer, pkg, periodMonth, periodYear) {
   const metaParts = [];
   
   if (usePromo) {
-    metaParts.push(`Promo siklus ${promoUsed + 1}/${promoCycles} @ Rp ${Number(promoPrice).toLocaleString('id-ID')}`);
+    metaParts.push(`Promo siklus ${promoUsed + 1}/${promoCycles} @ ${regional.currencySymbol()} ${Number(promoPrice).toLocaleString(regional.locale())}`);
   }
   if (prorated && billableDays != null && dim != null) {
     metaParts.push(`Prorata ${billableDays}/${dim} hari`);
@@ -75,7 +76,7 @@ function computeInvoiceAmountAndMeta(customer, pkg, periodMonth, periodYear) {
     const ppnPct = Number(pkg.ppn_percentage) || 11.0;
     const ppnVal = Math.round(baseAmount * (ppnPct / 100));
     taxAmount += ppnVal;
-    metaParts.push(`PPN ${ppnPct}% (Rp ${ppnVal.toLocaleString('id-ID')})`);
+    metaParts.push(`PPN ${ppnPct}% (${regional.currencySymbol()} ${ppnVal.toLocaleString(regional.locale())})`);
   }
 
   // USO Calculation
@@ -83,7 +84,7 @@ function computeInvoiceAmountAndMeta(customer, pkg, periodMonth, periodYear) {
     const usoPct = Number(pkg.uso_percentage) || 1.75;
     const usoVal = Math.round(baseAmount * (usoPct / 100));
     taxAmount += usoVal;
-    metaParts.push(`USO ${usoPct}% (Rp ${usoVal.toLocaleString('id-ID')})`);
+    metaParts.push(`USO ${usoPct}% (${regional.currencySymbol()} ${usoVal.toLocaleString(regional.locale())})`);
   }
 
   const finalAmount = baseAmount + taxAmount;
@@ -640,14 +641,14 @@ function createInstallProrataCatchUpInvoice(customerId) {
   const baseAmount = Math.max(0, Math.round(basePrice * (billableDays / dim)));
   
   let taxAmount = 0;
-  const metaParts = [`Susulan prorata bulan pasang (${billableDays}/${dim} hari, dasar harga reguler Rp ${basePrice.toLocaleString('id-ID')})`];
+  const metaParts = [`Susulan prorata bulan pasang (${billableDays}/${dim} hari, dasar harga reguler ${regional.currencySymbol()} ${basePrice.toLocaleString(regional.locale())})`];
 
   // PPN
   if (pkg.use_ppn === 1) {
     const ppnPct = Number(pkg.ppn_percentage) || 11.0;
     const ppnVal = Math.round(baseAmount * (ppnPct / 100));
     taxAmount += ppnVal;
-    metaParts.push(`PPN ${ppnPct}% (Rp ${ppnVal.toLocaleString('id-ID')})`);
+    metaParts.push(`PPN ${ppnPct}% (${regional.currencySymbol()} ${ppnVal.toLocaleString(regional.locale())})`);
   }
 
   // USO
@@ -655,7 +656,7 @@ function createInstallProrataCatchUpInvoice(customerId) {
     const usoPct = Number(pkg.uso_percentage) || 1.75;
     const usoVal = Math.round(baseAmount * (usoPct / 100));
     taxAmount += usoVal;
-    metaParts.push(`USO ${usoPct}% (Rp ${usoVal.toLocaleString('id-ID')})`);
+    metaParts.push(`USO ${usoPct}% (${regional.currencySymbol()} ${usoVal.toLocaleString(regional.locale())})`);
   }
 
   const finalAmount = baseAmount + taxAmount;
@@ -711,7 +712,7 @@ function voidPreviousUnpaidInvoices(customerId, month, year, reason) {
 function autoPayInvoiceIfNeeded(invoiceId, customer, amount, existingNotes) {
   const reasons = [];
   if (Number(customer.auto_isolate) === 0) reasons.push('Auto Isolir OFF');
-  if (Number(amount) === 0) reasons.push('Nominal Rp 0');
+  if (Number(amount) === 0) reasons.push('Nominal ' + regional.formatMoney(0));
   if (!reasons.length) return null;
   const note = `AUTO-LUNAS: ${reasons.join(' / ')} (verifikasi sistem)`;
   const finalNotes = existingNotes ? `${existingNotes} | ${note}` : note;
@@ -727,7 +728,7 @@ function notifyAutoPaid(customer, invoiceId, periodText, amount, reason) {
     if (!getSetting('whatsapp_enabled', false)) return;
     const waSvc = require('./whatsappService');
     if (!waSvc || typeof waSvc.sendWhatsAppMessage !== 'function') return;
-    const msg = `✅ *PEMBAYARAN LUNAS*\n\nYth. *${customer.name}*,\nTagihan periode *${periodText}* sebesar *Rp ${Number(amount || 0).toLocaleString('id-ID')}* telah *LUNAS otomatis oleh sistem* (${reason}).\n\nDokumen tagihan tetap tercatat. Terima kasih.`;
+    const msg = `✅ *PEMBAYARAN LUNAS*\n\nYth. *${customer.name}*,\nTagihan periode *${periodText}* sebesar *${regional.currencySymbol()} ${Number(amount || 0).toLocaleString(regional.locale())}* telah *LUNAS otomatis oleh sistem* (${reason}).\n\nDokumen tagihan tetap tercatat. Terima kasih.`;
     waSvc.sendWhatsAppMessage(customer.phone, msg).catch(() => {});
   } catch (e) {}
 }
@@ -746,7 +747,7 @@ function autoLunasUnpaidForCustomer(customerId, opts = {}) {
   for (const inv of invoices) {
     const reasons = [];
     if (Number(customer.auto_isolate) === 0) reasons.push('Auto Isolir OFF');
-    if (Number(inv.amount) === 0) reasons.push('Nominal Rp 0');
+    if (Number(inv.amount) === 0) reasons.push('Nominal ' + regional.formatMoney(0));
     if (!reasons.length) continue;
     const note = 'AUTO-LUNAS: ' + reasons.join(' / ') + ' (verifikasi sistem)';
     const finalNotes = inv.notes ? (inv.notes + ' | ' + note) : note;
@@ -769,13 +770,13 @@ function notifyAutoPaidPolite(customer, items) {
     if (!waSvc || typeof waSvc.sendWhatsAppMessage !== 'function') return;
     const periods = items.map(function (it) { return it.period; }).join(', ');
     const total = items.reduce(function (s, it) { return s + Number(it.amount || 0); }, 0);
-    const _defAl = '✅ *Tagihan LUNAS*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nTerima kasih, tagihan internet Anda telah kami tandai *LUNAS* otomatis.\n\n📅 Periode: {{rincian}}\n💰 Nominal: *Rp {{tagihan}}*\n\nTerima kasih 🙏\n— {{company}}';
+    const _defAl = '✅ *Tagihan LUNAS*\n\nYth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),\n\nTerima kasih, tagihan internet Anda telah kami tandai *LUNAS* otomatis.\n\n📅 Periode: {{rincian}}\n💰 Nominal: *{{moneda}} {{tagihan}}*\n\nTerima kasih 🙏\n— {{company}}';
     const _tplAl = String(db.getAppSetting('whatsapp_autolunas_message', _defAl) || _defAl);
     const msg = _tplAl
       .replace(/{{nama}}/gi, customer.name || 'Pelanggan')
       .replace(/{{id_pelanggan}}/gi, customer.customer_code || ('ID:' + customer.id))
-      .replace(/{{tagihan}}/gi, total.toLocaleString('id-ID'))
-      .replace(/{{total}}/gi, total.toLocaleString('id-ID'))
+      .replace(/{{tagihan}}/gi, total.toLocaleString(regional.locale()))
+      .replace(/{{total}}/gi, total.toLocaleString(regional.locale()))
       .replace(/{{rincian}}/gi, periods)
       .replace(/{{periode}}/gi, periods)
       .replace(/{{company}}/gi, getSetting('company_header', '') || '-');

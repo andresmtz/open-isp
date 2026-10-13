@@ -6,13 +6,14 @@
 const fs = require('fs');
 const path = require('path');
 const { getSetting } = require('../config/settingsManager');
+const regional = require('../config/regional');
 
 function gateway() {
   return String(getSetting('wa_gateway_type', 'gowa') || 'baileys').toLowerCase();
 }
 
 function spx(t) {
-  return String(t || '').replace(/\{([^{}|]+(?:\|[^{}|]+)+)\}/g, function (m, c) {
+  return regional.applyPlaceholders(String(t || '')).replace(/\{([^{}|]+(?:\|[^{}|]+)+)\}/g, function (m, c) {
     const arr = c.split('|');
     return arr[Math.floor(Math.random() * arr.length)].trim();
   });
@@ -61,7 +62,7 @@ async function sendMetaImage(phone, buffer, caption) {
     const upj = await up.json().catch(() => null);
     if (!up.ok || !upj || !upj.id) return await sendText(phone, caption || '');
     let digits = String(phone).replace(/\D/g, '');
-    if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+    digits = regional.normalizePhone(digits);
     const send = await fetch('https://graph.facebook.com/v20.0/' + phoneId + '/messages', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -112,7 +113,7 @@ async function sendDocument(phone, docBuffer, filename, caption, mimetype) {
 function normalizeNum(p) {
   let d = String(p || '').replace(/\D/g, '');
   if (!d) return '';
-  if (d.startsWith('0')) d = '62' + d.slice(1);
+  d = regional.normalizePhone(d);
   return d.length >= 8 ? d : '';
 }
 

@@ -128,7 +128,7 @@
       <div class="card-bd">
         <div style="display:flex;gap:24px;margin-bottom:10px;flex-wrap:wrap">
           <div><div class="muted" style="font-size:11px">JUMLAH</div><div style="font-weight:800;font-size:20px;color:var(--primary)"><%= (typeof alRows!=='undefined'?alRows.length:0) %></div></div>
-          <div><div class="muted" style="font-size:11px">TOTAL</div><div style="font-weight:800;font-size:20px">Rp <%= Number((typeof alTotal!=='undefined'?alTotal:0)).toLocaleString('id-ID') %></div></div>
+          <div><div class="muted" style="font-size:11px">TOTAL</div><div style="font-weight:800;font-size:20px"><%= APP_CUR %> <%= Number((typeof alTotal!=='undefined'?alTotal:0)).toLocaleString(APP_LOCALE) %></div></div>
         </div>
         <div class="tbl-wrap" style="max-height:360px;overflow:auto">
           <table class="dtbl">
@@ -140,7 +140,7 @@
                 <td style="font-weight:700"><%= r.customer_name %></td>
                 <td><span class="ew-svc mono"><%= r.customer_code||'-' %></span></td>
                 <td><%= r.period_month %>/<%= r.period_year %></td>
-                <td style="font-weight:800;color:var(--primary)">Rp <%= Number(r.amount||0).toLocaleString('id-ID') %></td>
+                <td style="font-weight:800;color:var(--primary)"><%= APP_CUR %> <%= Number(r.amount||0).toLocaleString(APP_LOCALE) %></td>
                 <td class="muted"><%= r.paid_at||'-' %></td>
               </tr>
               <% }); %>
@@ -301,9 +301,8 @@
             <div class="fg">
               <label class="fl"><%= t('admin.settings.timezone', 'Zona Waktu') %></label>
               <select class="fs" name="timezone">
-                <option value="Asia/Jakarta" <%= settings.timezone === 'Asia/Jakarta' ? 'selected' : '' %>><%= t('admin.set.tz_wib','WIB (Asia/Jakarta)') %></option>
-                <option value="Asia/Makassar" <%= settings.timezone === 'Asia/Makassar' ? 'selected' : '' %>><%= t('admin.set.tz_wita','WITA (Asia/Makassar)') %></option>
-                <option value="Asia/Jayapura" <%= settings.timezone === 'Asia/Jayapura' ? 'selected' : '' %>><%= t('admin.set.tz_wit','WIT (Asia/Jayapura)') %></option>
+                <% const _tzs = [['America/Asuncion','Paraguay (America/Asuncion)'],['America/Argentina/Buenos_Aires','Argentina (Buenos Aires)'],['America/Sao_Paulo','Brasil (São Paulo)'],['America/Montevideo','Uruguay (Montevideo)'],['America/La_Paz','Bolivia (La Paz)'],['America/Santiago','Chile (Santiago)'],['America/Lima','Perú (Lima)'],['America/Bogota','Colombia (Bogotá)'],['America/Mexico_City','México (Ciudad de México)'],['UTC','UTC']]; const _curTz = settings.timezone || 'America/Asuncion'; if (!_tzs.some(z => z[0] === _curTz)) _tzs.unshift([_curTz, _curTz]); %>
+                <% _tzs.forEach(function (z) { %><option value="<%= z[0] %>" <%= _curTz === z[0] ? 'selected' : '' %>><%= z[1] %></option><% }) %>
               </select>
             </div>
             <div class="fg">
@@ -998,7 +997,7 @@ function showEwalletNotification(row) {
   if (!notifEnabled()) return;
   if (!canNotify() || Notification.permission !== 'granted') return;
   const svc = String(row?.service || 'E-Wallet');
-  const amt = row?.parsed_ok ? `Rp ${(Number(row.parsed_amount) || 0).toLocaleString('id-ID')}` : 'Nominal tidak terdeteksi';
+  const amt = row?.parsed_ok ? `${APP_CUR} ${(Number(row.parsed_amount) || 0).toLocaleString(APP_LOCALE)}` : 'Nominal tidak terdeteksi';
   const body = String(row?.content || '').replace(/\r?\n/g, ' ').slice(0, 140);
   try {
     new Notification(`${svc}: ${amt}`, { body });
@@ -1074,7 +1073,7 @@ async function loadEwalletLogs() {
       else statusBadge = '<span class="ew-badge ew-amber"><%= t('admin.set.ew_unmatched','Belum cocok') %></span>';
       const amountHtml = (amountNum == null)
         ? '<span class="muted">—</span>'
-        : ('<span class="mono" style="font-weight:800;' + (parsed ? 'color:var(--primary)' : 'color:var(--muted)') + '">Rp ' + amountNum.toLocaleString('id-ID') + '</span>');
+        : ('<span class="mono" style="font-weight:800;' + (parsed ? 'color:var(--primary)' : 'color:var(--muted)') + '">' + APP_CUR + ' ' + amountNum.toLocaleString(APP_LOCALE) + '</span>');
       const matchHtml = mi
         ? ('<a class="mono" href="/admin/billing?search=' + mi + '" target="_blank" style="font-weight:800">INV#' + mi + '</a>')
         : (mv ? ('<span class="mono" style="font-weight:800">Voucher#' + mv + '</span>')

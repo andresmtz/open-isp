@@ -174,7 +174,7 @@
             <% } %>
           </div>
           <div class="right">
-            <div class="pill price-pill price-top">Rp <%= Number(batch.price || 0).toLocaleString('id-ID') %></div>
+            <div class="pill price-pill price-top"><%= APP_CUR %> <%= Number(batch.price || 0).toLocaleString(APP_LOCALE) %></div>
             <% if (v.code === v.password) { %>
               <div class="code"><%= v.code %></div>
               <div class="right-meta"><i class="bi bi-hourglass-split"></i> <%= formatValidity(batch.validity) %></div>

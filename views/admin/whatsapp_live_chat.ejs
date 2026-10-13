@@ -200,7 +200,7 @@ function renderUserList(list) {
     const name = c.customer_name || c.phone;
     const initial = name.charAt(0).toUpperCase();
     const isActive = c.phone === activePhone ? 'active' : '';
-    const dateStr = c.created_at ? new Date(c.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+    const dateStr = c.created_at ? new Date(c.created_at).toLocaleTimeString(APP_LOCALE, { hour: '2-digit', minute: '2-digit' }) : '';
     
     return `
       <div class="chat-user-item ${isActive}" onclick="openChat('${c.phone}', '${escapeHtml(name)}')">
@@ -284,7 +284,7 @@ async function loadChatMessages(phone, showSpinner = false) {
       
       container.innerHTML = messages.map(m => {
         const isOutbound = m.direction === 'outbound';
-        const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+        const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString(APP_LOCALE, { hour: '2-digit', minute: '2-digit' }) : '';
         const gatewayBadge = m.gateway === 'meta' ? 'Meta API'
           : m.gateway === 'gowa' ? 'GoWA'
           : m.gateway === 'fonnte' ? 'Fonnte'

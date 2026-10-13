@@ -44,7 +44,7 @@ try {
   // Menambahkan fungsi waktu lokal untuk SQLite sesuai setting timezone
   db.function('NOW_LOCAL', () => {
     const { getSetting } = require('./settingsManager');
-    const tz = getSetting('timezone', 'Asia/Jakarta');
+    const tz = getSetting('timezone', 'America/Asuncion');
     const now = new Date();
     
     // Format: YYYY-MM-DD HH:mm:ss

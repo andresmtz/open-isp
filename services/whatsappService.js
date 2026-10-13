@@ -4,6 +4,7 @@ const db = require('../config/database');
 const metaWAService = require('./metaWhatsappService');
 const fonnteWAService = require('./fonnteWhatsappService');
 const gowaWAService = require('./gowaWhatsappService');
+const regional = require('../config/regional');
 
 /* ═══ Helper periode & tunggakan (port upstream 105fcab) ═══ */
 const INDONESIAN_MONTH_NAMES = [
@@ -83,7 +84,7 @@ function formatUnpaidInvoicesSummary(unpaidInvoices) {
     };
   }
 
-  const formatter = new Intl.NumberFormat('id-ID');
+  const formatter = new Intl.NumberFormat(regional.locale());
   const count = unpaidInvoices.length;
   const totalAmount = unpaidInvoices.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
   const totalAmountStr = formatter.format(totalAmount);
@@ -114,7 +115,7 @@ function formatUnpaidInvoicesSummary(unpaidInvoices) {
   const breakdownLines = sorted.map(inv => {
     const pStr = formatIndonesianPeriod(inv.period_month, inv.period_year);
     const amtStr = formatter.format(Number(inv.amount) || 0);
-    return `• *${pStr}:* Rp ${amtStr}${inv.id ? ` (Inv #${inv.id})` : ''}`;
+    return `• *${pStr}:* ${regional.currencySymbol()} ${amtStr}${inv.id ? ` (Inv #${inv.id})` : ''}`;
   });
 
   return {
@@ -140,6 +141,7 @@ function formatUnpaidInvoicesSummary(unpaidInvoices) {
  * @param {object} options Opsi tambahan: { templateName, parameters, langCode, url, filename }
  */
 async function sendWhatsAppMessage(toPhone, messageText, options = {}) {
+  messageText = regional.applyPlaceholders(messageText);
   const gatewayType = getSetting('wa_gateway_type', 'gowa'); // 'baileys', 'fonnte', or 'meta'
 
   if (gatewayType === 'fonnte') {
@@ -268,7 +270,7 @@ Terima kasih, pembayaran tagihan internet Anda telah kami terima dan diverifikas
 • *Waktu Bayar:* {{waktu}}
 • *Metode Bayar:* {{metode}}
 • *Diterima Oleh:* {{penerima}}
-• *Total Bayar:* *Rp {{total}}*
+• *Total Bayar:* *{{moneda}} {{total}}*
 • *Status:* *LUNAS ✅*
 
 🌐 *Status Layanan:*
@@ -324,15 +326,9 @@ function formatPaymentSuccessMessage({
 
   const periodText = formatIndonesianPeriod(periodMonth, periodYear) || '-';
 
-  const tz = getSetting('timezone', 'Asia/Jakarta');
-  let tzSuffix = 'WIB';
-  if (/Makassar|Ujung_Pandang|Bali|Pontianak|Banjarmasin|Manado|Mataram|Kupang/i.test(tz)) {
-    tzSuffix = 'WITA';
-  } else if (/Jayapura|Ambon|Papua|Maluku/i.test(tz)) {
-    tzSuffix = 'WIT';
-  } else if (!/Jakarta|Bangkok|Asia\/Jakarta/i.test(tz)) {
-    tzSuffix = tz;
-  }
+  const tz = getSetting('timezone', 'America/Asuncion');
+  // Sufijo opcional tras la hora (ej. "PYT"); vacío por defecto
+  const tzSuffix = String(getSetting('timezone_label', '') || '').trim();
 
   let formattedTime = '';
   try {
@@ -340,10 +336,10 @@ function formatPaymentSuccessMessage({
     formattedTime = `${formatDateLocal(paidAt || new Date())} ${tzSuffix}`;
   } catch {
     const now = new Date();
-    formattedTime = `${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID')} ${tzSuffix}`;
+    formattedTime = `${now.toLocaleDateString(regional.locale())} ${now.toLocaleTimeString(regional.locale())} ${tzSuffix}`;
   }
 
-  const formattedAmount = Number(amount || 0).toLocaleString('id-ID');
+  const formattedAmount = Number(amount || 0).toLocaleString(regional.locale());
 
   // Sisa tunggakan lain (struk pelunasan lengkap) — port upstream 105fcab
   let remainingList = remainingUnpaidInvoices;
@@ -357,7 +353,7 @@ function formatPaymentSuccessMessage({
   let tunggakanInfo = '';
   if (remainingList && Array.isArray(remainingList) && remainingList.length > 0) {
     const summary = formatUnpaidInvoicesSummary(remainingList);
-    tunggakanInfo = `\n⚠️ *Perhatian Tunggakan Lain:*\nMasih ada *${summary.count} tagihan lain* belum lunas:\n${summary.breakdownText}\n💰 *Total Sisa Tunggakan:* *Rp ${summary.totalAmountStr}*\n_Mohon segera diselesaikan agar layanan tetap lancar._\n`;
+    tunggakanInfo = `\n⚠️ *Perhatian Tunggakan Lain:*\nMasih ada *${summary.count} tagihan lain* belum lunas:\n${summary.breakdownText}\n💰 *Total Sisa Tunggakan:* *${regional.currencySymbol()} ${summary.totalAmountStr}*\n_Mohon segera diselesaikan agar layanan tetap lancar._\n`;
   }
 
   const _invIdMatch = String(invoiceId || '').match(/\d+/);

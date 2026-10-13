@@ -6,9 +6,10 @@ const PDFDocument = require('pdfkit');
 const { resolveLogoPath } = require('./pdfBranding');
 const path = require('path');
 const fs = require('fs');
+const regional = require('../config/regional');
 
 const MNS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-const fmtRp = (n) => 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID');
+const fmtRp = (n) => regional.currencySymbol() + ' ' + Math.round(Number(n) || 0).toLocaleString(regional.locale());
 
 function generateFinanceReportPdfBuffer(o) {
   const { company = 'OPEN-ISP', settings = {}, filterYear, filterMonth = 0, finance = {}, ply = {}, pm = {}, monthlyFinance = [], mode = 'after' } = o;
@@ -43,7 +44,7 @@ function generateFinanceReportPdfBuffer(o) {
 
       // ── Meta ──
       y = 90;
-      doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Dicetak: ${new Date().toLocaleString('id-ID')}`, LEFT, y);
+      doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Dicetak: ${new Date().toLocaleString(regional.locale())}`, LEFT, y);
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Telp/WA: ${companyPhone}`, LEFT, y, { width: W, align: 'right' });
 
       const statRow = (yy, label, value, opt = {}) => {
@@ -124,7 +125,7 @@ function generateFinanceReportPdfBuffer(o) {
       doc.moveTo(LEFT, fy - 12).lineTo(RIGHT, fy - 12).strokeColor(LINE).stroke();
       doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(company, LEFT, fy);
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(companyAddress, LEFT, fy + 13, { width: 330 });
-      doc.fillColor(MUTED).fontSize(7.5).text(`Dokumen dibuat otomatis • ${new Date().toLocaleString('id-ID')}`, LEFT, fy + 32);
+      doc.fillColor(MUTED).fontSize(7.5).text(`Dokumen dibuat otomatis • ${new Date().toLocaleString(regional.locale())}`, LEFT, fy + 32);
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text('Dibuat oleh,', 440, fy, { width: 115, align: 'center' });
       doc.moveTo(420, fy + 30).lineTo(555, fy + 30).strokeColor(INK).stroke();
       doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(settings.company_manager || 'Bagian Keuangan', 420, fy + 34, { width: 135, align: 'center' });

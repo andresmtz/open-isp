@@ -19,6 +19,7 @@ const techSvc = require('../services/techService');
 const mikrotikService = require('../services/mikrotikService');
 const qrisUtil = require('../utils/qrisUtil');
 const QRCode = require('qrcode');
+const regional = require('../config/regional');
 
 // Helper Token JWT / HMAC
 function b64urlEncode(input) {
@@ -472,7 +473,7 @@ function renderTemplateMessage(template, customer, invoice = null) {
 
   const pkgName = customer.package_name || customer.packageName || 'Paket Internet';
   const billAmount = invoice ? Number(invoice.amount || 0) : Number(customer.package_price || 0);
-  const fmtMoney = new Intl.NumberFormat('id-ID').format(billAmount);
+  const fmtMoney = new Intl.NumberFormat(regional.locale()).format(billAmount);
 
   const now = new Date();
   const period = invoice ? `${invoice.period_month || (now.getMonth() + 1)}/${invoice.period_year || now.getFullYear()}` : `${now.getMonth() + 1}/${now.getFullYear()}`;
@@ -509,9 +510,9 @@ router.get('/app/admin/customer/:id/wa-templates', requireAdminApiAuth, (req, re
 
     const invoice = billingSvc.getLatestInvoiceForCustomer ? billingSvc.getLatestInvoiceForCustomer(cId) : null;
 
-    const defaultAutoBilling = `Yth. Pelanggan {{nama}},\n\nIni adalah pengingat sebelum tanggal jatuh tempo/isolir.\n\n📦 *Paket:* {{paket}}\n💰 *Total Tagihan:* Rp {{tagihan}}\n📅 *Periode:* {{rincian}}\n\nMohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\nTerima kasih atas kerja samanya.\nSalam,\nAdmin {{company}}`;
-    const defaultIsolir = `Yth. Pelanggan {{nama}},\n\nLayanan internet Anda (Paket {{paket}}) saat ini ditangguhkan (Terisolir) karena belum melunasi tagihan sebesar *Rp {{tagihan}}*.\n\nSilakan lakukan pembayaran segera melalui portal pelanggan: {{link}}\n\nTerima kasih.`;
-    const defaultSuccess = `✅ *PEMBAYARAN DITERIMA*\n\nTerima kasih, Bp/Ibu {{nama}}.\nPembayaran tagihan internet Paket *{{paket}}* sebesar *Rp {{tagihan}}* telah kami terima dan dinyatakan *LUNAS*.\n\nSalam,\nAdmin {{company}}`;
+    const defaultAutoBilling = `Yth. Pelanggan {{nama}},\n\nIni adalah pengingat sebelum tanggal jatuh tempo/isolir.\n\n📦 *Paket:* {{paket}}\n💰 *Total Tagihan:* {{moneda}} {{tagihan}}\n📅 *Periode:* {{rincian}}\n\nMohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\nTerima kasih atas kerja samanya.\nSalam,\nAdmin {{company}}`;
+    const defaultIsolir = `Yth. Pelanggan {{nama}},\n\nLayanan internet Anda (Paket {{paket}}) saat ini ditangguhkan (Terisolir) karena belum melunasi tagihan sebesar *{{moneda}} {{tagihan}}*.\n\nSilakan lakukan pembayaran segera melalui portal pelanggan: {{link}}\n\nTerima kasih.`;
+    const defaultSuccess = `✅ *PEMBAYARAN DITERIMA*\n\nTerima kasih, Bp/Ibu {{nama}}.\nPembayaran tagihan internet Paket *{{paket}}* sebesar *{{moneda}} {{tagihan}}* telah kami terima dan dinyatakan *LUNAS*.\n\nSalam,\nAdmin {{company}}`;
 
     const rawBilling = (db.getAppSetting && db.getAppSetting('whatsapp_auto_billing_message')) || defaultAutoBilling;
     const rawIsolir = (db.getAppSetting && db.getAppSetting('whatsapp_isolir_message')) || defaultIsolir;
@@ -549,9 +550,7 @@ router.post('/app/admin/whatsapp/send', requireAdminApiAuth, async (req, res) =>
     const { phone, message } = req.body;
     if (!phone || !message) return res.status(400).json({ success: false, message: 'Nomor WhatsApp dan pesan wajib diisi' });
 
-    let p = String(phone).replace(/[^0-9]/g, '');
-    if (p.startsWith('08')) p = '62' + p.substring(1);
-    if (!p.startsWith('62')) p = '62' + p;
+    const p = regional.normalizePhone(phone);
 
     const waNotify = require('../services/waNotifyService');
     if (false) {
@@ -638,8 +637,8 @@ router.post('/app/admin/pay-invoice', requireAdminApiAuth, async (req, res) => {
 
     const pkg = customer?.package_id ? customerSvc.getPackageById(customer.package_id) : null;
     const now = new Date();
-    const dateStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
-                    now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = now.toLocaleDateString(regional.locale(), { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+                    now.toLocaleTimeString(regional.locale(), { hour: '2-digit', minute: '2-digit' });
 
     res.json({
       success: true,
@@ -650,7 +649,7 @@ router.post('/app/admin/pay-invoice', requireAdminApiAuth, async (req, res) => {
         customerName: customer?.name || 'Pelanggan',
         packageName: pkg?.name || customer?.package_name || 'Langganan Internet',
         period: `${inv.period_month}/${inv.period_year}`,
-        amountFormatted: `Rp ${Number(inv.amount || 0).toLocaleString('id-ID')}`,
+        amountFormatted: `${regional.currencySymbol()} ${Number(inv.amount || 0).toLocaleString(regional.locale())}`,
         amount: Number(inv.amount || 0),
         paymentDate: dateStr,
         collectorName: collectorLabel
@@ -893,7 +892,7 @@ router.post('/app/collector/pay-bill', requireCollectorApiAuth, async (req, res)
         receipt: {
           invoiceId: invId,
           customerName: customer?.name || 'Pelanggan',
-          amountFormatted: `Rp ${Number(inv.amount || 0).toLocaleString('id-ID')}`,
+          amountFormatted: `${regional.currencySymbol()} ${Number(inv.amount || 0).toLocaleString(regional.locale())}`,
           period: `${inv.period_month}/${inv.period_year}`,
           paidAt: new Date().toISOString()
         }
@@ -1616,7 +1615,7 @@ router.post('/app/admin/vouchers/create-single', requireAdminApiAuth, express.js
         profile: profileName,
         comment: comment,
         price,
-        priceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
+        priceFormatted: `${regional.currencySymbol()} ${price.toLocaleString(regional.locale())}`,
         validity: validity || '-',
         buyerPhone,
         companyName,
@@ -1777,9 +1776,7 @@ router.post('/app/admin/vouchers/send-wa', requireAdminApiAuth, async (req, res)
       return res.status(400).json({ success: false, message: 'Nomor WhatsApp dan Kode Voucher wajib diisi' });
     }
 
-    let p = String(phone).replace(/[^0-9]/g, '');
-    if (p.startsWith('08')) p = '62' + p.substring(1);
-    if (!p.startsWith('62')) p = '62' + p;
+    const p = regional.normalizePhone(phone);
 
     const settings = getSettingsWithCache();
     const companyName = settings.company_header || settings.company_name || 'ISP NETWORK';
@@ -1845,7 +1842,7 @@ router.get('/app/admin/vouchers/batch/:id/print', (req, res) => {
     const companyPhone = settings.company_phone || '';
     let hotspotDns = (settings.hotspot_dns || settings.hotspot_name || '').trim();
     if (hotspotDns === 'wifi.id') hotspotDns = '';
-    const priceText = Number(batch.price || 0).toLocaleString('id-ID');
+    const priceText = Number(batch.price || 0).toLocaleString(regional.locale());
     const validityText = batch.validity || '-';
 
     const escapeHtml = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -2000,7 +1997,7 @@ router.get('/app/admin/vouchers/batch/:id/print', (req, res) => {
   <div class="print-bar">
     <div>
       <strong>Batch #${batch.id} (${vouchers.length} Voucher)</strong><br>
-      <small>Paket: ${escapeHtml(batch.profile_name)} • Rp ${priceText} • Durasi: ${escapeHtml(validityText)}</small>
+      <small>Paket: ${escapeHtml(batch.profile_name)} • ${regional.currencySymbol()} ${priceText} • Durasi: ${escapeHtml(validityText)}</small>
     </div>
     <button class="btn-print" onclick="window.print()">🖨️ Cetak / Simpan PDF A4</button>
   </div>
@@ -2012,7 +2009,7 @@ router.get('/app/admin/vouchers/batch/:id/print', (req, res) => {
         <div class="voucher-card">
           <div class="v-top">
             <span class="v-brand">${escapeHtml(companyName)}</span>
-            <span class="v-price">Rp ${priceText}</span>
+            <span class="v-price">${regional.currencySymbol()} ${priceText}</span>
           </div>
           <div class="v-pkg">📦 ${escapeHtml(batch.profile_name)} • ⏱️ ${escapeHtml(validityText)}</div>
           <div class="v-code-box">
@@ -2172,7 +2169,7 @@ router.get('/app/admin/settings', requireAdminApiAuth, (req, res) => {
       data: {
         company_header: s.company_header || '', company_subheader: s.company_subheader || '',
         company_phone: s.company_phone || '', company_address: s.company_address || '',
-        server_port: s.server_port || '3001', timezone: s.timezone || 'Asia/Jakarta',
+        server_port: s.server_port || '3001', timezone: s.timezone || 'America/Asuncion',
         payment_gateway: s.payment_gateway || '', qris_enabled: s.qris_enabled || '0',
         whatsapp_enabled: s.whatsapp_enabled || '0', telegram_enabled: s.telegram_enabled || '0',
         radius_enabled: s.radius_enabled || '0',
@@ -2276,7 +2273,7 @@ router.post('/app/admin/customers/topup', requireAdminApiAuth, async (req, res) 
 
     res.json({
       success: true,
-      message: `Saldo pelanggan "${result.customer?.name || ''}" berhasil ${actionText} Rp ${amt.toLocaleString('id-ID')}. Sisa saldo: Rp ${result.after.toLocaleString('id-ID')}`,
+      message: `Saldo pelanggan "${result.customer?.name || ''}" berhasil ${actionText} ${regional.currencySymbol()} ${amt.toLocaleString(regional.locale())}. Sisa saldo: ${regional.currencySymbol()} ${result.after.toLocaleString(regional.locale())}`,
       data: {
         customerId: cid,
         customerName: result.customer?.name,
@@ -2690,7 +2687,7 @@ router.post('/app/tech/tr069/device/ssid', requireTechApiAuth, async (req, res) 
           const cust = customerSvc.findCustomerByAny(tag);
           if (cust && cust.phone) {
             const waNotify = require('../services/waNotifyService');
-            const now = new Date().toLocaleString('id-ID');
+            const now = new Date().toLocaleString(regional.locale());
             const msg = `📡 *PERUBAHAN NAMA WIFI (SSID)*\n\n` +
               `👤 *Pelanggan:* ${cust.name}\n` +
               `🕒 *Waktu:* ${now}\n\n` +
@@ -2727,7 +2724,7 @@ router.post('/app/tech/tr069/device/password', requireTechApiAuth, async (req, r
           const cust = customerSvc.findCustomerByAny(tag);
           if (cust && cust.phone) {
             const waNotify = require('../services/waNotifyService');
-            const now = new Date().toLocaleString('id-ID');
+            const now = new Date().toLocaleString(regional.locale());
             const msg = `🔑 *PERUBAHAN SANDI WIFI*\n\n` +
               `👤 *Pelanggan:* ${cust.name}\n` +
               `🕒 *Waktu:* ${now}\n\n` +
@@ -2956,7 +2953,7 @@ router.post('/app/customer/topup/create', requireCustomerApiAuth, async (req, re
     const customerId = req.customer.id;
     const amount = Number(req.body.amount || 0);
     if (!amount || amount < 10000) {
-      return res.status(400).json({ success: false, message: 'Minimal top-up saldo adalah Rp 10.000' });
+      return res.status(400).json({ success: false, message: 'Minimal top-up saldo adalah ' + regional.formatMoney(10000) });
     }
 
     const customer = req.customer;
@@ -3035,7 +3032,7 @@ router.get('/config', (req, res) => {
       companyEmail: settings.company_email || '',
       companyAddress: settings.company_address || '',
       operationalHours: settings.operational_hours || '08.00 - 22.00 WIB',
-      timezone: settings.timezone || 'Asia/Jakarta',
+      timezone: settings.timezone || 'America/Asuncion',
       gateways: {
         tripay: Boolean(settings.tripay_enabled && settings.tripay_api_key),
         midtrans: Boolean(settings.midtrans_enabled && settings.midtrans_server_key),

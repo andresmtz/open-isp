@@ -310,7 +310,7 @@
           <i class="bi bi-<%= healthStatus.status === 'healthy' ? 'check-circle' : healthStatus.status === 'warning' ? 'exclamation-triangle' : 'x-circle' %>"></i>
           <%= healthStatus.status.toUpperCase() %>
         </div>
-        <p class="text-muted mt-2 fs12"><%= t('admin.mon.updated','Update terakhir:') %> <%= new Date(healthStatus.timestamp).toLocaleString('id-ID') %></p>
+        <p class="text-muted mt-2 fs12"><%= t('admin.mon.updated','Update terakhir:') %> <%= new Date(healthStatus.timestamp).toLocaleString(APP_LOCALE) %></p>
       </div>
     </div>
 
@@ -534,11 +534,11 @@
             <table class="dtbl">
               <tr>
                 <td class="text-muted">Start</td>
-                <td class="fw6" style="font-size: 11px;"><%= new Date(performanceSummary.period.start).toLocaleString('id-ID') %></td>
+                <td class="fw6" style="font-size: 11px;"><%= new Date(performanceSummary.period.start).toLocaleString(APP_LOCALE) %></td>
               </tr>
               <tr>
                 <td class="text-muted">End</td>
-                <td class="fw6" style="font-size: 11px;"><%= new Date(performanceSummary.period.end).toLocaleString('id-ID') %></td>
+                <td class="fw6" style="font-size: 11px;"><%= new Date(performanceSummary.period.end).toLocaleString(APP_LOCALE) %></td>
               </tr>
               <tr>
                 <td class="text-muted">Samples</td>
@@ -728,7 +728,7 @@
       const response = await fetch('/admin/api/metrics/history?limit=10');
       const history = await response.json();
 
-      const labels = history.map(m => new Date(m.timestamp).toLocaleTimeString('id-ID'));
+      const labels = history.map(m => new Date(m.timestamp).toLocaleTimeString(APP_LOCALE));
       const cpuData = history.map(m => parseFloat(m.system.cpu.usage));
       const memoryData = history.map(m => parseFloat(m.system.memory.percentage));
 

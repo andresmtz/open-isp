@@ -140,7 +140,7 @@
           <% if (i === featuredIndex) { %><span class="tag"><%= t('landing.pkg.popular','Terpopuler') %></span><% } %>
           <h3><%= p.name %></h3>
           <div class="speed"><%= p.speedText %> <small>Mbps</small></div>
-          <div class="price"><b>Rp <%= p.priceText %></b> / <%= t('landing.pkg.permonth','bulan') %></div>
+          <div class="price"><b><%= APP_CUR %> <%= p.priceText %></b> / <%= t('landing.pkg.permonth','bulan') %></div>
           <ul>
             <li><i class="bi bi-check-circle-fill"></i> <%= t('landing.pkg.symmetric','Kecepatan simetris') %> <%= p.speedText %> Mbps</li>
             <li><i class="bi bi-check-circle-fill"></i> <%= t('landing.pkg.f_unlimited','Tanpa batas kuota') %></li>

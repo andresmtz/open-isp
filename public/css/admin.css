@@ -138,7 +138,7 @@ textarea.fc{resize:vertical;min-height:75px}
 .alert-i{background:var(--idim);color:var(--info);border:1px solid rgba(88,166,255,.3)}
 
 /* ── MISC ── */
-.currency::before{content:'Rp '}
+.currency::before{content:var(--currency-prefix,'')}
 .text-right{text-align:right}
 .text-center{text-align:center}
 .text-muted{color:var(--muted)}

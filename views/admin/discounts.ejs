@@ -170,9 +170,9 @@
                 <td style="font-size:11px;color:var(--muted)"><%= l.created_at %></td>
                 <td style="font-size:12px"><%= l.customer_name || ('#'+l.customer_id) %><div style="font-size:10px;color:var(--muted)"><%= l.customer_code||'' %></div></td>
                 <td style="font-size:12px"><%= l.period_month %>/<%= l.period_year %></td>
-                <td><span class="disc-badge <%= l.discount_type==='amount'?'amount':'' %>"><%= l.discount_type==='percent' ? (l.discount_value+'%') : 'Rp' %></span></td>
-                <td class="num" style="color:var(--danger);font-weight:700">- Rp <%= Number(l.discount_amount||0).toLocaleString('id-ID') %></td>
-                <td class="num" style="font-size:12px">Rp <%= Number(l.amount_before||0).toLocaleString('id-ID') %> → <b>Rp <%= Number(l.amount_after||0).toLocaleString('id-ID') %></b></td>
+                <td><span class="disc-badge <%= l.discount_type==='amount'?'amount':'' %>"><%= l.discount_type==='percent' ? (l.discount_value+'%') : APP_CUR %></span></td>
+                <td class="num" style="color:var(--danger);font-weight:700">- <%= APP_CUR %> <%= Number(l.discount_amount||0).toLocaleString(APP_LOCALE) %></td>
+                <td class="num" style="font-size:12px"><%= APP_CUR %> <%= Number(l.amount_before||0).toLocaleString(APP_LOCALE) %> → <b><%= APP_CUR %> <%= Number(l.amount_after||0).toLocaleString(APP_LOCALE) %></b></td>
                 <td style="font-size:12px"><%= l.applied_by||'-' %></td>
                 <td style="font-size:11px;color:var(--muted)"><%= l.note||'' %></td>
               </tr>

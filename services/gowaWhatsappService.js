@@ -11,6 +11,7 @@
  */
 const { getSetting } = require('../config/settingsManager');
 const { logger } = require('../config/logger');
+const regional = require('../config/regional');
 
 function baseUrl() {
   return String(getSetting('gowa_base_url', 'http://127.0.0.1:3000') || '').trim().replace(/\/+$/, '') || 'http://127.0.0.1:3000';
@@ -54,8 +55,7 @@ async function resolveDeviceId(force) {
 function normalizePhoneJid(phone) {
   let d = String(phone || '').replace(/\D/g, '');
   if (!d) return '';
-  if (d.startsWith('0')) d = '62' + d.slice(1);
-  else if (d.startsWith('8')) d = '62' + d;
+  d = regional.normalizePhone(d);
   return d + '@s.whatsapp.net';
 }
 

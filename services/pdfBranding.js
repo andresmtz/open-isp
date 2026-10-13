@@ -5,6 +5,7 @@
  */
 const path = require('path');
 const fs = require('fs');
+const regional = require('../config/regional');
 
 const THEME = {
   INK: '#0f172a',      // header band / teks utama
@@ -37,12 +38,12 @@ function resolveLogoPath(settings) {
   return null;
 }
 
-function fmtRp(n) { return 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID'); }
+function fmtRp(n) { return regional.currencySymbol() + ' ' + Math.round(Number(n) || 0).toLocaleString(regional.locale()); }
 
 function companyInfo(settings) {
   const s = settings || {};
   const phone = (Array.isArray(s.whatsapp_admin_numbers) && s.whatsapp_admin_numbers[0])
-    ? '+' + String(s.whatsapp_admin_numbers[0]).replace(/^0/, '62')
+    ? '+' + regional.normalizePhone(s.whatsapp_admin_numbers[0])
     : (s.company_phone || '-');
   return {
     name: s.company_header || 'OPEN-ISP',

@@ -151,7 +151,7 @@
       <div>
         <% if (hasUnpaid) { %>
           <span class="badge bw" style="font-size:10px"><i class="bi bi-exclamation-circle"></i> TAGIHAN BELUM DIBAYAR <%= unpaidCount > 1 ? '('+unpaidCount+' BULAN)' : '' %></span>
-          <h5 style="margin-top:6px;color:var(--warning)">Rp <%= parseInt(totalUnpaidAmount || 0).toLocaleString('id-ID') %></h5>
+          <h5 style="margin-top:6px;color:var(--warning)"><%= APP_CUR %> <%= parseInt(totalUnpaidAmount || 0).toLocaleString(APP_LOCALE) %></h5>
           <div class="muted" style="font-size:12.5px;margin-top:2px">Periode <%= unpaidPeriods %></div>
           <div style="font-size:13px;margin-top:6px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">
             <i class="bi bi-calendar-event" style="color:var(--warning)"></i>
@@ -325,7 +325,7 @@
               <span class="muted" style="font-size:12px"><i class="bi bi-calendar-event"></i> Periode <%= inv.period_month %>/<%= inv.period_year %></span>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap">
-              <div><div class="inv-name"><%= inv.package_name || 'Paket Internet' %></div><div class="inv-amt">Rp <%= parseInt(itemAmt || 0).toLocaleString('id-ID') %></div></div>
+              <div><div class="inv-name"><%= inv.package_name || 'Paket Internet' %></div><div class="inv-amt"><%= APP_CUR %> <%= parseInt(itemAmt || 0).toLocaleString(APP_LOCALE) %></div></div>
             </div>
             <div class="inv-actions">
               <% if (inv.status !== 'paid') { %>
@@ -387,7 +387,7 @@
     <div class="mbody">
       <div style="text-align:center;padding:14px;border-radius:14px;background:var(--bg);border:1px solid var(--warning-glow);margin-bottom:16px">
         <div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.5px">Total Tagihan</div>
-        <h2 id="pay_amount_text" style="font-family:var(--font-display);color:var(--warning);font-size:26px;margin-top:4px">Rp 0</h2>
+        <h2 id="pay_amount_text" style="font-family:var(--font-display);color:var(--warning);font-size:26px;margin-top:4px"><%= APP_CUR %> 0</h2>
       </div>
       <div class="stack">
         <%
@@ -650,7 +650,7 @@
     var num = 0;
     if (typeof amount === 'number') { num = isNaN(amount) ? 0 : amount; }
     else if (amount) { num = parseFloat(String(amount).replace(/[^0-9.]/g, '')) || 0; }
-    document.getElementById('pay_amount_text').innerText = 'Rp ' + Math.round(num).toLocaleString('id-ID');
+    document.getElementById('pay_amount_text').innerText = APP_CUR + ' ' + Math.round(num).toLocaleString(APP_LOCALE);
     showModal('paymentModal');
   }
   function submitPayment(method) {
@@ -741,10 +741,10 @@
     var container = document.getElementById('notifListContainer'); if (!container) return;
     var notifs = [];
     <% if (paidInvoices && paidInvoices.length > 0) { paidInvoices.slice(0,3).forEach(function(inv){ var pAmt = inv.amount != null ? inv.amount : (inv.package_price != null ? inv.package_price : 0); %>
-      notifs.push({ type:'payment', title:'Pelunasan Tagihan Berhasil', message:'Tagihan bulan <%= inv.period_month %>/<%= inv.period_year %> sebesar Rp <%= parseInt(pAmt || 0).toLocaleString("id-ID") %> telah LUNAS.', time:'Terkonfirmasi Sistem' });
+      notifs.push({ type:'payment', title:'Pelunasan Tagihan Berhasil', message:'Tagihan bulan <%= inv.period_month %>/<%= inv.period_year %> sebesar <%= APP_CUR %> <%= parseInt(pAmt || 0).toLocaleString(APP_LOCALE) %> telah LUNAS.', time:'Terkonfirmasi Sistem' });
     <% }); } %>
     <% if (hasUnpaid) { var uAmt = latestUnpaid.amount != null ? latestUnpaid.amount : (latestUnpaid.package_price != null ? latestUnpaid.package_price : 0); %>
-      notifs.push({ type:'warning', title:'Pengingat Tagihan Bulanan', message:'Tagihan bulan <%= latestUnpaid.period_month %>/<%= latestUnpaid.period_year %> sebesar Rp <%= parseInt(uAmt || 0).toLocaleString("id-ID") %> menunggu pembayaran.', time:'Jatuh Tempo Tgl 20' });
+      notifs.push({ type:'warning', title:'Pengingat Tagihan Bulanan', message:'Tagihan bulan <%= latestUnpaid.period_month %>/<%= latestUnpaid.period_year %> sebesar <%= APP_CUR %> <%= parseInt(uAmt || 0).toLocaleString(APP_LOCALE) %> menunggu pembayaran.', time:'Jatuh Tempo Tgl 20' });
     <% } %>
     var badge = document.getElementById('notifCountBadge');
     if (badge && notifs.length > 0) { badge.innerText = notifs.length; badge.style.display = 'flex'; }

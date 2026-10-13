@@ -182,12 +182,12 @@
     <div class="divider"></div>
 
     <% if (Number(invoice.discount_amount||0) > 0) { %>
-      <div class="row-item"><span class="label"><%= t('thermal.discount','Diskon:') %></span><span class="val">- Rp <%= Number(invoice.discount_amount).toLocaleString('id-ID') %></span></div>
+      <div class="row-item"><span class="label"><%= t('thermal.discount','Diskon:') %></span><span class="val">- <%= APP_CUR %> <%= Number(invoice.discount_amount).toLocaleString(APP_LOCALE) %></span></div>
     <% } %>
     <div class="total-box">
       <div style="font-size: 10px; font-weight: bold;"><%= t('thermal.total_payment','TOTAL PEMBAYARAN') %></div>
       <% const amt = invoice.amount != null ? invoice.amount : (customer.package_price != null ? customer.package_price : 0); %>
-      <div class="total-amount">Rp <%= parseInt(amt || 0).toLocaleString('id-ID') %></div>
+      <div class="total-amount"><%= APP_CUR %> <%= parseInt(amt || 0).toLocaleString(APP_LOCALE) %></div>
       <div class="badge-status"><%= t('thermal.paid','*** LUNAS ***') %></div>
     </div>
 

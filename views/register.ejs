@@ -55,8 +55,8 @@
           <div><%= t('customer.register.succ_id', 'ID Pelanggan') %>: <b style="color:var(--primary);font-size:16px"><%= newCustomer.customer_code %></b></div>
           <div><%= t('customer.register.succ_pkg', 'Paket') %>: <b><%= _np ? _np.name : (newCustomer.package_name || '-') %></b></div>
           <% if (typeof bill !== 'undefined' && bill) { %>
-          <div><%= t('customer.register.succ_estimate', 'Estimasi Biaya Awal') %>: <b>Rp <%= Number(bill.total||0).toLocaleString('id-ID') %></b></div>
-          <div class="muted" style="font-size:12px">(<%= t('customer.register.succ_install', 'Biaya pasang') %> Rp <%= Number(bill.installFee||0).toLocaleString('id-ID') %> + <%= t('customer.register.succ_prorata', 'Prorata') %> Rp <%= Number(bill.prorata||0).toLocaleString('id-ID') %><% if (bill.discount) { %> &minus; <%= t('customer.register.succ_discount', 'Diskon') %> Rp <%= Number(bill.discount||0).toLocaleString('id-ID') %><% } %>)</div>
+          <div><%= t('customer.register.succ_estimate', 'Estimasi Biaya Awal') %>: <b><%= APP_CUR %> <%= Number(bill.total||0).toLocaleString(APP_LOCALE) %></b></div>
+          <div class="muted" style="font-size:12px">(<%= t('customer.register.succ_install', 'Biaya pasang') %> <%= APP_CUR %> <%= Number(bill.installFee||0).toLocaleString(APP_LOCALE) %> + <%= t('customer.register.succ_prorata', 'Prorata') %> <%= APP_CUR %> <%= Number(bill.prorata||0).toLocaleString(APP_LOCALE) %><% if (bill.discount) { %> &minus; <%= t('customer.register.succ_discount', 'Diskon') %> <%= APP_CUR %> <%= Number(bill.discount||0).toLocaleString(APP_LOCALE) %><% } %>)</div>
           <% } %>
           <div class="muted" style="font-size:12px;margin-top:4px"><i class="bi bi-info-circle"></i> <%= t('customer.register.succ_note', 'Simpan ID Pelanggan Anda. Nominal final ditetapkan admin saat pemasangan.') %></div>
         </div>
@@ -126,17 +126,17 @@
           <select class="inp inp-plain" id="package_id" name="package_id" required>
             <option value="" disabled selected><%= t('customer.register.package_ph', 'Pilih salah satu paket…') %></option>
             <% (packages || []).forEach(function(pkg) { %>
-              <option value="<%= pkg.id %>" data-price="<%= Number(pkg.price||0) %>"><%= pkg.name %> — Rp <%= Number(pkg.price||0).toLocaleString('id-ID') %>/<%= t('customer.register.per_month', 'bulan') %></option>
+              <option value="<%= pkg.id %>" data-price="<%= Number(pkg.price||0) %>"><%= pkg.name %> — <%= APP_CUR %> <%= Number(pkg.price||0).toLocaleString(APP_LOCALE) %>/<%= t('customer.register.per_month', 'bulan') %></option>
             <% }); %>
           </select>
         </div>
 
         <div id="regEstimate" style="display:none;border:1px solid var(--border);border-radius:14px;padding:14px;margin:6px 0 14px;background:var(--glass-2,rgba(17,22,34,.72))">
           <div style="font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="bi bi-calculator" style="color:var(--primary)"></i> <%= t('customer.register.est_title', 'Estimasi Biaya Awal') %></div>
-          <div style="display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0"><span><%= t('customer.register.est_install', 'Biaya Pasang') %></span><span id="reInstall">Rp 0</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0"><span><%= t('customer.register.est_prorata', 'Paket Prorata') %> (<span id="reDays">0</span> <%= t('customer.register.est_days', 'hari') %>)</span><span id="reProrata">Rp 0</span></div>
-          <div id="reDiscRow" style="display:none;justify-content:space-between;font-size:13.5px;padding:4px 0;color:var(--danger,#fb7185)"><span><%= t('customer.register.est_discount', 'Diskon Voucher') %> <span id="reVoucherCode"></span></span><span id="reDiscount">- Rp 0</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;padding:8px 0 2px;border-top:1px solid var(--border);margin-top:6px"><span><%= t('customer.register.est_total', 'Total Bayar Awal') %></span><span id="reTotal" style="color:var(--primary)">Rp 0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0"><span><%= t('customer.register.est_install', 'Biaya Pasang') %></span><span id="reInstall"><%= APP_CUR %> 0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0"><span><%= t('customer.register.est_prorata', 'Paket Prorata') %> (<span id="reDays">0</span> <%= t('customer.register.est_days', 'hari') %>)</span><span id="reProrata"><%= APP_CUR %> 0</span></div>
+          <div id="reDiscRow" style="display:none;justify-content:space-between;font-size:13.5px;padding:4px 0;color:var(--danger,#fb7185)"><span><%= t('customer.register.est_discount', 'Diskon Voucher') %> <span id="reVoucherCode"></span></span><span id="reDiscount">- <%= APP_CUR %> 0</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;padding:8px 0 2px;border-top:1px solid var(--border);margin-top:6px"><span><%= t('customer.register.est_total', 'Total Bayar Awal') %></span><span id="reTotal" style="color:var(--primary)"><%= APP_CUR %> 0</span></div>
           <div style="font-size:11.5px;color:var(--muted);margin-top:6px"><%= t('customer.register.est_note_pre', 'Paket dihitung prorata s/d') %> <b id="reDue">-</b> <%= t('customer.register.est_note_post', '(acuan tanggal 5). Ini estimasi; nominal final ditetapkan admin.') %></div>
         </div>
 
@@ -240,8 +240,8 @@
     installFee: <%= (typeof installFee !== "undefined") ? installFee : 0 %>
   };
   var _voucherDiscount = 0;
-  function fmtRp(n){ return 'Rp ' + Math.round(Number(n)||0).toLocaleString('id-ID'); }
-  function fmtTgl(s){ try { var d=new Date(s); return isNaN(d.getTime())?s:d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}); } catch(e){ return s; } }
+  function fmtRp(n){ return APP_CUR + ' ' + Math.round(Number(n)||0).toLocaleString(APP_LOCALE); }
+  function fmtTgl(s){ try { var d=new Date(s); return isNaN(d.getTime())?s:d.toLocaleDateString(APP_LOCALE,{day:'numeric',month:'long',year:'numeric'}); } catch(e){ return s; } }
   function regNext(){
     var name=(document.getElementById('name')||{}).value||'';
     var phone=(document.getElementById('phone')||{}).value||'';

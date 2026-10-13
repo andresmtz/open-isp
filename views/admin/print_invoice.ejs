@@ -636,7 +636,7 @@
               <div class="item-sub">Langganan bulanan internet high-speed</div>
             </td>
             <td><%= periodStr %></td>
-            <td class="text-right" style="font-weight:700;">Rp <%= Number(invoice.amount || 0).toLocaleString('id-ID') %></td>
+            <td class="text-right" style="font-weight:700;"><%= APP_CUR %> <%= Number(invoice.amount || 0).toLocaleString(APP_LOCALE) %></td>
           </tr>
         </tbody>
       </table>
@@ -655,15 +655,15 @@
       <div class="totals-card">
         <div class="total-line">
           <span class="lbl">Subtotal</span>
-          <span class="val">Rp <%= Number(invoice.amount_before_discount || invoice.amount || 0).toLocaleString('id-ID') %></span>
+          <span class="val"><%= APP_CUR %> <%= Number(invoice.amount_before_discount || invoice.amount || 0).toLocaleString(APP_LOCALE) %></span>
         </div>
         <div class="total-line">
           <span class="lbl">Diskon / Potongan<% if (Number(invoice.discount_amount||0) > 0 && invoice.discount_type==='percent') { %> (<%= invoice.discount_value %>%)<% } %></span>
-          <span class="val"><%= Number(invoice.discount_amount||0) > 0 ? ('- Rp ' + Number(invoice.discount_amount).toLocaleString('id-ID')) : 'Rp 0' %></span>
+          <span class="val"><%= Number(invoice.discount_amount||0) > 0 ? ('- ' + APP_CUR + ' ' + Number(invoice.discount_amount).toLocaleString(APP_LOCALE)) : (APP_CUR + ' 0') %></span>
         </div>
         <div class="total-line grand-total">
           <span class="lbl">Total Bayar</span>
-          <span class="val">Rp <%= Number(invoice.amount || 0).toLocaleString('id-ID') %></span>
+          <span class="val"><%= APP_CUR %> <%= Number(invoice.amount || 0).toLocaleString(APP_LOCALE) %></span>
         </div>
       </div>
     </div>

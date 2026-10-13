@@ -17,8 +17,8 @@ function parseTaxFromNotes(notes) {
     if (m) return Number(String(m[1]).replace(/\./g, '')) || 0;
     return 0;
   };
-  tax += grab(/PPN\s+[\d.,]+%\s*\(Rp\s*([\d.]+)\)/i);
-  tax += grab(/USO\s+[\d.,]+%\s*\(Rp\s*([\d.]+)\)/i);
+  tax += grab(/PPN\s+[\d.,]+%\s*\([^\d)]*?([\d.]+)\)/i);
+  tax += grab(/USO\s+[\d.,]+%\s*\([^\d)]*?([\d.]+)\)/i);
   return tax;
 }
 

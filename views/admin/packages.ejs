@@ -120,13 +120,13 @@
                 </div>
               </td>
               <td class="fw6" style="color:var(--success)">
-                Rp <%= p.price.toLocaleString('id-ID') %>
+                <%= APP_CUR %> <%= p.price.toLocaleString(APP_LOCALE) %>
                 <% if (p.use_ppn) { %><br><span class="badge bp" style="font-size:9px;padding:2px 4px;margin-top:2px;display:inline-block">+ PPN <%= p.ppn_percentage %>%</span><% } %>
                 <% if (p.use_uso) { %><br><span class="badge bm" style="font-size:9px;padding:2px 4px;margin-top:2px;display:inline-block">+ USO <%= p.uso_percentage %>%</span><% } %>
               </td>
               <td style="font-size:11px;max-width:160px">
                 <% if (p.promo_cycles > 0 && p.promo_price != null && p.promo_price !== '') { %>
-                  <span class="badge bp">Promo</span> Rp <%= Number(p.promo_price).toLocaleString('id-ID') %> × <%= p.promo_cycles %> bln
+                  <span class="badge bp">Promo</span> <%= APP_CUR %> <%= Number(p.promo_price).toLocaleString(APP_LOCALE) %> × <%= p.promo_cycles %> bln
                 <% } else { %><span class="text-muted">—</span><% } %>
                 <% if (p.prorate_first_invoice) { %><br><span class="badge bs" style="margin-top:4px;display:inline-block">Prorata 1×</span><% } %>
               </td>

@@ -32,9 +32,9 @@
 
     <!-- Summary Cards -->
     <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
-      <div class="sc p"><i class="bi bi-receipt sc-icon"></i><div class="sc-label"><%= t('admin.billing.summary.total', 'Total Tagihan') %></div><div class="sc-val"><%= summary.total.count||0 %></div><div class="sc-sub">Rp <%= (summary.total.total||0).toLocaleString('id-ID') %></div></div>
-      <div class="sc s"><i class="bi bi-check-circle sc-icon"></i><div class="sc-label"><%= t('admin.billing.summary.paid', 'Sudah Bayar') %></div><div class="sc-val"><%= summary.paid.count||0 %></div><div class="sc-sub">Rp <%= (summary.paid.total||0).toLocaleString('id-ID') %></div></div>
-      <div class="sc d"><i class="bi bi-hourglass sc-icon"></i><div class="sc-label"><%= t('admin.billing.summary.unpaid', 'Belum Bayar') %></div><div class="sc-val"><%= summary.unpaid.count||0 %></div><div class="sc-sub">Rp <%= (summary.unpaid.total||0).toLocaleString('id-ID') %></div></div>
+      <div class="sc p"><i class="bi bi-receipt sc-icon"></i><div class="sc-label"><%= t('admin.billing.summary.total', 'Total Tagihan') %></div><div class="sc-val"><%= summary.total.count||0 %></div><div class="sc-sub"><%= APP_CUR %> <%= (summary.total.total||0).toLocaleString(APP_LOCALE) %></div></div>
+      <div class="sc s"><i class="bi bi-check-circle sc-icon"></i><div class="sc-label"><%= t('admin.billing.summary.paid', 'Sudah Bayar') %></div><div class="sc-val"><%= summary.paid.count||0 %></div><div class="sc-sub"><%= APP_CUR %> <%= (summary.paid.total||0).toLocaleString(APP_LOCALE) %></div></div>
+      <div class="sc d"><i class="bi bi-hourglass sc-icon"></i><div class="sc-label"><%= t('admin.billing.summary.unpaid', 'Belum Bayar') %></div><div class="sc-val"><%= summary.unpaid.count||0 %></div><div class="sc-sub"><%= APP_CUR %> <%= (summary.unpaid.total||0).toLocaleString(APP_LOCALE) %></div></div>
       <div class="sc w"><i class="bi bi-percent sc-icon"></i><div class="sc-label"><%= t('admin.billing.summary.collected_pct', '% Terkumpul') %></div><div class="sc-val"><%= summary.total.count>0 ? Math.round((summary.paid.count/summary.total.count)*100) : 0 %>%</div></div>
     </div>
 
@@ -163,15 +163,15 @@
               <td style="font-size:12px;color:var(--muted)"><%= inv.package_name||'-' %></td>
               <td class="num fw6" style="color:var(--success)">
                 <% if (Number(inv.discount_amount||0) > 0) { %>
-                  <div style="font-size:10px;color:var(--muted);text-decoration:line-through">Rp <%= Number(inv.amount_before_discount||0).toLocaleString('id-ID') %></div>
+                  <div style="font-size:10px;color:var(--muted);text-decoration:line-through"><%= APP_CUR %> <%= Number(inv.amount_before_discount||0).toLocaleString(APP_LOCALE) %></div>
                 <% } %>
-                <div>Rp <%= inv.amount.toLocaleString('id-ID') %></div>
+                <div><%= APP_CUR %> <%= inv.amount.toLocaleString(APP_LOCALE) %></div>
                 <% if (Number(inv.discount_amount||0) > 0) { %>
-                  <div style="font-size:10px;color:var(--danger);font-weight:700">Diskon <%= inv.discount_type==='percent' ? (inv.discount_value+'%') : '' %> -Rp <%= Number(inv.discount_amount).toLocaleString('id-ID') %></div>
+                  <div style="font-size:10px;color:var(--danger);font-weight:700">Diskon <%= inv.discount_type==='percent' ? (inv.discount_value+'%') : '' %> -<%= APP_CUR %> <%= Number(inv.discount_amount).toLocaleString(APP_LOCALE) %></div>
                 <% } %>
                 <% if (inv.status === 'unpaid' && inv.qris_amount_unique) { %>
                   <div style="font-size:11px;color:var(--muted);margin-top:4px">
-                    Nominal unik: <span class="mono" style="font-weight:600;color:var(--primary)">Rp <%= Number(inv.qris_amount_unique || inv.amount || 0).toLocaleString('id-ID') %></span>
+                    Nominal unik: <span class="mono" style="font-weight:600;color:var(--primary)"><%= APP_CUR %> <%= Number(inv.qris_amount_unique || inv.amount || 0).toLocaleString(APP_LOCALE) %></span>
                     <% if (inv.qris_unique_code) { %>
                       <span class="badge bm" style="margin-left:4px">Kode <%= String(inv.qris_unique_code).padStart(3, "0") %></span>
                     <% } %>
@@ -187,12 +187,12 @@
                 <div><%= inv.paid_by_name||'-' %></div>
                 <% if (inv.notes) { %>
                   <% const _pf = (String(inv.notes).match(/\/(?:admin\/media\/payment-proof|uploads\/payment_proofs)\/([A-Za-z0-9._-]+)/) || [])[1]; %>
-                  <% const _nc = String(inv.notes).replace(/Bukti bayar:\s*\S+/gi, '').replace(/AUTO-QRIS:\s*cocok nominal unik Rp\s*([0-9.]+)[^\n]*/gi, 'QRIS otomatis tercocokkan Rp $1').replace(/https?:\/\/\S*\/uploads\/payment_proofs\/\S+/gi, '').replace(/[ \t]{2,}/g, ' ').replace(/\n{2,}/g, '\n').trim(); %>
+                  <% const _nc = String(inv.notes).replace(/Bukti bayar:\s*\S+/gi, '').replace(/AUTO-QRIS:\s*cocok nominal unik (?:Rp|Gs\.)?\s*([0-9.]+)[^\n]*/gi, 'QRIS otomatis tercocokkan Rp $1').replace(/https?:\/\/\S*\/uploads\/payment_proofs\/\S+/gi, '').replace(/[ \t]{2,}/g, ' ').replace(/\n{2,}/g, '\n').trim(); %>
                   <% if (_nc) { %><div style="font-size:10px;color:var(--muted)"><%= _nc %></div><% } %>
                   <% if (_pf) { %><a class="btn btn-g btn-icon btn-sm" style="margin-top:4px" title="<%= t('admin.bill.tt_view_proof','Lihat Bukti Bayar') %>" target="_blank" href="/admin/media/payment-proof/<%= _pf %>"><i class="bi bi-image"></i> Lihat Bukti</a><% } %>
                 <% } %>
               </td>
-              <td style="font-size:11px;color:var(--muted)"><%= inv.paid_at ? new Date(inv.paid_at).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-' %></td>
+              <td style="font-size:11px;color:var(--muted)"><%= inv.paid_at ? new Date(inv.paid_at).toLocaleString(APP_LOCALE,{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-' %></td>
               <td style="white-space:nowrap">
                 <% if(inv.status==='unpaid'){%>
                   <form id="qa-<%= inv.id %>" method="POST" action="/admin/billing/<%= inv.id %>/qris-assign" style="display:none"></form>
@@ -409,7 +409,7 @@ document.addEventListener('click', async function(e) {
           <label for="inv_${inv.id}" style="font-size:13px; cursor:pointer">
             ${I18N.periodPrefix} ${(MONTHS[inv.period_month] || '')} ${inv.period_year} 
             <span class="text-muted">(${inv.package_name || I18N.packageFallback})</span> - 
-            <strong style="color:var(--success)">Rp ${inv.amount.toLocaleString('id-ID')}</strong>
+            <strong style="color:var(--success)">${APP_CUR} ${inv.amount.toLocaleString(APP_LOCALE)}</strong>
           </label>
         `;
         unpaidList.appendChild(div);
@@ -482,7 +482,7 @@ document.getElementById('bulkPayBtn')?.addEventListener('click', function() {
       <label for="bulk_inv_${id}" style="font-size:13px; cursor:pointer">
         ${customerName ? `<strong>${customerName}</strong> • ` : ''}${I18N.periodPrefix} ${period}
         <span class="text-muted">(${pkg || I18N.packageFallback})</span> -
-        <strong style="color:var(--success)">Rp ${amt.toLocaleString('id-ID')}</strong>
+        <strong style="color:var(--success)">${APP_CUR} ${amt.toLocaleString(APP_LOCALE)}</strong>
       </label>
     `;
     unpaidList.appendChild(div);
@@ -545,7 +545,7 @@ document.querySelectorAll('.disc-btn').forEach(function(btn){
     var f = document.getElementById('discModalForm');
     if (!f) return;
     f.action = '/admin/billing/' + id + '/discount';
-    document.getElementById('discModalDesc').textContent = name + ' — ' + period + ' (Rp ' + Number(amount || 0).toLocaleString('id-ID') + ')';
+    document.getElementById('discModalDesc').textContent = name + ' — ' + period + ' (' + APP_CUR + ' ' + Number(amount || 0).toLocaleString(APP_LOCALE) + ')';
     var v = document.getElementById('dmValue'); if (v) v.value = '';
     openModal('discModal');
   });

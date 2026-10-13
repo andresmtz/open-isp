@@ -69,28 +69,28 @@
         <a class="cardx p-3 d-block text-decoration-none" href="/collector?<%= new URLSearchParams({ month: String(month), year: String(year), status: 'unpaid', scope: 'today', search: String(search||''), jump: 'data' }).toString() %>#data-tagihan">
           <div class="muted" style="font-size:12px"><%= t('collector.tag_hari_ini_tgl','Tagihan Hari Ini (tgl') %> <%= todayDay %>)</div>
           <div style="font-weight:900;font-size:20px"><%= Number(summary?.today_count || 0) %></div>
-          <div class="muted" style="font-size:12px">Rp <%= Number(summary?.today_total || 0).toLocaleString('id-ID') %></div>
+          <div class="muted" style="font-size:12px"><%= APP_CUR %> <%= Number(summary?.today_total || 0).toLocaleString(APP_LOCALE) %></div>
         </a>
       </div>
       <div class="col-6 col-md-3">
         <a class="cardx p-3 d-block text-decoration-none" href="/collector?<%= new URLSearchParams({ month: String(month), year: String(year), status: 'unpaid', scope: 'unpaid', search: String(search||''), jump: 'data' }).toString() %>#data-tagihan">
           <div class="muted" style="font-size:12px"><%= t('collector.tag_belum_bayar','Tagihan Belum Bayar') %></div>
           <div style="font-weight:900;font-size:20px"><%= Number(summary?.unpaid_count || 0) %></div>
-          <div class="muted" style="font-size:12px">Rp <%= Number(summary?.unpaid_total || 0).toLocaleString('id-ID') %></div>
+          <div class="muted" style="font-size:12px"><%= APP_CUR %> <%= Number(summary?.unpaid_total || 0).toLocaleString(APP_LOCALE) %></div>
         </a>
       </div>
       <div class="col-6 col-md-3">
         <a class="cardx p-3 d-block text-decoration-none" href="/collector?<%= new URLSearchParams({ month: String(month), year: String(year), status: 'unpaid', scope: 'isolir', search: String(search||''), jump: 'data' }).toString() %>#data-tagihan">
           <div class="muted" style="font-size:12px"><%= t('collector.tag_isolir','Tagihan Isolir') %></div>
           <div style="font-weight:900;font-size:20px"><%= Number(summary?.isolir_count || 0) %></div>
-          <div class="muted" style="font-size:12px">Rp <%= Number(summary?.isolir_total || 0).toLocaleString('id-ID') %></div>
+          <div class="muted" style="font-size:12px"><%= APP_CUR %> <%= Number(summary?.isolir_total || 0).toLocaleString(APP_LOCALE) %></div>
         </a>
       </div>
       <div class="col-6 col-md-3">
         <a class="cardx p-3 d-block text-decoration-none" href="/collector?<%= new URLSearchParams({ month: String(month), year: String(year), status: 'unpaid', scope: 'multi', search: String(search||''), jump: 'data' }).toString() %>#data-tagihan">
           <div class="muted" style="font-size:12px"><%= t('collector.tag_menunggak','Menunggak > 1 Bulan') %></div>
           <div style="font-weight:900;font-size:20px"><%= Number(summary?.multi_customer_count || 0) %></div>
-          <div class="muted" style="font-size:12px">Rp <%= Number(summary?.multi_total || 0).toLocaleString('id-ID') %></div>
+          <div class="muted" style="font-size:12px"><%= APP_CUR %> <%= Number(summary?.multi_total || 0).toLocaleString(APP_LOCALE) %></div>
         </a>
       </div>
     </div>
@@ -164,7 +164,7 @@
                   <div class="muted" style="font-size:12px"><%= inv.package_name || 'Internet' %> <%= invId ? ('• Invoice #' + invId) : '• Belum Ada Invoice' %></div>
                 </div>
                 <div class="text-end">
-                  <div style="font-weight:900">Rp <%= amount.toLocaleString('id-ID') %></div>
+                  <div style="font-weight:900"><%= APP_CUR %> <%= amount.toLocaleString(APP_LOCALE) %></div>
                   <% if (isPaid) { %>
                     <span class="badgey s"><i class="bi bi-check-circle"></i> <%= t('collector.status_lunas','LUNAS') %></span>
                   <% } else if (isPending) { %>
@@ -245,10 +245,10 @@
               <% myReqs.forEach(r => { %>
                 <% const st = String(r.status||''); %>
                 <tr>
-                  <td style="font-size:12px"><%= r.created_at ? new Date(r.created_at).toLocaleString('id-ID') : '-' %></td>
+                  <td style="font-size:12px"><%= r.created_at ? new Date(r.created_at).toLocaleString(APP_LOCALE) : '-' %></td>
                   <td style="font-size:12px"><%= r.customer_name || '-' %> <span class="muted"><%= r.customer_phone ? '('+r.customer_phone+')' : '' %></span></td>
                   <td style="font-size:12px"><%= r.period_month %>/<%= r.period_year %></td>
-                  <td class="text-end" style="font-size:12px">Rp <%= Number(r.amount||0).toLocaleString('id-ID') %></td>
+                  <td class="text-end" style="font-size:12px"><%= APP_CUR %> <%= Number(r.amount||0).toLocaleString(APP_LOCALE) %></td>
                   <td style="font-size:12px">
                     <% if (st === 'approved') { %>
                       <span class="badgey s"><%= t('collector.approved','APPROVED') %></span>
@@ -265,7 +265,7 @@
             <tfoot>
               <tr>
                 <td colspan="3" class="muted" style="font-size:12px"><%= t('collector.total_requests','Total pengajuan (halaman ini)') %></td>
-                <td class="text-end" style="font-size:12px;font-weight:900">Rp <%= (myReqs || []).reduce((s, r) => s + (Number(r.amount||0) || 0), 0).toLocaleString('id-ID') %></td>
+                <td class="text-end" style="font-size:12px;font-weight:900"><%= APP_CUR %> <%= (myReqs || []).reduce((s, r) => s + (Number(r.amount||0) || 0), 0).toLocaleString(APP_LOCALE) %></td>
                 <td></td>
               </tr>
             </tfoot>

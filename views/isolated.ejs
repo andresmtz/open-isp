@@ -68,7 +68,7 @@
             </div>
             <span class="badge bd" style="font-size:10px"><%= t('iso.unpaid','BELUM LUNAS') %></span>
           </div>
-          <div class="amt">Rp <%= Number(inv.amount || 0).toLocaleString('id-ID') %></div>
+          <div class="amt"><%= APP_CUR %> <%= Number(inv.amount || 0).toLocaleString(APP_LOCALE) %></div>
           <button type="button" class="iso-btn primary" onclick="openQuickQris(<%= inv.id %>, '<%= inv.publicToken %>')"><i class="bi bi-lightning-charge-fill"></i> <%= t('iso.pay_qris','Bayar Cepat via QRIS') %></button>
           <a href="/customer/payment/create/<%= inv.id %>?t=<%= encodeURIComponent(inv.publicToken) %>#bank" class="iso-btn ghost iso-space"><i class="bi bi-credit-card"></i> <%= t('iso.transfer','Transfer Bank / E-Wallet') %></a>
         </div>
@@ -134,7 +134,7 @@
 
       <div class="iso-amt-box">
         <div class="l"><%= t('iso.total','Total Pembayaran') %></div>
-        <div class="v" id="qrisAmountDisplay">Rp 0</div>
+        <div class="v" id="qrisAmountDisplay"><%= APP_CUR %> 0</div>
         <div id="qrisUniqueBadge" class="iso-unique" style="display:none"><%= t('iso.unique_note','Termasuk Kode Unik Verifikasi') %></div>
       </div>
 
@@ -191,15 +191,15 @@
       document.getElementById('qrisInvoicePeriod').innerText = 'Invoice #' + data.invoiceId + ' • Periode: ' + (data.periodText || '');
       document.getElementById('qrisImage').src = data.qrDataUrl || '';
       currentAmountNumber = data.amount;
-      document.getElementById('qrisAmountDisplay').innerText = 'Rp ' + Number(data.amount).toLocaleString('id-ID');
+      document.getElementById('qrisAmountDisplay').innerText = APP_CUR + ' ' + Number(data.amount).toLocaleString(APP_LOCALE);
 
       var uniqueBadge = document.getElementById('qrisUniqueBadge');
       if (data.uniqueCode && data.uniqueCode > 0) {
         var base = Number(data.nominalAsli || (Number(data.amount) - Number(data.uniqueCode)));
         uniqueBadge.style.display = 'block';
-        uniqueBadge.innerHTML = 'Tagihan: Rp ' + base.toLocaleString('id-ID')
-          + ' + Kode Unik: Rp ' + Number(data.uniqueCode).toLocaleString('id-ID')
-          + ' = <b>Rp ' + Number(data.amount).toLocaleString('id-ID') + '</b>';
+        uniqueBadge.innerHTML = 'Tagihan: ' + APP_CUR + ' ' + base.toLocaleString(APP_LOCALE)
+          + ' + Kode Unik: ' + APP_CUR + ' ' + Number(data.uniqueCode).toLocaleString(APP_LOCALE)
+          + ' = <b>' + APP_CUR + ' ' + Number(data.amount).toLocaleString(APP_LOCALE) + '</b>';
       } else { uniqueBadge.style.display = 'none'; }
 
       if (data.helpText) document.getElementById('qrisHelpText').innerText = data.helpText;
@@ -250,8 +250,8 @@
   function copyAmount() {
     if (!currentAmountNumber) return;
     navigator.clipboard.writeText(String(currentAmountNumber))
-      .then(function(){ alert('Nominal Rp ' + Number(currentAmountNumber).toLocaleString('id-ID') + ' berhasil disalin!'); })
-      .catch(function(){ alert('Nominal: Rp ' + currentAmountNumber); });
+      .then(function(){ alert('Nominal ' + APP_CUR + ' ' + Number(currentAmountNumber).toLocaleString(APP_LOCALE) + ' berhasil disalin!'); })
+      .catch(function(){ alert('Nominal: ' + APP_CUR + ' ' + currentAmountNumber); });
   }
 </script>
   <script src="/js/theme-toggle.js" defer></script>

@@ -1358,7 +1358,7 @@
 
           // Update traffic Chart.js
           const activeRates = calculatedRates[selectedInterface] || { rxMbps: 0, txMbps: 0 };
-          const timeLabel = new Date(now).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          const timeLabel = new Date(now).toLocaleTimeString(APP_LOCALE, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
           
           historicalData.labels.push(timeLabel);
           historicalData.rx.push(activeRates.rxMbps);

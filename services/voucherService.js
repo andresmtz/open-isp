@@ -5,6 +5,7 @@
  * type 'nominal' = potongan Rp; 'percent' = % dengan batas maksimal (max_discount).
  */
 const db = require('../config/database');
+const regional = require('../config/regional');
 
 function list() {
   return db.prepare('SELECT * FROM discount_vouchers ORDER BY id DESC').all();
@@ -38,10 +39,10 @@ function validate(code, amount) {
   if (Number(v.max_uses) > 0 && Number(v.used_count) >= Number(v.max_uses)) return { ok: false, message: 'Kode voucher sudah habis dipakai.' };
   const amt = Math.max(0, Math.round(Number(amount) || 0));
   if (Number(v.min_purchase) > 0 && amt < Number(v.min_purchase)) {
-    return { ok: false, message: 'Minimal tagihan Rp ' + Number(v.min_purchase).toLocaleString('id-ID') + ' untuk memakai voucher ini.' };
+    return { ok: false, message: 'Minimal tagihan ' + regional.currencySymbol() + ' ' + Number(v.min_purchase).toLocaleString(regional.locale()) + ' untuk memakai voucher ini.' };
   }
   const discount = computeDiscount(v, amt);
-  return { ok: true, voucher: v, discount: discount, message: 'Voucher diterapkan: -Rp ' + discount.toLocaleString('id-ID') };
+  return { ok: true, voucher: v, discount: discount, message: 'Voucher diterapkan: -' + regional.currencySymbol() + ' ' + discount.toLocaleString(regional.locale()) };
 }
 function create(data) {
   const code = String(data.code || '').trim().toUpperCase();

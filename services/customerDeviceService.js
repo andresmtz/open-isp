@@ -9,6 +9,7 @@ const auditTrail = require('./auditTrailService');
 const { logger } = require('../config/logger');
 const genieacsApi = require('../config/genieacs');
 const mikrotikService = require('./mikrotikService');
+const regional = require('../config/regional');
 
 // Helper: Search device across all servers (always get full data)
 async function searchDeviceAcrossServers(query, fullData = true) {
@@ -378,7 +379,7 @@ function formatDeviceTimestamp(value) {
   if (!value) return '-';
   const d = new Date(value);
   if (isNaN(d.getTime())) return '-';
-  return d.toLocaleString('id-ID');
+  return d.toLocaleString(regional.locale());
 }
 
 function formatRelativeTime(value) {
@@ -562,10 +563,7 @@ function expandTagCandidates(input) {
   if (!t) return [];
   if (/^\d+$/.test(t)) {
     const d = t.replace(/\D/g, '');
-    const set = new Set([d]);
-    if (d.startsWith('62') && d.length > 2) set.add('0' + d.slice(2));
-    if (d.startsWith('0')) set.add('62' + d.slice(1));
-    return [...set];
+    return Array.from(new Set([d, ...regional.phoneVariants(d)]));
   }
   return [t];
 }

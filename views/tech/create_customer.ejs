@@ -10,11 +10,11 @@
       <input name="name" class="p-input" required>
     </div>
     <div class="p-grid2">
-      <div class="p-field"><label><%= t('tech.cc.phone','No. HP') %></label><input name="phone" class="p-input" placeholder="08xxxxxxxxxx"></div>
+      <div class="p-field"><label><%= t('tech.cc.phone','No. HP') %></label><input name="phone" class="p-input" placeholder="<%= regional.phoneExample %>"></div>
       <div class="p-field"><label><%= t('pwa.field.package','Paket') %></label>
         <select name="package_id" class="p-input">
           <option value=""><%= t('tech.cc.ph_pkg','-- Pilih Paket --') %></option>
-          <% packages.forEach(function(p){ %><option value="<%= p.id %>"><%= p.name %> (Rp <%= Number(p.price||0).toLocaleString('id-ID') %>)</option><% }) %>
+          <% packages.forEach(function(p){ %><option value="<%= p.id %>"><%= p.name %> (<%= APP_CUR %> <%= Number(p.price||0).toLocaleString(APP_LOCALE) %>)</option><% }) %>
         </select>
       </div>
     </div>

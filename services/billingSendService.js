@@ -9,6 +9,7 @@
 const db = require('../config/database');
 const { getSetting } = require('../config/settingsManager');
 const billingSvc = require('./billingService');
+const regional = require('../config/regional');
 
 const TEMPLATE_LABELS = {
   whatsapp_auto_billing_message: 'Pengingat Tagihan',
@@ -47,8 +48,8 @@ function buildMessage(tplRaw, c, inv) {
     .replace(/{{id_pelanggan}}/gi, c.customer_code || ('ID:' + c.id))
     .replace(/{{nama}}/gi, c.name || 'Pelanggan')
     .replace(/{{paket}}/gi, inv.package_name || '-')
-    .replace(/{{tagihan}}/gi, amount.toLocaleString('id-ID'))
-    .replace(/{{qris_nominal}}/gi, amount.toLocaleString('id-ID'))
+    .replace(/{{tagihan}}/gi, amount.toLocaleString(regional.locale()))
+    .replace(/{{qris_nominal}}/gi, amount.toLocaleString(regional.locale()))
     .replace(/{{rincian}}/gi, period)
     .replace(/{{periode}}/gi, period)
     .replace(/{{bulan_nunggak}}/gi, String(c.unpaid_streak || 0))
@@ -87,7 +88,7 @@ async function start(opts = {}) {
   const intervalMax = Math.max(intervalMin, parseInt(opts.intervalMax, 10) || 40);
   const isQris = /qris/i.test(templateKey) || templateKey === 'whatsapp_billing_qris_message';
 
-  const def = 'Yth. {{nama}},\n\nBerikut tagihan internet Anda:\n📦 {{paket}}\n💰 Rp {{tagihan}}\n📅 {{rincian}}\n\nBayar: {{link}}';
+  const def = 'Yth. {{nama}},\n\nBerikut tagihan internet Anda:\n📦 {{paket}}\n💰 {{moneda}} {{tagihan}}\n📅 {{rincian}}\n\nBayar: {{link}}';
   const tplRaw = db.getAppSetting(templateKey, def) || def;
 
   const targets = buildTargets(isolateDay);

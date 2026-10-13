@@ -40,14 +40,14 @@
         <div class="val-icon" style="background:rgba(239, 68, 68, 0.1);color:#ef4444"><i class="bi bi-graph-down-arrow"></i></div>
         <div>
           <div class="val-text"><%= t('admin.exp.month','Pengeluaran Bulan Ini') %></div>
-          <div class="val-num">Rp <%= totalThisMonth.toLocaleString('id-ID') %></div>
+          <div class="val-num"><%= APP_CUR %> <%= totalThisMonth.toLocaleString(APP_LOCALE) %></div>
         </div>
       </div>
       <div class="val-box">
         <div class="val-icon" style="background:rgba(99, 102, 241, 0.1);color:#6366f1"><i class="bi bi-wallet-fill"></i></div>
         <div>
           <div class="val-text"><%= t('admin.exp.total','Total Pengeluaran Dicatat') %></div>
-          <div class="val-num">Rp <%= totalAll.toLocaleString('id-ID') %></div>
+          <div class="val-num"><%= APP_CUR %> <%= totalAll.toLocaleString(APP_LOCALE) %></div>
         </div>
       </div>
     </div>
@@ -89,7 +89,7 @@
               <td>
                 <span class="badge bm"><%= String(item.payment_method).toUpperCase() %></span>
               </td>
-              <td class="num fw6" style="color:#ef4444">- Rp <%= Number(item.amount).toLocaleString('id-ID') %></td>
+              <td class="num fw6" style="color:#ef4444">- <%= APP_CUR %> <%= Number(item.amount).toLocaleString(APP_LOCALE) %></td>
               <td style="font-size:12px"><%= item.recorded_by_name || 'Admin' %></td>
               <td>
                 <form method="POST" action="/admin/finance/expenses/<%= item.id %>/delete" style="display:inline" onsubmit="return confirm('Hapus data pengeluaran ini?')">
@@ -174,7 +174,7 @@ if(amtInput){
   amtInput.addEventListener('keyup', function(e) {
     let val = this.value.replace(/[^0-9]/g, '');
     if(val){
-      this.value = parseInt(val, 10).toLocaleString('id-ID');
+      this.value = parseInt(val, 10).toLocaleString(APP_LOCALE);
     } else {
       this.value = '';
     }

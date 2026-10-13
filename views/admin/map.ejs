@@ -2093,9 +2093,10 @@
     const raw = String(phone || '').trim();
     const digits = raw.replace(/\D/g, '');
     if (!digits) return '';
-    if (digits.startsWith('62')) return digits;
-    if (digits.startsWith('0')) return `62${digits.slice(1)}`;
-    if (digits.length >= 9) return `62${digits}`;
+    const cc = APP_CFG.phoneCountryCode, trunk = APP_CFG.phoneTrunkPrefix;
+    if (digits.startsWith(cc)) return digits;
+    if (trunk && digits.startsWith(trunk)) return cc + digits.slice(trunk.length);
+    if (digits.length >= 8) return cc + digits;
     return digits;
   }
 

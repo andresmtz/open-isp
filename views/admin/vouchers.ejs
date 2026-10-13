@@ -383,7 +383,7 @@
     }
     sel.insertAdjacentHTML('beforeend', '<option value=""><%= t('admin.vou.pick_profile','-- Pilih Profile --') %></option>');
     for (const x of filtered) {
-      const label = `${x.raw.name} (Rp ${Number(x.meta.price || 0).toLocaleString('id-ID')} • ${x.meta.validity})`;
+      const label = `${x.raw.name} (${APP_CUR} ${Number(x.meta.price || 0).toLocaleString(APP_LOCALE)} • ${x.meta.validity})`;
       sel.insertAdjacentHTML('beforeend', `<option value="${x.raw.name}">${label}</option>`);
     }
     document.getElementById('profileHint').innerText = '';
@@ -401,7 +401,7 @@
     const raw = profilesCache.find(p => p.name === name);
     const meta = raw ? parseMikhmonOnLogin(raw.onLogin || raw['on-login']) : null;
     if (!meta) return document.getElementById('profileHint').innerText = '';
-    document.getElementById('profileHint').innerText = `${I18N.profilePricePrefix} Rp ${Number(meta.price||0).toLocaleString('id-ID')} • ${I18N.profileDurationPrefix} ${meta.validity}`;
+    document.getElementById('profileHint').innerText = `${I18N.profilePricePrefix} ${APP_CUR} ${Number(meta.price||0).toLocaleString(APP_LOCALE)} • ${I18N.profileDurationPrefix} ${meta.validity}`;
     const priceEl = document.getElementById('price');
     if (priceEl && (priceEl.value === '' || Number(priceEl.value) === 0)) {
       priceEl.value = Number(meta.price || 0) ? String(Number(meta.price || 0)) : '';
@@ -467,7 +467,7 @@
     list.innerHTML = batches.map(b => {
       const status = String(b.status || '-');
       const stClass = status === 'ready' ? 's' : (status === 'failed' ? 'd' : (status === 'partial' ? 'w' : 'w'));
-      const created = b.created_at ? new Date(b.created_at).toLocaleString('id-ID') : '-';
+      const created = b.created_at ? new Date(b.created_at).toLocaleString(APP_LOCALE) : '-';
       const qty = `${b.qty_created || 0}/${b.qty_total || 0}`;
       const used = `${b.used_count || 0}/${b.vouchers_count || 0}`;
       const routerName = b.router_name || I18N.defaultRouterName;
@@ -555,7 +555,7 @@
     meta.insertAdjacentHTML('beforeend', `<span class="pill"><i class="bi bi-hdd-network"></i> <b>${data.batch.router_name || I18N.defaultRouterName}</b></span>`);
     meta.insertAdjacentHTML('beforeend', `<span class="pill"><i class="bi bi-ticket"></i> <b>${data.batch.profile_name}</b></span>`);
     meta.insertAdjacentHTML('beforeend', `<span class="pill"><i class="bi bi-clock"></i> <b>${data.batch.validity || '-'}</b></span>`);
-    meta.insertAdjacentHTML('beforeend', `<span class="pill"><i class="bi bi-cash-coin"></i> <b>Rp ${Number(data.batch.price||0).toLocaleString('id-ID')}</b></span>`);
+    meta.insertAdjacentHTML('beforeend', `<span class="pill"><i class="bi bi-cash-coin"></i> <b>${APP_CUR} ${Number(data.batch.price||0).toLocaleString(APP_LOCALE)}</b></span>`);
     meta.insertAdjacentHTML('beforeend', `<span class="pill"><i class="bi bi-collection"></i> <b>${data.batch.qty_created || 0}/${data.batch.qty_total || 0}</b></span>`);
 
     const list = document.getElementById('batchDetailList');
@@ -567,8 +567,8 @@
     }
     list.innerHTML = items.map(v => {
       const st = String(v.status || '-');
-      const usedAt = v.used_at ? new Date(v.used_at).toLocaleString('id-ID') : '-';
-      const seenAt = v.last_seen_at ? new Date(v.last_seen_at).toLocaleString('id-ID') : '-';
+      const usedAt = v.used_at ? new Date(v.used_at).toLocaleString(APP_LOCALE) : '-';
+      const seenAt = v.last_seen_at ? new Date(v.last_seen_at).toLocaleString(APP_LOCALE) : '-';
       const seen = (v.last_seen_uptime || v.last_seen_comment) ? `${(v.last_seen_uptime || '-')}${v.last_seen_comment ? ' • ' + v.last_seen_comment : ''}` : '-';
       const stClass = st === 'used' ? 's' : (st === 'created' ? 'w' : (st === 'missing' ? 'd' : 'w'));
       return `

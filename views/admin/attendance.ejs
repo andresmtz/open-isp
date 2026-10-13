@@ -267,7 +267,7 @@
     <!-- All Attendance Records -->
     <div class="card" style="margin-top:20px">
       <div class="card-hd">
-        <h6><i class="bi bi-calendar-check"></i> <%= t('admin.att.all_attendance','Semua Absensi') %> - <%= parseDateInTimezone(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></h6>
+        <h6><i class="bi bi-calendar-check"></i> <%= t('admin.att.all_attendance','Semua Absensi') %> - <%= parseDateInTimezone(selectedDate).toLocaleDateString(APP_LOCALE, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></h6>
       </div>
       
       <% if (attendances.length > 0) { %>

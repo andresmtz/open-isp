@@ -18,7 +18,7 @@
     <div class="p-card" style="border-color:var(--danger-glow)">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px">
         <span class="badge-status badge-open"><i class="bi bi-exclamation-circle-fill"></i> <%= t('tech.ticket.open', 'Belum Ditangani') %></span>
-        <span class="muted" style="font-size:11px"><%= typeof formatDateLocal === 'function' ? formatDateLocal(ticket.created_at) : (ticket.created_at ? new Date(ticket.created_at).toLocaleString('id-ID', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}) : '-') %></span>
+        <span class="muted" style="font-size:11px"><%= typeof formatDateLocal === 'function' ? formatDateLocal(ticket.created_at) : (ticket.created_at ? new Date(ticket.created_at).toLocaleString(APP_LOCALE, {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}) : '-') %></span>
       </div>
 
       <div style="font-weight:700;font-size:15px"><%= ticket.customer_name %></div>

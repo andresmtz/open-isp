@@ -30,6 +30,7 @@ const { BinaryBitmap, HybridBinarizer, RGBLuminanceSource, MultiFormatReader, Ba
 let loginRateLimiter = (req, res, next) => next();
 try {
   const rlMod = require('../middleware/rateLimiter');
+const regional = require('../config/regional');
   if (rlMod && typeof rlMod.loginRateLimiter === 'function') {
     loginRateLimiter = rlMod.loginRateLimiter;
   }
@@ -98,7 +99,7 @@ const waSendDedup = new Map();
 function normalizeWaDigits(input) {
   let digits = String(input || '').replace(/\D/g, '');
   if (!digits) return '';
-  if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+  digits = regional.normalizePhone(digits);
   if (digits.length < 8) return '';
   return digits;
 }
@@ -203,9 +204,7 @@ function verifyPublicToken(token, secret) {
 function normalizeBuyerPhone(input) {
   const digits = String(input || '').replace(/\D/g, '');
   if (digits.length < 8) return '';
-  if (digits.startsWith('0')) return '62' + digits.slice(1);
-  if (digits.startsWith('62')) return digits;
-  return '62' + digits;
+  return regional.normalizePhone(digits);
 }
 
 function genRandomCode(length = 6) {
@@ -1554,10 +1553,8 @@ router.post('/register', async (req, res) => {
     }
     // Validasi nomor WhatsApp
     {
-      let _ph = String(phone || '').replace(/[^0-9]/g, '');
-      if (_ph.startsWith('62')) _ph = '0' + _ph.slice(2);
-      if (!/^08[0-9]{7,12}$/.test(_ph)) throw new Error((res.locals.t || function(k,d){return d;})('customer.register.err_phone', 'Nomor WhatsApp tidak valid. Gunakan format 08xxxxxxxxxx.'));
-      phone = _ph;
+      if (!regional.isValidPhone(phone)) throw new Error((res.locals.t || function(k,d){return d;})('customer.register.err_phone', 'Nomor WhatsApp tidak valid. Gunakan format 08xxxxxxxxxx.').replace(/08x+/g, regional.phoneExample()));
+      phone = regional.toLocalPhone(phone);
     }
 
     const selectedPkg = packages.find(p => String(p.id) === String(package_id));
@@ -1592,7 +1589,7 @@ router.post('/register', async (req, res) => {
       const selectedPkg = packages.find(p => p.id.toString() === package_id.toString());
       const pkgName = selectedPkg ? selectedPkg.name : 'Tidak diketahui';
       
-      const adminMsg = `🔔 *PENDAFTARAN BARU*\n\nAda calon pelanggan baru yang mendaftar via web:\n\n👤 *Nama:* ${name}\n📞 *WA:* ${phone}\n📍 *Alamat:* ${address}\n📦 *Paket:* ${pkgName}\n🎟️ *Voucher:* ${bill.voucherCode || '-'}\n💰 *Estimasi Bayar Awal:* Rp ${bill.total.toLocaleString('id-ID')}\n\nSilakan cek di panel Admin untuk menindaklanjuti.`;
+      const adminMsg = `🔔 *PENDAFTARAN BARU*\n\nAda calon pelanggan baru yang mendaftar via web:\n\n👤 *Nama:* ${name}\n📞 *WA:* ${phone}\n📍 *Alamat:* ${address}\n📦 *Paket:* ${pkgName}\n🎟️ *Voucher:* ${bill.voucherCode || '-'}\n💰 *Estimasi Bayar Awal:* ${regional.currencySymbol()} ${bill.total.toLocaleString(regional.locale())}\n\nSilakan cek di panel Admin untuk menindaklanjuti.`;
       const latStr = String(lat || '').trim();
       const lngStr = String(lng || '').trim();
       const mapLine = (latStr && lngStr) ? `\n🗺️ *Lokasi:* https://maps.google.com/?q=${encodeURIComponent(latStr)},${encodeURIComponent(lngStr)}` : '';
@@ -1602,7 +1599,7 @@ router.post('/register', async (req, res) => {
       for (const adminPhone of settings.whatsapp_admin_numbers) {
         let digits = String(adminPhone || '').replace(/\D/g, '');
         if (!digits) continue;
-        if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+        digits = regional.normalizePhone(digits);
         if (seen.has(digits)) continue;
         seen.add(digits);
         try { await waNotify.sendText(digits, finalAdminMsg); } catch(e) { /* ignore */ }
@@ -1630,7 +1627,7 @@ router.post('/register', async (req, res) => {
           for (const tech of technicians) {
             let digits = String(tech.phone || '').replace(/\D/g, '');
             if (!digits) continue;
-            if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+            digits = regional.normalizePhone(digits);
             if (seenTech.has(digits)) continue;
             seenTech.add(digits);
             try { await waNotify.sendText(digits, finalTechMsg); } catch(e) { /* ignore */ }
@@ -1976,7 +1973,7 @@ router.get('/dashboard', async (req, res) => {
   const _statusRaw = String(_prof.status || _dev.status || '-').toLowerCase();
   const _statusActive = ['active','aktif'].indexOf(_statusRaw) !== -1;
   const _statusText = _statusActive ? _t('common.active','Aktif') : String(_prof.status || _dev.status || '-');
-  const _fmt = n => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
+  const _fmt = n => regional.currencySymbol() + ' ' + Number(n || 0).toLocaleString(regional.locale());
   const _isolateDay = Math.max(1, Math.min(28, Number(_prof.isolate_day || (settings && settings.isolir_day) || 10)));
   const _isolirOf = (y, m) => { const d = new Date(y, (m || 1) - 1, _isolateDay); return d.getDate() + ' ' + _mNames[d.getMonth()] + ' ' + d.getFullYear(); };
   const _periodLabel = inv => inv ? ((_mNames[(Number(inv.period_month) || 1) - 1] || '') + ' ' + (inv.period_year || '')) : '';
@@ -2047,7 +2044,7 @@ router.get('/dashboard', async (req, res) => {
     serialNumber: String(_dev.serialNumber || '-'),
     onuDetected: (!!_dev.status && _dev.status !== 'Tidak ditemukan'),
     onuOnline: (String(_dev.status || '').toLowerCase() === 'online'),
-    waPhone: String((settings && settings.company_phone) || '').replace(/[^0-9]/g, '').replace(/^0/, '62'),
+    waPhone: regional.normalizePhone((settings && settings.company_phone) || ''),
     rxPower: (function(v){ v = String(v || '-').trim(); if (v === '-' || !v) return '-'; return /dbm/i.test(v) ? v : (v + ' dBm'); })(_dev.rxPower),
     ssid: String(_dev.ssid || '-'),
     devices: _devices, deviceCount: _devices.length,
@@ -2654,7 +2651,7 @@ router.post('/invoice/:id/send-pdf-wa', async (req, res) => {
     const isPaid = inv.status === 'paid';
     const caption = `📄 *INVOICE ${isPaid ? '(LUNAS)' : '(TAGIHAN)'}*\n` +
       `Periode: ${inv.period_month}/${inv.period_year}\n` +
-      `Total: Rp ${Number(inv.amount || 0).toLocaleString('id-ID')}\n` +
+      `Total: ${regional.currencySymbol()} ${Number(inv.amount || 0).toLocaleString(regional.locale())}\n` +
       `Status: *${isPaid ? 'LUNAS' : 'BELUM BAYAR'}*\n\n` +
       `Terima kasih.\n— ${settings.company_header || 'OPEN-ISP'}`;
 
@@ -3299,7 +3296,7 @@ router.post('/payment/proof/:invoiceId', uploadProof.single('proof'), async (req
             `👤 *Nama:* ${who}\n` +
             `🧾 *Invoice:* INV-${inv.id}\n` +
             `📅 *Periode:* ${inv.period_month}/${inv.period_year}\n` +
-            `💰 *Nominal:* Rp ${Number(amountUnique).toLocaleString('id-ID')} (kode ${String(uniqueCode).padStart(3, '0')})\n` +
+            `💰 *Nominal:* ${regional.currencySymbol()} ${Number(amountUnique).toLocaleString(regional.locale())} (kode ${String(uniqueCode).padStart(3, '0')})\n` +
             `📎 *Bukti:* ${proofUrl}\n`;
           await waNotify.sendText(adminWaDigits, msg);
         }
@@ -3395,7 +3392,7 @@ router.post('/voucher/proof/:orderId', uploadProof.single('proof'), async (req, 
             `🎫 *KONFIRMASI PEMBAYARAN VOUCHER (QRIS STATIS)*\n\n` +
             `🧾 *Order:* VOUCHER-${orderId}\n` +
             `📦 *Paket:* ${order.profile_name || '-'}${order.validity ? ' (' + order.validity + ')' : ''}\n` +
-            `💰 *Nominal:* Rp ${Number(amountUnique).toLocaleString('id-ID')} (kode ${String(uniqueCode).padStart(3, '0')})\n` +
+            `💰 *Nominal:* ${regional.currencySymbol()} ${Number(amountUnique).toLocaleString(regional.locale())} (kode ${String(uniqueCode).padStart(3, '0')})\n` +
             `📞 *WA Pembeli:* ${order.buyer_phone || '-'}\n` +
             `📎 *Bukti:* ${proofUrl}\n`;
           await waNotify.sendText(adminWaDigits, msg);
@@ -3619,7 +3616,7 @@ router.post('/payment/callback', express.json({
                 `🎫 *VOUCHER HOTSPOT*\n\n` +
                 `✅ Pembayaran diterima via *${gateway}*\n` +
                 `📦 Paket: *${fresh.profile_name}* (${fresh.validity || '-'})\n` +
-                `💰 Harga: Rp ${Number(fresh.price || 0).toLocaleString('id-ID')}\n\n` +
+                `💰 Harga: ${regional.currencySymbol()} ${Number(fresh.price || 0).toLocaleString(regional.locale())}\n\n` +
                 `👤 User: *${created.code}*\n` +
                 `🔑 Pass: *${created.pass}*\n\n` +
                 `Terima kasih.`;

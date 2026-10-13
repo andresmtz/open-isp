@@ -177,9 +177,9 @@ const templates = {
   
   active: `Yth. Pelanggan Setia {{nama}},\n\nTerima kasih telah mempercayakan kebutuhan internet Anda kepada kami. Nikmati terus layanan terbaik Paket {{paket}} tanpa hambatan.\n\nKelola akun Anda di: {{link}}\n\nSalam,\nAdmin <%= company %>`,
   
-  suspended: `Yth. Pelanggan {{nama}},\n\nMohon maaf, layanan internet Anda saat ini sedang dinonaktifkan (Terisolir). \n\nTotal tunggakan Anda: *Rp {{tagihan}}* (Periode: {{rincian}}).\n\nSilakan bayar melalui portal kami: {{link}}\n\nSalam,\nAdmin <%= company %>`,
+  suspended: `Yth. Pelanggan {{nama}},\n\nMohon maaf, layanan internet Anda saat ini sedang dinonaktifkan (Terisolir). \n\nTotal tunggakan Anda: *{{moneda}} {{tagihan}}* (Periode: {{rincian}}).\n\nSilakan bayar melalui portal kami: {{link}}\n\nSalam,\nAdmin <%= company %>`,
   
-  unpaid: `Yth. Pelanggan {{nama}},\n\nBerdasarkan data sistem kami, Anda memiliki tagihan internet yang *BELUM LUNAS*.\n\n📦 *Paket:* {{paket}}\n💰 *Total Tagihan:* Rp {{tagihan}}\n📅 *Periode:* {{rincian}}\n\nMohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\nTerima kasih atas kerja samanya.\nSalam,\nAdmin <%= company %>`
+  unpaid: `Yth. Pelanggan {{nama}},\n\nBerdasarkan data sistem kami, Anda memiliki tagihan internet yang *BELUM LUNAS*.\n\n📦 *Paket:* {{paket}}\n💰 *Total Tagihan:* {{moneda}} {{tagihan}}\n📅 *Periode:* {{rincian}}\n\nMohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\nTerima kasih atas kerja samanya.\nSalam,\nAdmin <%= company %>`
 };
 
 const targetSelect = document.getElementById('targetSelect');

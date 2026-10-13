@@ -131,8 +131,17 @@ function saveSettings(newSettings) {
       }
     } catch (e) { /* abaikan */ }
     const tmpPath = settingsPath + '.tmp-' + process.pid;
-    fs.writeFileSync(tmpPath, JSON.stringify(updatedSettings, null, 2), 'utf-8');
-    fs.renameSync(tmpPath, settingsPath); // atomik: pembaca tidak pernah melihat file setengah jadi
+    const json = JSON.stringify(updatedSettings, null, 2);
+    fs.writeFileSync(tmpPath, json, 'utf-8');
+    try {
+      fs.renameSync(tmpPath, settingsPath); // atómico: nadie lee un archivo a medio escribir
+    } catch (e) {
+      // En Docker settings.json suele estar montado como archivo: no se puede renombrar encima
+      // (EBUSY/EXDEV). En ese caso se escribe directo sobre el archivo montado.
+      if (!['EBUSY', 'EXDEV', 'EPERM'].includes(e.code)) throw e;
+      fs.writeFileSync(settingsPath, json, 'utf-8');
+      try { fs.unlinkSync(tmpPath); } catch (_) {}
+    }
     settingsCache = updatedSettings;
     settingsCacheTime = Date.now();
     return true;

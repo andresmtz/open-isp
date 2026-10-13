@@ -309,9 +309,9 @@ function getConfigMenus() {
       ...menu,
       state: states[menu.key] || DEFAULT_MENU_STATES[menu.key] || STATE_VISIBLE,
       roleLabel: menu.roles.includes('admin') && menu.roles.includes('cashier')
-        ? 'Admin & Kasir'
+        ? 'Admin y cajero'
         : menu.roles.includes('cashier')
-          ? 'Kasir'
+          ? 'Cajero'
           : 'Admin',
       sectionLabel: section?.labelDefault || menu.section,
       sectionLabelKey: section?.labelKey || ''

@@ -968,12 +968,30 @@ db.exec(`
 try {
   db.exec(`
     INSERT OR IGNORE INTO expense_categories (name, parent_id, description, icon, color) VALUES
-    ('Perangkat', NULL, 'Compra de equipos de red', 'bi bi-router', '#3b82f6'),
-    ('Utilitas', NULL, 'Servicios (electricidad, internet, etc.)', 'bi bi-lightning-charge', '#f59e0b'),
+    ('Equipos de red', NULL, 'Compra de equipos de red', 'bi bi-router', '#3b82f6'),
+    ('Servicios', NULL, 'Servicios (electricidad, internet, etc.)', 'bi bi-lightning-charge', '#f59e0b'),
     ('Sueldos y beneficios', NULL, 'Sueldos y beneficios del personal', 'bi bi-wallet2', '#10b981'),
-    ('Maintenance', NULL, 'Mantenimiento y reparaciones', 'bi bi-tools', '#ef4444'),
-    ('Operasional', NULL, 'Otros gastos operativos', 'bi bi-briefcase', '#8b5cf6');
+    ('Mantenimiento', NULL, 'Mantenimiento y reparaciones', 'bi bi-tools', '#ef4444'),
+    ('Operativos', NULL, 'Otros gastos operativos', 'bi bi-briefcase', '#8b5cf6');
   `);
+} catch (e) {}
+
+// Migración: categorías de gastos sembradas en indonesio en versiones anteriores -> español
+try {
+  const _catRename = [
+    ['Perangkat', 'Equipos de red', 'Compra de equipos de red'],
+    ['Utilitas', 'Servicios', 'Servicios (electricidad, internet, etc.)'],
+    ['Gaji & Tunjangan', 'Sueldos y beneficios', 'Sueldos y beneficios del personal'],
+    ['Maintenance', 'Mantenimiento', 'Mantenimiento y reparaciones'],
+    ['Operasional', 'Operativos', 'Otros gastos operativos']
+  ];
+  const _hasExpCat = db.prepare("SELECT 1 FROM pragma_table_info('expenses') WHERE name='category'").get();
+  for (const [oldName, newName, desc] of _catRename) {
+    const exists = db.prepare('SELECT id FROM expense_categories WHERE name = ?').get(newName);
+    if (exists) db.prepare('DELETE FROM expense_categories WHERE name = ?').run(oldName);
+    else db.prepare('UPDATE expense_categories SET name = ?, description = ? WHERE name = ?').run(newName, desc, oldName);
+    if (_hasExpCat) db.prepare('UPDATE expenses SET category = ? WHERE category = ?').run(newName, oldName);
+  }
 } catch (e) {}
 
 

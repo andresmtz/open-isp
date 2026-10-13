@@ -206,7 +206,7 @@ router.get('/map', requireTechSession, (req, res) => {
   const odps = odpSvc.getAllOdps();
   
   res.render('tech/map', { 
-    title: 'Peta Jaringan', 
+    title: 'Mapa de red', 
     company: company(), 
     activePage: 'map', 
     customers, 

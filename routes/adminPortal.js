@@ -721,7 +721,7 @@ router.get('/map', requireAdminSession, requireSidebarMenuAccess('map'), (req, r
   });
   const _s = getSettings();
   res.render('admin/map', {
-    title: 'Peta Jaringan',
+    title: 'Mapa de red',
     company: company(),
     activePage: 'map',
     customers: customers,
@@ -6652,7 +6652,7 @@ function buildWaPreviewMessages() {
   const base = (getSetting('app_url', '') || getSetting('public_base_url', '') || 'http://localhost:3001').replace(/\/+$/, '');
   const nowTxt = new Date().toLocaleString(regional.locale(), { timeZone: getSetting('timezone', 'America/Asuncion') });
   const sample = { nama: 'Juan Pérez', id: 'ISP-12345', paket: 'PLAN180MB', tagihan: '250.000', periode: '10/2026', link: base + '/customer', otp: '482913', ssid: 'WiFi-JuanPerez', password: 'clave-wifi-2026', waktu: nowTxt, bulan: '3', batas: '3' };
-  const rv = (t) => String(t || '')
+  const rv = (t) => regional.applyPlaceholders(String(t || ''))
     .replace(/{{nama}}/gi, sample.nama).replace(/{{id_pelanggan}}/gi, sample.id).replace(/{{paket}}/gi, sample.paket)
     .replace(/{{tagihan}}/gi, sample.tagihan).replace(/{{total}}/gi, sample.tagihan).replace(/{{qris_nominal}}/gi, sample.tagihan)
     .replace(/{{rincian}}/gi, sample.periode).replace(/{{periode}}/gi, sample.periode).replace(/{{bulan_nunggak}}/gi, sample.bulan).replace(/{{batas}}/gi, sample.batas)
@@ -6663,7 +6663,7 @@ function buildWaPreviewMessages() {
   const g = (k, def) => db.getAppSetting(k, def) || def;
   const messages = [
     { title: 'Recordatorio de pago (automático, X días antes)', key: 'whatsapp_auto_billing_message', text: rv(g('whatsapp_auto_billing_message', 'Estimado/a {{nama}}, factura de {{moneda}} {{tagihan}} del período {{rincian}}. Detalle: {{link}}')) },
-    { title: 'Factura con QR (con imagen)', key: 'whatsapp_billing_qris_message', text: rv(g('whatsapp_billing_qris_message', 'Estimado/a {{nama}}, factura de {{moneda}} {{tagihan}} del período {{rincian}}. QR adjunto.')) + '\n\n[gambar QRIS dinamis]' },
+    { title: 'Factura con QR (con imagen)', key: 'whatsapp_billing_qris_message', text: rv(g('whatsapp_billing_qris_message', 'Estimado/a {{nama}}, factura de {{moneda}} {{tagihan}} del período {{rincian}}. QR adjunto.')) + '\n\n[imagen QR dinámica]' },
     { title: 'Comprobante de pago', key: 'whatsapp_payment_success_message', text: rv(g('whatsapp_payment_success_message', 'PAGO RECIBIDO\n\nEstimado/a {{nama}}, recibimos el pago de la factura del período {{periode}} por {{moneda}} {{total}}.\n\nFactura N.º: {{no_invoice}}\nForma de pago: {{metode}}\nFecha: {{waktu}}\n\nFactura PDF: {{link_pdf}}\nGracias.')) },
     { title: 'Aviso de corte', key: 'whatsapp_isolir_message', text: rv(g('whatsapp_isolir_message', 'Su servicio de internet fue suspendido porque la factura de {{moneda}} {{tagihan}} no está pagada.')) },
     { title: 'Aviso de deuda', key: 'whatsapp_arrears_warning_message', text: rv(g('whatsapp_arrears_warning_message', 'Factura de {{moneda}} {{tagihan}} con {{bulan_nunggak}} meses de atraso.')) },
@@ -6671,8 +6671,8 @@ function buildWaPreviewMessages() {
     { title: 'Baja automática (N meses de deuda)', key: 'whatsapp_deactivated_message', text: rv(g('whatsapp_deactivated_message', 'Servicio dado de baja.')) },
     { title: 'Eliminación automática (mes N)', key: 'whatsapp_deleted_message', text: rv(g('whatsapp_deleted_message', 'Cuenta eliminada.')) },
     { title: 'Código de ingreso (OTP)', key: '(mensaje del sistema)', text: 'Su código de ingreso es: *' + sample.otp + '*\n\nVálido por 10 minutos. No comparta este código con nadie.', note: 'Mensaje del sistema (código) — se envía al ingresar.' },
-    { title: 'Cambio de nombre del WiFi (SSID)', key: '(mensaje del sistema)', text: 'CAMBIO DE NOMBRE DEL WIFI\n\nCliente:' + sample.nama + '\nWaktu: ' + sample.waktu + '\n\nEl nombre (SSID) de su WiFi ahora es:\n*' + sample.ssid + '*\n\nSeleccione la nueva red en sus dispositivos para conectarse.', note: 'Mensaje del sistema — cuando el cliente cambia el nombre del WiFi.' },
-    { title: 'Cambio de contraseña del WiFi', key: '(mensaje del sistema)', text: 'CAMBIO DE CONTRASEÑA DEL WIFI\n\nCliente:' + sample.nama + '\nWaktu: ' + sample.waktu + '\n\nLa contraseña de su WiFi ahora es:\n*' + sample.password + '*\n\nUse la nueva contraseña para conectarse.', note: 'Mensaje del sistema — cuando el cliente cambia la contraseña del WiFi.' }
+    { title: 'Cambio de nombre del WiFi (SSID)', key: '(mensaje del sistema)', text: 'CAMBIO DE NOMBRE DEL WIFI\n\nCliente:' + sample.nama + '\nFecha: ' + sample.waktu + '\n\nEl nombre (SSID) de su WiFi ahora es:\n*' + sample.ssid + '*\n\nSeleccione la nueva red en sus dispositivos para conectarse.', note: 'Mensaje del sistema — cuando el cliente cambia el nombre del WiFi.' },
+    { title: 'Cambio de contraseña del WiFi', key: '(mensaje del sistema)', text: 'CAMBIO DE CONTRASEÑA DEL WIFI\n\nCliente:' + sample.nama + '\nFecha: ' + sample.waktu + '\n\nLa contraseña de su WiFi ahora es:\n*' + sample.password + '*\n\nUse la nueva contraseña para conectarse.', note: 'Mensaje del sistema — cuando el cliente cambia la contraseña del WiFi.' }
   ];
   return { messages, sample };
 }

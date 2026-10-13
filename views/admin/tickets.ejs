@@ -37,7 +37,7 @@
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
           <h2 style="font-size:16pt;font-weight:800;text-transform:uppercase;margin:0"><%= company %></h2>
-          <div style="font-size:10pt;color:#334155"><%= t('admin.nav.customer_tickets', 'Daftar Tiket Gangguan & Tugas Teknisi') %> &bull; Estado: <%= filterStatus ? filterStatus.toUpperCase() : 'SEMUA' %></div>
+          <div style="font-size:10pt;color:#334155"><%= t('admin.nav.customer_tickets', 'Daftar Tiket Gangguan & Tugas Teknisi') %> &bull; Estado: <%= filterStatus ? filterStatus.toUpperCase() : 'TODOS' %></div>
         </div>
         <div style="text-align:right;font-size:8.5pt;color:#475569">
           <div>Dicetak: <%= typeof getNowLocal === 'function' ? getNowLocal() : (typeof formatDateLocal === 'function' ? formatDateLocal(new Date()) : new Date().toLocaleString(APP_LOCALE)) %></div>

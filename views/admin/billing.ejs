@@ -89,7 +89,7 @@
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
           <h2 style="font-size:16pt;font-weight:800;text-transform:uppercase;margin:0"><%= company %></h2>
-          <div style="font-size:10pt;color:#334155"><%= t('admin.billing.manage_title', 'Rekapitulasi Tagihan Pelanggan') %> <%= t('admin.bill.period_label','• Período:') %> <%= filterMonth ? (monthNames[filterMonth-1] + ' ' + filterYear) : ('Tahun ' + filterYear) %></div>
+          <div style="font-size:10pt;color:#334155"><%= t('admin.billing.manage_title', 'Rekapitulasi Tagihan Pelanggan') %> <%= t('admin.bill.period_label','• Período:') %> <%= filterMonth ? (monthNames[filterMonth-1] + ' ' + filterYear) : ('Año ' + filterYear) %></div>
         </div>
         <div style="text-align:right;font-size:8.5pt;color:#475569">
           <div><%= t('admin.cust.printed_at','Dicetak:') %> <%= getNowLocal() %></div>

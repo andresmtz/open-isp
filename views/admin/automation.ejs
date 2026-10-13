@@ -42,6 +42,7 @@
     </div>
 
     <div class="au-tabs">
+      <div class="au-tab" data-tab="ciclo" onclick="auTab('ciclo')"><i class="bi bi-calendar3"></i> Ciclo de facturación</div>
       <div class="au-tab active" data-tab="reminder" onclick="auTab('reminder')"><i class="bi bi-alarm"></i> <%= t('admin.automation.tab_reminder', 'Pengingat Tagihan') %></div>
       <div class="au-tab" data-tab="manual" onclick="auTab('manual')"><i class="bi bi-send"></i> <%= t('admin.automation.tab_manual', 'Kirim Manual') %></div>
       <div class="au-tab" data-tab="arrears" onclick="auTab('arrears')"><i class="bi bi-person-x"></i> <%= t('admin.automation.tab_arrears', 'Tunggakan &amp; Isolir') %></div>
@@ -166,6 +167,49 @@
         <button type="submit" class="btn btn-p"><i class="bi bi-save"></i> <%= t('common.save', 'Simpan') %></button>
       </div>
     </form>
+
+    <!-- ===================== CICLO DE FACTURACIÓN ===================== -->
+    <div class="au-panel" id="au-ciclo">
+      <form method="POST" action="/admin/automation/billing-cycle">
+        <div class="card mb16">
+          <div class="card-hd"><h6><i class="bi bi-calendar3"></i> Ciclo de facturación</h6></div>
+          <div class="card-bd">
+            <div class="hint" style="margin-bottom:12px">Próxima emisión: <b><%= cyclePreview.issue %></b> → período <b><%= cyclePreview.period %></b>, vence <b><%= cyclePreview.due %></b>, corte <b><%= cyclePreview.cut %></b> (zona horaria <%= getSetting('timezone','America/Asuncion') %>).</div>
+            <div class="form-row">
+              <div class="fg"><label class="fl">Día de emisión</label><input class="fc" type="number" min="1" max="31" name="billing_invoice_day" value="<%= cycle.invoiceDay %>"><div class="hint">Si el mes tiene menos días, se usa el último.</div></div>
+              <div class="fg"><label class="fl">Hora de emisión</label><input class="fc" type="number" min="0" max="23" name="billing_invoice_hour" value="<%= cycle.invoiceHour %>"></div>
+              <div class="fg" style="flex:2"><label class="fl">La factura emitida corresponde a</label>
+                <select class="fs" name="billing_period_mode">
+                  <option value="current" <%= cycle.periodMode==='current'?'selected':'' %>>El mismo mes (pospago)</option>
+                  <option value="next" <%= cycle.periodMode==='next'?'selected':'' %>>El mes siguiente (prepago, ej. emite el 28 → factura del mes que viene)</option>
+                </select></div>
+            </div>
+            <div class="form-row" style="margin-top:12px">
+              <div class="fg"><label class="fl">Día de vencimiento</label><input class="fc" type="number" min="1" max="31" name="billing_due_day" value="<%= cycle.dueDay %>"><div class="hint">Del mes del período.</div></div>
+              <div class="fg"><label class="fl">Día de corte</label><input class="fc" type="number" min="1" max="31" name="isolir_day" value="<%= cycle.cutDay %>"><div class="hint">Predeterminado; cada cliente puede tener el suyo.</div></div>
+              <div class="fg"><label class="fl">Hora de corte</label><input class="fc" type="number" min="0" max="23" name="billing_cut_hour" value="<%= cycle.cutHour %>"></div>
+            </div>
+            <div class="fg" style="margin-top:12px"><label class="fl">Facturas impagas anteriores al emitir una nueva</label>
+              <select class="fs" name="billing_void_previous_unpaid">
+                <option value="false" <%= !cycle.voidPreviousUnpaid?'selected':'' %>>Se mantienen: la deuda se acumula (recomendado)</option>
+                <option value="true" <%= cycle.voidPreviousUnpaid?'selected':'' %>>Se anulan automáticamente</option>
+              </select></div>
+          </div>
+        </div>
+        <div class="card mb16">
+          <div class="card-hd"><h6><i class="bi bi-hand-thumbs-up"></i> Promesa de pago</h6></div>
+          <div class="card-bd">
+            <div class="form-row">
+              <div class="fg"><label class="fl">Días máximos</label><input class="fc" type="number" min="1" max="60" name="promise_max_days" value="<%= cycle.promiseMaxDays %>"></div>
+              <div class="fg"><label class="fl">Días por defecto al habilitar con deuda</label><input class="fc" type="number" min="1" max="60" name="promise_default_days" value="<%= cycle.promiseDefaultDays %>"></div>
+              <div class="fg"><label class="fl">Promesas por cliente por mes</label><input class="fc" type="number" min="0" max="31" name="promise_max_per_month" value="<%= cycle.promiseMaxPerMonth %>"><div class="hint">0 = sin límite.</div></div>
+            </div>
+            <div class="hint" style="margin-top:8px">Si paga todo antes del vencimiento, la promesa queda cumplida. Si vence con deuda, se corta automáticamente.</div>
+          </div>
+        </div>
+        <div class="au-savebar"><button type="submit" class="btn btn-p"><i class="bi bi-save"></i> Guardar ciclo</button></div>
+      </form>
+    </div>
 
     <!-- ===================== KIRIM MANUAL ===================== -->
     <div class="au-panel" id="au-manual">
@@ -316,6 +360,7 @@
   </div>
 </div>
 <script>
+  document.addEventListener('DOMContentLoaded', function(){ var h = (location.hash || '').slice(1); if (h && document.getElementById('au-' + h)) auTab(h); });
   function auTab(name){
     document.querySelectorAll('.au-panel').forEach(function(p){ p.classList.toggle('active', p.id === 'au-' + name); });
     document.querySelectorAll('.au-tab').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-tab') === name); });

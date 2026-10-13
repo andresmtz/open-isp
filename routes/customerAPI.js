@@ -715,13 +715,19 @@ router.post('/app/admin/unisolate-customer', requireAdminApiAuth, async (req, re
 
     // Aktifkan kembali profil normal di MikroTik dan set status ke 'ditangguhkan'
     // Status 'ditangguhkan' TIDAK akan terkena cron auto-isolir walau tagihan belum lunas
-    await customerSvc.activateCustomer(customerId, 'ditangguhkan');
+    const unpaid = db.prepare("SELECT COUNT(*) c FROM invoices WHERE customer_id=? AND status='unpaid'").get(customerId).c;
+    let until = null;
+    if (unpaid > 0) {
+      until = (await require('../services/promiseService').grant(customerId, { note: 'Habilitación desde la app', actor: { type: 'admin', name: 'app', ip: req.ip } })).until;
+    } else {
+      await customerSvc.activateCustomer(customerId, 'active');
+    }
     const updated = customerSvc.getCustomerById(customerId);
 
     res.json({
       success: true,
-      message: `¡Servicio habilitado! "${updated?.name || customerId}" vuelve a estar EN LÍNEA con estado DITANGGUHKAN (sin corte automático diario).`,
-      status: 'ditangguhkan'
+      message: until ? `¡Servicio habilitado! "${updated?.name || customerId}" con promesa de pago hasta ${until}.` : `¡Servicio habilitado! "${updated?.name || customerId}" está ACTIVO.`,
+      status: updated ? updated.status : 'active'
     });
   } catch (e) {
     res.status(500).json({ success: false, message: 'No se pudo habilitar el servicio:' + e.message });

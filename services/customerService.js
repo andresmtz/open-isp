@@ -795,9 +795,9 @@ async function suspendCustomer(id) {
 function _handleUnsuspendInvoice(id, customer, wasSuspended, targetStatus) {
   if (wasSuspended && (targetStatus === 'active' || targetStatus === 'ditangguhkan') && customer.package_id) {
     try {
-      const now = new Date();
-      const curMonth = now.getMonth() + 1;
-      const curYear = now.getFullYear();
+      const cur = require('../config/billingCycle').currentPeriod();
+      const curMonth = cur.month;
+      const curYear = cur.year;
       const existingCurInv = db.prepare('SELECT id FROM invoices WHERE customer_id = ? AND period_month = ? AND period_year = ? LIMIT 1').get(id, curMonth, curYear);
       if (!existingCurInv) {
         const billingSvc = require('./billingService');

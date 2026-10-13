@@ -2335,6 +2335,21 @@ router.get('/customers/export', requireAdminSession, (req, res) => {
 });
 
 // ─── Cancelar servicio (manual) ───
+router.get('/customers/:id/promise-preview', requireAdminSession, (req, res) => {
+  try {
+    res.json({ ok: true, ...require('../services/promiseService').preview(Number(req.params.id)) });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
+router.post('/customers/:id/promise', requireAdminSession, express.json(), async (req, res) => {
+  try {
+    const actor = { type: 'admin', name: req.session.adminUser || req.session.cashierName || 'admin', ip: req.ip };
+    const r = await require('../services/promiseService').grant(Number(req.params.id), { days: req.body && req.body.days, note: req.body && req.body.note, actor });
+    const ro = require('../services/mikrotikService').isMikrotikReadOnly && require('../services/mikrotikService').isMikrotikReadOnly();
+    res.json({ ok: true, ...r, message: `Promesa de pago registrada hasta ${r.until}.` + (r.wasSuspended ? (ro ? ' MikroTik en solo lectura: habilitalo en WispHub/MikroTik.' : ' Servicio habilitado.') : '') });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
 router.get('/customers/:id/cancel-preview', requireAdminSession, (req, res) => {
   if (req.session.isCashier) return res.status(403).json({ ok: false, message: 'Solo el administrador puede cancelar clientes.' });
   try { return res.json({ ok: true, ...customerSvc.cancellationPreview(Number(req.params.id)) }); }
@@ -2457,10 +2472,14 @@ router.post('/customers/:id/unisolate', requireAdminSession, async (req, res) =>
     const customer = customerSvc.getCustomerById(req.params.id);
     if (!customer) throw new Error('Cliente no encontrado');
     const unpaid = db.prepare("SELECT COUNT(*) as cnt FROM invoices WHERE customer_id=? AND status='unpaid'").get(req.params.id)?.cnt || 0;
-    const targetStatus = unpaid > 0 ? 'ditangguhkan' : 'active';
-    await customerSvc.activateCustomer(req.params.id, targetStatus);
-    const statusLabel = targetStatus === 'ditangguhkan' ? 'DITANGGUHKAN (Bebas auto-isolir sampai awal bulan berikutnya)' : 'AKTIF';
-    req.session._msg = { type: 'success', text: `Se rehabilitó el servicio de "${customer.name}" (${statusLabel}).` };
+    if (unpaid > 0) {
+      // Con deuda: se habilita como promesa de pago con los días por defecto (luego se corta si no paga)
+      const r = await require('../services/promiseService').grant(Number(req.params.id), { note: 'Habilitación manual con deuda', actor: { type: 'admin', name: req.session.adminUser || 'admin', ip: req.ip } });
+      req.session._msg = { type: 'success', text: `Se habilitó a "${customer.name}" con deuda: promesa de pago hasta ${r.until}.` };
+    } else {
+      await customerSvc.activateCustomer(req.params.id, 'active');
+      req.session._msg = { type: 'success', text: `Se rehabilitó el servicio de "${customer.name}" (ACTIVO).` };
+    }
   } catch (e) {
     req.session._msg = { type: 'error', text: 'No se pudo rehabilitar:' + e.message };
   }
@@ -4321,8 +4340,20 @@ router.get('/automation', requireAdminSession, requireSidebarMenuAccess('automat
   try { isolateDays = db.prepare("SELECT DISTINCT COALESCE(isolate_day,0) d FROM customers WHERE package_id IS NOT NULL AND COALESCE(isolate_day,0)>0 ORDER BY d").all().map(function (x) { return x.d; }); } catch (e) {}
   res.render('admin/automation', {
     title: 'Automation', company: comp, activePage: 'automation', msg: flashMsg(req),
-    getSetting, autoBillingMsg, selectedTplKey, billingTemplates: _bsvc.TEMPLATE_LABELS, runs: runs, isolateDays: isolateDays
+    getSetting, autoBillingMsg, selectedTplKey, billingTemplates: _bsvc.TEMPLATE_LABELS, runs: runs, isolateDays: isolateDays,
+    cycle: require('../config/billingCycle').get(), cyclePreview: require('../config/billingCycle').preview()
   });
+});
+
+router.post('/automation/billing-cycle', requireAdminSession, requireMainAdmin, express.urlencoded({ extended: true }), (req, res) => {
+  try {
+    const next = require('../config/billingCycle').sanitize(req.body);
+    saveSettings(next);
+    req.session._msg = { type: 'success', text: 'Ciclo de facturación guardado.' };
+  } catch (e) {
+    req.session._msg = { type: 'error', text: 'No se pudo guardar el ciclo: ' + e.message };
+  }
+  res.redirect('/admin/automation#ciclo');
 });
 
 router.post('/automation', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {

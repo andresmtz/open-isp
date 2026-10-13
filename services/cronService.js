@@ -2,6 +2,8 @@
  * Service: Penjadwalan Tugas Otomatis (Cron)
  */
 const cron = require('node-cron');
+const billingCycle = require('../config/billingCycle');
+const promiseSvc = require('./promiseService');
 const billingSvc = require('./billingService');
 const { logger } = require('../config/logger');
 
@@ -371,28 +373,32 @@ async function runAutoBillingReminder() {
 }
 
 function startCronJobs() {
-  // 1. Generate Tagihan Otomatis setiap tanggal 1 jam 00:01
-  cron.schedule('1 0 1 * *', () => {
-    if (inMigrationMode('facturación mensual')) return; 
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-    
-    logger.info(`[CRON] Menjalankan generate tagihan otomatis untuk ${month}/${year}`);
+  try { promiseSvc.ensureSchema(); } catch (e) { logger.error('[CRON] Esquema de promesas: ' + e.message); }
+  // 1. Emisión automática de facturas según el ciclo configurado (día/hora/período en Configuración).
+  //    Corre cada hora; solo actúa el día de emisión a partir de la hora fijada (idempotente).
+  cron.schedule('1 * * * *', () => {
+    const period = billingCycle.invoiceRunDue();
+    if (!period) return;
+    if (inMigrationMode('facturación mensual')) return;
     try {
-      const count = billingSvc.generateMonthlyInvoices(month, year);
-      logger.info(`[CRON] Berhasil generate ${count} tagihan otomatis.`);
+      const count = billingSvc.generateMonthlyInvoices(period.month, period.year);
+      if (count) logger.info(`[CRON] Facturación ${period.month}/${period.year}: ${count} facturas emitidas.`);
     } catch (error) {
-      logger.error(`[CRON] Gagal generate tagihan otomatis: ${error.message}`);
+      logger.error(`[CRON] Falló la facturación automática: ${error.message}`);
     }
   });
 
-  // 2. Isolir Otomatis setiap hari jam 02:00
-  cron.schedule('0 2 * * *', async () => {
-    if (inMigrationMode('corte automático')) return; 
+  // 2. Corte automático: cada hora. Corta a quien tenga una factura impaga cuyo momento de corte
+  //    (día de corte del período + hora de corte) ya pasó, y a quien venció la promesa de pago con deuda.
+  cron.schedule('0 * * * *', async () => {
+    if (inMigrationMode('corte automático')) return;
     const now = new Date();
-    const today = now.getDate();
-    logger.info(`[CRON] Menjalankan pengecekan isolir otomatis harian (Tanggal ${today})`);
+    const cfg = billingCycle.get();
+    const nowStamp = billingCycle.nowStamp(now);
+    try {
+      const pr = await promiseSvc.review();
+      if (pr.kept || pr.broken) logger.info(`[CRON] Promesas de pago: ${pr.kept} cumplidas, ${pr.broken} vencidas (cortadas).`);
+    } catch (e) { logger.error('[CRON] Revisión de promesas: ' + e.message); }
 
     let isolatedCount = 0;
     const BATCH_SIZE = 100;
@@ -430,11 +436,11 @@ function startCronJobs() {
             }
           }
         } else {
-          const customerIsolirDay = c.isolate_day || 10;
-          const unpaidCount = db.prepare('SELECT COUNT(*) as cnt FROM invoices WHERE customer_id=? AND status=?').get(c.id, 'unpaid')?.cnt || 0;
-          if (today >= customerIsolirDay && unpaidCount > 0) {
+          const unpaid = db.prepare("SELECT period_month, period_year FROM invoices WHERE customer_id=? AND status='unpaid'").all(c.id);
+          const overdue = unpaid.find(function (inv) { return billingCycle.cutStampFor(inv.period_year, inv.period_month, c, cfg) <= nowStamp; });
+          if (overdue) {
             try {
-              logger.info(`[CRON] Isolir otomatis PASCABAYAR: ${c.name} (${c.pppoe_username || c.hotspot_username || '-'}) - Tgl Isolir: ${customerIsolirDay}`);
+              logger.info(`[CRON] Corte automático: ${c.name} (${c.pppoe_username || c.hotspot_username || '-'}) - factura ${overdue.period_month}/${overdue.period_year} vencida (corte ${billingCycle.cutStampFor(overdue.period_year, overdue.period_month, c, cfg)})`);
               await customerSvc.suspendCustomer(c.id);
               isolatedCount++;
             } catch (err) {
@@ -449,7 +455,7 @@ function startCronJobs() {
       }
     }
 
-    logger.info(`[CRON] Selesai pengecekan isolir. Total ${isolatedCount} pelanggan baru di-isolir.`);
+    if (isolatedCount) logger.info(`[CRON] Corte automático: ${isolatedCount} clientes cortados.`);
   });
 
   cron.schedule('0 9 * * *', () => { if (inMigrationMode('recordatorio de pago')) return; runAutoBillingReminder().catch(function (e) { logger.error('[CRON] Reminder error: ' + (e && e.message)); }); });

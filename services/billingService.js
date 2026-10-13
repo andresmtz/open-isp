@@ -107,6 +107,7 @@ function generateMonthlyInvoices(month, year) {
   const bumpPromo = db.prepare('UPDATE customers SET promo_cycles_used = COALESCE(promo_cycles_used,0) + 1 WHERE id=?');
   let created = 0;
   const autoPaid = [];
+  const voidPrevious = require('../config/billingCycle').get().voidPreviousUnpaid;
   const run = db.transaction(() => {
     for (const c of customers) {
       if (existingIds.has(c.id)) continue;
@@ -115,12 +116,12 @@ function generateMonthlyInvoices(month, year) {
       const { amount, bumpPromo: bump, notesAuto } = computeInvoiceAmountAndMeta(c, pkg, month, year);
       const ir = insert.run(c.id, month, year, amount, notesAuto);
       if (bump) bumpPromo.run(c.id);
-      voidPreviousUnpaidInvoices(c.id, month, year, `Anulada automáticamente: se emitió la factura del período ${month}/${year}`);
+      if (voidPrevious) voidPreviousUnpaidInvoices(c.id, month, year, `Anulada automáticamente: se emitió la factura del período ${month}/${year}`);
 
       const ap = autoPayInvoiceIfNeeded(ir.lastInsertRowid, c, amount, notesAuto);
       if (ap) { ap.periodText = `${month}/${year}`; autoPaid.push(ap); }
       // Jika pelanggan berstatus 'ditangguhkan', otomatis ubah kembali ke 'active' saat tagihan baru terbit di awal bulan
-      if (c.status === 'ditangguhkan') {
+      if (c.status === 'ditangguhkan' && !c.promise_until) {
         db.prepare("UPDATE customers SET status = 'active' WHERE id = ?").run(c.id);
       }
 
@@ -158,7 +159,7 @@ function generateInvoiceForCustomer(customerId, month, year) {
   if (bump) {
     db.prepare('UPDATE customers SET promo_cycles_used = COALESCE(promo_cycles_used,0) + 1 WHERE id=?').run(cid);
   }
-  voidPreviousUnpaidInvoices(cid, m, y, `Anulada automáticamente: se emitió la factura del período ${m}/${y}`);
+  if (require('../config/billingCycle').get().voidPreviousUnpaid) voidPreviousUnpaidInvoices(cid, m, y, `Anulada automáticamente: se emitió la factura del período ${m}/${y}`);
 
   const ap = autoPayInvoiceIfNeeded(r.lastInsertRowid, customer, amount, notesAuto);
   if (ap) { try { notifyAutoPaid(ap.customer, ap.invoiceId, `${m}/${y}`, ap.amount, ap.reason); } catch (e) {} }

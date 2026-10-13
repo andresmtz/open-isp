@@ -1959,7 +1959,7 @@ router.get('/dashboard', async (req, res) => {
   const _t = (res.locals && res.locals.t) || ((k, d) => d);
   const _mNames = _lang === 'en'
     ? ['January','February','March','April','May','June','July','August','September','October','November','December']
-    : ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    : ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   const _dev = deviceData || fallbackCustomer(loginId);
   const _prof = profile || {};
   const _name = String(_prof.name || _dev.name || _t('pwa.r.fallback_name','Pelanggan')).trim();

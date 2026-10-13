@@ -986,7 +986,7 @@
             <select class="fs" name="month" required>
               <% const genMns = (lang === 'en')
                 ? ['January','February','March','April','May','June','July','August','September','October','November','December']
-                : ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                : ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
                  for(let m=1;m<=12;m++){%>
               <option value="<%= m %>" <%= m===new Date().getMonth()+1?'selected':'' %>><%= genMns[m-1] %></option>
               <% } %>
@@ -1029,7 +1029,7 @@
             <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
               <% const payMns = (lang === 'en')
                 ? ['January','February','March','April','May','June','July','August','September','October','November','December']
-                : ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                : ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
                  for(let m=1;m<=12;m++){%>
               <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid rgba(148,163,184,.25);border-radius:12px;cursor:pointer">
                 <input type="checkbox" class="pay-month" name="months" value="<%= m %>" <%= m===new Date().getMonth()+1?'checked':'' %> style="width:16px;height:16px">
@@ -1212,7 +1212,7 @@
 <script id="routers-data" type="application/json"><%- JSON.stringify(routers || []).split('<').join('\\u003c') %></script>
 <script id="pay-months-data" type="application/json"><%- JSON.stringify((lang === 'en')
   ? ['January','February','March','April','May','June','July','August','September','October','November','December']
-  : ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']).split('<').join('\\u003c') %></script>
+  : ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']).split('<').join('\\u003c') %></script>
 <script id="pay-i18n-data" type="application/json"><%- JSON.stringify({
   paidMonthsLabel: t('admin.customers.paid_months_label', 'Sudah lunas:'),
   nonePaid: t('admin.customers.none_paid', 'Belum ada yang lunas'),

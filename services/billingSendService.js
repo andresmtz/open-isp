@@ -11,12 +11,7 @@ const { getSetting } = require('../config/settingsManager');
 const billingSvc = require('./billingService');
 const regional = require('../config/regional');
 
-const TEMPLATE_LABELS = {
-  whatsapp_auto_billing_message: 'Pengingat Tagihan',
-  whatsapp_billing_qris_message: 'Tagihan QRIS (dengan gambar QR)',
-  whatsapp_arrears_warning_message: 'Peringatan Tunggakan',
-  whatsapp_isolir_message: 'Pemberitahuan Isolir',
-};
+const TEMPLATE_LABELS = require('../config/waTemplates').LABELS;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 

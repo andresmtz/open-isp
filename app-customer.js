@@ -24,6 +24,11 @@ for (const [m, lvl] of [['log', 'info'], ['info', 'info'], ['warn', 'warn'], ['e
 }
 
 const db = require('./config/database');
+// Plantillas de WhatsApp en español: se cargan en la base solo si todavía no existen
+try {
+  const _seeded = require('./config/waTemplates').seedDefaults(db);
+  if (_seeded.length) logger.info(`[WA] Plantillas predeterminadas cargadas: ${_seeded.join(', ')}`);
+} catch (e) { logger.warn('[WA] No se pudieron cargar las plantillas predeterminadas: ' + e.message); }
 const customerSvc = require('./services/customerService');
 const noticeSvc = require('./services/serviceNoticeService');
 const billingSvc = require('./services/billingService');

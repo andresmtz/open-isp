@@ -48,7 +48,7 @@
         <option value=""><%= t('admin.billing.all_months', 'Semua Bulan') %></option>
         <% const monthNames = (lang === 'en')
           ? ['January','February','March','April','May','June','July','August','September','October','November','December']
-          : ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+          : ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
            for(let m=1;m<=12;m++){%>
         <option value="<%= m %>" <%= filterMonth==m?'selected':'' %>><%= monthNames[m-1] %></option>
         <% } %>
@@ -156,7 +156,7 @@
               <td>
                 <% const mns = (lang === 'en')
                   ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-                  : ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des']; %>
+                  : ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']; %>
                 <span class="badge bm"><%= mns[inv.period_month-1] %> <%= inv.period_year %></span>
                 <% if (inv.status === 'unpaid' && inv.isolate_day) { %><div style="font-size:10px;color:var(--muted);margin-top:4px">Jatuh tempo tgl <%= inv.isolate_day %></div><% } %>
               </td>
@@ -258,7 +258,7 @@
             <select class="fs" name="month" required>
               <% const mns2 = (lang === 'en')
                 ? ['January','February','March','April','May','June','July','August','September','October','November','December']
-                : ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                : ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
                  for(let m=1;m<=12;m++){%>
               <option value="<%= m %>" <%= m===new Date().getMonth()+1?'selected':'' %>><%= mns2[m-1] %></option>
               <% } %>
@@ -350,7 +350,7 @@ document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.
 const LANG = "<%= lang || 'id' %>";
 const MONTHS = (LANG === "en")
   ? ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  : ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+  : ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const I18N = {
   customerPrefix: "<%= t('admin.billing.js.customer_prefix', 'Pelanggan:') %>",
   loadingOther: "<%= t('admin.billing.loading_other_invoices', 'Loading tagihan lainnya...') %>",

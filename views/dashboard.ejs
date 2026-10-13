@@ -130,7 +130,7 @@
     const unpaidPeriods = latestUnpaid ? (latestUnpaid.period_month + '/' + latestUnpaid.period_year) : '';
     const unpaidCount = unpaidInvoices.length;
     const isolateDay = (typeof profile !== 'undefined' && profile && profile.isolate_day) ? Number(profile.isolate_day) : ((typeof settings !== 'undefined' && settings && settings.isolir_day) ? Number(settings.isolir_day) : 10);
-    const bulanNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const bulanNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const fmtDue = function(m, y){ return isolateDay + ' ' + (bulanNames[Number(m) - 1] || '') + ' ' + y; };
     let dueText = '';
     let dueDiffDays = null;

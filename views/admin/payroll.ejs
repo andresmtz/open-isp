@@ -123,7 +123,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <form method="GET" action="/admin/payroll" style="display:flex;gap:6px;align-items:center">
               <select name="month" class="fc" style="width:auto;padding:6px 10px">
-                <% for(let m=1;m<=12;m++){%><option value="<%=m%>" <%=m==selectedMonth?'selected':''%>><%= ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'][m] %></option><%}%>
+                <% for(let m=1;m<=12;m++){%><option value="<%=m%>" <%=m==selectedMonth?'selected':''%>><%= ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][m] %></option><%}%>
               </select>
               <input type="number" name="year" value="<%= selectedYear %>" class="fc" style="width:80px;padding:6px 10px">
               <button type="submit" class="btn btn-p btn-sm"><i class="bi bi-funnel"></i> Filter</button>

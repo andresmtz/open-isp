@@ -2834,7 +2834,7 @@ router.post('/billing/:id/send-pdf-wa', requireAdminSession, async (req, res) =>
     const settings = getSettings();
     const pdfBuffer = await pdfSvc.generateInvoicePdfBuffer(inv, customer, settings);
 
-    const mns = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+    const mns = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     const periodStr = `${mns[(inv.period_month || 1) - 1]} ${inv.period_year}`;
     const safeName = (customer.name || 'Pelanggan').replace(/[^a-zA-Z0-9]/g, '_');
     const filename = `Invoice_${inv.id}_${safeName}.pdf`;
@@ -4086,7 +4086,7 @@ router.post('/registrations/:id/approve', requireAdminSession, express.urlencode
       const invRow = db.prepare('SELECT * FROM invoices WHERE customer_id=? AND period_month=? AND period_year=?').get(id, pMonth, pYear);
       if (cust.phone && invRow) {
         const q = invoiceQris.ensureInvoiceQris(invRow);
-        const mns = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+        const mns = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
         const periodStr = (mns[pMonth - 1] || pMonth) + ' ' + pYear;
         const pkg = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
         const comp = getSetting('company_header', 'OPEN-ISP');
@@ -4197,87 +4197,8 @@ router.post('/vouchers-discounts/settings', requireAdminSession, express.urlenco
 });
 
 function waTemplateDefaults(comp) {
-  return {
-    whatsapp_auto_billing_message: `Yth. Pelanggan {{nama}},
-
-Ini adalah pengingat sebelum tanggal jatuh tempo/isolir.
-
-📦 *Paket:* {{paket}}
-💰 *Total Tagihan:* {{moneda}} {{tagihan}}
-📅 *Periode:* {{rincian}}
-
-Mohon segera melakukan pembayaran melalui portal pelanggan: {{link}}
-
-Terima kasih atas kerja samanya.
-Salam,
-Admin ${comp || ''}`,
-    whatsapp_billing_qris_message: `Yth. Pelanggan {{nama}},
-
-Berikut rincian tagihan manual + Kode Bayar QRIS Anda:
-
-📦 *Paket:* {{paket}}
-📅 *Periode:* {{periode}}
-💰 *Nominal:* {{moneda}} {{qris_nominal}}
-
-Silakan scan QRIS berikut untuk melakukan pembayaran otomatis:
-{{qris_qr}}
-
-Terima kasih.`,
-    whatsapp_payment_success_message: whatsappService.DEFAULT_PAYMENT_SUCCESS_TEMPLATE,
-    whatsapp_isolir_message: `{Halo|Salam} Bapak/Ibu *{{nama}}*,
-
-Dengan hormat, layanan internet Anda untuk sementara kami nonaktifkan karena tagihan belum kami terima.
-
-ID Pelanggan: *{{id_pelanggan}}*
-Paket: {{paket}}
-Total Tagihan: *{{moneda}} {{tagihan}}*
-
-Mohon berkenan menyelesaikan pembayaran agar layanan dapat kami aktifkan kembali:
-{{link}}
-
-Terima kasih atas perhatian dan kerja samanya. — {{company}}`,
-    whatsapp_arrears_warning_message: `Pemberitahuan Tagihan Internet
-
-Yth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),
-
-Dengan hormat, pembayaran tagihan layanan internet Anda belum kami terima selama *{{bulan_nunggak}} bulan*.
-
-Paket: {{paket}}
-Total Tagihan: {{moneda}} {{tagihan}}
-Periode: {{rincian}}
-
-Mohon berkenan menyelesaikan pembayaran sebelum {{batas}} bulan agar layanan tetap aktif:
-{{link}}
-
-Terima kasih atas perhatian dan kerja samanya. — {{company}}`,
-    whatsapp_autolunas_message: `✅ *Tagihan LUNAS*
-
-Yth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),
-
-Terima kasih, tagihan layanan internet Anda telah kami tandai *LUNAS* secara otomatis.
-
-💵 Nominal: *{{moneda}} {{tagihan}}*
-📅 Periode: {{rincian}}
-
-Terima kasih 🙏
-— {{company}}`,
-    whatsapp_deactivated_message: `⚠️ *Layanan Dinonaktifkan*
-
-Yth. Bapak/Ibu *{{nama}}* (ID Pelanggan: {{id_pelanggan}}),
-
-Layanan internet Anda untuk sementara kami *nonaktifkan* karena tagihan belum diselesaikan selama *{{bulan_nunggak}} bulan berturut-turut*.
-
-Bayar: {{link}}
-— {{company}}`,
-    whatsapp_deleted_message: `🗑️ *Akun Dihapus*
-
-Yth. *{{nama}}*,
-
-Akun layanan internet Anda telah *DIHAPUS OTOMATIS* karena tagihan tidak dibayar *{{bulan_nunggak}} bulan berturut-turut*.
-
-Untuk berlangganan kembali, silakan *mendaftar dari awal*. Terima kasih.
-— {{company}}`
-  };
+  // Plantillas predeterminadas en español (config/waTemplates.js)
+  return Object.assign({}, require('../config/waTemplates').TEMPLATES);
 }
 
 router.get('/automation/template', requireAdminSession, (req, res) => {
@@ -7889,7 +7810,7 @@ router.post('/payroll/slip/:id/send-wa', requireAdmin, async (req, res) => {
       throw new Error('WhatsApp bot tidak terkoneksi');
     }
 
-    const monthNames = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const monthNames = ['','Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     
     const msg = `🧾 *SLIP GAJI KARYAWAN*\n\n` +
       `👤 *Nama:* ${slip.employee_name}\n` +

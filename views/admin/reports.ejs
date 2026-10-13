@@ -110,7 +110,7 @@
             </tr>
           </thead>
           <tbody>
-            <% const _mn = (lang === 'en') ? ['January','February','March','April','May','June','July','August','September','October','November','December'] : ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+            <% const _mn = (lang === 'en') ? ['January','February','March','April','May','June','July','August','September','October','November','December'] : ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
                let _tBruto=0,_tKeluar=0,_tPpn=0,_tUso=0,_tBhp=0,_tSebelum=0,_tPph=0,_tBersih=0; %>
             <% monthlyFinance.forEach(r => { _tBruto+=r.bruto; _tKeluar+=r.keluar; _tPpn+=r.ppn; _tUso+=r.uso; _tBhp+=r.bhp; _tSebelum+=r.sebelumPph; _tPph+=r.pph; _tBersih+=r.bersih; %>
             <tr>
@@ -197,7 +197,7 @@
         <table class="dtbl">
           <thead><tr><th><%= t('admin.reports.table.customer','Pelanggan') %></th><th><%= t('admin.reports.table.period','Periode') %></th><th class="num"><%= t('admin.reports.table.amount','Jumlah') %></th><th><%= t('admin.reports.table.recorded_by','Dicatat Oleh') %></th><th><%= t('admin.reports.table.time','Waktu') %></th></tr></thead>
           <tbody>
-          <% const mn2 = (lang === 'en') ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] : ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des']; %>
+          <% const mn2 = (lang === 'en') ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] : ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']; %>
           <% if(recentPayments.length===0){%><tr><td colspan="5" class="text-center text-muted" style="padding:24px"><%= t('admin.reports.no_payments','Belum ada pembayaran') %></td></tr><%}%>
           <% recentPayments.forEach(p=>{ %>
             <tr>
@@ -242,7 +242,7 @@
 <script>
 const monthLabels = JSON.parse(`<%- JSON.stringify((lang === 'en') 
   ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] 
-  : ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des']).split('<').join('\\u003c') %>`);
+  : ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']).split('<').join('\\u003c') %>`);
 const revenueData = JSON.parse(`<%- JSON.stringify(chartData).split('<').join('\\u003c') %>`);
 const labels = monthLabels;
 const values = Array(12).fill(0);

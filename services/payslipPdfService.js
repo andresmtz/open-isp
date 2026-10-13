@@ -6,7 +6,7 @@ const fs = require('fs');
 const { THEME, resolveLogoPath, companyInfo, fmtRp } = require('./pdfBranding');
 const regional = require('../config/regional');
 
-const MNS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const MNS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 function generatePayslipPdfBuffer(slip, settings = {}) {
   return new Promise((resolve, reject) => {

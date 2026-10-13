@@ -8,7 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const regional = require('../config/regional');
 
-const MNS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const MNS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const fmtRp = (n) => regional.currencySymbol() + ' ' + Math.round(Number(n) || 0).toLocaleString(regional.locale());
 
 function generateFinanceReportPdfBuffer(o) {

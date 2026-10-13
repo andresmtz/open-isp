@@ -3045,7 +3045,10 @@ router.get('/config', (req, res) => {
 });
 
 // ─── 2. AUTENTIKASI MULTI-ROLE (ADMIN, AGENT, KOLEKTOR, TEKNISI, PELANGGAN) ──
-router.post('/auth/login', (req, res) => {
+// Límite de intentos para los ingresos por API (app móvil)
+const { loginRateLimiter: apiLoginLimiter } = require('../middleware/rateLimiter');
+
+router.post('/auth/login', apiLoginLimiter, (req, res) => {
   const { loginId, username, password } = req.body;
   const inputUser = String(loginId || username || '').trim();
   const inputPass = String(password || '').trim();
@@ -3059,8 +3062,8 @@ router.post('/auth/login', (req, res) => {
 
   // 1. Check Root Administrator
   const adminUser = String(getSetting('admin_username', 'admin')).trim();
-  const adminPass = String(getSetting('admin_password', 'admin123')).trim();
-  if (inputUser.toLowerCase() === adminUser.toLowerCase() && inputPass === adminPass) {
+  const adminPass = String(getSetting('admin_password', '') || '').trim();
+  if (adminPass && inputUser.toLowerCase() === adminUser.toLowerCase() && inputPass === adminPass) {
     const adminObj = { id: 1, name: 'Administrator', username: adminUser, role: 'admin' };
     const token = generateApiToken({ id: 1, adminId: 1, name: 'Administrator', username: adminUser, role: 'admin' });
     return res.json({
@@ -3135,54 +3138,48 @@ router.post('/auth/login', (req, res) => {
   });
 
   if (customer) {
-    let passMatched = false;
-    if (customer.pppoe_password && inputPass === String(customer.pppoe_password).trim()) {
-      passMatched = true;
-    }
-    const phoneDigits = String(customer.phone || '').slice(-4);
-    if (phoneDigits && inputPass === phoneDigits) {
-      passMatched = true;
-    }
-    if (!customer.pppoe_password && inputPass === '123456') {
-      passMatched = true;
-    }
-
-    if (!passMatched) {
-      return res.status(401).json({
-        success: false,
-        message: 'La contraseña / PIN es incorrecto.'
-      });
-    }
-
-    const token = generateApiToken({
-      id: customer.id,
-      customerId: customer.id,
-      phone: customer.phone,
-      name: customer.name,
-      username: customer.pppoe_username || customer.id,
-      role: 'customer'
-    });
-    return res.json({
-      success: true,
-      message: 'Ingreso de cliente correcto.',
-      role: 'customer',
-      token,
-      customer: {
-        id: customer.id,
-        name: customer.name,
-        phone: customer.phone,
-        pppoeUsername: customer.pppoe_username || '',
-        address: customer.address || '',
-        status: customer.status || 'active',
-        installDate: customer.install_date || null
-      }
+    // Los clientes ya no ingresan con contraseña (antes aceptaba los últimos 4 dígitos
+    // del teléfono o 123456). Deben usar /auth/otp/request y /auth/otp/verify.
+    return res.status(401).json({
+      success: false,
+      otpRequired: true,
+      message: 'Los clientes ingresan con un código enviado por WhatsApp.'
     });
   }
-
   // Not matched anywhere
   return res.status(401).json({
     success: false,
     message: 'Usuario / WhatsApp o contraseña incorrectos. Verifique sus datos.'
+  });
+});
+
+// ─── Ingreso de clientes por código de WhatsApp (app móvil) ───
+const customerAuth = require('../services/customerAuthService');
+
+router.post('/auth/otp/request', apiLoginLimiter, async (req, res) => {
+  const loginId = String((req.body && (req.body.loginId || req.body.phone)) || '').trim();
+  if (!loginId) return res.status(400).json({ success: false, message: 'Ingrese su ID de cliente o su número de WhatsApp.' });
+  const r = await customerAuth.requestOtp(loginId, { channel: 'api', ip: req.ip });
+  if (!r.ok && !['not_found', 'no_phone'].includes(r.reason)) {
+    return res.status(429).json({ success: false, message: customerAuth.messageFor(r) });
+  }
+  // Respuesta igual exista o no el cliente
+  return res.json({ success: true, message: 'Si el dato corresponde a un cliente, le enviamos un código por WhatsApp.', maskedPhone: r.ok ? r.maskedPhone : null });
+});
+
+router.post('/auth/otp/verify', apiLoginLimiter, (req, res) => {
+  const loginId = String((req.body && (req.body.loginId || req.body.phone)) || '').trim();
+  const customer = customerAuth.findCustomer(loginId);
+  const v = customerAuth.verifyOtp(customer ? customer.id : null, req.body && req.body.otp);
+  if (!v.ok) return res.status(401).json({ success: false, message: customerAuth.messageFor(v) });
+  const c = v.customer;
+  const token = generateApiToken({ id: c.id, customerId: c.id, phone: c.phone, name: c.name, username: c.pppoe_username || c.id, role: 'customer' });
+  return res.json({
+    success: true,
+    message: 'Ingreso de cliente correcto.',
+    role: 'customer',
+    token,
+    customer: { id: c.id, name: c.name, phone: c.phone, pppoeUsername: c.pppoe_username || '', address: c.address || '', status: c.status || 'active', installDate: c.install_date || null }
   });
 });
 

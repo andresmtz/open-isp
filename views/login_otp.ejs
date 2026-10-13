@@ -44,15 +44,22 @@
     <% if (error) { %>
       <div class="auth-alert err" style="justify-content:center"><i class="bi bi-exclamation-triangle"></i> <%= error %></div>
     <% } %>
+    <% if (typeof info !== 'undefined' && info) { %>
+      <div class="auth-alert" style="justify-content:center"><i class="bi bi-info-circle"></i> <%= info %></div>
+    <% } %>
 
     <form action="/customer/login-otp" method="POST">
       <div class="field" style="text-align:left">
         <label for="otp" style="justify-content:center"><i class="bi bi-123"></i> <%= t('customer.otp_label', 'Masukkan Kode OTP') %></label>
-        <input type="text" class="inp otp-input" id="otp" name="otp" maxlength="4" inputmode="numeric"
-               pattern="\d{4}" required autocomplete="one-time-code" autofocus placeholder="0000">
+        <input type="text" class="inp otp-input" id="otp" name="otp" maxlength="6" inputmode="numeric"
+               pattern="\d{6}" required autocomplete="one-time-code" autofocus placeholder="000000">
       </div>
       <button type="submit" class="lbtn lbtn-primary btn-auth"><i class="bi bi-check-circle-fill"></i> <%= t('customer.otp_verify', 'Verifikasi & Masuk') %></button>
     </form>
+    <form action="/customer/login-otp/resend" method="POST" style="margin-top:10px;text-align:center">
+      <button type="submit" class="lbtn lbtn-ghost lbtn-sm"><i class="bi bi-arrow-repeat"></i> Reenviar código</button>
+    </form>
+    <p class="sub" style="margin-top:10px;font-size:12px">Si el dato corresponde a un cliente, el código llega al WhatsApp registrado. Vence en 10 minutos.</p>
 
     <div class="otp-back">
       <a href="/customer/login" class="muted"><i class="bi bi-arrow-left"></i> <%= t('customer.back_to_login', 'Kembali ke Login') %></a>
@@ -75,14 +82,14 @@
       submitted = true;
       try {
         var b = inp.form.querySelector('button[type=submit]');
-        if (b) { b.disabled = true; b.innerHTML = '<i class="bi bi-hourglass-split"></i> Memverifikasi…'; }
+        if (b) { b.disabled = true; b.innerHTML = '<i class="bi bi-hourglass-split"></i> Verificando…'; }
         inp.readOnly = true;
       } catch(e){}
       inp.form.submit();
     }
     inp.addEventListener('input', function(){
-      inp.value = inp.value.replace(/\D/g,'').slice(0,4);
-      if(inp.value.length === 4) setTimeout(submitOnce, 90);
+      inp.value = inp.value.replace(/\D/g,'').slice(0,6);
+      if(inp.value.length === 6) setTimeout(submitOnce, 90);
     });
     inp.form.addEventListener('submit', function(e){ if (submitted) { e.preventDefault(); return; } submitted = true; });
   })();

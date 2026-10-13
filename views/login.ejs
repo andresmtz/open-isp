@@ -103,9 +103,7 @@
         </div>
         <div class="hint-line"><i class="bi bi-info-circle"></i> <%= t('login.hint','Hanya ID Pelanggan (SKY-xxxxx) atau Nomor WhatsApp terdaftar') %></div>
 
-        <% if (settings.login_otp_enabled) { %>
-          <div class="auth-alert info"><i class="bi bi-whatsapp"></i> <%= t('customer.otp_sent_via_wa', 'Kode OTP akan dikirim via WhatsApp') %></div>
-        <% } %>
+        <div class="auth-alert info"><i class="bi bi-whatsapp"></i> <%= t('customer.otp_sent_via_wa', 'Kode OTP akan dikirim via WhatsApp') %></div>
 
         <button type="submit" class="lbtn lbtn-primary btn-auth">
           <i class="bi bi-box-arrow-in-right"></i> <%= t('customer.sign_in', 'Masuk Ke Portal') %>

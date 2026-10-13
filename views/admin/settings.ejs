@@ -307,10 +307,7 @@
             </div>
             <div class="fg">
               <label class="fl"><%= t('admin.settings.customer_otp_login', 'Login OTP Pelanggan') %></label>
-              <select class="fs" name="login_otp_enabled">
-                <option value="true" <%= settings.login_otp_enabled ? 'selected' : '' %>><%= t('admin.settings.otp_enabled', 'Aktif (Kirim via WA)') %></option>
-                <option value="false" <%= !settings.login_otp_enabled ? 'selected' : '' %>><%= t('admin.settings.otp_disabled', 'Nonaktif (Langsung)') %></option>
-              </select>
+              <div class="hint" style="padding:8px 10px;border:1px dashed var(--border);border-radius:8px">Siempre activo: los clientes ingresan con un código de 6 dígitos enviado al WhatsApp registrado. Requiere WhatsApp conectado.</div>
             </div>
           </div>
           <div class="hint" style="margin:0 0 10px;padding:12px;border:1px dashed var(--border);border-radius:10px;background:var(--bg2)">

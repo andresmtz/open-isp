@@ -87,7 +87,7 @@
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-top:18px">
           <div>
             <div style="font-weight:700;font-size:15px"><%= customer.name %></div>
-            <div class="bill-sub">ID: <%= customer.id %><% if (customer.phone) { %> • WA: <%= customer.phone %><% } %><% if (customer.package_name) { %> • Plan: <%= customer.package_name %><% } %></div>
+            <div class="bill-sub">ID: <%= customer.customer_code || customer.id %><% if (customer.phone) { %> • WA: <%= customer.phone %><% } %><% if (customer.package_name) { %> • Plan: <%= customer.package_name %><% } %></div>
           </div>
           <div>
             <% const unpaidCount = unpaidInvoices ? unpaidInvoices.length : 0; %>

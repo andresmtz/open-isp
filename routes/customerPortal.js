@@ -793,6 +793,31 @@ router.get('/login', (req, res) => {
   res.render('login', { error: null, settings, packages });
 });
 
+// ─── Consulta pública de deuda: búsqueda estricta y datos enmascarados ───
+function findCustomerForPublicLookup(query) {
+  const q = String(query || '').trim();
+  if (!q || q.length > 64) return null;
+  const byCode = db.prepare('SELECT id FROM customers WHERE customer_code = ? COLLATE NOCASE').get(q);
+  if (byCode) return customerSvc.getCustomerById(byCode.id);
+  const byPppoe = db.prepare('SELECT id FROM customers WHERE pppoe_username = ? COLLATE NOCASE').get(q);
+  if (byPppoe) return customerSvc.getCustomerById(byPppoe.id);
+  const digits = q.replace(/\D/g, '');
+  if (digits.length >= 9 && /^[+\d\s().-]+$/.test(q)) {
+    const suffix = digits.slice(-9);
+    const rows = db.prepare('SELECT id FROM customers WHERE phone LIKE ? LIMIT 2').all('%' + suffix);
+    if (rows.length === 1) return customerSvc.getCustomerById(rows[0].id);
+  }
+  return null;
+}
+
+function maskCustomerForPublic(c) {
+  const parts = String(c.name || '').trim().split(/\s+/).filter(Boolean);
+  const name = parts.length ? parts[0] + (parts[1] ? ' ' + parts[1].charAt(0) + '.' : '') : 'Cliente';
+  const d = String(c.phone || '').replace(/\D/g, '');
+  const phone = d.length >= 4 ? '*'.repeat(d.length - 3) + d.slice(-3) : '';
+  return Object.assign({}, c, { name, phone, address: '', email: '', nik: '', lat: null, lng: null, pppoe_password: '', hotspot_password: '' });
+}
+
 router.get('/check-billing', async (req, res) => {
   const settings = getSettingsWithCache();
   const query = String(req.query.q || '').trim();
@@ -828,10 +853,13 @@ router.get('/check-billing', async (req, res) => {
   }
 
   if (query) {
-    customer = customerSvc.findCustomerByAny(query);
+    // Búsqueda pública: solo identificadores exactos (ID de cliente, teléfono o usuario PPPoE).
+    // No se busca por nombre ni por número interno, y no se listan coincidencias de otros clientes.
+    customer = findCustomerForPublicLookup(query);
     if (customer) {
       const lookup = customer.pppoe_username || customer.genieacs_tag || customer.phone || String(customer.id);
       invoices = billingSvc.getInvoicesByAny(lookup) || [];
+      invoices = invoices.filter(i => Number(i.customer_id) === Number(customer.id));
       unpaidInvoices = invoices.filter(i => i.status === 'unpaid');
 
       const secret = settings.session_secret || 'rahasia-portal-pelanggan-default-ganti-ini';
@@ -843,30 +871,9 @@ router.get('/check-billing', async (req, res) => {
         );
         return acc;
       }, {});
-    } else {
-      const invs = billingSvc.getInvoicesByAny(query) || [];
-      const unpaid = (Array.isArray(invs) ? invs : []).filter(i => i && i.status === 'unpaid');
-      const map = new Map();
-      for (const inv of unpaid) {
-        const customerId = Number(inv.customer_id || 0);
-        if (!Number.isFinite(customerId) || customerId <= 0) continue;
-        const prev = map.get(customerId) || {
-          customer_id: customerId,
-          customer_name: inv.customer_name || '-',
-          customer_phone: inv.customer_phone || '',
-          unpaid_count: 0,
-          total_amount: 0
-        };
-        prev.unpaid_count += 1;
-        prev.total_amount += Number(inv.amount || 0) || 0;
-        map.set(customerId, prev);
-      }
-      matches = Array.from(map.values()).sort((a, b) => {
-        const au = Number(a.unpaid_count || 0);
-        const bu = Number(b.unpaid_count || 0);
-        if (au !== bu) return bu - au;
-        return String(a.customer_name || '').localeCompare(String(b.customer_name || ''), 'id');
-      });
+      customer = maskCustomerForPublic(customer);
+      invoices = invoices.map(i => Object.assign({}, i, { customer_name: customer.name, customer_phone: customer.phone, customer_address: '' }));
+      unpaidInvoices = unpaidInvoices.map(i => Object.assign({}, i, { customer_name: customer.name, customer_phone: customer.phone, customer_address: '' }));
     }
   }
 
@@ -1645,194 +1652,92 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// ─── INGRESO DE CLIENTES: siempre con código por WhatsApp (services/customerAuthService.js) ───
+// El código se envía al teléfono REGISTRADO del cliente. No se revela si el dato existe.
+const customerAuth = require('../services/customerAuthService');
+
+function renderLoginError(res, settings, error) {
+  const packages = customerSvc.getAllPackages().filter(p => p.is_active !== 0);
+  return res.render('login', { error, settings, packages });
+}
+
 router.post('/login', loginRateLimiter, async (req, res) => {
-  const { phone } = req.body;
   const settings = getSettingsWithCache();
-  const startTime = Date.now();
-
-  // Validasi: login HANYA boleh via ID Pelanggan (SKY-xxxxx) atau Nomor WhatsApp (08xxx)
-  const idRaw = String(phone || '').trim();
-  const isCode = /^[A-Za-z0-9]+-\d{4,10}$/.test(idRaw);
-  const isPhone = /^\+?\d[\d\s.\-]*$/.test(idRaw) && idRaw.replace(/\D/g, '').length >= 10;
-  if (!isCode && !isPhone) {
-    const packages = customerSvc.getAllPackages().filter(p => p.is_active !== 0);
-    return res.render('login', { error: 'Ingrese su ID de cliente o su número de WhatsApp (08xxxxxxxx).', settings, packages });
+  const loginId = String((req.body && (req.body.phone || req.body.loginId)) || '').trim();
+  if (!loginId || loginId.length > 64) {
+    return renderLoginError(res, settings, 'Ingrese su ID de cliente o su número de WhatsApp.');
   }
 
-  let device = null;
-  let pppoeUsername = null;
-  let customerPhone = phone;
-
-  // 1. Tahap 1: Cari Data di Billing DB (hanya ID Pelanggan / Nomor HP)
-  const customer = customerSvc.findCustomerForLogin(phone);
-  
-  if (customer) {
-    logger.info(`[Login] Pelanggan ditemukan di DB (customerId=${customer.id || '-'}, pppoe=${customer.pppoe_username || '-'}).`);
-    
-    // Use customer's actual phone number and PPPoE username
-    customerPhone = customer.phone || phone;
-    pppoeUsername = customer.pppoe_username || null;
-    
-    // Prioritas: PPPoE username > genieacs_tag > phone
-    const searchTokens = [
-      customer.pppoe_username,
-      customer.genieacs_tag,
-      customer.phone
-    ].filter(Boolean);
-
-    // Cari secara paralel dengan timeout 2.0s agar tidak menggantung jika GenieACS offline/lambat
-    const acsSearchPromise = (async () => {
-      const results = await Promise.allSettled(searchTokens.map(async (token) => {
-        let d = await customerDevice.findDeviceByPppoe(token); // Prioritas PPPoE
-        if (!d) d = await customerDevice.findDeviceByTag(token);
-        if (!d) {
-          const variants = await customerDevice.findDeviceWithTagVariants(token);
-          if (variants) d = variants.device;
-        }
-        return d;
-      }));
-      return results.find(r => r.status === 'fulfilled' && r.value !== null)?.value || null;
-    })();
-
-    device = await Promise.race([
-      acsSearchPromise,
-      new Promise(resolve => setTimeout(() => resolve(null), 2000))
-    ]);
-
-    if (device) {
-      logger.info('[Login] Perangkat terdeteksi di GenieACS (matched).');
-      if (!pppoeUsername && device.pppoeUsername) {
-        pppoeUsername = device.pppoeUsername;
-        logger.info(`[Login] PPPoE username dari device: ${pppoeUsername}`);
-      }
-    }
+  const r = await customerAuth.requestOtp(loginId, { channel: 'web', ip: req.ip });
+  if (!r.ok && !['not_found', 'no_phone'].includes(r.reason)) {
+    return renderLoginError(res, settings, customerAuth.messageFor(r));
   }
 
-  // 2. Tahap 2: Fallback (Jika DB tidak ketemu atau perangkat belum link)
-  if (!device) {
-    try {
-      const directPromise = customerDevice.findDeviceWithTagVariants(phone);
-      const directResult = await Promise.race([
-        directPromise,
-        new Promise(resolve => setTimeout(() => resolve(null), 1500))
-      ]);
-      if (directResult && directResult.device) {
-        device = directResult.device;
-        if (device.pppoeUsername) {
-          pppoeUsername = device.pppoeUsername;
-        }
-        logger.info('[Login] Perangkat ditemukan secara langsung di GenieACS (fallback).');
-      }
-    } catch (e) {}
-  }
-
-  // 3. Tahap 3: Verifikasi Akhir
-  if (!device && !customer) {
-    logger.warn('[Login] Gagal: pelanggan tidak ditemukan.');
-    const packages = customerSvc.getAllPackages().filter(p => p.is_active !== 0);
-    return res.render('login', {
-      error: 'No se encontró el cliente. Verifique el número de WhatsApp.',
-      settings,
-      packages
-    });
-  }
-
-  if (!device) {
-    logger.warn('[Login] Login dilanjutkan tanpa data ONU (device tidak ditemukan).');
-  }
-
-  const loginTime = Date.now() - startTime;
-  logger.info(`[Login] Proses login selesai dalam ${loginTime}ms`);
-
-  // --- OTP LOGIC ---
-  if (settings.login_otp_enabled) {
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
-    const expiry = Date.now() + 10 * 60 * 1000; // 10 menit
-    
-    // Simpan ke session sementara
-    req.session.pending_login = {
-      phone: customerPhone,
-      pppoeUsername: pppoeUsername,
-      otp: otp,
-      expiry: expiry
-    };
-
-    logger.info('[Login] OTP dibuat.');
-
-    // Kirim via WhatsApp
-    if (settings.whatsapp_enabled) {
-      try {
-        const waNotify = require('../services/waNotifyService');
-        
-        if (!(await waNotify.isConnected())) {
-          throw new Error('El sistema de WhatsApp no está activo. Comuníquese con la administración.');
-        }
-
-        const msg = `🔐 Su código de ingreso es: *${otp}*\n\nVálido por 10 minutos. No comparta este código con nadie.`;
-        const sent = await waNotify.sendText(customerPhone, msg);
-        
-        if (!sent) {
-          throw new Error('No se pudo enviar el código por WhatsApp. Verifique que su número tenga WhatsApp.');
-        }
-
-        logger.info('[Login] OTP dikirim via WhatsApp.');
-      } catch (e) {
-        logger.error(`[Login] Gagal kirim OTP via WhatsApp: ${e.message}`);
-        const packages = customerSvc.getAllPackages().filter(p => p.is_active !== 0);
-        return res.render('login', { error: e.message, settings, packages });
-      }
-    }
-
-    return res.redirect('/customer/login-otp');
-  }
-
-  // --- DIRECT LOGIN ---
-  logger.info('[Login] Login direct berhasil.');
-  req.session.phone = customerPhone; // Nomor telepon untuk findCustomerByAny()
-  req.session.pppoe_username = pppoeUsername; // PPPoE username untuk GenieACS & MikroTik
-  if (customer && customer.status === 'suspended') {
-    return res.redirect('/isolated');
-  }
-  return res.redirect('/customer/dashboard');
+  // Para datos inexistentes también se pasa a la pantalla del código (no se revela si existe).
+  req.session.pending_login = {
+    customerId: r.ok ? r.customerId : null,
+    masked: r.ok ? r.maskedPhone : '***',
+    loginId,
+    at: Date.now()
+  };
+  return req.session.save(() => res.redirect('/customer/login-otp'));
 });
 
 router.get('/login-otp', (req, res) => {
   const settings = getSettingsWithCache();
-  if (!req.session.pending_login) return res.redirect('/customer/login');
-  res.render('login_otp', { error: null, settings, phone: req.session.pending_login.phone });
+  const pending = req.session.pending_login;
+  if (!pending) return res.redirect('/customer/login');
+  res.render('login_otp', { error: null, info: null, settings, phone: pending.masked });
+});
+
+// Reenviar código
+router.post('/login-otp/resend', loginRateLimiter, async (req, res) => {
+  const settings = getSettingsWithCache();
+  const pending = req.session.pending_login;
+  if (!pending) return res.redirect('/customer/login');
+  const r = await customerAuth.requestOtp(pending.loginId, { channel: 'web', ip: req.ip });
+  if (r.ok) {
+    pending.customerId = r.customerId; pending.masked = r.maskedPhone;
+    return res.render('login_otp', { error: null, info: 'Le enviamos un código nuevo.', settings, phone: pending.masked });
+  }
+  const msg = ['not_found', 'no_phone'].includes(r.reason) ? null : customerAuth.messageFor(r);
+  return res.render('login_otp', { error: msg, info: msg ? null : 'Le enviamos un código nuevo.', settings, phone: pending.masked });
 });
 
 router.post('/login-otp', loginRateLimiter, (req, res) => {
-  const { otp } = req.body;
   const settings = getSettingsWithCache();
   const pending = req.session.pending_login;
-
   if (!pending) {
-    // Sudah terverifikasi (mis. submit ganda) → langsung dashboard, jangan lempar ke login
     if (req.session && req.session.phone) return res.redirect('/customer/dashboard');
     return res.redirect('/customer/login');
   }
 
-  if (Date.now() > pending.expiry) {
+  const v = customerAuth.verifyOtp(pending.customerId, req.body && req.body.otp);
+  if (!v.ok) {
+    if (v.reason === 'invalid') {
+      return res.render('login_otp', { error: customerAuth.messageFor(v), info: null, settings, phone: pending.masked });
+    }
     delete req.session.pending_login;
-    const packages = customerSvc.getAllPackages().filter(p => p.is_active !== 0);
-    return res.render('login', { error: 'El código venció. Vuelva a ingresar.', settings, packages });
+    return renderLoginError(res, settings, customerAuth.messageFor(v));
   }
 
-  if (otp === pending.otp) {
-    logger.info('[Login] OTP berhasil diverifikasi.');
-    req.session.phone = pending.phone; // Nomor telepon customer
-    req.session.pppoe_username = pending.pppoeUsername; // PPPoE username untuk GenieACS & MikroTik
-    delete req.session.pending_login;
-    const custAfterOtp = customerSvc.findCustomerByAny(pending.phone);
-    if (custAfterOtp && custAfterOtp.status === 'suspended') {
-      return res.redirect('/isolated');
-    }
-    return res.redirect('/customer/dashboard');
-  } else {
-    return res.render('login_otp', { error: 'Código incorrecto. Intente de nuevo.', settings, phone: pending.phone });
-  }
+  // Nueva sesión tras autenticar (evita fijación de sesión)
+  const customer = v.customer;
+  const lang = req.session.lang;
+  req.session.regenerate((err) => {
+    if (err) return renderLoginError(res, settings, 'No se pudo iniciar la sesión. Intente de nuevo.');
+    if (lang) req.session.lang = lang;
+    // Si el teléfono lo comparten varios clientes, se identifica la sesión por el usuario PPPoE (único)
+    const _digits = String(customer.phone || '').replace(/\D/g, '');
+    const _shared = _digits ? customerSvc.getAllCustomers().filter(c => String(c.phone || '').replace(/\D/g, '') === _digits).length > 1 : false;
+    req.session.phone = (_shared && customer.pppoe_username) ? customer.pppoe_username : customer.phone;
+    req.session.customer_id = customer.id;
+    req.session.pppoe_username = customer.pppoe_username || null;
+    logger.info(`[Login] Cliente #${customer.id} ingresó con código`);
+    req.session.save(() => res.redirect(customer.status === 'suspended' ? '/isolated' : '/customer/dashboard'));
+  });
 });
+
 
 // Pelanggan terisolir: paksa halaman /isolated, kecuali cek tagihan / bayar / logout
 router.use((req, res, next) => {

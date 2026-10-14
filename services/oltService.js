@@ -707,22 +707,28 @@ const parseHiosoOnuTable = (text) => {
 // así que la lista se lee de la CLI: auth-info (nombre/MAC/tipo), status (estado, distancia,
 // última caída) y opm-diag (potencia óptica). Las tablas son de ancho fijo: se cortan por las
 // posiciones de las columnas del encabezado.
-const parseFixedTable = (text, firstHeader) => {
+const parseFixedTable = (text, firstHeader, names) => {
+  // Las columnas se toman de la línea de guiones (alineada), no del encabezado (espacios irregulares).
   const lines = String(text || '').replace(/\r/g, '').split('\n');
   const rows = [];
+  let state = 0; // 0 buscando encabezado, 1 esperando guiones, 2 leyendo filas
   let cols = null;
   for (const line of lines) {
-    // Otra tabla o el prompt: termina la tabla actual
-    if ((line.startsWith('ONU-ID') && !line.startsWith(firstHeader)) || /[#>]\s*$/.test(line)) { cols = null; continue; }
-    if (line.startsWith(firstHeader)) {
-      cols = [];
-      const re = /\S+(?: \S+)*/g; let m;
-      while ((m = re.exec(line))) cols.push({ name: m[0], start: m.index });
+    if (line.startsWith(firstHeader)) { state = 1; continue; }
+    if (state === 1) {
+      if (/^-{3,}/.test(line)) {
+        cols = []; const re = /-+/g; let m;
+        while ((m = re.exec(line))) cols.push(m.index);
+        state = 2;
+      }
       continue;
     }
-    if (!cols || !/^EPON\d+\/\d+:\d+/.test(line)) continue;
+    if (state !== 2) continue;
+    if (!/^EPON\d+\/\d+:\d+/.test(line)) { if (line.startsWith('ONU-ID') || /[#>]\s*$/.test(line)) state = 0; continue; }
     const r = {};
-    cols.forEach((c, i) => { r[c.name] = line.slice(c.start, i + 1 < cols.length ? cols[i + 1].start : undefined).trim(); });
+    names.forEach((n, i) => { if (i < cols.length) r[n] = line.slice(cols[i], i + 1 < cols.length ? cols[i + 1] : undefined).trim(); });
+    r._line = line;
+    r._cols = cols;
     rows.push(r);
   }
   return rows;
@@ -735,23 +741,30 @@ const fetchVsolEponViaTelnet = async (olt) => {
   const out = await telnetLoginAndRun(olt.host, olt.web_user, olt.web_password, cmds,
     Object.assign(telnetOptsFromOlt(olt), { enablePassword: olt.enable_password || olt.web_password }));
   const clean = String(out).replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace(/[^\x09\x0a\x0d\x20-\x7e]/g, '');
-  const auth = parseFixedTable(clean, 'ONU-ID      LLID');
-  const status = parseFixedTable(clean, 'ONU-ID      Status');
-  const opm = parseFixedTable(clean, 'ONU-ID      Temperature');
+  const auth = parseFixedTable(clean, 'ONU-ID      LLID', ['id', 'llid', 'status', 'mac', 'rtt', 'desc', 'type', 'authflag', 'exchange', 'authmode', 'loid']);
+  const status = parseFixedTable(clean, 'ONU-ID      Status', ['id', 'status', 'mac', 'distance', 'rtt', 'lastReg', 'lastDereg', 'lastDeregReason', 'aliveTime', 'upgrade']);
+  const opm = parseFixedTable(clean, 'ONU-ID      Temperature', ['id', 'temp', 'voltage', 'bias', 'tx', 'rx']);
   const byId = new Map();
-  for (const a of auth) byId.set(a['ONU-ID'], { id: a['ONU-ID'], mac: a['MAC'] || '', name: a['Description'] || '', type: a['Type'] || '', status: a['Status'] || '', auth: a['Authflag'] || '' });
-  for (const s of status) {
-    const r = byId.get(s['ONU-ID']) || { id: s['ONU-ID'], name: '', mac: s['MAC'] || '' };
-    r.status = s['Status'] || r.status;
-    r.distance = s['Distance(m)'];
-    r.lastDereg = s['LastDeregTime'];
-    r.lastDeregReason = s['LastDeregReason'];
-    r.aliveTime = s['AliveTime'];
+  for (const a of auth) {
+    // Nombres de más de 16 caracteres invaden la columna "Type": se separan por el patrón del tipo.
+    const seg = a._line.slice(a._cols[5], a._cols[7]).trim();
+    const m = /^(.*?)(N\/A|\d+GE\S*)$/.exec(seg);
+    const name = m ? m[1].trim() : a.desc;
+    const type = m ? m[2] : a.type;
+    byId.set(a.id, { id: a.id, mac: a.mac, name, type, status: a.status, auth: a.authflag });
+  }
+  for (const st of status) {
+    const r = byId.get(st.id) || { id: st.id, name: '', mac: st.mac };
+    r.status = st.status || r.status;
+    r.distance = st.distance;
+    r.lastDereg = st.lastDereg;
+    r.lastDeregReason = st.lastDeregReason;
+    r.aliveTime = st.aliveTime;
     byId.set(r.id, r);
   }
   for (const p of opm) {
-    const r = byId.get(p['ONU-ID']); if (!r) continue;
-    r.rx = p['RX Power(dBm)']; r.tx = p['TX Power(dBm)']; r.temp = p['Temperature(C)'];
+    const r = byId.get(p.id); if (!r) continue;
+    r.rx = p.rx; r.tx = p.tx; r.temp = p.temp;
   }
   return [...byId.values()];
 };

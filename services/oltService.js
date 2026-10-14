@@ -702,6 +702,87 @@ const parseHiosoOnuTable = (text) => {
   return rows;
 };
 
+// ─── VSOL EPON (V1600D y similares) por Telnet, SOLO comandos de consulta ────────
+// Estas OLT no responden a GETBULK y publican las ONUs fuera de la rama SNMP del perfil VSOL,
+// así que la lista se lee de la CLI: auth-info (nombre/MAC/tipo), status (estado, distancia,
+// última caída) y opm-diag (potencia óptica). Las tablas son de ancho fijo: se cortan por las
+// posiciones de las columnas del encabezado.
+const parseFixedTable = (text, firstHeader) => {
+  const lines = String(text || '').replace(/\r/g, '').split('\n');
+  const rows = [];
+  let cols = null;
+  for (const line of lines) {
+    if (line.startsWith(firstHeader)) {
+      cols = [];
+      const re = /\S+(?: \S+)*/g; let m;
+      while ((m = re.exec(line))) cols.push({ name: m[0], start: m.index });
+      continue;
+    }
+    if (!cols || !/^EPON\d+\/\d+:\d+/.test(line)) continue;
+    const r = {};
+    cols.forEach((c, i) => { r[c.name] = line.slice(c.start, i + 1 < cols.length ? cols[i + 1].start : undefined).trim(); });
+    rows.push(r);
+  }
+  return rows;
+};
+
+const VSOL_DEREG_REASON = { 'power off': 'Sin energía (equipo apagado)', 'wire down': 'Fibra cortada / sin señal (LOS)', 'mpcp dereg': 'Desregistrada', 'oam timeout': 'Sin respuesta (timeout)' };
+
+const fetchVsolEponViaTelnet = async (olt) => {
+  const cmds = ['configure terminal', 'interface epon 0/1', 'show onu auth-info all', 'show onu status all', 'show onu opm-diag all', 'exit', 'exit'];
+  const out = await telnetLoginAndRun(olt.host, olt.web_user, olt.web_password, cmds,
+    Object.assign(telnetOptsFromOlt(olt), { enablePassword: olt.enable_password || olt.web_password }));
+  const clean = String(out).replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace(/[^\x09\x0a\x0d\x20-\x7e]/g, '');
+  const auth = parseFixedTable(clean, 'ONU-ID      LLID');
+  const status = parseFixedTable(clean, 'ONU-ID      Status');
+  const opm = parseFixedTable(clean, 'ONU-ID      Temperature');
+  const byId = new Map();
+  for (const a of auth) byId.set(a['ONU-ID'], { id: a['ONU-ID'], mac: a['MAC  Address'] || a['MAC Address'] || '', name: a['Description'] || '', type: a['Type'] || '', status: a['Status'] || '', auth: a['Authflag'] || '' });
+  for (const s of status) {
+    const r = byId.get(s['ONU-ID']) || { id: s['ONU-ID'], name: '', mac: s['MAC  Address'] || '' };
+    r.status = s['Status'] || r.status;
+    r.distance = s['Distance(m)'];
+    r.lastDereg = s['LastDeregTime'];
+    r.lastDeregReason = s['LastDeregReason'];
+    r.aliveTime = s['AliveTime'];
+    byId.set(r.id, r);
+  }
+  for (const p of opm) {
+    const r = byId.get(p['ONU-ID']); if (!r) continue;
+    r.rx = p['RX Power(dBm)']; r.tx = p['TX Power(dBm)']; r.temp = p['Temperature(C)'];
+  }
+  return [...byId.values()];
+};
+
+const fillStatsFromVsolEpon = (stats, rows, full) => {
+  const online = rows.filter(r => /^online$/i.test(r.status || ''));
+  const weak = online.filter(r => { const n = parseFloat(r.rx); return Number.isFinite(n) && n < -27; });
+  stats.status = 'Online';
+  stats.error = null;
+  stats.onus_total = rows.length;
+  stats.onus_online = online.length;
+  stats.onus_offline = rows.length - online.length;
+  stats.onus_weak = weak.length;
+  if (full) {
+    stats.onus = enrichOnusWithCustomerData(rows.map(r => {
+      const isUp = /^online$/i.test(r.status || '');
+      const reason = String(r.lastDeregReason || '').trim().toLowerCase();
+      return {
+        index: r.id, id: r.id, name: r.name || r.mac || r.id,
+        sn: r.mac || '-',
+        status: isUp ? 'Online' : 'Offline',
+        offline_reason: isUp ? null : (reason && reason !== 'n/a' ? (VSOL_DEREG_REASON[reason] || r.lastDeregReason) + (r.lastDereg && r.lastDereg !== 'N/A' ? ' (' + r.lastDereg + ')' : '') : 'Sin registro'),
+        tx: r.tx ? r.tx + ' dBm' : 'N/A',
+        rx: r.rx ? r.rx + ' dBm' : 'N/A',
+        distance: r.distance && r.distance !== '0' ? r.distance + ' m' : '-',
+        firmware: r.type || '-',
+        uptime: isUp ? (r.aliveTime || '-') : '-',
+      };
+    }).sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true })));
+  }
+  return stats;
+};
+
 const fetchHiosoOnuDetailViaTelnet = async (olt) => {
   const user = olt.web_user || 'admin';
   const pass = olt.web_password || 'admin';
@@ -1745,6 +1826,17 @@ async function getOltStatsInternal(id, full = false) {
         }
 
         if (!activeProfile) {
+          // VSOL EPON: lista de ONUs por Telnet (solo consultas)
+          if (brandKey === 'vsol' && olt.web_user) {
+            try {
+              const rows = await fetchVsolEponViaTelnet(olt);
+              if (rows.length) { fillStatsFromVsolEpon(stats, rows, full); stats.source = 'telnet'; safeResolve(stats); return; }
+            } catch (e) {
+              stats.error = `No se pudo leer la OLT por Telnet: ${e.message}`;
+              safeResolve(stats);
+              return;
+            }
+          }
           // Telnet Fallback if profile not matched
           if (brandKey === 'hioso' || brandKey === 'hsgq') {
             const telnetData = await fetchHiosoOnuDetailViaTelnet(olt);
@@ -2142,6 +2234,7 @@ function decodeOltSnmpIndex(brand, index) {
 }
 
 async function rebootOnu(oltId, index) {
+  { const _o = getOltById(oltId); if (_o && String(_o.brand || '').toLowerCase() === 'vsol') throw new Error('Acción todavía no disponible para OLT VSOL EPON (solo monitoreo). Hacelo desde la web de la OLT.'); }
   const olt = getOltById(oltId);
   if (!olt) throw new Error('OLT no encontrada');
 
@@ -2174,6 +2267,7 @@ async function rebootOnu(oltId, index) {
 }
 
 async function renameOnu(oltId, index, newName) {
+  { const _o = getOltById(oltId); if (_o && String(_o.brand || '').toLowerCase() === 'vsol') throw new Error('Acción todavía no disponible para OLT VSOL EPON (solo monitoreo). Hacelo desde la web de la OLT.'); }
   const olt = getOltById(oltId);
   if (!olt) throw new Error('OLT no encontrada');
 
@@ -2210,6 +2304,7 @@ async function renameOnu(oltId, index, newName) {
  * Otorisasi ONU (Provisioning) via Telnet CLI.
  */
 async function authorizeOnu(oltId, data) {
+  { const _o = getOltById(oltId); if (_o && String(_o.brand || '').toLowerCase() === 'vsol') throw new Error('Acción todavía no disponible para OLT VSOL EPON (solo monitoreo). Hacelo desde la web de la OLT.'); }
   const olt = getOltById(oltId);
   if (!olt) throw new Error('OLT no encontrada');
 

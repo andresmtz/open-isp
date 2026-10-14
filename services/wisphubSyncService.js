@@ -360,9 +360,10 @@ function importTraffic(data, { dryRun = true } = {}) {
 /**
  * Importa promesas de pago vigentes desde la lista de WispHub (/promesas-de-pago/).
  * rows: [{ factura: '0000671', creado: 'DD/MM/AAAA HH:MM', limite: 'DD/MM/AAAA HH:MM', creado_por }]
- * WispHub muestra las horas en la zona de la cuenta (sourceOffset, ej. '-05:00'); se convierten a la zona configurada.
+ * Las horas se toman en la zona horaria del sistema (setting 'timezone'). sourceOffset (ej. '-05:00')
+ * solo si se quiere convertir desde otra zona.
  */
-function importPromises(rows, { dryRun = true, sourceOffset = '-05:00' } = {}) {
+function importPromises(rows, { dryRun = true, sourceOffset = null } = {}) {
   ensureSchema();
   const cycle = require('../config/billingCycle');
   const promiseSvc = require('./promiseService');
@@ -370,6 +371,7 @@ function importPromises(rows, { dryRun = true, sourceOffset = '-05:00' } = {}) {
   const toLocal = (txt) => {
     const m = /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/.exec(String(txt || '').trim());
     if (!m) return null;
+    if (!sourceOffset) return `${m[3]}-${m[2]}-${m[1]} ${m[4]}:${m[5]}`;
     const d = new Date(`${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}:00${sourceOffset}`);
     return isNaN(d.getTime()) ? null : cycle.nowStamp(d);
   };

@@ -21,10 +21,10 @@ const regional = require('../config/regional');
  * Modo migración (setting `migration_mode`): mientras WispHub sigue operando, Open-ISP no genera
  * facturas, no corta, no envía recordatorios ni toca perfiles. Los datos llegan por la sincronización.
  */
-function inMigrationMode(jobName) {
+function inMigrationMode(jobName, quiet) {
   const v = getSetting('migration_mode', false);
   const on = v === true || v === 'true';
-  if (on) logger.info(`[CRON] Modo migración activo: se omite "${jobName}"`);
+  if (on && !quiet) logger.info(`[CRON] Modo migración activo: se omite "${jobName}"`);
   return on;
 }
 
@@ -388,6 +388,20 @@ function startCronJobs() {
     }
   });
 
+  // Promesas de pago: cada minuto. Corta en el minuto exacto en que vence la promesa (hora local) y
+  // cierra como cumplidas las de clientes que ya no deben nada.
+  let _promiseBusy = false;
+  cron.schedule('* * * * *', async () => {
+    if (_promiseBusy) return;
+    if (inMigrationMode('vencimiento de promesas de pago', true)) return;
+    _promiseBusy = true;
+    try {
+      const pr = await promiseSvc.review();
+      if (pr.kept || pr.broken) logger.info(`[CRON] Promesas de pago: ${pr.kept} cumplidas, ${pr.broken} vencidas (cortadas).`);
+    } catch (e) { logger.error('[CRON] Revisión de promesas: ' + e.message); }
+    finally { _promiseBusy = false; }
+  });
+
   // 2. Corte automático: cada hora. Corta a quien tenga una factura impaga cuyo momento de corte
   //    (día de corte del período + hora de corte) ya pasó, y a quien venció la promesa de pago con deuda.
   cron.schedule('0 * * * *', async () => {
@@ -395,10 +409,6 @@ function startCronJobs() {
     const now = new Date();
     const cfg = billingCycle.get();
     const nowStamp = billingCycle.nowStamp(now);
-    try {
-      const pr = await promiseSvc.review();
-      if (pr.kept || pr.broken) logger.info(`[CRON] Promesas de pago: ${pr.kept} cumplidas, ${pr.broken} vencidas (cortadas).`);
-    } catch (e) { logger.error('[CRON] Revisión de promesas: ' + e.message); }
 
     let isolatedCount = 0;
     const BATCH_SIZE = 100;

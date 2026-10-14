@@ -141,7 +141,14 @@ function parseLocalStamp(text) {
  */
 function importExisting(customerId, { createdAt, until, note, createdBy, ref, debt } = {}) {
   ensureSchema();
-  if (ref && db.prepare('SELECT id FROM payment_promises WHERE customer_id=? AND note LIKE ?').get(customerId, '%' + ref + '%')) return { skipped: 'ya importada' };
+  const prev = ref ? db.prepare('SELECT id, status, until FROM payment_promises WHERE customer_id=? AND note LIKE ?').get(customerId, '%' + ref + '%') : null;
+  if (prev) {
+    if (prev.status !== 'active') return { skipped: 'ya importada (' + prev.status + ')' };
+    if (prev.until === until) return { skipped: 'ya importada' };
+    db.prepare('UPDATE payment_promises SET until=? WHERE id=?').run(until, prev.id);
+    db.prepare('UPDATE customers SET promise_until=? WHERE id=?').run(until, customerId);
+    return { updated: true, from: prev.until };
+  }
   const tx = db.transaction(() => {
     db.prepare("UPDATE payment_promises SET status='cancelled', closed_at=? WHERE customer_id=? AND status='active'").run(cycle.nowStamp(), customerId);
     db.prepare('INSERT INTO payment_promises (customer_id, created_at, until, debt_amount, note, created_by) VALUES (?,?,?,?,?,?)')

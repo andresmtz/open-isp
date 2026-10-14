@@ -143,11 +143,14 @@
       <% } %>
 
       <!-- GRAFIK PENDAPATAN + AKSI CEPAT -->
-      <div class="dash-2col">
+      <% const _verFin = (typeof verFinanzas === 'undefined') || verFinanzas; %>
+      <div class="dash-2col"<% if (!_verFin) { %> style="grid-template-columns:1fr"<% } %>>
+        <% if (_verFin) { %>
         <div class="card" style="margin:0">
           <div class="card-hd"><h6><i class="bi bi-bar-chart-line"></i> <%= t('admin.dashboard.revenue_chart','Pendapatan per Bulan') %> <span style="color:var(--muted);font-weight:500"><%= (typeof chartYear!=='undefined' ? chartYear : new Date().getFullYear()) %></span></h6></div>
           <div class="card-bd" style="height:260px"><canvas id="revenueChart"></canvas></div>
         </div>
+        <% } %>
         <div class="card" style="margin:0">
           <div class="card-hd"><h6><i class="bi bi-lightning-charge"></i> <%= t('admin.dashboard.quick_actions','Aksi Cepat') %></h6></div>
           <div class="card-bd quick-actions-grid">

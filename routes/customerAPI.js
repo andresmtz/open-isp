@@ -3476,7 +3476,7 @@ router.post('/tickets/create', requireCustomerApiAuth, async (req, res) => {
         // Kirim ke semua teknisi aktif
         try {
           const techSvc = require('../services/techService');
-          const technicians = techSvc.getAllTechnicians ? techSvc.getAllTechnicians().filter(t => t.is_active === 1) : [];
+          const technicians = require('../config/techPermissions').broadcastRecipients(); // solo técnicos con 'reclamos sin asignar'
           for (const tech of technicians) {
             const digits = String(tech.phone || '').replace(/\D/g, '');
             if (digits.length >= 8) recipients.add(digits);

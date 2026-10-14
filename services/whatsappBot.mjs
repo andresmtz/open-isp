@@ -1057,18 +1057,13 @@ export async function sendMonitoringAlert(message, priority = 'medium') {
     const adminNumbers = getWhatsappAdminNumbers();
 
     // Get technician numbers from database (active technicians only)
+    // Solo técnicos activos con permiso de 'equipos' (los tercerizados no reciben alertas de toda la red)
+    const regionalCfg = require('../config/regional');
+    const techPermsCfg = require('../config/techPermissions');
     const techSvc = require('./techService');
-    const technicians = techSvc.getAllTechnicians();
-    const techNumbers = technicians
-      .filter(tech => tech.is_active === 1 && tech.phone)
-      .map(tech => {
-        let phone = String(tech.phone || '').replace(/\D/g, '');
-        // Convert 08xxx to 628xxx
-        if (phone.startsWith('0')) {
-          phone = '62' + phone.slice(1);
-        }
-        return phone;
-      })
+    const techNumbers = techSvc.getAllTechnicians()
+      .filter(tech => tech.is_active === 1 && tech.phone && techPermsCfg.current(tech.id).equipos)
+      .map(tech => regionalCfg.normalizePhone(String(tech.phone || '').replace(/\D/g, '')))
       .filter(Boolean);
 
     const toJid = (raw) => {
@@ -1077,7 +1072,7 @@ export async function sendMonitoringAlert(message, priority = 'medium') {
       if (s.includes('@')) return s;
       let digits = s.replace(/\D/g, '');
       if (!digits) return '';
-      if (digits.startsWith('0')) digits = '62' + digits.slice(1);
+      digits = require('../config/regional').normalizePhone(digits);
       if (digits.length < 8) return '';
       return `${digits}@s.whatsapp.net`;
     };

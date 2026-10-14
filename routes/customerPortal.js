@@ -1618,7 +1618,7 @@ router.post('/register', async (req, res) => {
       try {
         const waNotify = require('../services/waNotifyService');
         const adminSvc = require('../services/adminService');
-        const technicians = adminSvc.getAllTechnicians().filter(t => t.is_active === 1 && t.phone);
+        const technicians = require('../config/techPermissions').broadcastRecipients(); // solo técnicos con 'reclamos sin asignar'
         
         if (technicians.length > 0) {
           const selectedPkg = packages.find(p => p.id.toString() === package_id.toString());
@@ -2874,7 +2874,7 @@ router.post('/tickets/create', uploadCustomer.array('photos', 5), async (req, re
           }
         }
         const techSvc = require('../services/techService');
-        const technicians = techSvc.getAllTechnicians().filter(t => t.is_active === 1);
+        const technicians = require('../config/techPermissions').broadcastRecipients(); // solo técnicos con 'reclamos sin asignar'
         for (const tech of technicians) {
           const digits = normalizeWaDigits(tech.phone);
           if (digits) recipients.add(digits);

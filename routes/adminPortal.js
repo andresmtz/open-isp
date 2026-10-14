@@ -992,14 +992,36 @@ router.post('/odps/:id/delete', requireAdminSession, restrictToAdmin, (req, res)
 
 // --- TECHNICIAN MANAGEMENT ---
 router.get('/technicians', requireAdminSession, requireSidebarMenuAccess('technicians'), restrictToAdmin, (req, res) => {
-  const technicians = adminSvc.getAllTechnicians().map(({ password, ...t }) => t);
-  res.render('admin/technicians', { title: 'Gestión de técnicos', company: company(), activePage: 'technicians', technicians, msg: flashMsg(req) });
+  const techPerms = require('../config/techPermissions');
+  techPerms.ensureSchema();
+  const technicians = adminSvc.getAllTechnicians().map(({ password, permissions, ...t }) => {
+    const perms = techPerms.current(t.id);
+    return { ...t, perms, permSummary: techPerms.summary(perms) };
+  });
+  res.render('admin/technicians', { title: 'Gestión de técnicos', company: company(), activePage: 'technicians', technicians, msg: flashMsg(req),
+    permCatalog: techPerms.CATALOG });
+});
+
+function techPermsFromBody(body) {
+  const out = {};
+  for (const p of require('../config/techPermissions').CATALOG) out[p.key] = body && body['perm_' + p.key];
+  return out;
+}
+
+router.post('/technicians/:id/permissions', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
+  const row = db.prepare('SELECT id, name FROM technicians WHERE id = ?').get(req.params.id);
+  if (!row) { req.session._msg = { type: 'error', text: 'Técnico no encontrado.' }; return res.redirect('/admin/technicians'); }
+  const out = require('../config/techPermissions').save(row.id, techPermsFromBody(req.body));
+  try { auditSvc && auditSvc.logAuditTrail && auditSvc.logAuditTrail({ action: 'UPDATE', entity_type: 'technician_permissions', entity_id: String(row.id), actor_type: 'admin', actor_name: req.session.adminUser || 'admin', details: { tecnico: row.name, permisos: out }, ip_address: req.ip }); } catch (_) {}
+  req.session._msg = { type: 'success', text: `Permisos de ${row.name} guardados. Se aplican de inmediato.` };
+  res.redirect('/admin/technicians');
 });
 
 router.post('/technicians', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
-    adminSvc.createTechnician(req.body);
-    req.session._msg = { type: 'success', text: 'Técnico agregado.' };
+    const r = adminSvc.createTechnician(req.body);
+    require('../config/techPermissions').save(r.lastInsertRowid, techPermsFromBody(req.body));
+    req.session._msg = { type: 'success', text: 'Técnico agregado con los permisos marcados.' };
   } catch (e) {
     req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
@@ -1009,7 +1031,8 @@ router.post('/technicians', requireAdminSession, restrictToAdmin, express.urlenc
 router.post('/technicians/:id/update', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     adminSvc.updateTechnician(req.params.id, req.body);
-    req.session._msg = { type: 'success', text: 'Datos del técnico actualizados.' };
+    const closed = (String(req.body.password || '') !== '' || String(req.body.is_active) === '0') ? require('../config/techPermissions').closeSessions(req.params.id) : 0;
+    req.session._msg = { type: 'success', text: 'Datos del técnico actualizados.' + (closed ? ` Se cerraron ${closed} sesión(es) abiertas.` : '') };
   } catch (e) {
     req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
@@ -1018,6 +1041,7 @@ router.post('/technicians/:id/update', requireAdminSession, restrictToAdmin, exp
 
 router.post('/technicians/:id/delete', requireAdminSession, restrictToAdmin, (req, res) => {
   adminSvc.deleteTechnician(req.params.id);
+  require('../config/techPermissions').closeSessions(req.params.id);
   req.session._msg = { type: 'success', text: 'Técnico eliminado.' };
   res.redirect('/admin/technicians');
 });
@@ -3752,7 +3776,7 @@ router.post('/tickets/create', requireAdminSession, express.urlencoded({ extende
           digits = regional.normalizePhone(digits);
           await waNotify.sendText(digits, waMsg);
         } else if (!techId) {
-          const technicians = techSvc.getAllTechnicians().filter(t => t.is_active === 1 && t.phone);
+          const technicians = require('../config/techPermissions').broadcastRecipients(); // solo técnicos con 'reclamos sin asignar'
           for (const t of technicians) {
             let digits = String(t.phone).replace(/\D/g, '');
             digits = regional.normalizePhone(digits);

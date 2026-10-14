@@ -21,7 +21,7 @@
 <% if (tickets.length === 0) { %>
   <div class="p-empty">
     <i class="bi bi-check2-circle" style="color:var(--success);opacity:1"></i>
-    <p style="font-size:13px"><%= t('tech.dashboard.empty_active', 'Bagus! Tidak ada tugas aktif saat ini.') %><br><%= t('tech.dashboard.empty_active_hint', 'Silakan cek tab "Tiket Baru" untuk mengambil tugas.') %></p>
+    <p style="font-size:13px"><%= t('tech.dashboard.empty_active', 'Bagus! Tidak ada tugas aktif saat ini.') %><% if (typeof can !== 'function' || can('reclamos_libres')) { %><br><%= t('tech.dashboard.empty_active_hint', 'Silakan cek tab "Tiket Baru" untuk mengambil tugas.') %><% } %></p>
   </div>
 <% } else { %>
   <% tickets.forEach(function(ticket){ %>

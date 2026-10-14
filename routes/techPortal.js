@@ -15,6 +15,7 @@ const { uploadAttendance, removeAttendanceFile } = require('../middleware/attend
 const genieacsApi = require('../config/genieacs');
 const rawAxios = require('axios');
 const regional = require('../config/regional');
+const techPerms = require('../config/techPermissions');
 
 const axios = {
   get: async (url, config = {}) => {
@@ -124,8 +125,12 @@ router.use((req, res, next) => {
   res.locals.formatTimeLocal = formatTimeLocal;
   res.locals.parseDateInTimezone = parseDateInTimezone;
   res.locals.getNowLocal = getNowLocal;
+  res.locals.can = (key) => techPerms.has(req.session, key);
   next();
 });
+
+// Técnicos (muchos tercerizados): solo lo que el administrador habilitó a cada uno; cuenta desactivada → fuera
+router.use(techPerms.guard);
 
 let loginRateLimiter = (req, res, next) => next();
 try {
@@ -145,10 +150,12 @@ router.post('/login', loginRateLimiter, express.urlencoded({ extended: true }), 
   const { username, password } = req.body;
   const tech = techSvc.authenticate(username, password);
   if (tech) {
-    req.session.isTechnician = true;
-    req.session.techId = tech.id;
-    req.session.techName = tech.name;
-    return res.redirect('/tech');
+    return req.session.regenerate(() => {
+      req.session.isTechnician = true;
+      req.session.techId = tech.id;
+      req.session.techName = tech.name;
+      req.session.save(() => res.redirect('/tech'));
+    });
   }
   res.render('tech/login', { title: 'Ingreso de técnicos', company: company(), error: '¡Usuario o contraseña incorrectos!' });
 });
@@ -162,6 +169,7 @@ router.get('/logout', (req, res) => {
 router.get('/', requireTechSession, (req, res) => {
   const techId = req.session.techId;
   const stats = techSvc.getTechStats(techId);
+  if (!techPerms.has(req.session, 'reclamos_libres')) stats.open = null; // no ve cuántos reclamos hay sin asignar
   const myTickets = techSvc.getAssignedTickets(techId);
   
   res.render('tech/dashboard', {
@@ -202,8 +210,14 @@ router.get('/history', requireTechSession, (req, res) => {
 
 // --- NETWORK MAP ---
 router.get('/map', requireTechSession, (req, res) => {
-  const customers = customerSvc.getAllCustomers();
-  const odps = odpSvc.getAllOdps();
+  // Solo lo necesario para ubicar: nunca montos, contraseñas, cédula ni correo
+  const CUST_FIELDS = ['id', 'name', 'address', 'area', 'lat', 'lng', 'status', 'phone', 'customer_code', 'package_name', 'speed_down', 'speed_up', 'pppoe_username', 'odp_id', 'odp_name', 'cable_path'];
+  const customers = customerSvc.getAllCustomers().map((c) => {
+    const o = {};
+    for (const k of CUST_FIELDS) if (c[k] !== undefined) o[k] = c[k];
+    return o;
+  });
+  const odps = odpSvc.getAllOdps().map(({ id, name, description, lat, lng, pon_port, port_capacity, olt_id }) => ({ id, name, description, lat, lng, pon_port, port_capacity, olt_id }));
   
   res.render('tech/map', { 
     title: 'Mapa de red', 
@@ -219,6 +233,9 @@ router.get('/map', requireTechSession, (req, res) => {
 // --- ACTIONS ---
 router.post('/tickets/:id/take', requireTechSession, (req, res) => {
   try {
+    const tk = db.prepare('SELECT status, technician_id FROM tickets WHERE id = ?').get(req.params.id);
+    if (!tk) throw new Error('el reclamo no existe');
+    if (tk.status !== 'open' || (tk.technician_id && Number(tk.technician_id) !== Number(req.session.techId))) throw new Error('ya lo tomó otro técnico o no está abierto');
     techSvc.takeTicket(req.params.id, req.session.techId);
     req.session._msg = { type: 'success', text: 'Ticket tomado. Ya podés empezar a trabajarlo.' };
   } catch (e) {
@@ -232,6 +249,10 @@ router.post('/tickets/:id/update', requireTechSession, upload.array('photos', 10
     const { status, notes } = req.body;
     const ticketId = req.params.id;
     const techId = req.session.techId;
+    // Solo sus propios reclamos, y solo estos estados
+    const own = db.prepare('SELECT technician_id FROM tickets WHERE id = ?').get(ticketId);
+    if (!own || Number(own.technician_id) !== Number(techId)) throw new Error('este reclamo no está asignado a vos');
+    if (!['in_progress', 'resolved'].includes(String(status))) throw new Error('estado inválido');
     
     // Prepare photo data
     let photoPaths = [];

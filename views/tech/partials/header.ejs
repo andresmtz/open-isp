@@ -26,7 +26,7 @@
       <a href="/lang/es" class="nav-btn lang-btn" title="Español">ES</a>
       <a href="/lang/en" class="nav-btn lang-btn" title="English">EN</a>
       <button type="button" class="nav-btn" onclick="toggleTheme()" title="Cambiar tema"><i class="bi bi-moon-stars-fill"></i></button>
-      <a href="/tech/customers/new" class="nav-btn" title="<%= t('tech.new_customer', 'Tambah Pelanggan') %>"><i class="bi bi-person-plus-fill"></i></a>
+      <% if (typeof can !== 'function' || can('instalaciones')) { %><a href="/tech/customers/new" class="nav-btn" title="<%= t('tech.new_customer', 'Tambah Pelanggan') %>"><i class="bi bi-person-plus-fill"></i></a><% } %>
       <a href="/tech/logout" class="nav-btn" onclick="return confirm('<%= t('tech.logout_confirm', 'Apakah Anda yakin ingin logout?') %>')" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
     </div>
   </div>

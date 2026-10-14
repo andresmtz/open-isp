@@ -42,13 +42,14 @@
               <th><%= t('admin.technicians.table.username', 'Username') %></th>
               <th><%= t('admin.technicians.table.whatsapp', 'WhatsApp') %></th>
               <th><%= t('admin.technicians.table.area', 'Area Tugas') %></th>
+              <th>Permisos</th>
               <th><%= t('admin.technicians.table.status', 'Status') %></th>
               <th><%= t('admin.technicians.table.actions', 'Aksi') %></th>
             </tr>
           </thead>
           <tbody>
             <% if (technicians.length === 0) { %>
-              <tr><td colspan="6" class="text-center text-muted" style="padding:20px"><%= t('admin.technicians.empty', 'Belum ada data teknisi.') %></td></tr>
+              <tr><td colspan="7" class="text-center text-muted" style="padding:20px"><%= t('admin.technicians.empty', 'Belum ada data teknisi.') %></td></tr>
             <% } else { %>
             <% technicians.forEach(tech => { %>
                 <tr>
@@ -56,6 +57,7 @@
                   <td><code><%= tech.username %></code></td>
                   <td><%= tech.phone || '-' %></td>
                   <td><%= tech.area || '-' %></td>
+                  <td style="max-width:380px;font-size:12px"><% if (tech.permSummary.length) { %><%= tech.permSummary.join(' · ') %><% } else { %><span class="text-muted">Solo sus reclamos asignados</span><% } %></td>
                   <td>
                     <span class="badge <%= tech.is_active ? 'bs' : 'bd' %>">
                       <%= tech.is_active ? t('common.active', 'Aktif') : t('common.inactive', 'Nonaktif') %>
@@ -66,6 +68,7 @@
                     <div class="act">
                       <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                       <div class="act-menu">
+                        <button type="button" class="act-item primary" onclick='openPerms(<%- JSON.stringify({ id: tech.id, name: tech.name, perms: tech.perms }).split("<").join("\\u003c").split("'").join("\\u0027") %>)'><i class="bi bi-shield-check"></i> Permisos</button>
                         <button type="button" class="act-item" onclick='editTech(<%- JSON.stringify(tech).split('<').join('\\u003c') %>)'><i class="bi bi-pencil"></i> Editar técnico</button>
                         <div class="act-sep"></div>
                         <button type="submit" form="tdel-<%= tech.id %>" class="act-item danger"><i class="bi bi-trash"></i> Eliminar técnico</button>
@@ -84,7 +87,7 @@
 
 <!-- Modal Tambah -->
 <div class="mo" id="addTechModal">
-  <div class="mb">
+  <div class="mb" style="max-width:820px">
     <form action="/admin/technicians" method="POST">
       <div class="mh"><span class="mt"><%= t('admin.technicians.modal.add_title', 'Tambah Teknisi Baru') %></span><button type="button" class="mc" onclick="closeModal('addTechModal')">&times;</button></div>
       <div class="mbody">
@@ -93,6 +96,16 @@
         <div class="fg"><label class="fl"><%= t('admin.technicians.form.password', 'Password') %></label><input type="password" name="password" class="fc" required minlength="8" autocomplete="new-password"><div style="font-size:11px;color:var(--muted);margin-top:3px">Mínimo 8 caracteres. Se guarda cifrada.</div></div>
         <div class="fg"><label class="fl"><%= t('admin.technicians.form.whatsapp', 'No. WhatsApp') %></label><input type="text" name="phone" class="fc" placeholder="<%= t('admin.technicians.form.whatsapp_placeholder', 'Contoh: 08123456789') %>"></div>
         <div class="fg"><label class="fl"><%= t('admin.technicians.form.area', 'Area Tugas') %></label><input type="text" name="area" class="fc" placeholder="<%= t('admin.technicians.form.area_placeholder', 'Contoh: Kelurahan A, Blok B') %>"></div>
+        <div class="fg"><label class="fl">Permisos</label><div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">Arranca solo con sus reclamos asignados: marcá lo demás que necesite.</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px">
+            <% permCatalog.forEach(function (p) { %>
+              <label style="display:flex;gap:9px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer">
+                <input type="checkbox" name="perm_<%= p.key %>" value="1" data-key="<%= p.key %>" class="perm-cb" style="margin-top:3px">
+                <span><strong style="font-size:12.5px"><%= p.label %></strong><br><span style="font-size:11.5px;color:var(--muted)"><%= p.help %></span></span>
+              </label>
+            <% }) %>
+          </div>
+        </div>
       </div>
       <div class="mf">
         <button type="button" class="btn btn-g" onclick="closeModal('addTechModal')"><%= t('common.cancel', 'Batal') %></button>
@@ -129,7 +142,38 @@
   </div>
 </div>
 
+<!-- Modal Permisos -->
+<div class="mo" id="permsModal">
+  <div class="mb" style="max-width:820px">
+    <form id="permsForm" method="POST">
+      <div class="mh"><span class="mt"><i class="bi bi-shield-check"></i> Permisos de <span id="p-name"></span></span><button type="button" class="mc" onclick="closeModal('permsModal')">&times;</button></div>
+      <div class="mbody">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Siempre puede: ver y trabajar los reclamos que vos le asignás, su historial y marcar asistencia. Nunca ve montos (precios, deudas, pagos) ni contraseñas de clientes.</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px">
+            <% permCatalog.forEach(function (p) { %>
+              <label style="display:flex;gap:9px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer">
+                <input type="checkbox" name="perm_<%= p.key %>" value="1" data-key="<%= p.key %>" class="perm-cb" style="margin-top:3px">
+                <span><strong style="font-size:12.5px"><%= p.label %></strong><br><span style="font-size:11.5px;color:var(--muted)"><%= p.help %></span></span>
+              </label>
+            <% }) %>
+          </div>
+      </div>
+      <div class="mf">
+        <button type="button" class="btn btn-g" onclick="closeModal('permsModal')"><%= t('common.cancel', 'Batal') %></button>
+        <button type="submit" class="btn btn-p"><i class="bi bi-check-lg"></i> Guardar permisos</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
+function openPerms(c) {
+  var f = document.getElementById('permsForm');
+  f.action = '/admin/technicians/' + c.id + '/permissions';
+  document.getElementById('p-name').textContent = c.name;
+  f.querySelectorAll('.perm-cb').forEach(function (cb) { cb.checked = !!(c.perms && c.perms[cb.dataset.key]); });
+  openModal('permsModal');
+}
 const I18N = {
   confirmDeleteTechnician: "<%= t('admin.technicians.confirm_delete', 'Hapus teknisi ini?') %>"
 };

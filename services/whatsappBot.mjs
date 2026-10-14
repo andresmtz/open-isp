@@ -228,9 +228,7 @@ export function loadAuthLidReverseMap(authFolder) {
       }
 
       if (forward) {
-        let phoneDigits = forward[1].replace(/\D/g, '');
-        if (phoneDigits.startsWith('0')) phoneDigits = '62' + phoneDigits.slice(1);
-        else if (phoneDigits.startsWith('8')) phoneDigits = '62' + phoneDigits;
+        const phoneDigits = waDigits(forward[1]);
         const lidDigits = String(value || '').replace(/\D/g, '');
         if (!phoneDigits || !lidDigits) continue;
         next.set(lidDigits + '@lid', phoneDigits);
@@ -240,9 +238,7 @@ export function loadAuthLidReverseMap(authFolder) {
 
       if (reverse) {
         const lidDigits = String(reverse[1] || '').replace(/\D/g, '');
-        let phoneDigits = String(value || '').replace(/\D/g, '');
-        if (phoneDigits.startsWith('0')) phoneDigits = '62' + phoneDigits.slice(1);
-        else if (phoneDigits.startsWith('8')) phoneDigits = '62' + phoneDigits;
+        const phoneDigits = waDigits(value);
         if (!phoneDigits || !lidDigits) continue;
         next.set(lidDigits + '@lid', phoneDigits);
         next.set(lidDigits, phoneDigits);
@@ -265,11 +261,7 @@ function getPhoneFromKey(key) {
 
   // 1. Check senderPn jika ada
   if (key.senderPn && key.senderPn.endsWith('@s.whatsapp.net')) {
-    let p = key.senderPn.split('@')[0].replace(/\D/g, '');
-    if (p.startsWith('0')) p = '62' + p.slice(1);
-    else if (p.startsWith('8')) p = '62' + p;
-    else if (!p.startsWith('62')) p = '62' + p;
-    return p;
+    return waDigits(key.senderPn.split('@')[0]);
   }
 
   // 2. Check jika remoteJid atau senderLid adalah @lid
@@ -287,11 +279,7 @@ function getPhoneFromKey(key) {
       if (lidStore) {
         const mapped = lidStore.get(lidJid) || lidStore.get(lidUser);
         if (mapped) {
-          let p = String(mapped).replace(/\D/g, '');
-          if (p.startsWith('0')) p = '62' + p.slice(1);
-          else if (p.startsWith('8')) p = '62' + p;
-          else if (!p.startsWith('62')) p = '62' + p;
-          return p;
+          return waDigits(mapped);
         }
       }
     } catch (_) {}
@@ -301,11 +289,18 @@ function getPhoneFromKey(key) {
   const [user, host] = remoteJid.split('@');
   if (!user || !host) return null;
 
-  const phone = user.replace(/\D/g, '');
-  if (!phone) return null;
-  if (phone.startsWith('0')) return '62' + phone.slice(1);
-  if (phone.startsWith('8')) return '62' + phone;
-  return phone;
+  return waDigits(user) || null;
+}
+
+/**
+ * Dígitos de un número tal como lo reporta WhatsApp (JID, LID, contactos): ya vienen en
+ * formato internacional, así que solo se normalizan si llegan con prefijo troncal ('0').
+ * No se fuerza el código de país para no alterar números extranjeros ni IDs de grupo.
+ */
+function waDigits(raw) {
+  const d = String(raw || '').replace(/\D/g, '');
+  const trunk = regional.phoneTrunkPrefix();
+  return trunk && d.startsWith(trunk) ? regional.normalizePhone(d) : d;
 }
 
 function waBrand() {
@@ -794,25 +789,19 @@ async function notifyCustomer(sock, lidStore, tag, message) {
   logger.info(`[WA notifyCustomer] Memulai pengiriman untuk tag: "${tag}"`);
   try {
     const text = waAutoWrap(message);
-    const normalizeDigitsTo62 = (raw) => {
-      let digits = String(raw || '').replace(/\D/g, '');
-      if (!digits) return '';
-      if (digits.startsWith('0')) digits = '62' + digits.slice(1);
-      else if (!digits.startsWith('62')) digits = '62' + digits;
-      return digits;
-    };
+    const normalizeDigits = (raw) => regional.normalizePhone(raw);
 
     // 1. Coba cari data pelanggan dari database dulu untuk mendapatkan nomor HP aslinya
     const cust = customerSvc.findCustomerByAny(tag);
     let phoneNumber = '';
     if (cust && cust.phone) {
-      phoneNumber = normalizeDigitsTo62(cust.phone);
+      phoneNumber = normalizeDigits(cust.phone);
     }
     logger.info(`[WA notifyCustomer] Resolusi database tag "${tag}" -> Phone: "${phoneNumber}"`);
     
     // Jika tag itu sendiri adalah nomor HP, gunakan sebagai fallback
     if (!phoneNumber) {
-      const parsedTag = normalizeDigitsTo62(tag);
+      const parsedTag = normalizeDigits(tag);
       if (parsedTag.length >= 10) {
         phoneNumber = parsedTag;
       }
@@ -1025,9 +1014,8 @@ function loadWhatsappAdminSendList() {
   const out = [];
   const seen = new Set();
   for (const n of list) {
-    let digits = String(n).replace(/\D/g, '');
+    const digits = regional.normalizePhone(n);
     if (!digits) continue;
-    if (digits.startsWith('0')) digits = '62' + digits.slice(1);
     if (digits.length < 8) continue;
     if (seen.has(digits)) continue;
     seen.add(digits);
@@ -1204,13 +1192,8 @@ export async function sendWA(to, text, options = {}) {
     return false;
   }
   try {
-    let digits = String(to || '').replace(/\D/g, '');
+    const digits = regional.normalizePhone(to);
     if (!digits) return false;
-    if (digits.startsWith('0')) {
-      digits = '62' + digits.slice(1);
-    } else if (digits.startsWith('8')) {
-      digits = '62' + digits;
-    }
     const jid = digits + '@s.whatsapp.net';
     logger.info(`[WA sendWA] Mengirim ke JID: ${jid}`);
 
@@ -1272,13 +1255,8 @@ export async function sendWAImage(to, imageBuffer, caption = '', options = {}) {
     return false;
   }
   try {
-    let digits = String(to || '').replace(/\D/g, '');
+    const digits = regional.normalizePhone(to);
     if (!digits) return false;
-    if (digits.startsWith('0')) {
-      digits = '62' + digits.slice(1);
-    } else if (digits.startsWith('8')) {
-      digits = '62' + digits;
-    }
     const jid = digits + '@s.whatsapp.net';
     const img = Buffer.isBuffer(imageBuffer) ? imageBuffer : Buffer.from(imageBuffer || []);
     if (!img.length) return false;
@@ -1340,13 +1318,8 @@ export async function sendWADocument(to, documentBuffer, filename = 'Invoice.pdf
     return false;
   }
   try {
-    let digits = String(to || '').replace(/\D/g, '');
+    const digits = regional.normalizePhone(to);
     if (!digits) return false;
-    if (digits.startsWith('0')) {
-      digits = '62' + digits.slice(1);
-    } else if (digits.startsWith('8')) {
-      digits = '62' + digits;
-    }
     const jid = digits + '@s.whatsapp.net';
     const doc = Buffer.isBuffer(documentBuffer) ? documentBuffer : Buffer.from(documentBuffer || []);
     if (!doc.length) return false;
@@ -1413,10 +1386,7 @@ export async function processIncomingCommand({
   const trimmed = text.trim();
   if (!trimmed) return false;
 
-  let phone = String(senderPhone || '').replace(/\D/g, '');
-  if (phone.startsWith('0')) {
-    phone = '62' + phone.slice(1);
-  }
+  const phone = waDigits(senderPhone);
 
   const msgKey = key || {
     remoteJid: phone ? `${phone}@s.whatsapp.net` : null,
@@ -1825,12 +1795,7 @@ export async function processIncomingCommand({
             if (!agentKeyRaw) throw new Error('Agent username/id tidak valid');
             if (!amount) throw new Error('Nominal tidak valid');
 
-            const normalizeDigits = (v) => {
-              let d = String(v || '').replace(/\D/g, '');
-              if (!d) return '';
-              if (d.startsWith('0')) d = '62' + d.slice(1);
-              return d;
-            };
+            const normalizeDigits = (v) => regional.normalizePhone(v);
 
             const agentKey = agentKeyRaw.startsWith('@') ? agentKeyRaw.slice(1) : agentKeyRaw;
             const agentKeyLc = agentKey.toLowerCase();
@@ -2493,9 +2458,7 @@ export async function startWhatsAppBot() {
     sock.ev.on('contacts.upsert', (contacts) => {
       for (const contact of contacts) {
         if (contact.id && contact.id.endsWith('@lid') && contact.phoneNumber) {
-          let digits = String(contact.phoneNumber).replace(/\D/g, '');
-          if (digits.startsWith('0')) digits = '62' + digits.slice(1);
-          else if (digits.startsWith('8')) digits = '62' + digits;
+          const digits = waDigits(contact.phoneNumber);
           lidStore.set(contact.id, digits);
           authLidReverse.set(contact.id, digits);
           authLidReverse.set(contact.id.split('@')[0], digits);
@@ -2507,9 +2470,7 @@ export async function startWhatsAppBot() {
       if (contacts) {
         for (const contact of contacts) {
           if (contact.id && contact.id.endsWith('@lid') && contact.phoneNumber) {
-            let digits = String(contact.phoneNumber).replace(/\D/g, '');
-            if (digits.startsWith('0')) digits = '62' + digits.slice(1);
-            else if (digits.startsWith('8')) digits = '62' + digits;
+            const digits = waDigits(contact.phoneNumber);
             lidStore.set(contact.id, digits);
             authLidReverse.set(contact.id, digits);
             authLidReverse.set(contact.id.split('@')[0], digits);
@@ -2582,7 +2543,7 @@ export async function startWhatsAppBot() {
             for (const n of adminList) {
               const digits = String(n).replace(/\D/g, '');
               if (digits.length >= 8) {
-                const formatted = digits.startsWith('0') ? '62' + digits.slice(1) : digits.startsWith('62') ? digits : '62' + digits;
+                const formatted = regional.normalizePhone(digits);
                 const jid = `${formatted}@s.whatsapp.net`;
                 const waCheck = await sock.onWhatsApp(jid).catch(() => []);
                 if (waCheck && waCheck.length > 0 && waCheck[0].exists && waCheck[0].lid) {

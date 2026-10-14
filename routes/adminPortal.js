@@ -261,8 +261,11 @@ async function sendPaymentSuccessWA(customerPhone, customerName, periodText, amo
       customTemplate: template
     });
 
-    return await trySendWhatsappPayment(customerPhone, formattedMsg);
+    const sent = await trySendWhatsappPayment(customerPhone, formattedMsg);
+    logger.info(`[Pago] Comprobante por WhatsApp a ${customerName} (${customerPhone}): ${sent ? 'enviado' : 'NO enviado (WhatsApp desactivado o sin conexión)'}`);
+    return sent;
   } catch (e) {
+    logger.error(`[Pago] Comprobante por WhatsApp a ${customerName}: error ${e.message}`);
     return false;
   }
 }

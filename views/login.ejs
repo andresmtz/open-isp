@@ -29,6 +29,16 @@
       } catch (e) {}
     })();
   </script>
+<% const minimal = !(typeof settings !== 'undefined' && settings && (settings.customer_login_minimal === false || settings.customer_login_minimal === 'false')); %>
+<% if (minimal) { %>
+<style>
+  /* Solo ingreso: una tarjeta centrada, sin menú ni contenido de sitio web */
+  .auth-hero{min-height:calc(100vh - 70px);display:flex;align-items:center}
+  .auth-grid{grid-template-columns:1fr !important;justify-items:center}
+  .auth-card{width:100%;max-width:420px}
+  .min-foot{text-align:center;font-size:12px;opacity:.6;padding:14px 0 22px}
+</style>
+<% } %>
 </head>
 <body>
 
@@ -38,21 +48,21 @@
     <a class="brand" href="/" aria-label="Beranda">
       <img class="bmark" src="<%= brandLogo %>" alt="<%= brandName %>"><span class="bname"><%= brandName %></span>
     </a>
-    <nav class="nav" aria-label="Navigasi">
+    <% if (!minimal) { %><nav class="nav" aria-label="Navigasi">
       <a href="#packages">Plan</a>
       <a href="#features"><%= t('landing.nav.features','Keunggulan') %></a>
       <a href="/customer/check-billing"><%= t('landing.hero.check','Consultar deuda') %></a>
       <% if (voucherOn) { %><a href="/customer/voucher"><%= t('login.voucher_nav','Voucher') %></a><% } %>
       <% if (typeof settings !== 'undefined' && settings && settings.status_url) { %><a href="<%= settings.status_url %>" target="_blank" rel="noopener">Status</a><% } %>
-    </nav>
+    </nav><% } %>
     <div class="header-actions">
       <button class="icon-btn" onclick="toggleTheme()" aria-label="Cambiar tema"><i class="bi bi-moon-stars-fill" id="themeIcon"></i></button>
       <button class="lbtn lbtn-primary lbtn-sm" id="btnInstall" style="display:none" onclick="triggerPwaInstall()"><i class="bi bi-download"></i> Instal</button>
-      <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/register"><i class="bi bi-person-plus"></i> <%= t('landing.nav.register','Daftar') %></a>
-      <button class="icon-btn hamburger" onclick="toggleMenu()" aria-label="Menu"><i class="bi bi-list"></i></button>
+      <% if (!minimal) { %><a class="lbtn lbtn-ghost lbtn-sm" href="/customer/register"><i class="bi bi-person-plus"></i> <%= t('landing.nav.register','Daftar') %></a>
+      <button class="icon-btn hamburger" onclick="toggleMenu()" aria-label="Menu"><i class="bi bi-list"></i></button><% } %>
     </div>
   </div>
-  <div class="mobile-menu" id="mobileMenu">
+  <% if (!minimal) { %><div class="mobile-menu" id="mobileMenu">
     <div class="container inner">
       <a href="#packages" onclick="toggleMenu()"><%= t('landing.nav.packages_full','Paket & Harga') %></a>
       <a href="#features" onclick="toggleMenu()"><%= t('landing.nav.features','Keunggulan') %></a>
@@ -61,13 +71,13 @@
       <a href="/customer/register" onclick="toggleMenu()"><i class="bi bi-person-plus"></i> <%= t('login.register_new','Daftar Baru') %></a>
       <% if (typeof settings !== 'undefined' && settings && settings.status_url) { %><a href="<%= settings.status_url %>" target="_blank" rel="noopener" onclick="toggleMenu()"><i class="bi bi-activity"></i> Estado del servidor</a><% } %>
     </div>
-  </div>
+  </div><% } %>
 </header>
 
 <!-- ═══ HERO + LOGIN ═══ -->
 <section class="auth-hero">
   <div class="container auth-grid">
-    <div class="auth-copy reveal">
+    <% if (!minimal) { %><div class="auth-copy reveal">
       <span class="eyebrow"><i class="bi bi-shield-lock-fill"></i> <%= t('landing.footer.portal','Portal Pelanggan') %></span>
       <h1><%= t('login.manage','Kelola layanan internet Anda') %> <span class="hl"><%= t('login.manage_hl','dalam satu tempat') %></span></h1>
       <p class="lead"><%= t('login.manage_desc','Masuk untuk melihat tagihan, melakukan pembayaran, memantau koneksi, dan mengatur WiFi perangkat Anda.') %></p>
@@ -82,7 +92,7 @@
         <div class="st"><b>24/7</b><span><%= t('login.f4t','Dukungan') %></span></div>
         <div class="st"><b>Fiber</b><span>Optic</span></div>
       </div>
-    </div>
+    </div><% } %>
 
     <!-- Kartu Login -->
     <div class="auth-card reveal" id="login-section">
@@ -117,10 +127,10 @@
         </div>
       <% } %>
 
-      <div class="quick-tools">
+      <% if (!minimal) { %><div class="quick-tools">
         <a href="/customer/check-billing" class="qtool"><i class="bi bi-receipt"></i> <%= t('landing.hero.check','Consultar deuda') %></a>
         <% if (voucherOn) { %><a href="/customer/voucher" class="qtool"><i class="bi bi-ticket-perforated"></i> <%= t('login.voucher_short','Beli Voucher') %></a><% } %>
-      </div>
+      </div><% } %>
 
       <div class="auth-foot">
         <%= t('customer.not_subscribed', 'Belum berlangganan?') %>
@@ -130,6 +140,7 @@
   </div>
 </section>
 
+<% if (!minimal) { %>
 <!-- ═══ PAKET ═══ -->
 <section class="section" id="packages" style="padding-top:10px">
   <div class="container">
@@ -202,7 +213,6 @@
         </a>
         <p class="muted" style="font-size:14px;max-width:40ch">Proveedor de internet por fibra óptica.</p>
         <p class="muted" style="font-size:13px;margin-top:8px">Internet Freedom — We Are Open-Source.</p>
-        <p class="muted" style="font-size:12.5px;margin-top:12px"><i class="bi bi-building"></i> PT Artha Mega Data</p>
       </div>
       <div>
         <h4>Portal</h4>
@@ -231,6 +241,9 @@
     </div>
   </div>
 </footer>
+<% } else { %>
+<div class="min-foot">&copy; <span id="year"></span> <%= settings.company_header || '' %></div>
+<% } %>
 
 <!-- PWA install banner -->
 <div class="pwa-banner" id="pwaBanner">

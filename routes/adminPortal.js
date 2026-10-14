@@ -5044,6 +5044,8 @@ router.post('/settings', requireAdminSession, express.urlencoded({ extended: tru
     delete newSettings.admin_password; delete newSettings.admin_password_hash; delete newSettings.admin_username;
     if (newSettings.whatsapp_enabled === 'true') newSettings.whatsapp_enabled = true;
     else if (newSettings.whatsapp_enabled === 'false') newSettings.whatsapp_enabled = false;
+    if (newSettings.customer_login_minimal === 'true') newSettings.customer_login_minimal = true;
+    else if (newSettings.customer_login_minimal === 'false') newSettings.customer_login_minimal = false;
     if (newSettings.voucher_enabled === 'true') newSettings.voucher_enabled = true;
     else if (newSettings.voucher_enabled === 'false') newSettings.voucher_enabled = false;
 

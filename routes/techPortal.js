@@ -187,7 +187,7 @@ router.get('/', requireTechSession, (req, res) => {
 router.get('/pool', requireTechSession, (req, res) => {
   const openTickets = techSvc.getOpenTickets();
   res.render('tech/pool', {
-    title: 'Tiket Baru', 
+    title: 'Reclamos sin asignar',
     company: company(), 
     activePage: 'pool',
     tickets: openTickets,
@@ -692,7 +692,7 @@ router.get('/attendance', requireTechSession, (req, res) => {
   );
   
   res.render('tech/attendance', {
-    title: 'Absensi',
+    title: 'Asistencia',
     company: company(),
     activePage: 'attendance',
     techName: req.session.techName,

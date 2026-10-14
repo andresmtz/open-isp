@@ -1037,7 +1037,7 @@ function loadWhatsappAdminSendList() {
 }
 
 /**
- * Send monitoring alert to admin and technicians
+ * Alerta de monitoreo a administradores y personal de oficina con permiso de ver la red (nunca a técnicos)
  * @param {string} message - Alert message to send
  * @param {string} priority - Priority level: 'high', 'medium', 'low'
  */
@@ -1056,14 +1056,15 @@ export async function sendMonitoringAlert(message, priority = 'medium') {
     // Get admin numbers from settings
     const adminNumbers = getWhatsappAdminNumbers();
 
-    // Get technician numbers from database (active technicians only)
-    // Solo técnicos activos con permiso de 'equipos' (los tercerizados no reciben alertas de toda la red)
+    // Destinatarios además de los administradores
+    // Alertas de monitoreo: administradores + personal de oficina con permiso "Ver estado de la red".
+    // Nunca a técnicos (muchos son tercerizados; el trabajo se les asigna desde la oficina).
     const regionalCfg = require('../config/regional');
-    const techPermsCfg = require('../config/techPermissions');
-    const techSvc = require('./techService');
-    const techNumbers = techSvc.getAllTechnicians()
-      .filter(tech => tech.is_active === 1 && tech.phone && techPermsCfg.current(tech.id).equipos)
-      .map(tech => regionalCfg.normalizePhone(String(tech.phone || '').replace(/\D/g, '')))
+    const staffPermsCfg = require('../config/staffPermissions');
+    const techNumbers = require('../config/database')
+      .prepare("SELECT id, phone FROM cashiers WHERE is_active = 1 AND COALESCE(phone,'') <> ''").all()
+      .filter(c => staffPermsCfg.current(c.id).red_ver)
+      .map(c => regionalCfg.normalizePhone(String(c.phone || '').replace(/\D/g, '')))
       .filter(Boolean);
 
     const toJid = (raw) => {
@@ -1086,7 +1087,7 @@ export async function sendMonitoringAlert(message, priority = 'medium') {
       return { success: false, message: 'Tidak ada penerima yang dikonfigurasi' };
     }
 
-    logger.info(`[WhatsApp] Mengirim alert monitoring ke ${recipients.length} penerima (${adminJids.length} admin, ${techJids.length} teknisi)`);
+    logger.info(`[WhatsApp] Mengirim alert monitoring ke ${recipients.length} penerima (${adminJids.length} admin, ${techJids.length} oficina)`);
 
     const results = [];
     for (const jid of recipients) {
@@ -1114,7 +1115,7 @@ export async function sendMonitoringAlert(message, priority = 'medium') {
     const successCount = results.filter(r => r.success).length;
     return {
       success: successCount > 0,
-      message: `Alert terkirim ke ${successCount}/${recipients.length} penerima (${adminJids.length} admin, ${techJids.length} teknisi)`,
+      message: `Alert terkirim ke ${successCount}/${recipients.length} penerima (${adminJids.length} admin, ${techJids.length} oficina)`,
       results
     };
   } catch (error) {

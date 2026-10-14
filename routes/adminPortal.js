@@ -2344,7 +2344,7 @@ router.get('/customers/:id/promise-preview', requireAdminSession, (req, res) => 
 router.post('/customers/:id/promise', requireAdminSession, express.json(), async (req, res) => {
   try {
     const actor = { type: 'admin', name: req.session.adminUser || req.session.cashierName || 'admin', ip: req.ip };
-    const r = await require('../services/promiseService').grant(Number(req.params.id), { days: req.body && req.body.days, note: req.body && req.body.note, actor });
+    const r = await require('../services/promiseService').grant(Number(req.params.id), { days: req.body && req.body.days, until: req.body && req.body.until, note: req.body && req.body.note, actor });
     const ro = require('../services/mikrotikService').isMikrotikReadOnly && require('../services/mikrotikService').isMikrotikReadOnly();
     res.json({ ok: true, ...r, message: `Promesa de pago registrada hasta ${r.until}.` + (r.wasSuspended ? (ro ? ' MikroTik en solo lectura: habilitalo en WispHub/MikroTik.' : ' Servicio habilitado.') : '') });
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }

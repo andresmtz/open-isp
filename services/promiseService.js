@@ -72,14 +72,25 @@ function preview(customerId) {
  * Otorga (o extiende) una promesa. days ≤ promise_max_days.
  * Si el cliente estaba cortado, lo habilita en el MikroTik.
  */
-async function grant(customerId, { days, note, actor } = {}) {
+async function grant(customerId, { days, until: untilText, note, actor } = {}) {
   ensureSchema();
   const cfg = cycle.get();
   const pv = preview(customerId);
   if (pv.blocked) throw new Error(pv.blocked);
-  const d = parseInt(days, 10) || cfg.promiseDefaultDays;
-  if (d < 1 || d > cfg.promiseMaxDays) throw new Error(`La promesa debe ser de 1 a ${cfg.promiseMaxDays} días.`);
-  const until = cycle.addDaysStamp(d);
+  // Fecha y hora límite exacta ('DD/MM/AAAA HH:MM' o 'AAAA-MM-DD HH:MM'), o cantidad de días desde ahora.
+  let until;
+  let d;
+  if (untilText) {
+    until = parseLocalStamp(untilText);
+    if (!until) throw new Error('Fecha límite inválida. Usá DD/MM/AAAA HH:MM.');
+    if (until <= cycle.nowStamp()) throw new Error('La fecha límite ya pasó.');
+    if (until > cycle.addDaysStamp(cfg.promiseMaxDays)) throw new Error(`La promesa no puede superar ${cfg.promiseMaxDays} días.`);
+    d = null;
+  } else {
+    d = parseInt(days, 10) || cfg.promiseDefaultDays;
+    if (d < 1 || d > cfg.promiseMaxDays) throw new Error(`La promesa debe ser de 1 a ${cfg.promiseMaxDays} días.`);
+    until = cycle.addDaysStamp(d);
+  }
   const c = pv.customer;
 
   if (c.status === 'suspended' || c.status === 'isolated') {
@@ -106,6 +117,39 @@ async function grant(customerId, { days, note, actor } = {}) {
     });
   } catch (e) {}
   return { until, days: d, debt: pv.debt, extended: !!pv.active, wasSuspended: c.status === 'suspended' };
+}
+
+/** 'DD/MM/AAAA HH:MM' | 'AAAA-MM-DD HH:MM' | 'AAAA-MM-DDTHH:MM' → 'AAAA-MM-DD HH:MM' (hora local configurada) */
+function parseLocalStamp(text) {
+  const t = String(text || '').trim();
+  let m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/.exec(t);
+  let y, mo, da, h, mi;
+  if (m) { da = +m[1]; mo = +m[2]; y = +m[3]; h = m[4] != null ? +m[4] : 23; mi = m[5] != null ? +m[5] : 59; }
+  else {
+    m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2}))?$/.exec(t);
+    if (!m) return null;
+    y = +m[1]; mo = +m[2]; da = +m[3]; h = m[4] != null ? +m[4] : 23; mi = m[5] != null ? +m[5] : 59;
+  }
+  if (mo < 1 || mo > 12 || da < 1 || da > cycle.daysInMonth(y, mo) || h > 23 || mi > 59) return null;
+  const p = (n) => String(n).padStart(2, '0');
+  return `${y}-${p(mo)}-${p(da)} ${p(h)}:${p(mi)}`;
+}
+
+/**
+ * Registra una promesa ya otorgada en otro sistema (migración). No toca el router:
+ * el cliente ya está habilitado allá. Idempotente por 'ref'.
+ */
+function importExisting(customerId, { createdAt, until, note, createdBy, ref, debt } = {}) {
+  ensureSchema();
+  if (ref && db.prepare('SELECT id FROM payment_promises WHERE customer_id=? AND note LIKE ?').get(customerId, '%' + ref + '%')) return { skipped: 'ya importada' };
+  const tx = db.transaction(() => {
+    db.prepare("UPDATE payment_promises SET status='cancelled', closed_at=? WHERE customer_id=? AND status='active'").run(cycle.nowStamp(), customerId);
+    db.prepare('INSERT INTO payment_promises (customer_id, created_at, until, debt_amount, note, created_by) VALUES (?,?,?,?,?,?)')
+      .run(customerId, createdAt || cycle.nowStamp(), until, debt || debtOf(customerId).total, [note, ref].filter(Boolean).join(' — '), createdBy || '');
+    db.prepare("UPDATE customers SET status='ditangguhkan', promise_until=? WHERE id=?").run(until, customerId);
+  });
+  tx();
+  return { imported: true };
 }
 
 function close(customerId, status) {
@@ -147,4 +191,4 @@ async function review() {
   return { kept, broken };
 }
 
-module.exports = { ensureSchema, preview, grant, review, history, activePromise, close };
+module.exports = { ensureSchema, preview, grant, review, history, activePromise, close, parseLocalStamp, importExisting };

@@ -2078,11 +2078,13 @@ async function promiseCust(id) {
       + (pr.active ? 'Promesa vigente hasta ' + pr.active.until + ' (se reemplaza)\n' : '')
       + (c.status === 'suspended' ? 'El servicio está CORTADO: se habilita ahora.\n' : '')
       + 'Si no paga todo antes del vencimiento, se corta automáticamente.\n\n'
-      + '¿Cuántos días? (máximo ' + pr.maxDays + ')';
-    const days = prompt(msg, String(pr.defaultDays));
-    if (days === null) return;
+      + 'Fecha y hora límite de pago (DD/MM/AAAA HH:MM, máximo ' + pr.maxDays + ' días):';
+    const d = new Date(Date.now() + pr.defaultDays * 86400000);
+    const p2 = n => String(n).padStart(2, '0');
+    const until = prompt(msg, p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()));
+    if (until === null) return;
     const note = prompt('Nota (opcional): qué prometió el cliente', '') || '';
-    const r = await fetch('/admin/customers/' + id + '/promise', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ days: days, note: note }) });
+    const r = await fetch('/admin/customers/' + id + '/promise', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ until: until, note: note }) });
     const j = await r.json();
     alert(j.message || (j.ok ? 'Listo.' : 'Error'));
     if (j.ok) location.reload();

@@ -355,4 +355,40 @@ function importTraffic(data, { dryRun = true } = {}) {
   return out;
 }
 
-module.exports = { run, testConnection, lastRuns, importTraffic, apiGet };
+/**
+ * Importa promesas de pago vigentes desde la lista de WispHub (/promesas-de-pago/).
+ * rows: [{ factura: '0000671', creado: 'DD/MM/AAAA HH:MM', limite: 'DD/MM/AAAA HH:MM', creado_por }]
+ * WispHub muestra las horas en la zona de la cuenta (sourceOffset, ej. '-05:00'); se convierten a la zona configurada.
+ */
+function importPromises(rows, { dryRun = true, sourceOffset = '-05:00' } = {}) {
+  ensureSchema();
+  const cycle = require('../config/billingCycle');
+  const promiseSvc = require('./promiseService');
+  promiseSvc.ensureSchema();
+  const toLocal = (txt) => {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/.exec(String(txt || '').trim());
+    if (!m) return null;
+    const d = new Date(`${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}:00${sourceOffset}`);
+    return isNaN(d.getTime()) ? null : cycle.nowStamp(d);
+  };
+  const now = cycle.nowStamp();
+  const out = { imported: [], skipped: [] };
+  for (const r of rows || []) {
+    const num = parseInt(String(r.factura || '').replace(/\D/g, ''), 10);
+    const inv = num ? db.prepare('SELECT i.id, i.customer_id, i.status, c.name FROM invoices i JOIN customers c ON c.id=i.customer_id WHERE i.wisphub_invoice_id=?').get(num) : null;
+    const until = toLocal(r.limite);
+    if (!inv) { out.skipped.push({ factura: r.factura, motivo: 'factura no importada' }); continue; }
+    if (!until) { out.skipped.push({ factura: r.factura, motivo: 'fecha límite inválida' }); continue; }
+    if (until <= now) { out.skipped.push({ factura: r.factura, cliente: inv.name, motivo: 'promesa vencida (' + until + ')' }); continue; }
+    if (inv.status !== 'unpaid') { out.skipped.push({ factura: r.factura, cliente: inv.name, motivo: 'la factura ya no está pendiente' }); continue; }
+    const item = { factura: r.factura, cliente: inv.name, hasta: until, creado: toLocal(r.creado) };
+    if (!dryRun) {
+      const res = promiseSvc.importExisting(inv.customer_id, { createdAt: item.creado, until, note: 'Importada de WispHub', createdBy: r.creado_por || '', ref: 'WispHub factura ' + num });
+      if (res.skipped) { out.skipped.push({ ...item, motivo: res.skipped }); continue; }
+    }
+    out.imported.push(item);
+  }
+  return out;
+}
+
+module.exports = { run, testConnection, lastRuns, importTraffic, importPromises, apiGet };

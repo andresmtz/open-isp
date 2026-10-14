@@ -608,6 +608,9 @@ try { db.exec("ALTER TABLE customers ADD COLUMN reg_prorata INTEGER DEFAULT 0");
 try { db.exec("ALTER TABLE customers ADD COLUMN reg_discount INTEGER DEFAULT 0"); } catch (e) { /* ignore if already exists */ }
 try { db.exec("ALTER TABLE customers ADD COLUMN reg_total INTEGER DEFAULT 0"); } catch (e) { /* ignore if already exists */ }
 try { db.exec("ALTER TABLE customers ADD COLUMN reg_due_date TEXT DEFAULT ''"); } catch (e) { /* ignore if already exists */ }
+// Pagos parciales y saldo a favor (ver services/paymentReversalService.js)
+try { db.exec('ALTER TABLE invoices ADD COLUMN amount_paid INTEGER DEFAULT 0'); } catch (e) {}
+try { db.exec('ALTER TABLE customers ADD COLUMN credit_balance INTEGER DEFAULT 0'); } catch (e) {}
 try { db.exec("ALTER TABLE customers ADD COLUMN reg_status TEXT DEFAULT ''"); } catch (e) { /* ignore if already exists */ }
 // Kolom invoices (pembayaran/QRIS/diskon/void) — WAJIB utk instalasi baru
 try { db.exec("ALTER TABLE invoices ADD COLUMN payment_gateway TEXT"); } catch (e) { /* ignore if already exists */ }

@@ -4151,11 +4151,6 @@ router.get('/sidebar-settings', requireAdminSession, (req, res) => {
 
 router.post('/sidebar-settings', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
-    const featurePassword = String(req.body.feature_password || '').trim();
-    if (!sidebarMenuSvc.isFeaturePasswordValid(featurePassword)) {
-      throw new Error(`Código de activación incorrecto. Contactá a ${sidebarMenuSvc.getFeatureContactPhone()} para obtener el código correcto.`);
-    }
-
     const menuStates = sidebarMenuSvc.sanitizeMenuStates(req.body.menu_state || {});
     const success = sidebarMenuSvc.saveMenuStates(menuStates);
     if (!success) throw new Error('No se pudo guardar la configuración del menú lateral');

@@ -116,16 +116,16 @@ const DEFAULT_MENU_STATES = {
   cashiers_reports: STATE_VISIBLE,
   collector_payments: STATE_VISIBLE,
   tickets: STATE_VISIBLE,
-  inventory: STATE_LOCKED,
-  attendance: STATE_LOCKED,
-  payroll: STATE_LOCKED,
+  inventory: STATE_VISIBLE,
+  attendance: STATE_VISIBLE,
+  payroll: STATE_VISIBLE,
   cash_in: STATE_VISIBLE,
   expenses: STATE_VISIBLE,
   expense_categories: STATE_VISIBLE,
   cashier_attendance: STATE_VISIBLE,
-  technicians: STATE_LOCKED,
-  cashiers: STATE_LOCKED,
-  collectors: STATE_LOCKED,
+  technicians: STATE_VISIBLE,
+  cashiers: STATE_VISIBLE,
+  collectors: STATE_VISIBLE,
   areas: STATE_VISIBLE,
   update: STATE_VISIBLE,
   vouchers_discounts: STATE_VISIBLE,
@@ -154,6 +154,8 @@ function sha256(input) {
 
 function normalizeState(value) {
   const normalized = String(value || '').trim().toLowerCase();
+  // Sin bloqueo por código de activación: un estado 'locked' guardado de antes se trata como oculto
+  if (normalized === STATE_LOCKED) return STATE_HIDDEN;
   return VALID_STATES.has(normalized) ? normalized : STATE_VISIBLE;
 }
 
@@ -189,18 +191,6 @@ function getStoredMenuStates() {
     let storedState = raw && raw[menu.key] ? raw[menu.key] : defaultState;
     
     const normalized = normalizeState(storedState);
-
-    // Jika menu aslinya LOCKED tapi diubah jadi VISIBLE/HIDDEN, cek kunci aktivasinya
-    if (defaultState === STATE_LOCKED && normalized !== STATE_LOCKED) {
-      const expectedKey = sha256(menu.key + getFeaturePasswordHash());
-      const providedKey = activationKeys[menu.key];
-
-      if (providedKey !== expectedKey) {
-        // Kunci tidak cocok! Kembalikan ke LOCKED
-        stateMap[menu.key] = STATE_LOCKED;
-        continue;
-      }
-    }
 
     stateMap[menu.key] = normalized;
   }

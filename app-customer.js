@@ -1255,164 +1255,63 @@ app.get('/login', (req, res) => {
 });
 
 // Halaman Isolir (Akses langsung dari redirect MikroTik) - dengan integrasi pembayaran otomatis
-app.get('/isolated', async (req, res) => {
-  try {
-    const settings = getSettingsWithCache();
-    
-    // 1. Identifikasi pelanggan: Session, Query param (?q= / ?cid=), atau IP
-    let customer = null;
-    const searchQuery = String(req.query.q || req.query.lookup || req.query.cid || req.query.phone || '').trim();
-    
-    // Priority 1: Session login
-    if (req.session && req.session.phone) {
-      customer = customerSvc.findCustomerByAny(req.session.phone);
-    }
-    
-    // Priority 2: Query search param
-    if (!customer && searchQuery) {
-      customer = customerSvc.findCustomerByAny(searchQuery);
-    }
-    
-    // Priority 3: IP-based detection
-    let clientIp = '';
-    if (!customer) {
-      const rawIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() 
-                  || req.ip 
-                  || req.connection?.remoteAddress 
-                  || '';
-      clientIp = rawIp.replace(/^::ffff:/, '').trim();
-      
-      if (clientIp) {
-        const allCustomers = customerSvc.getAllCustomers();
-        customer = allCustomers.find(c => 
-          (c.static_ip && c.static_ip === clientIp) || 
-          (c.pppoe_remote_address && c.pppoe_remote_address === clientIp)
-        );
-        
-        // MikroTik active PPP session lookup if still not found
-        if (!customer && mikrotikService && typeof mikrotikService.getPppoeActive === 'function') {
-          try {
-            const activeUsers = await mikrotikService.getPppoeActive();
-            if (Array.isArray(activeUsers)) {
-              const match = activeUsers.find(u => u.address === clientIp);
-              if (match && match.name) {
-                customer = customerSvc.findCustomerByAny(match.name);
-              }
-            }
-          } catch (e) {
-            // Ignore Mikrotik query error
-          }
-        }
-      }
-    }
-    
-    // Check unpaid invoices
-    let invoicesWithTokens = [];
-    if (customer) {
-      const unpaidInvoices = billingSvc.getUnpaidInvoicesByCustomerId(customer.id);
-      if (unpaidInvoices && unpaidInvoices.length > 0) {
-        const tokenUtil = require('./utils/tokenUtil');
-        invoicesWithTokens = unpaidInvoices.map(inv => ({
-          ...inv,
-          publicToken: tokenUtil.signPublicToken({
-            invoiceId: inv.id,
-            customerId: inv.customer_id,
-            lookup: customer.phone || customer.pppoe_username || String(customer.id),
-            exp: Date.now() + 60 * 60 * 1000  // 60 minutes
-          }, settings.session_secret)
-        }));
-      }
-    }
-    
-    // If customer is found, active, and has no unpaid invoices, redirect to dashboard
-    if (customer && customer.status === 'active' && invoicesWithTokens.length === 0) {
-      return res.redirect('/customer/dashboard');
-    }
-    
-    // Resolve active gateway
-    const paymentSvc = require('./services/paymentService');
-    const sampleAmount = invoicesWithTokens[0] ? invoicesWithTokens[0].amount : 50000;
-    const activeGateway = paymentSvc.resolveConfiguredGatewayForAmount(settings, sampleAmount) || 'qris_static';
-
-    res.render('isolated', {
-      company: settings.company_header || 'My ISP',
-      adminPhone: settings.company_phone || settings.company_whatsapp || '',
-      address: settings.company_address || '',
-      customer: customer || null,
-      invoices: invoicesWithTokens,
-      searchQuery,
-      clientIp,
-      activeGateway,
-      settings,
-      hasUnpaidInvoices: invoicesWithTokens.length > 0
-    });
-  } catch (err) {
-    logger.error(`[ISOLATED] Error: ${err.message}`);
-    const settings = getSettingsWithCache();
-    res.render('isolated', {
-      company: settings.company_header || 'My ISP',
-      adminPhone: settings.company_phone || '',
-      address: settings.company_address || '',
-      customer: null,
-      invoices: [],
-      searchQuery: '',
-      clientIp: '',
-      activeGateway: 'qris_static',
-      settings,
-      hasUnpaidInvoices: false
-    });
+// ── Pantalla de corte administrativo ─────────────────────────────────────────
+// El MikroTik redirige a los clientes cortados a esta página (por la red interna).
+// Se identifica al cliente SOLO por su sesión del portal o por la IP de la conexión directa
+// (socket). No se aceptan búsquedas por teléfono/ID ni el encabezado X-Forwarded-For, para que
+// nadie pueda ver la deuda de otro cliente.
+async function identifyCutCustomer(req) {
+  if (req.session && req.session.phone) {
+    const c = customerSvc.findCustomerByAny(req.session.phone);
+    if (c) return { customer: c, via: 'session' };
   }
+  const ip = String((req.socket && req.socket.remoteAddress) || '').replace(/^::ffff:/, '').trim();
+  if (!ip) return { customer: null, ip };
+  let customer = customerSvc.getAllCustomers().find(c =>
+    (c.static_ip && c.static_ip === ip) || (c.pppoe_remote_address && c.pppoe_remote_address === ip));
+  if (!customer && mikrotikService && typeof mikrotikService.getPppoeActive === 'function') {
+    try {
+      const active = await mikrotikService.getPppoeActive();
+      const m = Array.isArray(active) ? active.find(u => u.address === ip) : null;
+      if (m && m.name) customer = customerSvc.findCustomerByAny(m.name);
+    } catch (e) { /* router no disponible */ }
+  }
+  return { customer: customer || null, ip, via: customer ? 'ip' : null };
+}
+
+app.get('/isolated', async (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  const settings = getSettingsWithCache();
+  const base = {
+    company: settings.company_header || 'ISP',
+    phone: (settings.company_phone || settings.company_whatsapp) ? regional.normalizePhone(String(settings.company_phone || settings.company_whatsapp)) : '',
+    address: settings.company_address || '',
+    paymentInfo: String(getSetting('corte_payment_info', '') || ''),
+    customer: null, debt: null, promise: null,
+  };
+  try {
+    const { customer } = await identifyCutCustomer(req);
+    if (customer) {
+      const pay = require('./services/paymentReversalService');
+      base.customer = { name: customer.name, code: customer.customer_code || '', status: customer.status, package: customer.package_name || '' };
+      base.debt = pay.debtOf(customer.id);
+      base.promise = customer.promise_until || null;
+    }
+  } catch (err) {
+    logger.error(`[CORTE] ${err.message}`);
+  }
+  res.render('corte', base);
 });
 
-// GET /isolated/status - untuk polling status pelanggan real-time
-app.get('/isolated/status', (req, res) => {
+// Estado para refrescar la pantalla de corte (mismas reglas de identificación)
+app.get('/isolated/status', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
   try {
-    let customer = null;
-    const queryLookup = String(req.query.q || req.query.cid || req.query.phone || '').trim();
-    
-    // Detection: Query, Session, atau IP
-    if (queryLookup) {
-      customer = customerSvc.findCustomerByAny(queryLookup);
-    } else if (req.session && req.session.phone) {
-      customer = customerSvc.findCustomerByAny(req.session.phone);
-    } else {
-      const rawIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() 
-                  || req.ip 
-                  || '';
-      const cleanIp = rawIp.replace(/^::ffff:/, '').trim();
-      
-      if (cleanIp) {
-        const allCustomers = customerSvc.getAllCustomers();
-        customer = allCustomers.find(c => 
-          (c.static_ip && c.static_ip === cleanIp) || 
-          (c.pppoe_remote_address && c.pppoe_remote_address === cleanIp)
-        );
-      }
-    }
-    
-    if (!customer) {
-      return res.json({ 
-        status: 'unknown',
-        unpaid_count: 0,
-        message: 'Cliente no encontrado'
-      });
-    }
-    
-    const unpaidInvoices = billingSvc.getUnpaidInvoicesByCustomerId(customer.id);
-    const isClean = customer.status === 'active' || unpaidInvoices.length === 0;
-    
-    res.json({
-      status: isClean ? 'active' : customer.status,
-      unpaid_count: unpaidInvoices.length,
-      customer_id: customer.id,
-      customer_name: customer.name,
-      message: isClean 
-        ? 'Servicio activo, pago completado'
-        : `Quedan ${unpaidInvoices.length} facturas sin pagar`
-    });
+    const { customer } = await identifyCutCustomer(req);
+    if (!customer) return res.json({ status: 'unknown' });
+    res.json({ status: customer.status === 'suspended' ? 'suspended' : 'active' });
   } catch (e) {
-    logger.error(`[ISOLATED-STATUS] Error: ${e.message}`);
-    res.status(500).json({ error: 'Server error', status: 'error' });
+    res.status(500).json({ status: 'error' });
   }
 });
 

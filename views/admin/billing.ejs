@@ -568,7 +568,7 @@ async function annulPayment(id) {
     let msg = 'ANULAR ' + (rc ? 'COBRO #' + rc.id : 'PAGO') + ' — ' + pr.customer.name + '\n\n'
       + (rc ? 'Cobrado ' + rc.created_at + ' por ' + (rc.paid_by || '-') + (rc.method ? ' (' + rc.method + ')' : '') + ': ' + fmtMoney(rc.amount)
           + (rc.credit_used ? ' + ' + fmtMoney(rc.credit_used) + ' de saldo a favor' : '') + '\n' : 'Factura ' + pr.invoice.period + ': ' + money + ', pagada ' + (pr.invoice.paid_at || '') + '\n')
-      + 'Se revierte en: ' + pr.allocations.map(a => a.period + ' ' + fmtMoney(a.amount)).join(', ') + '\n'
+      + 'Se revierte en: ' + pr.allocations.map(a => a.period + ' ' + fmtMoney(a.amount) + (a.kind === 'carry' ? ' (saldo trasladado)' : '')).join(', ') + '\n'
       + (rc && rc.credit_added ? 'Se descuenta del saldo a favor: ' + fmtMoney(rc.credit_added) + '\n' : '')
       + (rc && rc.credit_used ? 'Se devuelve al saldo a favor: ' + fmtMoney(rc.credit_used) + '\n' : '')
       + '\nEstado del cliente: ' + pr.currentLabel + ' → ' + pr.targetLabel

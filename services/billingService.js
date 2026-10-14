@@ -116,6 +116,7 @@ function generateMonthlyInvoices(month, year) {
       if (!pkg) continue;
       const { amount, bumpPromo: bump, notesAuto } = computeInvoiceAmountAndMeta(c, pkg, month, year);
       const ir = insert.run(c.id, month, year, amount, notesAuto);
+      try { require('./paymentReversalService').applyCarryOver(c.id, ir.lastInsertRowid); } catch (e) { logger.warn('[Billing] saldo trasladado: ' + e.message); }
       if (bump) bumpPromo.run(c.id);
       if (voidPrevious) voidPreviousUnpaidInvoices(c.id, month, year, `Anulada automáticamente: se emitió la factura del período ${month}/${year}`);
 
@@ -160,6 +161,7 @@ function generateInvoiceForCustomer(customerId, month, year) {
 
   const { amount, bumpPromo: bump, notesAuto } = computeInvoiceAmountAndMeta(customer, pkg, m, y);
   const r = db.prepare('INSERT INTO invoices (customer_id, period_month, period_year, amount, notes) VALUES (?, ?, ?, ?, ?)').run(cid, m, y, amount, notesAuto);
+  try { require('./paymentReversalService').applyCarryOver(cid, r.lastInsertRowid); } catch (e) { logger.warn('[Billing] saldo trasladado: ' + e.message); }
   if (bump) {
     db.prepare('UPDATE customers SET promo_cycles_used = COALESCE(promo_cycles_used,0) + 1 WHERE id=?').run(cid);
   }

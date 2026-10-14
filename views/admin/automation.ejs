@@ -207,6 +207,15 @@
             <div class="hint" style="margin-top:8px">Si paga todo antes del vencimiento, la promesa queda cumplida. Si vence con deuda, se corta automáticamente.</div>
           </div>
         </div>
+        <div class="card mb16">
+          <div class="card-hd"><h6><i class="bi bi-sign-stop"></i> Pantalla de corte administrativo</h6></div>
+          <div class="card-bd">
+            <div class="fg"><label class="fl">Cómo pagar (texto que ve el cliente cortado)</label>
+              <textarea class="fc" name="corte_payment_info" rows="5" placeholder="Ej.: Transferencia a Banco X, cuenta 123456, a nombre de ...&#10;Giros Tigo al 09xx xxx xxx&#10;Pago en oficina de lunes a sábado"><%= getSetting('corte_payment_info','') %></textarea>
+              <div class="hint">Se muestra junto con las facturas pendientes, la dirección y el botón de WhatsApp del negocio. Página: <code>/isolated</code> (el MikroTik redirige allí a los clientes de la lista de corte).</div>
+            </div>
+          </div>
+        </div>
         <div class="au-savebar"><button type="submit" class="btn btn-p"><i class="bi bi-save"></i> Guardar ciclo</button></div>
       </form>
     </div>

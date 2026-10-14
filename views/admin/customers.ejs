@@ -2093,29 +2093,38 @@ async function openReceive(id) {
       + '<div class="form-row"><div class="fg"><label class="fl">Medio</label><select class="fs" id="rcv-method"><option>Efectivo</option><option>Transferencia</option><option>Giro</option><option>Depósito</option><option>Otro</option></select></div>'
       + '<div class="fg" style="flex:2"><label class="fl">Nota</label><input class="fc" id="rcv-note" placeholder="Ej.: comprobante 1234"></div></div>'
       + '<div class="hint" id="rcv-hint" style="margin:8px 0"></div>'
-      + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="btn btn-g" type="button" id="rcv-cancel">Cancelar</button><button class="btn btn-p" type="button" id="rcv-ok"><i class="bi bi-check2"></i> Registrar cobro</button></div>'
+      + (d.carryOver > 0 ? '<div class="hint" style="margin-bottom:8px">Saldo trasladado pendiente (se suma a la próxima factura): <b>' + fmtMoney(d.carryOver) + '</b></div>' : '')
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px"><button class="btn btn-g" type="button" id="rcv-cancel">Cancelar</button>'
+      + '<button class="btn btn-g" type="button" id="rcv-act" style="display:none" title="Habilita el servicio; lo que falta se suma a la factura del próximo mes"><i class="bi bi-wifi"></i> Cobrar y activar</button>'
+      + '<button class="btn btn-p" type="button" id="rcv-ok"><i class="bi bi-check2"></i> Registrar cobro</button></div>'
       + '</div></div>';
     document.body.appendChild(m);
     const amt = m.querySelector('#rcv-amount'), cr = m.querySelector('#rcv-credit'), hint = m.querySelector('#rcv-hint');
     const upd = () => {
       const a = Math.max(0, Number(amt.value) || 0) + (cr && cr.checked ? d.credit : 0);
       if (!d.total) hint.textContent = 'Sin deuda: todo el monto queda como saldo a favor.';
-      else if (a < d.total) hint.textContent = 'Pago parcial: se cubre lo más antiguo primero; quedan ' + fmtMoney(d.total - a) + ' pendientes (el corte sigue según el ciclo).';
+      else if (a < d.total) hint.textContent = 'Pago parcial de ' + fmtMoney(a) + ', faltan ' + fmtMoney(d.total - a) + '. «Solo cobrar»: la deuda sigue y el corte se aplica según el ciclo. «Cobrar y activar»: se habilita el servicio y lo que falta se suma a la factura del próximo mes.';
       else if (a > d.total) hint.textContent = 'Cubre toda la deuda; ' + fmtMoney(a - d.total) + ' quedan como saldo a favor.';
       else hint.textContent = 'Cubre toda la deuda.';
     };
-    amt.addEventListener('input', upd); if (cr) cr.addEventListener('change', upd); upd();
+    const btnAct = m.querySelector('#rcv-act'), btnOk = m.querySelector('#rcv-ok');
+    const upd2 = () => { const a = Math.max(0, Number(amt.value) || 0) + (cr && cr.checked ? d.credit : 0); const partial = d.total > 0 && a < d.total && Number(amt.value) > 0;
+      btnAct.style.display = partial ? '' : 'none'; btnOk.innerHTML = partial ? '<i class="bi bi-check2"></i> Solo cobrar' : '<i class="bi bi-check2"></i> Registrar cobro'; };
+    amt.addEventListener('input', () => { upd(); upd2(); }); if (cr) cr.addEventListener('change', () => { upd(); upd2(); }); upd(); upd2();
     m.querySelector('#rcv-cancel').onclick = () => m.remove();
-    m.querySelector('#rcv-ok').onclick = async (ev) => {
-      ev.target.disabled = true;
+    const send = async (btn, activate) => {
+      if (activate && !confirm('Se habilita el servicio y el saldo faltante se suma a la factura del próximo mes. ¿Continuar?')) return;
+      btn.disabled = true;
       try {
         const r = await fetch('/admin/customers/' + id + '/receive', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ amount: Number(amt.value) || 0, use_credit: !!(cr && cr.checked), method: m.querySelector('#rcv-method').value, note: m.querySelector('#rcv-note').value }) });
+          body: JSON.stringify({ amount: Number(amt.value) || 0, use_credit: !!(cr && cr.checked), activate: !!activate, method: m.querySelector('#rcv-method').value, note: m.querySelector('#rcv-note').value }) });
         const j = await r.json();
         alert(j.message || (j.ok ? 'Listo.' : 'Error'));
-        if (j.ok) location.reload(); else ev.target.disabled = false;
-      } catch (e) { alert('Error: ' + e.message); ev.target.disabled = false; }
+        if (j.ok) location.reload(); else btn.disabled = false;
+      } catch (e) { alert('Error: ' + e.message); btn.disabled = false; }
     };
+    btnOk.onclick = () => send(btnOk, false);
+    btnAct.onclick = () => send(btnAct, true);
   } catch (e) { alert('Error: ' + e.message); }
 }
 
@@ -2156,6 +2165,7 @@ async function cancelCustService(id) {
     const msg = 'CANCELAR SERVICIO de ' + c.name + (c.code ? ' (' + c.code + ')' : '') + '\n\n'
       + 'En el MikroTik:\n   • Se borra el usuario PPPoE "' + (c.pppoe || '-') + '"\n   • Se libera la IP ' + (c.ip || '-') + ' (sale de la lista de corte)\n\n'
       + 'Facturas pendientes que se ANULAN (quedan en el historial, fuera de estadísticas):\n' + inv + '\n\n'
+      + (pr.carryOver ? 'Saldo trasladado pendiente que se descarta: ' + fmtMoney(pr.carryOver) + '\n\n' : '')
       + 'El cliente y todo su historial se conservan.\n\nEscribí el motivo para confirmar:';
     const reason = prompt(msg, 'Equipo no recuperado / cliente no ubicable');
     if (reason === null) return;

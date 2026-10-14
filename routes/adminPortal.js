@@ -2350,16 +2350,21 @@ router.post('/customers/:id/receive', requireAdminSession, express.json(), async
     const pay = require('../services/paymentReversalService');
     const b = req.body || {};
     const paidBy = resolvePaidByName(req, b.paid_by_name);
-    const r = pay.receive(Number(req.params.id), { amount: b.amount, method: b.method, note: b.note, paidBy, useCredit: !!b.use_credit, invoiceIds: b.invoice_ids });
-    // Si quedó sin deuda y estaba cortado, se habilita (igual que el cobro por factura)
+    // activate=true: "Cobrar y activar" — el saldo que falte pasa a la próxima factura y se habilita el servicio
+    const r = pay.receive(Number(req.params.id), { amount: b.amount, method: b.method, note: b.note, paidBy, useCredit: !!b.use_credit, invoiceIds: b.invoice_ids, carryRemaining: !!b.activate });
+    // Sin deuda pendiente: si estaba cortado se habilita; si tenía promesa, queda cumplida
     const debt = pay.debtOf(r.customer.id);
     let enabled = false;
-    if (!debt.count && r.customer.status === 'suspended') { await customerSvc.activateCustomer(r.customer.id); enabled = true; }
+    if (!debt.count) {
+      if (r.customer.status === 'suspended') { await customerSvc.activateCustomer(r.customer.id, 'active'); enabled = true; }
+      else if (r.customer.status === 'ditangguhkan') { db.prepare("UPDATE customers SET status='active' WHERE id=?").run(r.customer.id); require('../services/promiseService').close(r.customer.id, 'kept'); }
+    }
     const parts = r.applied.map(a => `${a.period}: ${regional.formatMoney(a.amount)}${a.full ? ' (pagada)' : ' (parcial, falta ' + regional.formatMoney(a.remaining) + ')'}`);
     let msg = `Cobro #${r.receiptId} registrado.` + (parts.length ? ' Aplicado a ' + parts.join('; ') + '.' : '');
     if (r.creditUsed) msg += ` Se usó ${regional.formatMoney(r.creditUsed)} de saldo a favor.`;
     if (r.creditAdded) msg += ` Saldo a favor: +${regional.formatMoney(r.creditAdded)}.`;
-    msg += debt.count ? ` Deuda restante: ${regional.formatMoney(debt.total)}.` : ' El cliente no tiene deuda.';
+    if (r.carried) msg += ` Saldo de ${regional.formatMoney(r.carried)} trasladado a la próxima factura.`;
+    msg += debt.count ? ` Deuda restante: ${regional.formatMoney(debt.total)}.` : (r.carried ? '' : ' El cliente no tiene deuda.');
     if (enabled) msg += ' Servicio habilitado.';
     res.json({ ok: true, ...r, debt, enabled, message: msg });
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
@@ -4400,6 +4405,7 @@ router.get('/automation', requireAdminSession, requireSidebarMenuAccess('automat
 router.post('/automation/billing-cycle', requireAdminSession, requireMainAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     const next = require('../config/billingCycle').sanitize(req.body);
+    if (req.body && typeof req.body.corte_payment_info === 'string') next.corte_payment_info = req.body.corte_payment_info.replace(/\r/g, '').trim().slice(0, 1500);
     saveSettings(next);
     req.session._msg = { type: 'success', text: 'Ciclo de facturación guardado.' };
   } catch (e) {

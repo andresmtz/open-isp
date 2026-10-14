@@ -912,7 +912,8 @@ function cancellationPreview(id) {
   return {
     customer: { id: c.id, name: c.name, code: c.customer_code, status: c.status, pppoe: c.pppoe_username, ip: customerIsolationIp(c) },
     pendingInvoices: pending,
-    pendingTotal: pending.reduce((a, i) => a + Number(i.amount || 0), 0)
+    pendingTotal: pending.reduce((a, i) => a + Number(i.amount || 0), 0),
+    carryOver: Number(c.carry_over || 0)
   };
 }
 
@@ -947,7 +948,8 @@ async function cancelCustomer(id, { reason, actor } = {}) {
   const voided = db.transaction(() => {
     const r = db.prepare("UPDATE invoices SET status = 'void', voided_at = NOW_LOCAL(), void_reason = ? WHERE customer_id = ? AND status = 'unpaid'")
       .run(`Cancelación del servicio: ${why}`, id);
-    db.prepare("UPDATE customers SET status = 'cancelled', cancelled_at = NOW_LOCAL(), cancel_reason = ?, cancelled_by = ?, auto_isolate = 0 WHERE id = ?").run(why, by, id);
+    // El saldo trasladado a una próxima factura que no se va a emitir se descarta (queda en la auditoría)
+    db.prepare("UPDATE customers SET status = 'cancelled', cancelled_at = NOW_LOCAL(), cancel_reason = ?, cancelled_by = ?, auto_isolate = 0, carry_over = 0 WHERE id = ?").run(why, by, id);
     return r.changes;
   })();
 
@@ -955,7 +957,7 @@ async function cancelCustomer(id, { reason, actor } = {}) {
     require('./auditTrailService').logAuditTrail({
       action: 'CANCEL_CUSTOMER', entity_type: 'customer', entity_id: String(id),
       actor_type: (actor && actor.type) || 'admin', actor_id: (actor && actor.id) || null, actor_name: by,
-      details: { name: c.name, pppoe: c.pppoe_username, reason: why, voidedInvoices: voided, network },
+      details: { name: c.name, pppoe: c.pppoe_username, reason: why, voidedInvoices: voided, carryOverDiscarded: Number(c.carry_over || 0), network },
       ip_address: (actor && actor.ip) || null
     });
   } catch (_) {}

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Servicio suspendido | <%= company %></title>
+  <style>
+    :root{--bg:#f4f6fa;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--danger:#dc2626;--ok:#059669;--accent:#1d4ed8}
+    @media (prefers-color-scheme: dark){:root{--bg:#0b1020;--card:#141a2e;--text:#e5e7eb;--muted:#9ca3af;--border:#26304a;--danger:#f87171;--ok:#34d399;--accent:#60a5fa}}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px 16px}
+    .wrap{max-width:560px;margin:0 auto}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:14px}
+    .brand{font-weight:800;font-size:18px;text-align:center;margin-bottom:14px}
+    .tag{display:inline-block;background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger);font-weight:800;font-size:12px;letter-spacing:.04em;padding:4px 10px;border-radius:999px}
+    .tag.ok{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+    h1{font-size:22px;margin:10px 0 6px}
+    p{margin:6px 0;color:var(--muted)}
+    table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+    td,th{padding:8px 4px;border-bottom:1px solid var(--border);text-align:left}
+    th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase}
+    .r{text-align:right}
+    .total{display:flex;justify-content:space-between;font-weight:800;font-size:18px;margin-top:12px}
+    .pay{white-space:pre-line;color:var(--text)}
+    .btn{display:block;text-align:center;background:#16a34a;color:#fff;text-decoration:none;font-weight:700;padding:12px;border-radius:10px;margin-top:12px}
+    .muted{color:var(--muted);font-size:13px;text-align:center}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><%= company %></div>
+
+  <% if (customer && customer.status !== 'suspended') { %>
+    <div class="card">
+      <span class="tag ok">SERVICIO ACTIVO</span>
+      <h1>Hola, <%= customer.name %></h1>
+      <p>Tu servicio está habilitado. Si todavía no navegás, reiniciá tu equipo (router/ONU) y volvé a abrir el navegador.</p>
+    </div>
+  <% } else { %>
+    <div class="card">
+      <span class="tag">CORTE ADMINISTRATIVO</span>
+      <h1>Servicio suspendido</h1>
+      <% if (customer) { %>
+        <p><b style="color:var(--text)"><%= customer.name %></b><%= customer.code ? ' · ' + customer.code : '' %><%= customer.package ? ' · ' + customer.package : '' %></p>
+        <p>Tu servicio de internet fue suspendido por falta de pago. Se habilita nuevamente al registrarse el pago.</p>
+      <% } else { %>
+        <p>El servicio de internet de esta conexión está suspendido por falta de pago. Se habilita nuevamente al registrarse el pago.</p>
+      <% } %>
+    </div>
+
+    <% if (customer && debt && debt.count) { %>
+      <div class="card">
+        <b>Facturas pendientes</b>
+        <table>
+          <thead><tr><th>Período</th><th class="r">Monto</th><th class="r">Pagado</th><th class="r">Saldo</th></tr></thead>
+          <tbody>
+            <% debt.items.forEach(function (i) { %>
+              <tr><td><%= i.period %></td><td class="r"><%= fmtMoney(i.amount) %></td><td class="r"><%= i.paid ? fmtMoney(i.paid) : '-' %></td><td class="r"><b><%= fmtMoney(i.balance) %></b></td></tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <div class="total"><span>Total a pagar</span><span><%= fmtMoney(debt.total) %></span></div>
+      </div>
+    <% } %>
+
+    <div class="card">
+      <b>¿Cómo pagar?</b>
+      <% if (paymentInfo) { %><p class="pay"><%= paymentInfo %></p><% } else { %><p>Comunicate con nosotros para coordinar el pago.</p><% } %>
+      <% if (address) { %><p>📍 <%= address %></p><% } %>
+      <% if (phone) { %>
+        <a class="btn" href="https://wa.me/<%= String(phone).replace(/\D/g, '') %>?text=<%= encodeURIComponent('Hola ' + company + ', quiero regularizar mi servicio' + (customer ? ' (' + customer.name + ')' : '') + '.') %>">Escribinos por WhatsApp</a>
+      <% } %>
+    </div>
+    <p class="muted">Si ya pagaste, enviá el comprobante. Cuando se registre el pago, esta página se actualiza sola.</p>
+  <% } %>
+</div>
+<script>
+  // Al habilitarse el servicio, recargar para mostrar el estado actualizado
+  setInterval(function () {
+    fetch('/isolated/status', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
+      if (j && j.status === 'active' && !document.querySelector('.tag.ok')) location.reload();
+    }).catch(function () {});
+  }, 30000);
+</script>
+</body>
+</html>

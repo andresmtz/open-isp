@@ -70,6 +70,16 @@ function ensureSchema() {
   try { db.exec('ALTER TABLE invoices ADD COLUMN amount_paid INTEGER DEFAULT 0'); } catch (e) {}
   try { db.exec('ALTER TABLE invoices ADD COLUMN payment_annulled_at TEXT'); } catch (e) {}
   try { db.exec('ALTER TABLE customers ADD COLUMN credit_balance INTEGER DEFAULT 0'); } catch (e) {}
+  // Saldo trasladado a la próxima factura ("Cobrar y activar" con pago parcial)
+  try { db.exec('ALTER TABLE customers ADD COLUMN carry_over INTEGER DEFAULT 0'); } catch (e) {}
+  try { db.exec('ALTER TABLE invoices ADD COLUMN original_amount INTEGER'); } catch (e) {}
+  try { db.exec('ALTER TABLE invoices ADD COLUMN carried_out INTEGER DEFAULT 0'); } catch (e) {}
+  try { db.exec('ALTER TABLE invoices ADD COLUMN carried_in INTEGER DEFAULT 0'); } catch (e) {}
+  try { db.exec('ALTER TABLE payment_receipts ADD COLUMN carry_added INTEGER DEFAULT 0'); } catch (e) {}
+  try { db.exec("ALTER TABLE payment_allocations ADD COLUMN kind TEXT DEFAULT 'pay'"); } catch (e) {}
+  try { db.exec('ALTER TABLE payment_allocations ADD COLUMN prev_amount INTEGER'); } catch (e) {}
+  try { db.exec('ALTER TABLE payment_allocations ADD COLUMN prev_status TEXT'); } catch (e) {}
+  try { db.exec('ALTER TABLE payment_allocations ADD COLUMN prev_void_reason TEXT'); } catch (e) {}
   // Facturas pagadas antes de este registro (importadas, etc.): se consideran cubiertas por completo.
   db.exec("UPDATE invoices SET amount_paid = amount WHERE status='paid' AND COALESCE(amount_paid,0) = 0");
   _schemaOk = true;
@@ -89,12 +99,58 @@ function creditOf(customerId) {
   return r ? Number(r.b) || 0 : 0;
 }
 
+function carryOf(customerId) {
+  const r = db.prepare('SELECT COALESCE(carry_over,0) b FROM customers WHERE id=?').get(customerId);
+  return r ? Number(r.b) || 0 : 0;
+}
+
+/**
+ * Traslada el saldo pendiente de todas las facturas impagas a la próxima factura.
+ * Factura con pago parcial: su monto queda en lo pagado (status 'paid'), con original_amount y carried_out.
+ * Factura sin pagos: queda anulada ('void') con motivo; su monto completo se traslada.
+ */
+function carryPending(receiptId, customerId, by) {
+  const rows = db.prepare("SELECT * FROM invoices WHERE customer_id=? AND status='unpaid' ORDER BY period_year, period_month, id").all(customerId);
+  let total = 0;
+  for (const inv of rows) {
+    const bal = balanceOf(inv);
+    if (bal <= 0) continue;
+    db.prepare(`INSERT INTO payment_allocations (receipt_id, invoice_id, amount, kind, prev_amount, prev_status, prev_void_reason, prev_invoice_notes, prev_paid_at, prev_paid_by)
+      VALUES (?,?,?,'carry',?,?,?,?,?,?)`).run(receiptId, inv.id, bal, inv.amount, inv.status, inv.void_reason || null, inv.notes || '', inv.paid_at || null, inv.paid_by_name || '');
+    const note = `Saldo ${bal} trasladado a la próxima factura (cobro #${receiptId}, ${by || 'Admin'})`;
+    const notes = inv.notes ? `${inv.notes} | ${note}` : note;
+    if ((Number(inv.amount_paid) || 0) > 0) {
+      db.prepare("UPDATE invoices SET original_amount=COALESCE(original_amount, amount), amount=amount_paid, carried_out=COALESCE(carried_out,0)+?, status='paid', paid_at=NOW_LOCAL(), paid_by_name=?, notes=? WHERE id=?")
+        .run(bal, by || 'Admin', notes, inv.id);
+    } else {
+      db.prepare("UPDATE invoices SET carried_out=COALESCE(carried_out,0)+?, status='void', voided_at=NOW_LOCAL(), void_reason=?, notes=? WHERE id=?")
+        .run(bal, `Trasladada a la próxima factura (cobro #${receiptId})`, notes, inv.id);
+    }
+    total += bal;
+  }
+  if (total) db.prepare('UPDATE customers SET carry_over=COALESCE(carry_over,0)+? WHERE id=?').run(total, customerId);
+  return total;
+}
+
+/** Suma el saldo trasladado a una factura recién emitida. Llamar al emitir la factura. */
+function applyCarryOver(customerId, invoiceId) {
+  ensureSchema();
+  const carry = carryOf(customerId);
+  if (carry <= 0) return 0;
+  const inv = db.prepare('SELECT id, amount, notes FROM invoices WHERE id=?').get(invoiceId);
+  if (!inv) return 0;
+  const note = `Incluye saldo anterior trasladado: ${carry}`;
+  db.prepare('UPDATE invoices SET amount=amount+?, carried_in=COALESCE(carried_in,0)+?, notes=? WHERE id=?').run(carry, carry, inv.notes ? `${inv.notes} | ${note}` : note, inv.id);
+  db.prepare('UPDATE customers SET carry_over=0 WHERE id=?').run(customerId);
+  return carry;
+}
+
 /** Deuda real del cliente: saldo pendiente de cada factura impaga (descuenta pagos parciales). */
 function debtOf(customerId) {
   ensureSchema();
   const rows = db.prepare("SELECT id, period_month, period_year, amount, COALESCE(amount_paid,0) amount_paid FROM invoices WHERE customer_id=? AND status='unpaid' ORDER BY period_year, period_month, id").all(customerId);
   const items = rows.map(r => ({ id: r.id, period: `${r.period_month}/${r.period_year}`, amount: r.amount, paid: r.amount_paid, balance: balanceOf(r) }));
-  return { count: items.length, total: items.reduce((s, i) => s + i.balance, 0), items, credit: creditOf(customerId) };
+  return { count: items.length, total: items.reduce((s, i) => s + i.balance, 0), items, credit: creditOf(customerId), carryOver: carryOf(customerId) };
 }
 
 function snapshotCustomer(customerId) {
@@ -161,7 +217,7 @@ function recordPayment(invoiceId, paidBy) {
  * Cobro de un monto libre: cubre facturas pendientes (más antiguas primero, o las indicadas primero)
  * y el sobrante queda como saldo a favor. Con useCredit también consume el saldo a favor.
  */
-function receive(customerId, { amount, method, note, paidBy, invoiceIds, useCredit = false } = {}) {
+function receive(customerId, { amount, method, note, paidBy, invoiceIds, useCredit = false, carryRemaining = false } = {}) {
   ensureSchema();
   const cid = Number(customerId);
   const c = db.prepare('SELECT id, name, status FROM customers WHERE id=?').get(cid);
@@ -177,7 +233,8 @@ function receive(customerId, { amount, method, note, paidBy, invoiceIds, useCred
     pending = pending.filter(i => want.has(i.id)).concat(pending.filter(i => !want.has(i.id)));
   }
 
-  const result = { receiptId: null, applied: [], fullyPaid: [], creditUsed: 0, creditAdded: 0, customer: c };
+  if (carryRemaining && cash <= 0) throw new Error('Para activar con saldo pendiente hay que registrar un pago.');
+  const result = { receiptId: null, applied: [], fullyPaid: [], creditUsed: 0, creditAdded: 0, carried: 0, customer: c };
   db.transaction(() => {
     const rid = insertReceipt(cid, { amount: cash, method, paid_by: paidBy, note, source: cash ? 'manual' : 'credit' });
     result.receiptId = rid;
@@ -198,7 +255,8 @@ function receive(customerId, { amount, method, note, paidBy, invoiceIds, useCred
     result.creditAdded = Math.max(0, cash - appliedTotal);
     if (result.creditUsed) moveCredit(cid, -result.creditUsed, `Usado en cobro #${rid}`, rid, paidBy);
     if (result.creditAdded) moveCredit(cid, result.creditAdded, `Sobrante del cobro #${rid}`, rid, paidBy);
-    db.prepare('UPDATE payment_receipts SET credit_used=?, credit_added=? WHERE id=?').run(result.creditUsed, result.creditAdded, rid);
+    if (carryRemaining) result.carried = carryPending(rid, cid, paidBy);
+    db.prepare('UPDATE payment_receipts SET credit_used=?, credit_added=?, carry_added=? WHERE id=?').run(result.creditUsed, result.creditAdded, result.carried, rid);
   })();
   if (result.fullyPaid.length && hasColumn('customers', 'unpaid_streak')) {
     try { db.prepare('UPDATE customers SET unpaid_streak=0 WHERE id=?').run(cid); } catch (e) {}
@@ -251,8 +309,11 @@ function preview(invoiceId, receiptId) {
 
   if (rec) {
     allocations = db.prepare('SELECT a.*, i.period_month, i.period_year FROM payment_allocations a JOIN invoices i ON i.id=a.invoice_id WHERE a.receipt_id=?').all(rec.id)
-      .map(a => ({ invoiceId: a.invoice_id, period: `${a.period_month}/${a.period_year}`, amount: a.amount }));
+      .map(a => ({ invoiceId: a.invoice_id, period: `${a.period_month}/${a.period_year}`, amount: a.amount, kind: a.kind || 'pay' }));
     target = rec.prev_customer_status || c.status;
+    if (rec.carry_added && carryOf(c.id) < rec.carry_added) {
+      blocked = `Este cobro trasladó ${rec.carry_added} a la próxima factura y ese saldo ya se facturó. Corregí esa factura antes de anular.`;
+    }
     const later = db.prepare('SELECT id FROM payment_receipts WHERE customer_id=? AND id>? AND annulled_at IS NULL').all(c.id, rec.id);
     if (later.length) warnings.push(`Hay ${later.length} cobro(s) posteriores de este cliente (#${later.map(l => l.id).join(', #')}). No se modifican.`);
     const laterInv = db.prepare('SELECT COUNT(*) n FROM invoices WHERE customer_id=? AND created_at > ?').get(c.id, rec.created_at).n;
@@ -273,7 +334,7 @@ function preview(invoiceId, receiptId) {
   if (c.status === 'cancelled') { warnings.push('El cliente está CANCELADO: solo se revierten los montos, no se toca el servicio.'); target = 'cancelled'; }
 
   return {
-    receipt: rec ? { id: rec.id, created_at: rec.created_at, amount: rec.amount, credit_used: rec.credit_used, credit_added: rec.credit_added, paid_by: rec.paid_by, method: rec.method } : null,
+    receipt: rec ? { id: rec.id, created_at: rec.created_at, amount: rec.amount, credit_used: rec.credit_used, credit_added: rec.credit_added, carry_added: rec.carry_added || 0, paid_by: rec.paid_by, method: rec.method } : null,
     invoice: { id: inv.id, period: `${inv.period_month}/${inv.period_year}`, amount: inv.amount, paid_at: inv.paid_at, paid_by: inv.paid_by_name },
     allocations,
     customer: { id: c.id, name: c.name, status: c.status, credit: creditOf(c.id) },
@@ -299,8 +360,14 @@ async function annul(invoiceId, { reason, actor, receiptId } = {}) {
 
   db.transaction(() => {
     if (rec) {
-      const allocs = db.prepare('SELECT * FROM payment_allocations WHERE receipt_id=?').all(rec.id);
+      // Primero se deshacen los traslados (restauran monto/estado de la factura), luego los pagos.
+      const allocs = db.prepare("SELECT * FROM payment_allocations WHERE receipt_id=? ORDER BY CASE WHEN kind='carry' THEN 0 ELSE 1 END, id").all(rec.id);
       for (const a of allocs) {
+        if (a.kind === 'carry') {
+          db.prepare('UPDATE invoices SET amount=?, status=?, void_reason=?, voided_at=CASE WHEN ?=\'void\' THEN voided_at ELSE NULL END, carried_out=MAX(0, COALESCE(carried_out,0)-?), original_amount=CASE WHEN ?=original_amount THEN NULL ELSE original_amount END, paid_at=?, paid_by_name=?, notes=? WHERE id=?')
+            .run(a.prev_amount, a.prev_status || 'unpaid', a.prev_void_reason, a.prev_status || 'unpaid', a.amount, a.prev_amount, a.prev_paid_at, a.prev_paid_by || '', a.prev_invoice_notes || '', a.invoice_id);
+          continue;
+        }
         const inv = db.prepare('SELECT * FROM invoices WHERE id=?').get(a.invoice_id);
         if (!inv) continue;
         const paid = Math.max(0, (Number(inv.amount_paid) || 0) - a.amount);
@@ -313,6 +380,7 @@ async function annul(invoiceId, { reason, actor, receiptId } = {}) {
             .run(paid, paid > 0 ? a.prev_paid_at : null, paid > 0 ? (a.prev_paid_by || '') : '', base ? `${base} | ${note}` : note, now, inv.id);
         }
       }
+      if (rec.carry_added) db.prepare('UPDATE customers SET carry_over=MAX(0, COALESCE(carry_over,0)-?) WHERE id=?').run(rec.carry_added, cid);
       if (rec.credit_added) moveCredit(cid, -rec.credit_added, `Anulación del cobro #${rec.id}`, rec.id, who);
       if (rec.credit_used) moveCredit(cid, rec.credit_used, `Devolución por anulación del cobro #${rec.id}`, rec.id, who);
       db.prepare('UPDATE payment_receipts SET annulled_at=?, annul_reason=?, annulled_by=?, restored_status=? WHERE id=?').run(now, why, who, pv.target, rec.id);
@@ -382,6 +450,6 @@ function creditHistory(customerId) {
 }
 
 module.exports = {
-  ensureSchema, recordPayment, receive, applyCredit, adjustCredit, debtOf, creditOf,
+  ensureSchema, recordPayment, receive, applyCredit, adjustCredit, debtOf, creditOf, carryOf, applyCarryOver,
   preview, annul, receipts, creditHistory, lastReceiptForInvoice,
 };

@@ -27,10 +27,10 @@ const Jimp = _jimpMod.Jimp || _jimpMod;
 const qrisUtil = require('../utils/qrisUtil');
 const whatsappService = require('../services/whatsappService');
 const { BinaryBitmap, HybridBinarizer, RGBLuminanceSource, MultiFormatReader, BarcodeFormat, DecodeHintType } = require('@zxing/library');
+const regional = require('../config/regional');
 let loginRateLimiter = (req, res, next) => next();
 try {
   const rlMod = require('../middleware/rateLimiter');
-const regional = require('../config/regional');
   if (rlMod && typeof rlMod.loginRateLimiter === 'function') {
     loginRateLimiter = rlMod.loginRateLimiter;
   }

@@ -37,6 +37,7 @@
   .auth-grid{grid-template-columns:1fr !important;justify-items:center}
   .auth-card{width:100%;max-width:420px}
   .min-foot{text-align:center;font-size:12px;opacity:.6;padding:14px 0 22px}
+  .auth-card.reveal{opacity:1 !important;transform:none !important}
 </style>
 <% } %>
 </head>
@@ -46,7 +47,7 @@
 <header class="site-header">
   <div class="container inner">
     <a class="brand" href="/" aria-label="Beranda">
-      <img class="bmark" src="<%= brandLogo %>" alt="<%= brandName %>"><span class="bname"><%= brandName %></span>
+      <img class="bmark" src="<%= brandLogo %>" alt="" onerror="this.style.display='none'"><span class="bname"><%= brandName %></span>
     </a>
     <% if (!minimal) { %><nav class="nav" aria-label="Navigasi">
       <a href="#packages">Plan</a>
@@ -209,7 +210,7 @@
     <div class="foot-grid">
       <div>
         <a class="brand" href="/" style="margin-bottom:14px">
-          <img class="bmark" src="<%= brandLogo %>" alt="<%= brandName %>"><span class="bname"><%= brandName %></span>
+          <img class="bmark" src="<%= brandLogo %>" alt="" onerror="this.style.display='none'"><span class="bname"><%= brandName %></span>
         </a>
         <p class="muted" style="font-size:14px;max-width:40ch">Proveedor de internet por fibra óptica.</p>
         <p class="muted" style="font-size:13px;margin-top:8px">Internet Freedom — We Are Open-Source.</p>

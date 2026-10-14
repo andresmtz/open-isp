@@ -620,6 +620,19 @@ router.post('/login', loginRateLimiter, express.urlencoded({ extended: true }), 
 
 router.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/admin/login'); });
 
+// ─── VER EL PORTAL COMO EL CLIENTE (solo lectura) ───────────────────────────
+router.get('/customers/:id/portal-preview', requireAdminSession, (req, res) => {
+  const c = db.prepare('SELECT id, name, phone, pppoe_username, router_id FROM customers WHERE id = ?').get(req.params.id);
+  if (!c) { req.session._msg = { type: 'error', text: 'Cliente no encontrado.' }; return res.redirect('/admin/customers'); }
+  req.session.portalPreview = { customerId: c.id, by: req.session.adminUser || req.session.cashierName || 'admin', since: Date.now() };
+  req.session.customer_id = c.id;
+  req.session.phone = c.pppoe_username || c.phone;
+  req.session.pppoe_username = c.pppoe_username || null;
+  if (c.router_id) req.session.router_id = c.router_id;
+  try { auditSvc && auditSvc.logAuditTrail && auditSvc.logAuditTrail({ action: 'VIEW', entity_type: 'portal_preview', entity_id: String(c.id), actor_type: req.session.isAdmin ? 'admin' : 'cashier', actor_name: req.session.portalPreview.by, details: { cliente: c.name }, ip_address: req.ip }); } catch (_) {}
+  req.session.save(() => res.redirect('/customer/dashboard'));
+});
+
 // ─── EQUIPO Y WIFI DEL CLIENTE (ONU VSOL vía OLT) ───────────────────────────
 router.get('/customers/:id/onu', requireAdminSession, async (req, res) => {
   const onuMgr = require('../services/onuManageService');
@@ -665,8 +678,28 @@ router.post('/customers/:id/onu/recheck', requireAdminSession, async (req, res) 
 
 router.get('/onu-inventory', requireAdminSession, (req, res) => {
   const onuMgr = require('../services/onuManageService');
+  const ro = require('../services/tr069RolloutService');
+  const acsTags = db.prepare('SELECT tags, last_inform FROM acs_devices').all();
+  const rows = onuMgr.inventory().map(r => {
+    const d = r.pppoe ? acsTags.find(a => String(a.tags || '').includes(`"${r.pppoe}"`)) : null;
+    return { ...r, tr069: d ? d.last_inform : null };
+  });
   res.render('admin/onu_inventory', { title: 'Inventario de ONU', company: company(), activePage: 'onu_inventory',
-    rows: onuMgr.inventory(), changes: onuMgr.recentChanges(30), msg: flashMsg(req) });
+    rows, changes: onuMgr.recentChanges(30), rollout: ro.status(), today: require('../config/billingCycle').nowStamp().slice(0, 10), msg: flashMsg(req) });
+});
+
+router.post('/onu-inventory/tr069/schedule', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
+  try {
+    const at = `${String(req.body.date || '').trim()} ${String(req.body.time || '').trim()}`;
+    require('../services/tr069RolloutService').schedule(at);
+    req.session._msg = { type: 'success', text: `Activación de TR-069 programada para ${at}. Al terminar te llega un resumen por WhatsApp.` };
+  } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
+  res.redirect('/admin/onu-inventory');
+});
+router.post('/onu-inventory/tr069/cancel', requireAdminSession, restrictToAdmin, (req, res) => {
+  require('../services/tr069RolloutService').cancel();
+  req.session._msg = { type: 'success', text: 'Activación de TR-069 cancelada (si estaba en curso, se detiene después de la ONU actual).' };
+  res.redirect('/admin/onu-inventory');
 });
 
 router.post('/onu-inventory/sync', requireAdminSession, restrictToAdmin, async (req, res) => {

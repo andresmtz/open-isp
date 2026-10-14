@@ -428,6 +428,9 @@ function startCronJobs() {
     catch (e) { logger.error('[CRON] Inventario ONU: ' + e.message); }
   };
   cron.schedule('15 */6 * * *', onuSync);
+  // Activación de TR-069 programada (Red → Inventario de ONU): se revisa cada minuto
+  try { require('./tr069RolloutService').ensureSchema(); } catch (e) {}
+  cron.schedule('* * * * *', () => { require('./tr069RolloutService').tick().catch(e => logger.error('[CRON] TR-069: ' + e.message)); });
   setTimeout(onuSync, 3 * 60 * 1000);
 
   cron.schedule('30 * * * *', async () => {

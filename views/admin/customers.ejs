@@ -395,6 +395,7 @@
                     <button type="button" class="act-item primary" data-id="<%= c.id %>" onclick="promiseCust(+this.dataset.id)"><i class="bi bi-hand-thumbs-up"></i> Promesa de pago</button>
                     <% } %>
                     <% if (_adm || _can('wifi_clientes')) { %><button type="button" class="act-item primary" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="openOnu(+this.dataset.id, this.dataset.name)"><i class="bi bi-router"></i> Equipo y WiFi</button><% } %>
+                    <% if (_adm || _can('ver_facturas')) { %><a class="act-item" href="/admin/customers/<%= c.id %>/portal-preview" target="_blank" rel="noopener"><i class="bi bi-phone"></i> Ver portal como el cliente</a><% } %>
                     <% if (_can('corte_manual')) { %><button type="button" class="act-item" data-id="<%= c.id %>" onclick="syncCust(this)"><i class="bi bi-arrow-repeat"></i> Sincronizar con la red</button><% } %>
                     <div class="act-sep"></div>
                     <% if (_can('clientes_alta')) { %><button type="button" class="act-item" data-idx="<%= i %>" onclick="editCust(+this.dataset.idx)"><i class="bi bi-pencil"></i> <%= t('admin.cust.btn_edit','Edit Pelanggan') %></button><% } %>

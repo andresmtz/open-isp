@@ -52,6 +52,47 @@
     </div>
 
     <div class="card">
+      <div class="card-hd"><h6><i class="bi bi-broadcast"></i> TR-069 (equipos conectados en el panel y en el portal)</h6></div>
+      <div class="card-bd">
+        <p style="font-size:13px;color:var(--muted);margin:0 0 10px">
+          Activa la gestión TR-069 en las ONU gestionables, <b>de a una</b>: carga el servidor en la ONU, pasa su WAN a "tr069_internet" y verifica que reconecte.
+          Si algo falla vuelve atrás sola; si fallan 2 seguidas, se detiene. Cada cliente tiene un corte de unos segundos. Al terminar te llega un resumen por WhatsApp.
+        </p>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin-bottom:10px">
+          <span>Con TR-069: <b><%= rows.filter(r => r.tr069).length %></b></span>
+          <span>Pendientes de activar: <b><%= rollout.pendingCount %></b></span>
+          <span>Estado: <b><%= rollout.running ? 'en curso…' : (rollout.scheduledAt ? 'programada para ' + rollout.scheduledAt : 'sin programar') %></b></span>
+        </div>
+        <% if (_adm) { %>
+          <% if (rollout.scheduledAt || rollout.running) { %>
+            <form action="/admin/onu-inventory/tr069/cancel" method="POST" style="display:inline"><button class="btn btn-d btn-sm"><i class="bi bi-x-lg"></i> Cancelar</button></form>
+          <% } else if (rollout.pendingCount) { %>
+            <form action="/admin/onu-inventory/tr069/schedule" method="POST" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="date" name="date" class="fc" value="<%= today %>" style="max-width:170px" required>
+              <input type="time" name="time" class="fc" value="23:00" style="max-width:120px" required>
+              <button class="btn btn-p btn-sm"><i class="bi bi-clock"></i> Programar activación (<%= rollout.pendingCount %> ONU)</button>
+            </form>
+          <% } %>
+        <% } %>
+        <% if (rollout.rows.length) { %>
+          <div class="tbl-wrap" style="margin-top:12px"><table class="dtbl">
+            <thead><tr><th>ONU</th><th>Cliente</th><th>Resultado</th><th>Detalle</th><th>Hora</th></tr></thead>
+            <tbody>
+              <% rollout.rows.forEach(r => { %>
+                <tr>
+                  <td><code><%= r.onu_ref %></code></td><td><%= r.customer_name || '—' %></td>
+                  <td><span class="badge <%= r.status === 'ok' ? 'bs' : (r.status === 'failed' ? 'bd' : (r.status === 'skipped' ? 'bw' : 'bm')) %>"><%= { ok: 'Activada', failed: 'Falló', skipped: 'Omitida', running: 'En curso', pending: 'Pendiente' }[r.status] || r.status %></span></td>
+                  <td style="font-size:12px"><%= r.step %> — <%= r.message || '' %></td>
+                  <td style="font-size:12px;white-space:nowrap"><%= r.finished_at || r.started_at || '' %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table></div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-hd"><h6><i class="bi bi-wifi"></i> Últimos cambios de WiFi</h6></div>
       <div class="tbl-wrap"><table class="dtbl">
         <thead><tr><th>Fecha</th><th>Cliente</th><th>Red</th><th>Pedido por</th><th>Resultado</th></tr></thead>
@@ -77,7 +118,7 @@
     <div class="card">
       <div class="card-hd"><h6><i class="bi bi-list-ul"></i> ONU</h6></div>
       <div class="tbl-wrap"><table class="dtbl">
-        <thead><tr><th>Posición</th><th>Nombre en la OLT</th><th>Cliente</th><th>Tipo</th><th>Estado</th><th>Gestionable</th><th>WiFi 2.4</th><th>Comprobada</th></tr></thead>
+        <thead><tr><th>Posición</th><th>Nombre en la OLT</th><th>Cliente</th><th>Tipo</th><th>Estado</th><th>Gestionable</th><th>TR-069</th><th>WiFi 2.4</th><th>Comprobada</th></tr></thead>
         <tbody>
           <% rows.forEach(r => { %>
             <tr>
@@ -91,6 +132,7 @@
                 <% } else if (r.compatible === 0) { %><span class="badge bd" title="<%= r.caps || '' %>">No</span>
                 <% } else { %><span class="badge bm">Sin comprobar</span><% } %>
               </td>
+              <td><%- r.tr069 ? '<span class="badge bs" title="Último informe ' + r.tr069 + '">Activo</span>' : '<span class="badge bm">—</span>' %></td>
               <td><%= r.ssid_name || '-' %></td>
               <td style="white-space:nowrap;font-size:12px;color:var(--muted)"><%= r.checked_at || '-' %></td>
             </tr>

@@ -1,5 +1,25 @@
 const express = require('express');
 const router = express.Router();
+
+// ── Vista previa del portal desde el panel (Clientes → ⋮ → Ver portal como el cliente): SOLO LECTURA ──
+router.use((req, res, next) => {
+  const pv = req.session && req.session.portalPreview;
+  if (!pv) return next();
+  if (req.path === '/preview/exit') return next();
+  if (req.path === '/logout') return res.redirect('/customer/preview/exit');
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    const msg = 'Vista previa: no se pueden hacer cambios en nombre del cliente.';
+    if (/json/i.test(req.get('accept') || '') || /fetch/i.test(req.get('x-requested-with') || '') || req.is('json')) return res.status(403).json({ ok: false, success: false, message: msg });
+    req.session._msg = { type: 'danger', text: msg };
+    return res.redirect('/customer/dashboard');
+  }
+  next();
+});
+router.get('/preview/exit', (req, res) => {
+  const back = req.session && req.session.portalPreview ? '/admin/customers' : '/customer/login';
+  if (req.session) { delete req.session.portalPreview; delete req.session.phone; delete req.session.customer_id; delete req.session.pppoe_username; delete req.session.router_id; }
+  req.session.save(() => res.redirect(back));
+});
 const customerDevice = require('../services/customerDeviceService');
 const { getSettingsWithCache, getNowLocal, getCurrentTimeInfo, getNowLocalISO, formatDateLocal, formatTimeLocal } = require('../config/settingsManager');
 function voucherFeatureOn() { try { const s = getSettingsWithCache() || {}; const v = s.voucher_enabled; return !(v === false || v === 'false' || v === '0' || v === 0); } catch (e) { return true; } }
@@ -1964,6 +1984,7 @@ router.get('/dashboard', async (req, res) => {
     notifications: _notifs,
     notif: msgNotif,
     customerId: (_prof.id || null),
+    preview: !!(req.session && req.session.portalPreview),
     onuManaged: !!(_onuInv && _onuInv.compatible === 1),
     ...(_onuInv ? {
       onuDetected: true,

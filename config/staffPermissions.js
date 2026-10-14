@@ -40,6 +40,7 @@ const CATALOG = [
     ['GET', `^/api/billing/unpaid/${ID}$`],
     ['GET', `^/api/customers/${ID}/(billing-year|paid-months)$`],
     ['GET', `^/customers/${ID}/payment-info$`],
+    ['GET', `^/customers/${ID}/portal-preview$`],
   ] },
   { key: 'cobrar', label: 'Cobrar y registrar pagos', help: 'Cobrar a clientes (pago total o parcial), marcar facturas como pagadas y ver su propio reporte de cobros.', def: true, needs: ['ver_clientes', 'ver_facturas'], rules: [
     ['GET', '^/cashiers/reports$'],

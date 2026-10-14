@@ -346,4 +346,5 @@ async function notifyFailure(customerId, inv, step, error, actor) {
   for (const n of set) { try { await wa.sendText(n, msg); } catch (_) {} }
 }
 
-module.exports = { ensureSchema, syncInventory, inventory, forCustomer, readDetail, changeWifi, validate, history, recentChanges, SUFFIX_5G };
+module.exports = { ensureSchema, syncInventory, inventory, forCustomer, readDetail, changeWifi, validate, history, recentChanges, SUFFIX_5G,
+  _internal: { runOnPort, serial, getOlt, kv } };

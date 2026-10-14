@@ -38,13 +38,19 @@ function ensureSchema() {
   _schemaOk = true;
 }
 
+const _cols = {};
+function hasColumn(table, col) {
+  if (!_cols[table]) _cols[table] = new Set(db.prepare(`PRAGMA table_info(${table})`).all().map(r => r.name));
+  return _cols[table].has(col);
+}
+
 /** Llamar ANTES de marcar la factura como pagada. No falla nunca (no debe frenar un cobro). */
 function recordPayment(invoiceId, paidBy) {
   try {
     ensureSchema();
     const inv = db.prepare('SELECT id, customer_id, amount, status, notes FROM invoices WHERE id=?').get(invoiceId);
     if (!inv || inv.status === 'paid') return;
-    const c = db.prepare('SELECT status, promise_until, expired_at, unpaid_streak FROM customers WHERE id=?').get(inv.customer_id) || {};
+    const c = db.prepare('SELECT * FROM customers WHERE id=?').get(inv.customer_id) || {};
     db.prepare(`INSERT INTO payment_log (invoice_id, customer_id, paid_at, amount, paid_by, prev_customer_status, prev_promise_until,
       prev_expired_at, prev_unpaid_streak, prev_invoice_notes) VALUES (?,?,?,?,?,?,?,?,?,?)`)
       .run(inv.id, inv.customer_id, cycle.nowStamp(), Number(inv.amount) || 0, paidBy || '', c.status || null,
@@ -120,7 +126,8 @@ async function annul(invoiceId, { reason, actor } = {}) {
       .run(baseNotes ? `${baseNotes} | ${annulNote}` : annulNote, now, inv.id);
     if (snap) {
       db.prepare('UPDATE payment_log SET annulled_at=?, annul_reason=?, annulled_by=?, restored_status=? WHERE id=?').run(now, why, who, pv.target, snap.id);
-      db.prepare('UPDATE customers SET expired_at=?, unpaid_streak=? WHERE id=?').run(snap.prev_expired_at, snap.prev_unpaid_streak == null ? 0 : snap.prev_unpaid_streak, inv.customer_id);
+      if (hasColumn('customers', 'expired_at')) db.prepare('UPDATE customers SET expired_at=? WHERE id=?').run(snap.prev_expired_at, inv.customer_id);
+      if (hasColumn('customers', 'unpaid_streak') && snap.prev_unpaid_streak != null) db.prepare('UPDATE customers SET unpaid_streak=? WHERE id=?').run(snap.prev_unpaid_streak, inv.customer_id);
     } else {
       db.prepare(`INSERT INTO payment_log (invoice_id, customer_id, paid_at, amount, paid_by, annulled_at, annul_reason, annulled_by, restored_status)
         VALUES (?,?,?,?,?,?,?,?,?)`).run(inv.id, inv.customer_id, inv.paid_at || '', inv.amount, inv.paid_by_name || '', now, why, who, pv.target);

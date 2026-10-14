@@ -9,6 +9,8 @@
  *     (puede responder "Time Out!" y aun así aplicarse).
  *  3. Verificación: una sola WAN, modo tr069_internet, estado EXACTO "connected", mismas asociaciones.
  *  4. Bien → `save_config`. Mal → volver a `mode internet` + commit y verificar que reconecte.
+ *  5. SIEMPRE `write file` en la OLT (también tras volver atrás): si no, al reiniciarse la OLT reenvía la
+ *     configuración vieja a la ONU y el cambio se pierde (pasó con un corte de luz el 2026-10-14).
  * Corte para el cliente: unos segundos mientras el PPPoE se reconecta.
  * La tanda se frena sola si fallan 2 ONU seguidas. Al terminar avisa al administrador por WhatsApp.
  */
@@ -98,6 +100,7 @@ async function enableOne(inv) {
         await run([`onu ${N} pri wan_adv commit`]);
         let back = false;
         for (let i = 0; i < 24; i++) { await wait(5000); const b = blocks((await run([`show onu ${N} pri wan_conn`]))[0]); if (b.length === 1 && b[0].status === 'connected') { back = true; break; } }
+        try { await T().writeOlt(olt); } catch (_) {}
         return { ok: false, step: 'aplicar WAN', message: (good ? 'Las asociaciones o el usuario cambiaron' : 'La WAN no volvió a conectar en 2 minutos') + (back ? '; se volvió al modo anterior y quedó conectada.' : '; SE INTENTÓ VOLVER ATRÁS PERO NO RECONECTÓ: revisar ya.'), critical: !back };
       }
     }
@@ -106,7 +109,10 @@ async function enableOne(inv) {
     step = 'guardar';
     const [sv] = await run([`onu ${N} pri save_config`]);
     if (/%|error|fail/i.test(sv)) return { ok: false, step, message: 'No se pudo guardar en la ONU (la WAN quedó funcionando).' };
-    return { ok: true, step: 'listo', message: 'TR-069 activo; WAN conectada.' };
+    step = 'guardar en la OLT';
+    try { await T().writeOlt(olt); }
+    catch (e) { return { ok: false, step, message: 'La ONU quedó bien pero la OLT no confirmó el guardado (write file): se perdería al reiniciarse la OLT.' }; }
+    return { ok: true, step: 'listo', message: 'TR-069 activo; WAN conectada; guardado en la ONU y en la OLT.' };
   } catch (e) {
     return { ok: false, step, message: e.message };
   }

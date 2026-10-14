@@ -86,6 +86,20 @@ async function runOnPort(olt, port, cmds) {
   return outs.slice(2, 2 + cmds.length).map(clean);
 }
 
+/**
+ * Guarda la configuración de la OLT ("write file", igual que System Configuration → Save).
+ * OBLIGATORIO después de cualquier cambio en una ONU u OLT: al reiniciarse, la OLT vuelve a enviar a las ONU
+ * lo que tiene guardado y se pierde todo lo que no se haya escrito (comprobado tras un corte de luz el 2026-10-14).
+ */
+async function writeOlt(olt) {
+  const o = oltSvc();
+  const opts = Object.assign(o.telnetOptsFromOlt(olt), { enablePassword: olt.enable_password || olt.web_password, asArray: true });
+  const [out] = await o.telnetLoginAndRun(olt.host, olt.web_user, olt.web_password, ['write file'], opts);
+  const ok = /saved/i.test(clean(out));
+  if (!ok) throw new Error('la OLT no confirmó el guardado (write file)');
+  return true;
+}
+
 /** "Clave : valor" → objeto. */
 function kv(text) {
   const out = {};
@@ -285,6 +299,8 @@ async function changeWifi(customerId, { name, key }, actor = {}, { notify = true
       setStep('guardado');
       const sv = await runOnPort(olt, inv.port, [`onu ${id} pri save_config`]);
       if (/%|error|fail/i.test(sv[0])) throw new Error('no se pudo guardar en la memoria de la ONU');
+      setStep('guardado en la OLT');
+      await writeOlt(olt);
       return { ok: true };
     });
     db.prepare("UPDATE wifi_changes SET status = 'ok', step = 'listo', finished_at = (NOW_LOCAL()) WHERE id = ?").run(change);
@@ -347,4 +363,4 @@ async function notifyFailure(customerId, inv, step, error, actor) {
 }
 
 module.exports = { ensureSchema, syncInventory, inventory, forCustomer, readDetail, changeWifi, validate, history, recentChanges, SUFFIX_5G,
-  _internal: { runOnPort, serial, getOlt, kv } };
+  writeOlt, _internal: { runOnPort, serial, getOlt, kv, writeOlt } };

@@ -61,7 +61,7 @@
         <div class="tb-title"><button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><i class="bi bi-hdd-network"></i> <%= t('admin.acs.title','GenieACS Monitoring Pro') %></div>
         <div class="tb-right">
             <span class="adm-badge" style="font-size:12px;opacity:0.7;"><%= company %></span>
-            <span class="adm-badge"><i class="bi bi-person-fill"></i> <%= (typeof session !== 'undefined' && session && session.isCashier) ? 'Kasir' : 'Admin' %></span>
+            <span class="adm-badge"><i class="bi bi-person-fill"></i> <%= (typeof session !== 'undefined' && session && session.isCashier) ? ((session.cashierName ? session.cashierName + ' · ' : '') + t('admin.role.cashier', 'Oficina')) : 'Admin' %></span>
             <a href="/admin/logout" class="btn btn-g btn-sm"><i class="bi bi-box-arrow-left"></i></a>
         </div>
     </div>

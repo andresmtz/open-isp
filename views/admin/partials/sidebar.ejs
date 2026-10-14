@@ -120,10 +120,12 @@ document.addEventListener('DOMContentLoaded', () => {
       <% }) %>
     <% }) %>
 
+    <% if (!(typeof session !== 'undefined' && session && session.isCashier && !session.isAdmin)) { %>
     <div class="sb-section"><%= t('admin.side.section_control','KONTROL') %></div>
     <a href="/admin/sidebar-settings" class="sb-item <%= activePage==='sidebar_settings' ? 'active' : '' %>">
       <i class="bi bi-layout-sidebar-inset"></i><span><%= t('admin.side.settings','Pengaturan Sidebar') %></span>
     </a>
+    <% } %>
 
     <a href="/admin/logout" class="sb-item logout">
       <i class="bi bi-box-arrow-left"></i><span><%= t('common.logout', 'Logout') %></span>

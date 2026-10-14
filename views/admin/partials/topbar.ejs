@@ -87,7 +87,7 @@
 
     <span class="px-2.5 sm:px-3.5 py-1.5 rounded-full bg-primary-500/10 border border-primary-500/30 text-primary-400 text-xs font-bold flex items-center gap-1.5 shadow-sm">
       <i class="bi bi-person text-sm"></i>
-      <span class="hidden sm:inline"><%= (typeof session !== 'undefined' && session && session.isCashier) ? t('admin.role.cashier', 'Kasir') : t('admin.role.admin', 'Admin') %></span>
+      <span class="hidden sm:inline"><%= (typeof session !== 'undefined' && session && session.isCashier) ? ((session.cashierName ? session.cashierName + ' · ' : '') + t('admin.role.cashier', 'Oficina')) : t('admin.role.admin', 'Admin') %></span>
     </span>
   </div>
 </header>

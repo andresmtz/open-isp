@@ -26,7 +26,7 @@
   <div class="topbar">
     <div class="tb-title"><button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><i class="bi bi-megaphone-fill"></i> <%= t('admin.service_notice.title', 'Status Layanan &amp; Pengumuman') %></div>
     <div class="tb-right">
-      <span class="adm-badge"><i class="bi bi-person-fill"></i> <%= (typeof session !== 'undefined' && session && session.isCashier) ? 'Kasir' : 'Admin' %></span>
+      <span class="adm-badge"><i class="bi bi-person-fill"></i> <%= (typeof session !== 'undefined' && session && session.isCashier) ? ((session.cashierName ? session.cashierName + ' · ' : '') + t('admin.role.cashier', 'Oficina')) : 'Admin' %></span>
       <a href="/" target="_blank" rel="noopener" class="btn btn-g btn-sm"><i class="bi bi-box-arrow-up-right"></i> <%= t('admin.service_notice.view_landing', 'Lihat Landing') %></a>
       <a href="/admin/logout" class="btn btn-g btn-sm"><i class="bi bi-box-arrow-left"></i> <%= t('common.logout', 'Logout') %></a>
     </div>

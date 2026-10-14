@@ -18,7 +18,7 @@
       <span><%= t('admin.ar.heading','Manajemen Area / Wilayah') %></span>
     </div>
     <div class="tb-right">
-      <span class="adm-badge"><i class="bi bi-person-fill"></i> <%= (typeof session !== 'undefined' && session.isCashier) ? t('admin.role.cashier', 'Kasir') : t('admin.role.admin', 'Admin') %></span>
+      <span class="adm-badge"><i class="bi bi-person-fill"></i> <%= (typeof session !== 'undefined' && session.isCashier) ? ((session.cashierName ? session.cashierName + ' · ' : '') + t('admin.role.cashier', 'Oficina')) : t('admin.role.admin', 'Admin') %></span>
       <button class="btn btn-p btn-sm" onclick="openModal('addAreaModal')"><i class="bi bi-plus-lg"></i> <%= t('admin.ar.add','Tambah Area Baru') %></button>
     </div>
   </div>

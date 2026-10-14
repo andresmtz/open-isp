@@ -17,7 +17,7 @@
       <span><%= t('admin.cpay.title','Approval Pembayaran Kolektor') %></span>
     </div>
     <div class="tb-right">
-      <span class="adm-badge"><i class="bi bi-person-fill"></i> <%= (typeof session !== 'undefined' && session.isCashier) ? t('admin.role.cashier', 'Kasir') : t('admin.role.admin', 'Admin') %></span>
+      <span class="adm-badge"><i class="bi bi-person-fill"></i> <%= (typeof session !== 'undefined' && session.isCashier) ? ((session.cashierName ? session.cashierName + ' · ' : '') + t('admin.role.cashier', 'Oficina')) : t('admin.role.admin', 'Admin') %></span>
       <a href="/admin/collector-payments?status=pending" class="btn btn-g btn-sm <%= status==='pending'?'btn-p':'' %>">Pending</a>
       <a href="/admin/collector-payments?status=approved" class="btn btn-g btn-sm <%= status==='approved'?'btn-p':'' %>">Approved</a>
       <a href="/admin/collector-payments?status=rejected" class="btn btn-g btn-sm <%= status==='rejected'?'btn-p':'' %>">Rejected</a>

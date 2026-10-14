@@ -72,7 +72,7 @@
     },
     "role": {
       "admin": "Administrador",
-      "cashier": "Cajero",
+      "cashier": "Oficina",
       "technician": "Técnico",
       "collector": "Cobrador"
     },
@@ -1106,7 +1106,7 @@
       "user_management": "USUARIOS",
       "system": "SISTEMA",
       "finance": "FINANZAS",
-      "cashier": "CAJA"
+      "cashier": "OFICINA"
     },
     "nav": {
       "dashboard": "Panel",

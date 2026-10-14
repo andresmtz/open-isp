@@ -935,7 +935,7 @@ async function openIsolirScriptModal(routerId = null) {
   try {
     const res = await fetch('/admin/api/isolir-portal-script');
     const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Gagal');
+    if (!data.success) throw new Error(data.error || 'Error');
     ta.value = data.script || '';
     meta.textContent = (data.appUrl ? ('app_url: ' + data.appUrl + ' | ') : '') + 'IP Server: ' + (data.billingIp || '-') + ' | NAT → HTTP:' + (data.httpNatPort ?? '-') + ' HTTPS:' + (data.httpsNatPort ?? '-');
   } catch (e) {
@@ -965,7 +965,7 @@ async function runAutoSetupFirewallFromModal() {
       statusBox.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> <strong>LISTO:</strong> ' + data.message;
     } else {
       statusBox.className = 'alert alert-danger p-3 small mt-3';
-      statusBox.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>ERROR:</strong> ' + (data.error || data.message || 'Terjadi kesalahan');
+      statusBox.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>ERROR:</strong> ' + (data.error || data.message || 'Ocurrió un error');
     }
   } catch (e) {
     statusBox.className = 'alert alert-danger p-3 small mt-3';

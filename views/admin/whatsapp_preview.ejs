@@ -70,12 +70,12 @@
 <script>
   document.querySelectorAll('.wp-send').forEach(function(b){
     b.addEventListener('click', async function(){
-      var old = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="bi bi-hourglass-split"></i> Mengirim...';
+      var old = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
       try {
         var r = await fetch('/admin/whatsapp/preview/send', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'index=' + encodeURIComponent(b.getAttribute('data-idx')) });
         var j = await r.json().catch(function(){ return {}; });
-        alert(j.message || 'Selesai.');
-      } catch(e){ alert('Gagal: ' + e.message); }
+        alert(j.message || 'Listo.');
+      } catch(e){ alert('Error: ' + e.message); }
       finally { b.disabled = false; b.innerHTML = old; }
     });
   });

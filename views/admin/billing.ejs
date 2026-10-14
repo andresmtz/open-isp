@@ -198,8 +198,8 @@
                 <% if(inv.status==='unpaid'){%>
                   <form id="qa-<%= inv.id %>" method="POST" action="/admin/billing/<%= inv.id %>/qris-assign" style="display:none"></form>
                   <% if (inv.qris_amount_unique) { %>
-                  <form id="qr-<%= inv.id %>" method="POST" action="/admin/billing/<%= inv.id %>/qris-assign?force=1" style="display:none" onsubmit="return confirm('Ganti Kode Unik tagihan ini?')"></form>
-                  <form id="qc-<%= inv.id %>" method="POST" action="/admin/billing/<%= inv.id %>/qris-clear" style="display:none" onsubmit="return confirm('Hapus Kode Unik tagihan ini?')"></form>
+                  <form id="qr-<%= inv.id %>" method="POST" action="/admin/billing/<%= inv.id %>/qris-assign?force=1" style="display:none" onsubmit="return confirm('¿Cambiar el código único de esta factura?')"></form>
+                  <form id="qc-<%= inv.id %>" method="POST" action="/admin/billing/<%= inv.id %>/qris-clear" style="display:none" onsubmit="return confirm('¿Borrar el código único de esta factura?')"></form>
                   <% } %>
                   <form id="uni-<%= inv.id %>" method="POST" action="/admin/customers/<%= inv.customer_id %>/unisolate" style="display:none" class="needs-confirm" data-confirm-key="confirmUnisolate"></form>
                   <form id="wa-<%= inv.id %>" method="POST" action="/admin/billing/<%= inv.id %>/whatsapp" style="display:none"></form>
@@ -458,7 +458,7 @@ document.addEventListener('change', function(e) {
 document.getElementById('bulkPayBtn')?.addEventListener('click', function() {
   const selected = getSelectedInvoices();
   const unpaid = selected.filter(x => String(x.status || '').toLowerCase() === 'unpaid');
-  if (unpaid.length === 0) return alert('Pilih minimal 1 tagihan BELUM BAYAR.');
+  if (unpaid.length === 0) return alert('Elegí al menos 1 factura PENDIENTE.');
 
   const form = document.getElementById('payForm');
   const multiSection = document.getElementById('multiPaySection');

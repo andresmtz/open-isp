@@ -9,7 +9,7 @@
     if (bar || !document.body) return;
     bar = document.createElement('div'); bar.id = 'pgbar';
     ov = document.createElement('div'); ov.id = 'pgload';
-    ov.innerHTML = '<div class="pgbox"><div class="pgspin"></div><div class="pgtxt">Memuat…</div></div>';
+    ov.innerHTML = '<div class="pgbox"><div class="pgspin"></div><div class="pgtxt">Cargando…</div></div>';
     document.body.appendChild(bar);
     document.body.appendChild(ov);
   }

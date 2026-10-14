@@ -348,7 +348,7 @@ async function sendChatMessage(e) {
       await loadConversations();
       inputEl.focus();
     } else {
-      const errDetail = typeof data.error === 'object' ? (data.error.message || JSON.stringify(data.error)) : String(data.error || 'Terjadi kesalahan');
+      const errDetail = typeof data.error === 'object' ? (data.error.message || JSON.stringify(data.error)) : String(data.error || 'Ocurrió un error');
       alert('No se pudo enviar el WhatsApp: ' + errDetail);
     }
   } catch (err) {

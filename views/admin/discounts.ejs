@@ -237,7 +237,7 @@
       var m = mode.value;
       if (m === 'selected') {
         var n = document.querySelectorAll('#custTable .cust-sel:checked').length;
-        if (n === 0) { e.preventDefault(); alert('Pilih minimal 1 pelanggan (atau pilih mode Semua/Satu).'); }
+        if (n === 0) { e.preventDefault(); alert('Elegí al menos 1 cliente (o el modo Todos/Uno).'); }
       } else if (m === 'single') {
         var sel = document.querySelector('select[name="customer_id"]');
         if (!sel || !sel.value) { e.preventDefault(); alert('Primero elegí un cliente.'); }

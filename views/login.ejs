@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title><%= settings.company_header || 'OPEN-ISP' %> — <%= t('customer.login_title', 'Portal Pelanggan') %></title>
-  <meta name="description" content="Portal pelanggan internet fiber optic — masuk, cek tagihan, bayar, dan kelola WiFi Anda.">
+  <meta name="description" content="Portal de clientes de internet por fibra óptica: ingresá, consultá tus facturas y administrá tu WiFi.">
   <meta name="theme-color" content="#0A0D14">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -113,7 +113,7 @@
       <% if (error) { %>
         <div class="auth-alert err">
           <i class="bi bi-exclamation-triangle"></i>
-          <%= error === 'Nomor HP tidak valid atau belum terdaftar.' ? 'ID Pelanggan / Nomor tidak valid atau belum terdaftar.' : error %>
+          <%= error === 'Número de teléfono no válido o no registrado.' ? 'ID de cliente o número no válido o no registrado.' : error %>
         </div>
       <% } %>
 

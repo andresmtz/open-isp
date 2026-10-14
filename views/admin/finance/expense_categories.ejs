@@ -55,7 +55,7 @@
               <div class="cat-desc"><%= cat.description || 'Sin descripción' %></div>
             </div>
           </div>
-          <form method="POST" action="/admin/finance/expense-categories/<%= cat.id %>/delete" onsubmit="return confirm('Hapus kategori ini? (Pastikan tidak ada pengeluaran yang menggunakannya)')">
+          <form method="POST" action="/admin/finance/expense-categories/<%= cat.id %>/delete" onsubmit="return confirm('¿Borrar esta categoría? (Verificá que ningún gasto la use)')">
             <button class="btn btn-d btn-icon btn-sm" style="opacity:0.7"><i class="bi bi-trash"></i></button>
           </form>
         </div>

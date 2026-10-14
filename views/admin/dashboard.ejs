@@ -1029,7 +1029,7 @@ async function saveGenieACSSettings() {
       showGenieACSMessage(result.message, 'success');
       setTimeout(() => {
         closeModal('genieacsModal');
-        showToast('<%= t('admin.dash.genieacs_title','Pengaturan GenieACS') %> berhasil disimpan', 's');
+        showToast('<%= t('admin.dash.genieacs_title','Pengaturan GenieACS') %> guardado correctamente', 's');
       }, 1500);
     } else {
       showGenieACSMessage(result.message, 'danger');

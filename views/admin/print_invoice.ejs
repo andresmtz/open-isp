@@ -592,7 +592,7 @@
         <div class="card-heading">Informasi Transaksi</div>
         <div class="summary-list">
           <div class="summary-item">
-            <span class="label"><%= t('common.date','Tanggal') %> <%= isPaid ? 'Pembayaran' : 'Tagihan' %></span>
+            <span class="label"><%= t('common.date','Tanggal') %> <%= isPaid ? 'Pago' : 'Factura' %></span>
             <span class="value"><%= isPaid && invoice.paid_at ? formatDateLocal(invoice.paid_at) : getNowLocal() %></span>
           </div>
           <div class="summary-item">
@@ -722,7 +722,7 @@
     if (!btn) return;
     const oldText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<span><i class="bi bi-hourglass-split"></i></span> Mengirim...';
+    btn.innerHTML = '<span><i class="bi bi-hourglass-split"></i></span> Enviando...';
     try {
       const res = await fetch(`/admin/billing/${invoiceId}/send-pdf-wa`, {
         method: 'POST',

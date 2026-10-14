@@ -115,7 +115,7 @@
 
     <div class="card mb16">
       <div class="card-hd"><h6><i class="bi bi-send-check"></i> <%= t('admin.bc.send_title','Kirim Tagihan Sekarang (Manual — bila Auto OFF)') %></h6></div>
-      <form method="POST" action="/admin/whatsapp/send-billing-now" onsubmit="return confirm('Kirim tagihan sekarang ke pelanggan <%= t('admin.bc.unpaid','belum bayar') %>?');">
+      <form method="POST" action="/admin/whatsapp/send-billing-now" onsubmit="return confirm('¿Enviar ahora la factura al cliente <%= t('admin.bc.unpaid','con deuda') %>?');">
         <div class="card-bd">
           <div style="display:flex;gap:14px;flex-wrap:wrap">
             <div class="fg"><label class="fl"><i class="bi bi-calendar-event"></i> <%= t('admin.bc.isolir_date','Tanggal Isolir') %></label>
@@ -145,7 +145,7 @@
               </div>
             </div>
           </div>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px"><i class="bi bi-info-circle"></i><%= t('admin.bc.send_to',' Kirim ke pelanggan ') %><b><%= t('admin.bc.unpaid','belum bayar') %></b><%= t('admin.bc.on_date',' pada tanggal isolir terpilih. Gunakan ') %><b>Random</b> para que no se considere spam ni se bloquee el número.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px"><i class="bi bi-info-circle"></i><%= t('admin.bc.send_to',' Kirim ke pelanggan ') %><b><%= t('admin.bc.unpaid','con deuda') %></b><%= t('admin.bc.on_date',' pada tanggal isolir terpilih. Gunakan ') %><b>Random</b> para que no se considere spam ni se bloquee el número.</div>
         </div>
         <div class="card-bd" style="border-top:1px solid var(--border);background:var(--bg2);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
           <div id="bsResult" style="font-size:12px" class="text-muted"></div>
@@ -255,7 +255,7 @@ async function runReminderNow(btn) {
   try {
     const r = await fetch('/admin/whatsapp/run-reminder-now', { method: 'POST' });
     const j = await r.json().catch(function () { return {}; });
-    if (out) { out.textContent = j.ok ? (j.message || 'Berhasil.') : ('Falló — ' + (j.message || 'Ocurrió un error.')); out.style.color = j.ok ? 'var(--success)' : 'var(--danger)'; }
+    if (out) { out.textContent = j.ok ? (j.message || 'Listo.') : ('Falló — ' + (j.message || 'Ocurrió un error.')); out.style.color = j.ok ? 'var(--success)' : 'var(--danger)'; }
   } catch (e) {
     if (out) { out.textContent = 'Falló — ' + e.message; out.style.color = 'var(--danger)'; }
   } finally {
@@ -269,7 +269,7 @@ checkBroadcastStatus();
 
 function bsToggle(){ var m=(document.getElementById('bsMode')||{}).value; document.getElementById('bsStatic').style.display = m==='static'?'':'none'; document.getElementById('bsRandom').style.display = m==='random'?'':'none'; }
 async function bsStop(){ try{ await fetch('/admin/api/whatsapp/billing-send-stop',{method:'POST'}); }catch(e){} }
-async function bsPoll(){ try{ const r=await fetch('/admin/api/whatsapp/billing-send-status'); const s=await r.json(); const box=document.getElementById('bsProgress'); if(!s||(!s.running&&!s.total)) return; box.style.display='block'; const pct = s.total? Math.round(((s.sent+s.failed)/s.total)*100):0; document.getElementById('bsBar').style.width=pct+'%'; document.getElementById('bsProgressText').textContent=(s.running?'Mengirim…':'Selesai')+' '+s.sent+'/'+s.total+' enviados, '+s.failed+' gagal'+(s.last?(' • último: '+s.last):'')+(s.label?(' • '+s.label):''); }catch(e){} }
+async function bsPoll(){ try{ const r=await fetch('/admin/api/whatsapp/billing-send-status'); const s=await r.json(); const box=document.getElementById('bsProgress'); if(!s||(!s.running&&!s.total)) return; box.style.display='block'; const pct = s.total? Math.round(((s.sent+s.failed)/s.total)*100):0; document.getElementById('bsBar').style.width=pct+'%'; document.getElementById('bsProgressText').textContent=(s.running?'Enviando…':'Listo')+' '+s.sent+'/'+s.total+' enviados, '+s.failed+' gagal'+(s.last?(' • último: '+s.last):'')+(s.label?(' • '+s.label):''); }catch(e){} }
 setInterval(bsPoll, 3000); bsPoll();
 
 </script>

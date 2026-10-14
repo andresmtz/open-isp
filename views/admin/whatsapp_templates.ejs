@@ -262,7 +262,7 @@ function convertCurrentTemplate() {
       map2.innerHTML = '<span class="text-muted">Esta plantilla no tiene variables {{variabel}}.</span>';
     } else {
       map2.innerHTML = varMatches.map(function (v) {
-        return '<b>{{' + v.index + '}}</b> <i class="bi bi-arrow-right"></i> ' + v.name + (v.name === 'id_pelanggan' ? ' <span style="color:var(--primary)">(ID Pelanggan)</span>' : '');
+        return '<b>{{' + v.index + '}}</b> <i class="bi bi-arrow-right"></i> ' + v.name + (v.name === 'id_pelanggan' ? ' <span style="color:var(--primary)">(ID de cliente)</span>' : '');
       }).join('<br>');
     }
   }

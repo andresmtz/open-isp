@@ -269,7 +269,7 @@ async function sendTestGowa() {
         const phone = (document.getElementById('test_gowa_phone') || {}).value || '';
         const msg = (document.getElementById('test_gowa_msg') || {}).value || '';
         const resDiv = document.getElementById('test_gowa_result');
-        if (resDiv) { resDiv.style.display = 'block'; resDiv.style.color = 'var(--muted)'; resDiv.textContent = 'Mengirim...'; }
+        if (resDiv) { resDiv.style.display = 'block'; resDiv.style.color = 'var(--muted)'; resDiv.textContent = 'Enviando...'; }
         try {
           const r = await fetch('/admin/whatsapp/test-gowa', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, message: msg }) });
           const d = await r.json();
@@ -315,7 +315,7 @@ async function sendTestGowa() {
 
           if (data.success) {
             resDiv.style.color = 'var(--success)';
-            resDiv.innerHTML = '<i class="bi bi-check-circle-fill"></i> <b><%= t('common.success_excl','Berhasil!') %></b> Pesan tes telah dikirim via Fonnte. Silakan cek WhatsApp penerima.';
+            resDiv.innerHTML = '<i class="bi bi-check-circle-fill"></i> <b><%= t('common.success_excl','Listo!') %></b> Mensaje de prueba enviado por Fonnte. Revisá el WhatsApp del destinatario.';
           } else {
             resDiv.style.color = 'var(--danger)';
             resDiv.innerHTML = '<i class="bi bi-x-circle-fill"></i> <b><%= t('common.failed_colon','Gagal:') %></b> ' + (data.error || 'Ocurrió un error al contactar la API de Fonnte.');

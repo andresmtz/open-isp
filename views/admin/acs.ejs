@@ -106,7 +106,7 @@
                 <form action="/admin/acs" method="GET" class="srow">
                     <div class="sinput" style="max-width:340px">
                         <i class="bi bi-search"></i>
-                        <input class="fc" name="q" placeholder='<%= t("admin.acs.search_ph","Cari SN, Pelanggan, PPPoE...") %>' value="<%= (typeof searchQuery !== 'undefined' && searchQuery) ? searchQuery : '' %>">
+                        <input class="fc" name="q" placeholder='<%= t("admin.acs.search_ph","Buscar SN, cliente, PPPoE...") %>' value="<%= (typeof searchQuery !== 'undefined' && searchQuery) ? searchQuery : '' %>">
                     </div>
                     <select class="fs" id="acsFilter" name="acs" style="width:190px" onchange="this.form.submit()">
                         <option value="all"><%= t('admin.acs.all_servers','All ACS Servers') %></option>
@@ -722,7 +722,7 @@ async function toggleWifiFields() {
                 });
             }
         } catch (e) {
-            console.error('Gagal mengambil SSID perangkat:', e);
+            console.error('No se pudo obtener el SSID del equipo:', e);
         } finally {
             wifiLoading.style.display = 'none';
             band24Fields.style.opacity = '1';
@@ -778,7 +778,7 @@ function renderAddWanProgress(data) {
         badge.textContent = 'Hubo fallas';
     } else if (data.done) {
         badge.className = 'text-success';
-        badge.textContent = 'Selesai';
+        badge.textContent = 'Listo';
     } else {
         badge.className = 'text-warning';
         badge.textContent = 'Berjalan';
@@ -791,10 +791,10 @@ function renderAddWanProgress(data) {
         let statusLabel = 'Pending';
         if (status === 'completed') {
             statusClass = 'text-success';
-            statusLabel = 'Selesai';
+            statusLabel = 'Listo';
         } else if (status === 'failed') {
             statusClass = 'text-danger';
-            statusLabel = 'Gagal';
+            statusLabel = 'Error';
         } else if (status === 'in_progress') {
             statusClass = 'text-warning';
             statusLabel = 'Diproses';
@@ -903,7 +903,7 @@ async function openAddWanModal(deviceId, acsId, sn, manufacturer, model) {
             });
         }
     } catch (e) {
-        console.error('Gagal mengambil nama SSID:', e);
+        console.error('No se pudo obtener el nombre del WiFi:', e);
     }
 }
 

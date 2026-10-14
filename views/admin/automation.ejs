@@ -415,8 +415,8 @@
     try {
       var r = await fetch('/admin/whatsapp/run-reminder-now', { method: 'POST' });
       var j = await r.json().catch(function(){ return {}; });
-      alert(j.message || j.text || 'Selesai.');
-    } catch (e) { alert('Gagal: ' + e.message); }
+      alert(j.message || j.text || 'Listo.');
+    } catch (e) { alert('Error: ' + e.message); }
     finally { btn.disabled = false; btn.innerHTML = old; }
   }
   var auTplPrev = null;
@@ -450,7 +450,7 @@
     if (!confirm('¿Ejecutar ahora la desactivación automática? Los clientes que superen el límite de deuda serán suspendidos.')) return;
     fetch('/admin/customers/auto-deactivate-now', { method: 'POST' })
       .then(function (r) { return r.json(); })
-      .then(function (d) { alert(d.message || 'Selesai'); if (d.processed > 0) location.reload(); })
+      .then(function (d) { alert(d.message || 'Listo'); if (d.processed > 0) location.reload(); })
       .catch(function () { alert('No se pudo ejecutar la desactivación automática'); });
   };
 
@@ -475,7 +475,7 @@
       });
       var r = await fetch('/admin/automation/send-now', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() });
       var j = await r.json().catch(function(){ return {}; });
-      if (res) { res.textContent = j.ok ? (j.message || 'Berhasil.') : ('Falló — ' + (j.message || 'Ocurrió un error.')); res.style.color = j.ok ? 'var(--success)' : 'var(--danger)'; }
+      if (res) { res.textContent = j.ok ? (j.message || 'Listo.') : ('Falló — ' + (j.message || 'Ocurrió un error.')); res.style.color = j.ok ? 'var(--success)' : 'var(--danger)'; }
       if (j.ok) { document.getElementById('as_progress').style.display = 'block'; asPoll(); }
     } catch (e) {
       if (res) { res.textContent = 'Falló — ' + e.message; res.style.color = 'var(--danger)'; }
@@ -490,7 +490,7 @@
       document.getElementById('as_progress').style.display = 'block';
       var pct = s.total ? Math.round(((s.sent + s.failed) / s.total) * 100) : 0;
       document.getElementById('as_bar').style.width = pct + '%';
-      document.getElementById('as_progress_text').textContent = (s.running ? 'Mengirim…' : 'Selesai') + ' ' + s.sent + '/' + s.total + ' enviados, ' + s.failed + ' gagal' + (s.last ? (' • último: ' + s.last) : '') + (s.label ? (' • ' + s.label) : '');
+      document.getElementById('as_progress_text').textContent = (s.running ? 'Enviando…' : 'Listo') + ' ' + s.sent + '/' + s.total + ' enviados, ' + s.failed + ' con error' + (s.last ? (' • último: ' + s.last) : '') + (s.label ? (' • ' + s.label) : '');
     } catch (e) {}
   }
   setInterval(function(){ if (document.getElementById('au-manual') && document.getElementById('au-manual').classList.contains('active')) asPoll(); }, 3000);

@@ -313,7 +313,7 @@
     var notes = document.getElementById('inputNotes').value.trim();
     if (!phone || phone.length < 8) { alert('¡Ingresá un número de WhatsApp válido!'); document.getElementById('inputPhone').focus(); return; }
     var btn = document.getElementById('btnConfirm');
-    var orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Memverifikasi &amp; Mengirim WA…';
+    var orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Verificando y enviando WhatsApp…';
     try {
       var res = await fetch('/donasi/confirm', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ orderId: currentOrderId, name:name, phone:phone, amount:currentAmount, notes:notes }) });
       var data = await res.json();

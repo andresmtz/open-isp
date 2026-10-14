@@ -365,7 +365,7 @@
                   <td class="mono" style="color:var(--info)">#TK-<%= t.id %></td>
                   <td><%= t.subject %></td>
                   <td class="muted"><%= t.created_at %></td>
-                  <td><span class="badge <%= t.status === 'open' ? 'bw' : (t.status === 'in_progress' ? 'bi2' : 'bs') %>" style="font-size:10px"><%= t.status === 'open' ? 'TERKIRIM' : (t.status === 'in_progress' ? 'DIPROSES' : 'SELESAI') %></span></td>
+                  <td><span class="badge <%= t.status === 'open' ? 'bw' : (t.status === 'in_progress' ? 'bi2' : 'bs') %>" style="font-size:10px"><%= t.status === 'open' ? 'ENVIADO' : (t.status === 'in_progress' ? 'EN PROCESO' : 'LISTO') %></span></td>
                 </tr>
               <% }); %>
             </tbody>
@@ -604,18 +604,18 @@
       if (j && j.ok) {
         if (kind==='ssid') {
           var v=String(fd.get('ssid')||''); var val=document.querySelector('.wifi-val'); if(val) val.textContent=v;
-          wifiStatus('success','Berhasil','Nombre del WiFi enviado. El cambio se aplica en 1 a 5 minutos. Espere y no repita la solicitud.');
+          wifiStatus('success','Listo','Nombre del WiFi enviado. El cambio se aplica en 1 a 5 minutos. Espere y no repita la solicitud.');
           startSsidCooldown(300);
         } else {
-          wifiStatus('success','Berhasil', j.message || 'Cambios guardados.');
+          wifiStatus('success','Listo', j.message || 'Cambios guardados.');
         }
       } else if (j && j.cooldown) {
         wifiStatus('error','Espere un momento', j.message || 'Espere antes de volver a cambiarlo.');
         if (j.retryAfter) startSsidCooldown(j.retryAfter);
       } else {
-        wifiStatus('error','Gagal', (j && j.message) || 'Ocurrió un error. Intente de nuevo.');
+        wifiStatus('error','Error', (j && j.message) || 'Ocurrió un error. Intente de nuevo.');
       }
-    }catch(e){ wifiStatus('error','Gagal','No se pudo contactar al servidor. Revise su conexión.'); }
+    }catch(e){ wifiStatus('error','Error','No se pudo contactar al servidor. Revise su conexión.'); }
   }
   document.addEventListener('DOMContentLoaded', function(){
     var f1=document.querySelector('#editSsidModal form'); if(f1) f1.addEventListener('submit',function(e){e.preventDefault();submitWifiForm(f1,'ssid');});
@@ -660,7 +660,7 @@
   async function sendInvoiceWa(invId, btn) {
     if (!invId) return;
     const old = btn ? btn.innerHTML : '';
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Mengirim...'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...'; }
     try {
       const r = await fetch('/customer/invoice/' + invId + '/send-pdf-wa', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
       const j = await r.json().catch(function(){ return {}; });
@@ -741,10 +741,10 @@
     var container = document.getElementById('notifListContainer'); if (!container) return;
     var notifs = [];
     <% if (paidInvoices && paidInvoices.length > 0) { paidInvoices.slice(0,3).forEach(function(inv){ var pAmt = inv.amount != null ? inv.amount : (inv.package_price != null ? inv.package_price : 0); %>
-      notifs.push({ type:'payment', title:'Pago recibido', message:'Tagihan bulan <%= inv.period_month %>/<%= inv.period_year %> sebesar <%= APP_CUR %> <%= parseInt(pAmt || 0).toLocaleString(APP_LOCALE) %> telah LUNAS.', time:'Confirmado por el sistema' });
+      notifs.push({ type:'payment', title:'Pago recibido', message:'Factura del mes <%= inv.period_month %>/<%= inv.period_year %> por <%= APP_CUR %> <%= parseInt(pAmt || 0).toLocaleString(APP_LOCALE) %> está PAGADA.', time:'Confirmado por el sistema' });
     <% }); } %>
     <% if (hasUnpaid) { var uAmt = latestUnpaid.amount != null ? latestUnpaid.amount : (latestUnpaid.package_price != null ? latestUnpaid.package_price : 0); %>
-      notifs.push({ type:'warning', title:'Recordatorio de factura mensual', message:'Tagihan bulan <%= latestUnpaid.period_month %>/<%= latestUnpaid.period_year %> sebesar <%= APP_CUR %> <%= parseInt(uAmt || 0).toLocaleString(APP_LOCALE) %> menunggu pembayaran.', time:'Jatuh Tempo Tgl 20' });
+      notifs.push({ type:'warning', title:'Recordatorio de factura mensual', message:'Factura del mes <%= latestUnpaid.period_month %>/<%= latestUnpaid.period_year %> por <%= APP_CUR %> <%= parseInt(uAmt || 0).toLocaleString(APP_LOCALE) %> está pendiente de pago.', time:'Jatuh Tempo Tgl 20' });
     <% } %>
     var badge = document.getElementById('notifCountBadge');
     if (badge && notifs.length > 0) { badge.innerText = notifs.length; badge.style.display = 'flex'; }

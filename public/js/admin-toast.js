@@ -148,7 +148,7 @@
       var html = a.innerHTML.replace(/^\s*<i[^>]*>\s*<\/i>\s*/i, '').trim();
       a.style.display = 'none';
       (function (tp, h) {
-        var title = tp === 'success' ? 'Berhasil' : tp === 'error' ? 'Gagal' : tp === 'warning' ? 'Perhatian' : 'Info';
+        var title = tp === 'success' ? 'Listo' : tp === 'error' ? 'Error' : tp === 'warning' ? 'Atención' : 'Info';
         // tampilkan overlay langsung (aksi sudah selesai setelah redirect)
         window.notify(tp, title, h);
       })(type, html);
@@ -163,7 +163,7 @@
       var low = t.toLowerCase();
       var isErr = /gagal|error|tidak |invalid|tidak valid|kosong|forbidden|ditolak|harus|wajib|salah|exception|kedaluwarsa|tidak ditemukan|not found|401|403|500/.test(low);
       var type = isErr ? 'error' : 'success';
-      window.notify(type, isErr ? 'Gagal' : 'Berhasil', t.replace(/\n/g, '<br>'));
+      window.notify(type, isErr ? 'Error' : 'Listo', t.replace(/\n/g, '<br>'));
     } catch (e) { try { _nativeAlert(msg); } catch (_) { } }
   };
 
@@ -176,7 +176,7 @@
       if (f.getAttribute('target') === '_blank') return;
       if (f.hasAttribute('data-no-loading')) return;
       if (e.defaultPrevented) return;
-      window.notifyLoading(f.getAttribute('data-loading') || 'Menyimpan perubahan…', 'Mohon tunggu');
+      window.notifyLoading(f.getAttribute('data-loading') || 'Guardando cambios…', 'Espere por favor');
     } catch (_) { }
   }, false);
 

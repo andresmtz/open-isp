@@ -197,7 +197,7 @@
       if (data.uniqueCode && data.uniqueCode > 0) {
         var base = Number(data.nominalAsli || (Number(data.amount) - Number(data.uniqueCode)));
         uniqueBadge.style.display = 'block';
-        uniqueBadge.innerHTML = 'Tagihan: ' + APP_CUR + ' ' + base.toLocaleString(APP_LOCALE)
+        uniqueBadge.innerHTML = 'Factura: ' + APP_CUR + ' ' + base.toLocaleString(APP_LOCALE)
           + ' + Código único: ' + APP_CUR + ' ' + Number(data.uniqueCode).toLocaleString(APP_LOCALE)
           + ' = <b>' + APP_CUR + ' ' + Number(data.amount).toLocaleString(APP_LOCALE) + '</b>';
       } else { uniqueBadge.style.display = 'none'; }

@@ -878,8 +878,8 @@ window.regenPwaIcons = function (btn) {
   var old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Procesando...';
   fetch('/admin/settings/regenerate-icons', { method: 'POST' })
     .then(function (r) { return r.json().catch(function () { return {}; }); })
-    .then(function (d) { alert((d && d.message) || 'Selesai'); })
-    .catch(function (e) { alert('Gagal: ' + e.message); })
+    .then(function (d) { alert((d && d.message) || 'Listo'); })
+    .catch(function (e) { alert('Error: ' + e.message); })
     .finally(function () { btn.disabled = false; btn.innerHTML = old; });
 };
 
@@ -887,7 +887,7 @@ window.runAutoDeactivate = function () {
   if (!confirm('¿Ejecutar ahora la desactivación automática? Los clientes que superen el límite de deuda serán suspendidos.')) return;
   fetch('/admin/customers/auto-deactivate-now', { method: 'POST' })
     .then(function (r) { return r.json(); })
-    .then(function (d) { alert(d.message || 'Selesai'); if (d.processed > 0) location.reload(); })
+    .then(function (d) { alert(d.message || 'Listo'); if (d.processed > 0) location.reload(); })
     .catch(function () { alert('No se pudo ejecutar la desactivación automática'); });
 };
 
@@ -902,7 +902,7 @@ async function syncTelegram() {
     const res = await fetch('/admin/api/telegram/sync', { method: 'POST' });
     const data = await res.json();
     if (data.success) alert(data.message);
-    else alert('Gagal: ' + data.error);
+    else alert('Error: ' + data.error);
   } catch (e) { alert('Error: ' + e.message); }
 }
 
@@ -961,7 +961,7 @@ function updateNotifHint() {
   const perm = canNotify() ? Notification.permission : 'unsupported';
   const enabled = notifEnabled();
   let msg = '';
-  if (perm === 'unsupported') msg = 'Notifikasi browser tidak didukung di device ini.';
+  if (perm === 'unsupported') msg = 'Este dispositivo no admite notificaciones del navegador.';
   else if (perm === 'denied') msg = 'Notifikasi diblokir. Izinkan di pengaturan browser.';
   else if (perm === 'granted') msg = enabled ? 'Notif aktif. Notifikasi muncul saat ada log baru (mode Live).' : 'Notif siap, tapi masih nonaktif.';
   else msg = 'Hacé clic en "Activar avisos" para pedir permiso de notificaciones.';

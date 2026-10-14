@@ -1977,7 +1977,7 @@
   /* ═══════ Confirm modal (generic) ═══════ */
   let confirmCallback = null;
   function openConfirm(opts) {
-    document.getElementById('confirm-title').textContent = opts.title || 'Konfirmasi';
+    document.getElementById('confirm-title').textContent = opts.title || 'Confirmar';
     document.getElementById('confirm-message').textContent = opts.message || '';
     document.getElementById('confirm-action-btn').textContent = opts.actionText || 'Ya, Lanjutkan';
     confirmCallback = opts.onConfirm || null;
@@ -2301,7 +2301,7 @@ window.__PORTAL__ = <%- portalJson %>;
       ov.classList.toggle('error', !ok);
       var _om = document.getElementById('onu-modal'); if (_om) _om.classList.remove('open');
       ov.classList.add('done'); ico.innerHTML='<i class="'+(ok?'ph-fill ph-check-circle':'ph-fill ph-x-circle')+'"></i>';
-      txt.textContent=(res && res.message) || (ok?o.success:'<%= t('common.failed','Gagal') %>') || 'Selesai';
+      txt.textContent=(res && res.message) || (ok?o.success:'<%= t('common.failed','Error') %>') || 'Listo';
       setTimeout(function(){
         ov.classList.remove('show'); if (typeof busy !== 'undefined') busy=false;
         if (o.onDone) { try { o.onDone(); } catch(e) {} }

@@ -150,7 +150,7 @@
               <input type="hidden" name="month" value="<%= selectedMonth %>"><input type="hidden" name="year" value="<%= selectedYear %>">
               <button type="submit" class="btn btn-s btn-sm"><i class="bi bi-cash-coin"></i> Marcar todos como pagados</button>
             </form>
-            <form method="POST" action="/admin/payroll/delete-drafts" style="display:inline" onsubmit="return confirm('Hapus semua slip draft? Ini tidak bisa dikembalikan.')">
+            <form method="POST" action="/admin/payroll/delete-drafts" style="display:inline" onsubmit="return confirm('¿Borrar todos los recibos en borrador? No se puede deshacer.')">
               <input type="hidden" name="month" value="<%= selectedMonth %>"><input type="hidden" name="year" value="<%= selectedYear %>">
               <button type="submit" class="btn btn-d btn-sm"><i class="bi bi-trash"></i> Eliminar borradores</button>
             </form>
@@ -276,7 +276,7 @@ function editDeduction(id){
   if(amount===null) return;
   const note = prompt('Detalle del descuento:','');
   fetch('/admin/payroll/slip/'+id+'/deduction',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({other_deduction:amount,other_deduction_note:note||''})})
-    .then(r=>r.json()).then(d=>{if(d.success){alert(' Berhasil');location.reload()}else alert(' '+d.message)}).catch(e=>alert('Error: '+e.message));
+    .then(r=>r.json()).then(d=>{if(d.success){alert(' Listo');location.reload()}else alert(' '+d.message)}).catch(e=>alert('Error: '+e.message));
 }
 
 function sendSlipWA(id){

@@ -22,9 +22,9 @@
     return 'sn-badge-normal';
   }
   function titleOf() {
-    if (n.mode === 'GANGGUAN_MASAL') return 'Status layanan: Gangguan Masal' + (n.estimateText ? ' \u00b7 estimasi selesai ' + n.estimateText : '');
-    if (n.mode === 'PERBAIKAN') return 'Status layanan: Perbaikan Sistem' + (n.estimateText ? ' \u00b7 estimasi selesai ' + n.estimateText : '');
-    return 'Status layanan: Normal (tidak ada gangguan)';
+    if (n.mode === 'GANGGUAN_MASAL') return 'Estado del servicio: falla masiva' + (n.estimateText ? ' \u00b7 fin estimado ' + n.estimateText : '');
+    if (n.mode === 'PERBAIKAN') return 'Estado del servicio: mantenimiento' + (n.estimateText ? ' \u00b7 fin estimado ' + n.estimateText : '');
+    return 'Estado del servicio: normal (sin inconvenientes)';
   }
 
   function makeBadge() {

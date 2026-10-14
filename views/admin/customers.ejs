@@ -350,14 +350,14 @@
                 <% } %>
                 <% if (typeof session !== 'undefined' && session && !session.isCashier) { %>
                 <% if (c.package_id && (c.package_promo_cycles || 0) > 0) { %>
-                <form id="rpc-<%= c.id %>" method="POST" action="/admin/customers/<%= c.id %>/billing/reset-promo-cycles" style="display:none" onsubmit="return confirm('Reset counter siklus promo untuk pelanggan ini? Tagihan berikutnya akan memakai harga promo lagi sesuai pengaturan paket.')"></form>
+                <form id="rpc-<%= c.id %>" method="POST" action="/admin/customers/<%= c.id %>/billing/reset-promo-cycles" style="display:none" onsubmit="return confirm('¿Reiniciar el contador de ciclos de promoción de este cliente? La próxima factura usará otra vez el precio promocional del plan.')"></form>
                 <% } %>
                 <% if (c.package_id && c.install_date && c.package_prorate_first_invoice) { %>
-                <form id="ipr-<%= c.id %>" method="POST" action="/admin/customers/<%= c.id %>/billing/install-prorata" style="display:none" onsubmit="return confirm('Buat tagihan SUSULAN prorata untuk bulan tanggal pasang? Hanya jika belum ada tagihan periode itu. Dasar harga: reguler (bukan promo).')"></form>
+                <form id="ipr-<%= c.id %>" method="POST" action="/admin/customers/<%= c.id %>/billing/install-prorata" style="display:none" onsubmit="return confirm('¿Crear la factura PRORRATEADA del mes de instalación? Solo si no existe factura de ese período. Precio base: normal (no promoción).')"></form>
                 <% } %>
                 <% } %>
                 <% if (!c.pppoe_username) { %>
-                <form id="gpp-<%= c.id %>" method="POST" action="/admin/customers/<%= c.id %>/generate-pppoe" style="display:none" onsubmit="return confirm('Generate akun PPPoE untuk pelanggan ini?')"></form>
+                <form id="gpp-<%= c.id %>" method="POST" action="/admin/customers/<%= c.id %>/generate-pppoe" style="display:none" onsubmit="return confirm('¿Generar la cuenta PPPoE de este cliente?')"></form>
                 <% } %>
                 <form id="del-<%= c.id %>" method="POST" action="/admin/customers/<%= c.id %>/delete" style="display:none" data-confirm-msg=<%- JSON.stringify(t('admin.customers.confirm_delete', 'Hapus pelanggan ini?')).split('<').join('\\u003c') %> onsubmit="return confirm(this.dataset.confirmMsg)"></form>
                 <div class="act">
@@ -1174,7 +1174,7 @@
     </div>
     <div class="mf vd-foot">
       <button type="button" class="btn btn-g" onclick="closeModal('viewDetailModal')"><%= t('admin.cust.close','Tutup') %></button>
-      <form id="v_disconnect_form" method="POST" action="" style="display:inline" onsubmit="return confirm('Apakah Anda yakin ingin MEMUTUS koneksi aktif pelanggan ini dari MikroTik?')">
+      <form id="v_disconnect_form" method="POST" action="" style="display:inline" onsubmit="return confirm('¿Seguro que querés DESCONECTAR la sesión activa de este cliente en el MikroTik?')">
         <button type="submit" class="btn vd-danger"><i class="bi bi-power"></i> <%= t('admin.cust.disconnect_mt','Putus Sesi MikroTik') %></button>
       </form>
     </div>
@@ -1990,7 +1990,7 @@ function syncAllCust() {
   fetch('/admin/customers/sync-all-mikrotik', { method: 'POST' })
     .then(function (r) { return r.json(); })
     .then(function (d) { alert(d.message || 'Dimulai'); })
-    .catch(function (e) { alert('Gagal: ' + e.message); });
+    .catch(function (e) { alert('Error: ' + e.message); });
 }
 
 function loadOdpPorts(scope){

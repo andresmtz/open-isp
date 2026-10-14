@@ -820,7 +820,7 @@ async function rebootConfiguredOnu(oltId, index) {
       alert('¡Orden de reinicio enviada!');
       scanConfiguredONUs();
     } else {
-      alert('Gagal: ' + data.error);
+      alert('Error: ' + data.error);
     }
   } catch (error) {
     alert('Error: ' + error.message);
@@ -843,7 +843,7 @@ async function renameConfiguredOnu(oltId, index, oldName) {
       alert('¡Nombre de la ONU actualizado!');
       scanConfiguredONUs();
     } else {
-      alert('Gagal: ' + data.error);
+      alert('Error: ' + data.error);
     }
   } catch (error) {
     alert('Error: ' + error.message);
@@ -868,7 +868,7 @@ async function deleteConfiguredOnu(index, sn) {
       alert('¡ONU eliminada!');
       scanConfiguredONUs();
     } else {
-      alert('Gagal: ' + data.error);
+      alert('Error: ' + data.error);
     }
   } catch (error) {
     alert('Error: ' + error.message);

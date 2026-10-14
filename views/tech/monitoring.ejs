@@ -440,7 +440,7 @@ document.getElementById('btn-submit-action').addEventListener('click', async fun
       actionModal.hide();
       setTimeout(loadDevices, 2000);
     } else {
-      alert('Gagal: ' + (result.error || result.message || 'Terjadi kesalahan'));
+      alert('Error: ' + (result.error || result.message || 'Ocurrió un error'));
     }
   } catch (e) {
     alert('Error: ' + e.message);
@@ -527,7 +527,7 @@ async function toggleWifiFields() {
                 });
             }
         } catch (e) {
-            console.error('Gagal mengambil SSID perangkat:', e);
+            console.error('No se pudo obtener el SSID del equipo:', e);
         } finally {
             wifiLoading.style.display = 'none';
             band24Fields.style.opacity = '1';
@@ -587,7 +587,7 @@ async function openAddWanModal(deviceId, acsId, sn, manufacturer, model) {
             });
         }
     } catch (e) {
-        console.error('Gagal mengambil nama SSID:', e);
+        console.error('No se pudo obtener el nombre del WiFi:', e);
     }
 }
 

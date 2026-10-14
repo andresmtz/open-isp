@@ -2978,6 +2978,22 @@ router.get('/payment/create/:invoiceId', async (req, res) => {
       throw new Error('Acceso no permitido');
     }
 
+    // Sin pasarela de pago configurada (Paraguay: QRIS no aplica): mostrar monto, formas de pago y envío de comprobante
+    const _bal = Math.max(0, Number(inv.amount || 0) - Number(inv.amount_paid || 0));
+    if (!resolveConfiguredGatewayForAmount(settings, _bal)) {
+      const _reg = require('../config/regional');
+      const _wa = String(settings.company_phone || settings.company_whatsapp || '').trim();
+      return res.render('pago_manual', {
+        company: settings.company_header || 'ISP',
+        customerName: profile.name || '',
+        period: `${String(inv.period_month).padStart(2, '0')}/${inv.period_year}`,
+        amount: Number(inv.amount || 0), paid: Number(inv.amount_paid || 0), balance: _bal,
+        paymentInfo: String(settings.corte_payment_info || ''),
+        waDigits: _wa ? _reg.normalizePhone(_wa) : '',
+        backUrl: loginId ? '/customer/dashboard' : '/isolated',
+      });
+    }
+
     const methodRaw = String(req.query.method || 'QRIS').toUpperCase();
 
     const force = String(req.query.force || '').toLowerCase() === '1' || String(req.query.force || '').toLowerCase() === 'true';

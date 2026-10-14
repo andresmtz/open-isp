@@ -613,6 +613,14 @@
           <h6 style="font-size:13px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px"><i class="bi bi-wallet2"></i> Configuración de pasarela de pago</h6>
           
           <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+            <h6 style="font-size:12px; margin-bottom: 10px;"><i class="bi bi-cash-coin"></i> Formas de pago (lo que ven tus clientes)</h6>
+            <textarea class="fc" name="corte_payment_info" rows="14" placeholder="Giros, billeteras, cuentas bancarias, pago en oficina…"><%= settings.corte_payment_info || '' %></textarea>
+            <div style="font-size:10px; color:var(--muted); margin-top:4px">Se muestra en el botón <b>Pagar ahora</b> del portal de clientes, en la <b>pantalla de corte</b> y en los mensajes de WhatsApp que usan <code>{{pago}}</code>. El cliente envía el comprobante por WhatsApp y el pago se registra en <b>Clientes → Cobrar</b>.</div>
+          </div>
+
+          <details style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+            <summary style="cursor:pointer;font-size:12px;font-weight:700">Pasarelas automáticas (QRIS de Indonesia y otras) — no aplican en Paraguay</summary>
+          <div style="margin-top:12px">
             <h6 style="font-size:12px; margin-bottom: 10px;">QR estático (semiautomático)</h6>
             <div class="form-row3">
               <div class="fg">
@@ -837,6 +845,7 @@
             <div style="font-size: 10px; color: var(--muted); margin-top: 4px;">Pegalo en el panel de Mayar como URL del webhook (evento <span class="mono">payment.received</span>).</div>
           </div>
         </div>
+          </details>
 
       </div>
       

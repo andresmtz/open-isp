@@ -115,8 +115,8 @@
       </div>
 
       <!-- RINGKASAN BILLING -->
-      <div class="dash-sec-title"><i class="bi bi-receipt"></i> <%= t('admin.dashboard.billing_summary','Ringkasan Billing') %></div>
       <% if (typeof billing !== 'undefined' && billing) { %>
+      <div class="dash-sec-title"><i class="bi bi-receipt"></i> <%= t('admin.dashboard.billing_summary','Ringkasan Billing') %></div>
       <div class="stat-grid">
         <div class="sc s" style="cursor:pointer" onclick="location.href='/admin/billing'">
           <i class="bi bi-cash-stack sc-icon"></i>

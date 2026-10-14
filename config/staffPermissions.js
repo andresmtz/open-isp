@@ -19,7 +19,6 @@ const BASE = [
   ['GET', '^/api/stats$'],
   ['GET|POST', '^/logout$'],
   ['GET', '^/set-active-router$'],
-  ['GET', '^/packages$'],
   ['GET', '^/areas$'],
   ['GET|POST', '^/cashiers/attendance(/checkin|/checkout)?$'],
 ];
@@ -34,8 +33,9 @@ const CATALOG = [
     ['GET', `^/api/odps/${ID}/ports$`],
     ['GET', '^/onu-stickers$'],
   ] },
-  { key: 'ver_facturas', label: 'Ver facturas y deudas', help: 'Facturas, deuda de cada cliente, imprimir facturas. Solo consulta.', def: true, rules: [
+  { key: 'ver_facturas', label: 'Ver montos: facturas, deudas y precios', help: 'Facturas, deuda y saldo de cada cliente, precios de los planes, imprimir facturas. Sin este permiso no ve ningún monto. Solo consulta.', def: true, rules: [
     ['GET', '^/billing$'],
+    ['GET', '^/packages$'],
     ['GET', `^/billing/${ID}/(pdf|print|print-thermal)$`],
     ['GET', `^/api/billing/unpaid/${ID}$`],
     ['GET', `^/api/customers/${ID}/(billing-year|paid-months)$`],
@@ -173,4 +173,12 @@ function guard(req, res, next) {
   return res.redirect(req.method === 'GET' && req.path === '/' ? '/admin/logout' : '/admin');
 }
 
-module.exports = { CATALOG, BASE, current, save, allows, has, isStaff, guard };
+// Campos con montos que se quitan de los datos enviados a la página si no tiene permiso de ver montos
+const MONEY_FIELDS = ['package_price', 'unpaid_balance', 'unpaid_count', 'credit_balance', 'carry_over', 'balance',
+  'reg_install_fee', 'reg_prorata', 'reg_discount', 'reg_total', 'price', 'promo_price', 'amount', 'amount_paid'];
+function redactMoney(session, rows) {
+  if (has(session, 'ver_facturas') || !Array.isArray(rows)) return rows;
+  return rows.map(r => { const o = { ...r }; for (const f of MONEY_FIELDS) delete o[f]; return o; });
+}
+
+module.exports = { CATALOG, BASE, current, save, allows, has, isStaff, guard, redactMoney };

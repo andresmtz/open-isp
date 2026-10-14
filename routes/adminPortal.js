@@ -1716,7 +1716,7 @@ router.get('/customers', requireAdminSession, requireSidebarMenuAccess('customer
 
   res.render('admin/customers', {
     title: 'Datos del cliente', company: company(), activePage: 'customers',
-    customers, stats, packages, routers, olts, odps, collectors, areas, masterAreas, activeSessionsMap, search, filterStatus, filterArea, selectedRouterId,
+    customers: staffPerms.redactMoney(req.session, customers), stats, packages: staffPerms.redactMoney(req.session, packages), routers, olts, odps, collectors, areas, masterAreas, activeSessionsMap, search, filterStatus, filterArea, selectedRouterId,
     filterPackage, filterCollector, filterOlt, filterConn, filterBilling, filterAuto, msg: flashMsg(req),
     settings: getSettings()
   });

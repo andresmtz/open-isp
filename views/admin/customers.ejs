@@ -261,7 +261,7 @@
               <td>
                 <% if (c.package_name) { %>
                   <div style="font-weight:600;"><%= c.package_name %></div>
-                  <div style="font-size:11px;color:var(--muted)"><%= (c.speed_down/1000).toFixed(0) %>/<%= (c.speed_up/1000).toFixed(0) %> Mbps &bull; <%= APP_CUR %> <%= c.package_price ? c.package_price.toLocaleString(APP_LOCALE) : '-' %></div>
+                  <div style="font-size:11px;color:var(--muted)"><%= (c.speed_down/1000).toFixed(0) %>/<%= (c.speed_up/1000).toFixed(0) %> Mbps<% if (c.package_price !== undefined) { %> &bull; <%= APP_CUR %> <%= c.package_price ? c.package_price.toLocaleString(APP_LOCALE) : '-' %><% } %></div>
                   <% if (c.package_billing_type === 'prepaid' || c.expired_at) { %>
                     <% 
                       const expDateStr = c.expired_at ? String(c.expired_at).slice(0, 10) : '-';
@@ -326,7 +326,7 @@
                 <% } else { %><span class="badge bm"><%= t('admin.customers.filter.inactive', 'Nonaktif') %></span><% } %>
                 <% if (c.status === 'inactive' && (c.reg_total || c.reg_due_date || c.reg_voucher_code)) { %>
                   <div style="font-size:10px;margin-top:4px;color:var(--muted)">
-                    <i class="bi bi-calculator"></i> Est: <b style="color:var(--primary)"><%= APP_CUR %> <%= Number(c.reg_total||0).toLocaleString(APP_LOCALE) %></b>
+                    <% if (c.reg_total !== undefined) { %><i class="bi bi-calculator"></i> Est: <b style="color:var(--primary)"><%= APP_CUR %> <%= Number(c.reg_total||0).toLocaleString(APP_LOCALE) %></b><% } %>
                     <% if (c.reg_due_date) { %> • JT <%= c.reg_due_date %><% } %>
                     <% if (c.reg_voucher_code) { %> • <i class="bi bi-ticket-perforated"></i> <%= c.reg_voucher_code %><% } %>
                   </div>
@@ -490,7 +490,7 @@
               <select class="fs" name="package_id" required>
                 <option value=""><%= t('tech.cc.ph_pkg','-- Pilih Paket --') %></option>
                 <% packages.forEach(p => { %>
-                <option value="<%= p.id %>"><%= p.name %> — <%= APP_CUR %> <%= p.price.toLocaleString(APP_LOCALE) %></option>
+                <option value="<%= p.id %>"><%= p.name %><% if (p.price !== undefined) { %> — <%= APP_CUR %> <%= p.price.toLocaleString(APP_LOCALE) %><% } %></option>
                 <% }) %>
               </select>
             </div>
@@ -792,7 +792,7 @@
               <select class="fs" name="package_id" id="e_package" required>
                 <option value=""><%= t('tech.cc.ph_pkg','-- Pilih Paket --') %></option>
                 <% packages.forEach(p => { %>
-                <option value="<%= p.id %>"><%= p.name %> — <%= APP_CUR %> <%= p.price.toLocaleString(APP_LOCALE) %></option>
+                <option value="<%= p.id %>"><%= p.name %><% if (p.price !== undefined) { %> — <%= APP_CUR %> <%= p.price.toLocaleString(APP_LOCALE) %><% } %></option>
                 <% }) %>
               </select>
             </div>
@@ -1391,7 +1391,7 @@ function viewCustDetail(idx) {
     if (document.getElementById('v_nik')) document.getElementById('v_nik').textContent = c.nik || '-';
     if (document.getElementById('v_phone')) document.getElementById('v_phone').textContent = c.phone || '-';
     if (document.getElementById('v_address_area')) document.getElementById('v_address_area').textContent = (c.address || '-') + (c.area ? ` [Area: ${c.area}]` : '');
-    if (document.getElementById('v_package')) document.getElementById('v_package').textContent = c.package_name ? `${c.package_name} (${APP_CUR} ${Number(c.package_price||0).toLocaleString(APP_LOCALE)})` : '-';
+    if (document.getElementById('v_package')) document.getElementById('v_package').textContent = c.package_name ? (c.package_price !== undefined ? `${c.package_name} (${APP_CUR} ${Number(c.package_price||0).toLocaleString(APP_LOCALE)})` : c.package_name) : '-';
     if (document.getElementById('v_expired_at')) {
       if (c.package_billing_type === 'prepaid' || c.expired_at) {
         const expStr = c.expired_at ? String(c.expired_at).slice(0, 10) : '-';

@@ -247,7 +247,26 @@
           <div class="card-bd">
             <div class="fg"><label class="fl">Cómo pagar (texto que ve el cliente cortado)</label>
               <textarea class="fc" name="corte_payment_info" rows="5" placeholder="Ej.: Transferencia a Banco X, cuenta 123456, a nombre de ...&#10;Giros Tigo al 09xx xxx xxx&#10;Pago en oficina de lunes a sábado"><%= getSetting('corte_payment_info','') %></textarea>
-              <div class="hint">Se muestra junto con las facturas pendientes, la dirección y el botón de WhatsApp del negocio. Página: <code>/isolated</code> (el MikroTik redirige allí a los clientes de la lista de corte).</div>
+              <div class="hint">Se muestra junto con las facturas pendientes, la dirección y el botón de WhatsApp del negocio. Página: <code>/isolated</code> (el MikroTik redirige allí a los clientes de la lista de corte). En los mensajes de WhatsApp este texto se inserta con <code>{{pago}}</code>.</div>
+              <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+                <% if (cutPreviewId) { %><a class="btn btn-g btn-sm" target="_blank" href="/isolated?preview=<%= cutPreviewId %>"><i class="bi bi-eye"></i> Ver como un cliente cortado</a><% } %>
+                <a class="btn btn-g btn-sm" target="_blank" href="/isolated?preview=0"><i class="bi bi-eye"></i> Ver versión sin identificar</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card mb16">
+          <div class="card-hd"><h6><i class="bi bi-whatsapp"></i> Aviso de deuda a clientes cortados</h6></div>
+          <div class="card-bd">
+            <div class="hint" style="margin-bottom:10px">Se envía por WhatsApp a los clientes <b>cortados</b> con deuda, cada cierta cantidad de días, hasta que paguen o se cancelen. Los cancelados nunca reciben mensajes. El primero sale después de esa cantidad de días desde el aviso de corte. Hoy corresponde enviarlo a <b><%= cutNoticeDue %></b> cliente(s).</div>
+            <div class="form-row">
+              <div class="fg"><label class="fl">Estado</label><select class="fs" name="cut_debt_notice_enabled"><option value="false" <%= !cutNotice.enabled?'selected':'' %>>Desactivado</option><option value="true" <%= cutNotice.enabled?'selected':'' %>>Activado</option></select></div>
+              <div class="fg"><label class="fl">Cada cuántos días</label><input class="fc" type="number" min="1" max="60" name="cut_debt_notice_days" value="<%= cutNotice.days %>"></div>
+              <div class="fg"><label class="fl">Hora de envío</label><input class="fc" type="number" min="0" max="23" name="cut_debt_notice_hour" value="<%= cutNotice.hour %>"></div>
+            </div>
+            <div class="fg" style="margin-top:10px"><label class="fl">Mensaje</label>
+              <textarea class="fc" name="cut_debt_message" rows="12"><%= cutDebtMessage %></textarea>
+              <div class="hint">Variables: {{nama}} nombre · {{tagihan}} total adeudado · {{moneda}} · {{rincian}} períodos · {{rincian_detail}} detalle por período · {{pago}} formas de pago · {{paket}} plan · {{link}} portal · {{company}}. Texto al azar: {Hola|Buenas}.</div>
             </div>
           </div>
         </div>

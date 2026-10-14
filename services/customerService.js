@@ -779,6 +779,7 @@ async function suspendCustomer(id) {
             .replace(/{{periode}}/gi, displayPeriode || '-')
             .replace(/{{company}}/gi, getSetting('company_header', '') || '-')
             .replace(/{{company_phone}}/gi, getSetting('company_phone', '') || '-')
+            .replace(/{{pago}}/gi, String(getSetting('corte_payment_info', '') || '').trim() || 'Comuníquese con nosotros para coordinar el pago.')
             .replace(/{{link}}/gi, loginLink);
 
           if (summary.isMultiple && !template.includes('{{periode}}') && !template.includes('{{rincian}}')) {
@@ -790,7 +791,9 @@ async function suspendCustomer(id) {
             }
           }
 
-          await waNotify.sendText(customer.phone, formattedMsg);
+          const _sent = await waNotify.sendText(customer.phone, formattedMsg);
+          // El aviso periódico a cortados cuenta desde este aviso de corte
+          if (_sent) { try { require('./cutDebtNoticeService').markNotified(customer.id); } catch (_) {} }
         }
       }
     } catch (waErr) {

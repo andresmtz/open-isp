@@ -145,6 +145,9 @@ async function runAutoBillingReminder() {
     const targetCustomers = [];
     const seenPhones = new Set();
     for (const c of customers) {
+      // Recordatorio previo al corte: solo clientes con servicio (activos o con promesa).
+      // Los cortados reciben el aviso de deuda periódico; los cancelados no reciben mensajes.
+      if (!['active', 'ditangguhkan'].includes(String(c.status || ''))) continue;
       const phone = c.phone ? String(c.phone).trim() : '';
       if (!phone || phone.length < 9) continue;
       let digits = phone.replace(/\D/g, '');
@@ -375,6 +378,7 @@ async function runAutoBillingReminder() {
 function startCronJobs() {
   try { require('./paymentReversalService').ensureSchema(); } catch (e) { logger.error('[CRON] Esquema de cobros: ' + e.message); }
   try { require('./networkQueueService').ensureSchema(); } catch (e) { logger.error('[CRON] Esquema de cola de red: ' + e.message); }
+  try { require('./cutDebtNoticeService').ensureSchema(); } catch (e) {}
   try { promiseSvc.ensureSchema(); } catch (e) { logger.error('[CRON] Esquema de promesas: ' + e.message); }
   // 1. Emisión automática de facturas según el ciclo configurado (día/hora/período en Configuración).
   //    Corre cada hora; solo actúa el día de emisión a partir de la hora fijada (idempotente).
@@ -414,6 +418,12 @@ function startCronJobs() {
       if (r && (r.done || r.failed)) logger.info(`[CRON] Cola de red: ${r.done} aplicadas, ${r.retry} a reintentar, ${r.failed} agotadas.`);
     } catch (e) { logger.error('[CRON] Cola de red: ' + e.message); }
     finally { _netqBusy = false; }
+  });
+
+  // Aviso de deuda periódico a clientes cortados: se evalúa cada hora (minuto 30) y envía a la hora configurada.
+  cron.schedule('30 * * * *', async () => {
+    if (inMigrationMode('aviso de deuda a cortados', true)) return;
+    try { await require('./cutDebtNoticeService').run(); } catch (e) { logger.error('[CRON] Aviso a cortados: ' + e.message); }
   });
 
   // 2. Corte automático: cada hora. Corta a quien tenga una factura impaga cuyo momento de corte

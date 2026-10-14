@@ -13,7 +13,7 @@
  *   {{company}} empresa · {{company_phone}} teléfono de la empresa
  *   {{bulan_nunggak}} meses adeudados · {{batas}} límite de meses
  *   {{no_invoice}} N.º de factura · {{waktu}} fecha/hora · {{metode}} forma de pago
- *   {{penerima}} cobrado por
+ *   {{penerima}} cobrado por · {{pago}} formas de pago (Configuración del ciclo → Pantalla de corte)
  * Texto alternativo al azar: {Hola|Buenas} elige una opción en cada envío.
  */
 
@@ -106,6 +106,20 @@ Detalle de su deuda: {{link}}
 Ante cualquier consulta, estamos a su disposición.
 — {{company}}`,
 
+  whatsapp_cut_debt_message:
+`{Hola|Buenas}, *{{nama}}* 👋
+
+Le recordamos que su servicio de internet sigue *suspendido* por una deuda pendiente:
+
+💰 *Total adeudado:* {{moneda}} {{tagihan}}
+📅 *Períodos:* {{rincian}}
+
+*Formas de pago:*
+{{pago}}
+
+Al registrar su pago, el servicio se rehabilita. Si ya pagó, envíenos el comprobante por este medio.
+— {{company}}`,
+
   whatsapp_autolunas_message:
 `✅ *Factura saldada*
 
@@ -146,6 +160,7 @@ const LABELS = {
   whatsapp_billing_qris_message: 'Factura con QR',
   whatsapp_payment_success_message: 'Comprobante de pago',
   whatsapp_isolir_message: 'Aviso de corte',
+  whatsapp_cut_debt_message: 'Aviso de deuda a cortados (periódico)',
   whatsapp_arrears_warning_message: 'Aviso de deuda',
   whatsapp_autolunas_message: 'Factura saldada automáticamente',
   whatsapp_deactivated_message: 'Baja por deuda',

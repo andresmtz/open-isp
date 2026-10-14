@@ -4431,6 +4431,10 @@ router.get('/automation', requireAdminSession, requireSidebarMenuAccess('automat
     getSetting, autoBillingMsg, selectedTplKey, billingTemplates: _bsvc.TEMPLATE_LABELS, runs: runs, isolateDays: isolateDays,
     cycle: require('../config/billingCycle').get(), cyclePreview: require('../config/billingCycle').preview(),
     netQueue: require('../services/networkQueueService').list({ includeDone: false }),
+    cutPreviewId: (db.prepare("SELECT id FROM customers WHERE status='suspended' ORDER BY id LIMIT 1").get() || {}).id || null,
+    cutNotice: require('../services/cutDebtNoticeService').config(),
+    cutNoticeDue: (function () { try { return require('../services/cutDebtNoticeService').due().length; } catch (e) { return 0; } })(),
+    cutDebtMessage: db.getAppSetting('whatsapp_cut_debt_message', require('../config/waTemplates').getDefault('whatsapp_cut_debt_message')),
     netQueueRecent: require('../services/networkQueueService').list({ includeDone: true, limit: 20 })
   });
 });
@@ -4447,6 +4451,14 @@ router.post('/automation/billing-cycle', requireAdminSession, requireMainAdmin, 
   try {
     const next = require('../config/billingCycle').sanitize(req.body);
     if (req.body && typeof req.body.corte_payment_info === 'string') next.corte_payment_info = req.body.corte_payment_info.replace(/\r/g, '').trim().slice(0, 1500);
+    if (req.body && req.body.cut_debt_notice_enabled !== undefined) {
+      next.cut_debt_notice_enabled = req.body.cut_debt_notice_enabled === 'true';
+      next.cut_debt_notice_days = Math.min(60, Math.max(1, parseInt(req.body.cut_debt_notice_days, 10) || 7));
+      next.cut_debt_notice_hour = Math.min(23, Math.max(0, parseInt(req.body.cut_debt_notice_hour, 10) || 10));
+    }
+    if (req.body && typeof req.body.cut_debt_message === 'string' && req.body.cut_debt_message.trim()) {
+      db.saveAppSetting('whatsapp_cut_debt_message', req.body.cut_debt_message.replace(/\r/g, '').trim().slice(0, 2000));
+    }
     saveSettings(next);
     req.session._msg = { type: 'success', text: 'Ciclo de facturación guardado.' };
   } catch (e) {

@@ -1274,6 +1274,12 @@ app.get('/login', (req, res) => {
 // (socket). No se aceptan búsquedas por teléfono/ID ni el encabezado X-Forwarded-For, para que
 // nadie pueda ver la deuda de otro cliente.
 async function identifyCutCustomer(req) {
+  // Vista previa para el panel: /isolated?preview=<id de cliente> (preview=0 → versión sin identificar)
+  if (req.session && (req.session.isAdmin || req.session.isCashier) && req.query && req.query.preview !== undefined) {
+    const pid = parseInt(req.query.preview, 10);
+    const c = pid > 0 ? customerSvc.getCustomerById(pid) : null;
+    return { customer: c ? Object.assign({}, c, { status: 'suspended' }) : null, via: 'preview' };
+  }
   if (req.session && req.session.phone) {
     const c = customerSvc.findCustomerByAny(req.session.phone);
     if (c) return { customer: c, via: 'session' };

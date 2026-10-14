@@ -230,6 +230,8 @@ async function run({ dryRun = true, invoicesMonths = 12, source = null } = {}) {
         const fields = ['name', 'phone', 'nik', 'email', 'address', 'lat', 'lng', 'package_id', 'pppoe_username', 'pppoe_password', 'pppoe_remote_address', 'mac_address', 'status', 'install_date'];
         // No pisar datos cargados a mano en Open-ISP con valores vacíos de WispHub
         const changes = fields.filter(f => data[f] !== '' && data[f] !== null && String(existing[f] ?? '') !== String(data[f]));
+        // Un cliente con promesa de pago vigente figura 'Activo' en WispHub: conservar el estado de promesa
+        if (existing.status === 'ditangguhkan' && data.status === 'active') { const k = changes.indexOf('status'); if (k >= 0) changes.splice(k, 1); }
         if (existing.wisphub_id == null) changes.push('wisphub_id');
         if (!changes.length) { report.customers.unchanged++; continue; }
         report.customers.updated++;

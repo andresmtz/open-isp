@@ -228,6 +228,7 @@ function payInvoicesForCustomerMonths(customerId, year, months, paidByName, note
         amount = computed;
         if (bump) bumpPromo.run(cid);
       }
+      require('./paymentReversalService').recordPayment(invoiceId, paidByName || 'Admin');
       payInv.run(paidByName || 'Admin', notes || '', invoiceId);
       summary.paidMonths.push(m);
       summary.totalAmount += (Number.isFinite(amount) ? amount : 0);
@@ -396,6 +397,7 @@ function markAsPaid(invoiceId, paidByName, notes, actor = null) {
     finalNotes = finalNotes ? `${finalNotes} | ${notes}` : notes;
   }
 
+  require('./paymentReversalService').recordPayment(invId, paidByName || 'Admin');
   const result = db.prepare(`
     UPDATE invoices SET status='paid', paid_at=NOW_LOCAL(), paid_by_name=?, notes=? WHERE id=? AND status != 'paid'
   `).run(paidByName || 'Admin', finalNotes, invId);
@@ -718,6 +720,7 @@ function autoPayInvoiceIfNeeded(invoiceId, customer, amount, existingNotes) {
   if (!reasons.length) return null;
   const note = `AUTO-LUNAS: ${reasons.join(' / ')} (verifikasi sistem)`;
   const finalNotes = existingNotes ? `${existingNotes} | ${note}` : note;
+  require('./paymentReversalService').recordPayment(invoiceId, 'Sistema (automático)');
   const res = db.prepare(`UPDATE invoices SET status='paid', paid_at=NOW_LOCAL(), paid_by_name=?, notes=? WHERE id=? AND status='unpaid'`).run('Sistema (automático)', finalNotes, invoiceId);
   if (!res.changes) return null;
   try { db.prepare("UPDATE customers SET unpaid_streak=0, deactivate_cause='', deactivated_at=NULL WHERE id=?").run(customer.id); } catch (e) {}
@@ -753,6 +756,7 @@ function autoLunasUnpaidForCustomer(customerId, opts = {}) {
     if (!reasons.length) continue;
     const note = 'AUTO-LUNAS:' + reasons.join(' / ') + ' (verifikasi sistem)';
     const finalNotes = inv.notes ? (inv.notes + ' | ' + note) : note;
+    require('./paymentReversalService').recordPayment(inv.id, 'Sistem (Auto)');
     const r = db.prepare("UPDATE invoices SET status='paid', paid_at=NOW_LOCAL(), paid_by_name='Sistem (Auto)', notes=? WHERE id=? AND status='unpaid'").run(finalNotes, inv.id);
     if (r.changes) items.push({ id: inv.id, amount: Number(inv.amount || 0), period: inv.period_month + '/' + inv.period_year });
   }

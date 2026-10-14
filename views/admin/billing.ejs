@@ -227,7 +227,7 @@
                       <% if (inv.customer_phone) { %>
                       <button type="button" class="act-item" onclick="sendInvoicePdfWa('<%= inv.id %>', this)"><i class="bi bi-file-earmark-arrow-up"></i> Enviar factura PDF (WhatsApp)</button>
                       <% } %>
-                      <button type="submit" form="upa-<%= inv.id %>" class="act-item warn"><i class="bi bi-arrow-counterclockwise"></i> <%= t('admin.bill.btn_revert','Batalkan Lunas') %></button>
+                      <% if (typeof session === 'undefined' || !session || !session.isCashier) { %><button type="button" class="act-item warn" data-id="<%= inv.id %>" onclick="annulPayment(+this.dataset.id)"><i class="bi bi-arrow-counterclockwise"></i> Anular pago</button><% } %>
                     <%}%>
                     <div class="act-sep"></div>
                     <button type="submit" form="iso-<%= inv.id %>" class="act-item warn"><i class="bi bi-wifi-off"></i> Cortar servicio</button>
@@ -554,6 +554,28 @@ document.querySelectorAll('.disc-btn').forEach(function(btn){
 updateBulkUi();
 
 setTimeout(()=>document.querySelectorAll('.alert').forEach(a=>a.style.display='none'),5000);
+
+// Anular pago con reversión completa del estado del cliente
+async function annulPayment(id) {
+  try {
+    const pr = await (await fetch('/admin/billing/' + id + '/annul-preview', { headers: { Accept: 'application/json' } })).json();
+    if (!pr.ok) { alert(pr.message || 'No se pudo preparar la anulación.'); return; }
+    const money = (typeof fmtMoney === 'function') ? fmtMoney(pr.invoice.amount) : pr.invoice.amount;
+    let msg = 'ANULAR PAGO — ' + pr.customer.name + '\n\n'
+      + 'Factura ' + pr.invoice.period + ': ' + money + '\nPagada ' + (pr.invoice.paid_at || '') + ' por ' + (pr.invoice.paid_by || '-') + '\n\n'
+      + 'La factura vuelve a PENDIENTE.\nEstado del cliente: ' + pr.currentLabel + ' → ' + pr.targetLabel
+      + (pr.networkChange ? '  (se aplica en el MikroTik)' : '') + '\n';
+    if (pr.warnings && pr.warnings.length) msg += '\nATENCIÓN:\n' + pr.warnings.map(w => ' • ' + w).join('\n') + '\n';
+    msg += '\nEscribí el motivo para confirmar:';
+    const reason = prompt(msg, '');
+    if (reason === null) return;
+    if (reason.trim().length < 3) { alert('El motivo es obligatorio.'); return; }
+    const r = await fetch('/admin/billing/' + id + '/annul', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ reason: reason.trim() }) });
+    const j = await r.json();
+    alert(j.message || (j.ok ? 'Listo.' : 'Error'));
+    if (j.ok) location.reload();
+  } catch (e) { alert('Error: ' + e.message); }
+}
 </script>
 </body>
 </html>

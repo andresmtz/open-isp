@@ -3146,13 +3146,27 @@ router.post('/billing/:id/pay', requireAdminSession, express.urlencoded({ extend
   res.redirect('back');
 });
 
-router.post('/billing/:id/unpay', requireAdminSession, (req, res) => {
+// Anular pago: vista previa (estado al que vuelve el cliente + advertencias) y anulación con reversión completa
+router.get('/billing/:id/annul-preview', requireAdminSession, (req, res) => {
+  if (req.session.isCashier) return res.status(403).json({ ok: false, message: 'Solo el administrador puede anular pagos.' });
+  try { res.json({ ok: true, ...require('../services/paymentReversalService').preview(Number(req.params.id)) }); }
+  catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
+router.post('/billing/:id/annul', requireAdminSession, express.json(), async (req, res) => {
+  if (req.session.isCashier) return res.status(403).json({ ok: false, message: 'Solo el administrador puede anular pagos.' });
   try {
-    billingSvc.markAsUnpaid(req.params.id);
-    req.session._msg = { type: 'success', text: 'Pago anulado: la factura volvió a pendiente.' };
-  } catch (e) {
-    req.session._msg = { type: 'error', text: 'Error:' + e.message };
-  }
+    const r = await require('../services/paymentReversalService').annul(Number(req.params.id), {
+      reason: req.body && req.body.reason,
+      actor: { type: 'admin', name: req.session.adminUser || 'admin', ip: req.ip }
+    });
+    res.json({ ...r, message: `Pago anulado. La factura volvió a pendiente y el cliente quedó: ${r.restoredLabel} (${r.network}).` });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
+router.post('/billing/:id/unpay', requireAdminSession, (req, res) => {
+  // Reemplazado por /billing/:id/annul (con motivo y reversión del estado del cliente)
+  req.session._msg = { type: 'error', text: 'Usá "Anular pago" para revertir un cobro.' };
   res.redirect('back');
 });
 

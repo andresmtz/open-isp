@@ -712,6 +712,8 @@ const parseFixedTable = (text, firstHeader) => {
   const rows = [];
   let cols = null;
   for (const line of lines) {
+    // Otra tabla o el prompt: termina la tabla actual
+    if ((line.startsWith('ONU-ID') && !line.startsWith(firstHeader)) || /[#>]\s*$/.test(line)) { cols = null; continue; }
     if (line.startsWith(firstHeader)) {
       cols = [];
       const re = /\S+(?: \S+)*/g; let m;
@@ -737,9 +739,9 @@ const fetchVsolEponViaTelnet = async (olt) => {
   const status = parseFixedTable(clean, 'ONU-ID      Status');
   const opm = parseFixedTable(clean, 'ONU-ID      Temperature');
   const byId = new Map();
-  for (const a of auth) byId.set(a['ONU-ID'], { id: a['ONU-ID'], mac: a['MAC  Address'] || a['MAC Address'] || '', name: a['Description'] || '', type: a['Type'] || '', status: a['Status'] || '', auth: a['Authflag'] || '' });
+  for (const a of auth) byId.set(a['ONU-ID'], { id: a['ONU-ID'], mac: a['MAC'] || '', name: a['Description'] || '', type: a['Type'] || '', status: a['Status'] || '', auth: a['Authflag'] || '' });
   for (const s of status) {
-    const r = byId.get(s['ONU-ID']) || { id: s['ONU-ID'], name: '', mac: s['MAC  Address'] || '' };
+    const r = byId.get(s['ONU-ID']) || { id: s['ONU-ID'], name: '', mac: s['MAC'] || '' };
     r.status = s['Status'] || r.status;
     r.distance = s['Distance(m)'];
     r.lastDereg = s['LastDeregTime'];

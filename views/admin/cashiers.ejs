@@ -84,7 +84,7 @@
       </div>
       <div class="card-bd">
         <p style="font-size:13px;color:var(--muted);margin:0 0 12px">
-          Siempre puede: ver el panel (sin ingresos), consultar clientes y facturas, imprimir, ver planes y zonas, y su propio reporte de cobros.
+          Siempre puede: ver el panel (sin ingresos), los planes, las zonas y marcar su asistencia. Lo demás depende de lo que marques abajo.
           Nunca puede: configuración, automatización, respaldos, MikroTik/OLT (cambios), usuarios, cancelar clientes, anular pagos, ajustar saldo a favor ni borrar nada.
           Todo lo que hace queda registrado con su nombre.
         </p>
@@ -92,8 +92,9 @@
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px">
             <% permCatalog.forEach(function (p) { %>
               <label style="display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">
-                <input type="checkbox" name="<%= p.key %>" value="1" <%= perms[p.key] ? 'checked' : '' %> style="margin-top:3px">
-                <span><strong style="font-size:13px"><%= p.label %></strong><br><span style="font-size:12px;color:var(--muted)"><%= p.help %></span></span>
+                <input type="checkbox" name="<%= p.key %>" value="1" <%= perms[p.key] ? 'checked' : '' %> data-needs="<%= (p.needs || []).join(',') %>" class="perm-cb" style="margin-top:3px">
+                <span><strong style="font-size:13px"><%= p.label %></strong><br><span style="font-size:12px;color:var(--muted)"><%= p.help %></span>
+                <% if ((p.needs || []).length) { %><br><span style="font-size:11px;color:var(--muted)">Incluye: <%= p.needs.map(function (n) { var x = permCatalog.find(function (q) { return q.key === n; }); return x ? x.label : n; }).join(', ') %></span><% } %></span>
               </label>
             <% }) %>
           </div>
@@ -153,6 +154,15 @@
 const I18N = {
   confirmDeleteCashier: "<%= t('admin.cashiers.confirm_delete', 'Hapus kasir ini?') %>"
 };
+
+// Al marcar un permiso se marcan los que necesita; al desmarcar uno, se desmarcan los que dependen de él
+document.querySelectorAll('.perm-cb').forEach(function (cb) {
+  cb.addEventListener('change', function () {
+    var all = Array.prototype.slice.call(document.querySelectorAll('.perm-cb'));
+    if (cb.checked) (cb.dataset.needs || '').split(',').filter(Boolean).forEach(function (n) { var d = document.querySelector('.perm-cb[name="' + n + '"]'); if (d) d.checked = true; });
+    else all.forEach(function (o) { if (o.checked && (o.dataset.needs || '').split(',').indexOf(cb.name) !== -1) o.checked = false; });
+  });
+});
 
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }

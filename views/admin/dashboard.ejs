@@ -46,6 +46,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+<% var _can = (typeof can === 'function') ? can : function () { return true; }; var _adm = !(typeof session !== 'undefined' && session && session.isCashier); %>
 <%- include('partials/sidebar', { activePage: activePage || 'dashboard', company }) %>
 
 <div class="mw">
@@ -72,9 +73,11 @@
       <button class="tab-btn active" id="tab-dash" onclick="showTab('dashboard')">
         <i class="bi bi-speedometer2"></i><%= t('admin.nav.dashboard', 'Dashboard') %>
       </button>
+      <% if (_can('red_ver')) { %>
       <button class="tab-btn" id="tab-mon" onclick="showTab('monitoring')">
         <i class="bi bi-router"></i><%= t('admin.dashboard.monitoring_onu', 'Monitoring ONU') %>
       </button>
+      <% } %>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════ -->
@@ -151,17 +154,19 @@
           <div class="card-bd" style="height:260px"><canvas id="revenueChart"></canvas></div>
         </div>
         <% } %>
+        <% if (_adm || _can('clientes_alta') || _can('facturar') || _can('finanzas') || _can('red_ver')) { %>
         <div class="card" style="margin:0">
           <div class="card-hd"><h6><i class="bi bi-lightning-charge"></i> <%= t('admin.dashboard.quick_actions','Aksi Cepat') %></h6></div>
           <div class="card-bd quick-actions-grid">
-            <a href="/admin/customers" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-person-plus" style="font-size:20px;color:var(--primary)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_add_customer','Tambah Pelanggan') %></span></a>
-            <a href="/admin/billing" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-receipt" style="font-size:20px;color:var(--warning)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_create_invoice','Buat Tagihan') %></span></a>
-            <a href="/admin/packages" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-box-seam" style="font-size:20px;color:var(--success)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_manage_packages','Kelola Paket') %></span></a>
-            <a href="/admin/whatsapp/broadcast" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-megaphone" style="font-size:20px;color:var(--info)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_broadcast','Broadcast WA') %></span></a>
-            <a href="/admin/reports" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-bar-chart-line" style="font-size:20px;color:var(--primary)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_reports','Laporan') %></span></a>
-            <button class="btn btn-g" onclick="showTab('monitoring')" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-router" style="font-size:20px;color:var(--danger)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_monitor_onu','Monitor ONU') %></span></button>
+            <% if (_can('clientes_alta')) { %><a href="/admin/customers" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-person-plus" style="font-size:20px;color:var(--primary)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_add_customer','Tambah Pelanggan') %></span></a><% } %>
+            <% if (_can('facturar')) { %><a href="/admin/billing" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-receipt" style="font-size:20px;color:var(--warning)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_create_invoice','Buat Tagihan') %></span></a><% } %>
+            <% if (_adm) { %><a href="/admin/packages" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-box-seam" style="font-size:20px;color:var(--success)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_manage_packages','Kelola Paket') %></span></a><% } %>
+            <% if (_adm) { %><a href="/admin/whatsapp/broadcast" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-megaphone" style="font-size:20px;color:var(--info)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_broadcast','Broadcast WA') %></span></a><% } %>
+            <% if (_can('finanzas')) { %><a href="/admin/reports" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-bar-chart-line" style="font-size:20px;color:var(--primary)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_reports','Laporan') %></span></a><% } %>
+            <% if (_can('red_ver')) { %><button class="btn btn-g" onclick="showTab('monitoring')" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-router" style="font-size:20px;color:var(--danger)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_monitor_onu','Monitor ONU') %></span></button><% } %>
           </div>
         </div>
+        <% } %>
       </div>
 
       <!-- STATUS JARINGAN (ONU) -->

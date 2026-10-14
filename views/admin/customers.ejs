@@ -233,7 +233,7 @@
               <th><%= t('admin.cust.f_mikrotik_conn','Koneksi MikroTik') %></th>
               <th><%= t('admin.customers.table.address', 'Alamat') %></th>
               <th><%= t('admin.customers.table.status', 'Status') %></th>
-              <th><%= t('admin.customers.table.unpaid', 'Tagihan Belum Bayar') %></th>
+<% if (_can('ver_facturas')) { %><th><%= t('admin.customers.table.unpaid', 'Tagihan Belum Bayar') %></th><% } %>
               <th><%= t('admin.customers.table.actions', 'Aksi') %></th>
             </tr>
           </thead>
@@ -338,13 +338,13 @@
                   </span>
                 </div>
               </td>
-              <td class="text-center">
+              <% if (_can('ver_facturas')) { %><td class="text-center">
                 <% if (c.unpaid_count > 0) { %>
                   <span class="badge bd"><%= c.unpaid_count %> <%= t('admin.customers.unpaid_suffix', 'tagihan') %></span>
                   <div style="font-size:11px;margin-top:3px;font-weight:700"><%= fmtMoney(c.unpaid_balance || 0) %></div>
                 <% } else { %><span class="text-muted" style="font-size:12px"><%= t('admin.customers.paid_label', 'Lunas') %></span><% } %>
                 <% if (Number(c.credit_balance || 0) > 0) { %><div style="font-size:11px;margin-top:3px;color:#10b981" title="Saldo a favor"><i class="bi bi-piggy-bank"></i> <%= fmtMoney(c.credit_balance) %></div><% } %>
-              </td>
+              </td><% } %>
               <td style="white-space:nowrap">
                 <% if (c.status === 'inactive') { %>
                 <form id="rej-<%= c.id %>" method="POST" action="/admin/registrations/<%= c.id %>/reject" style="display:none" onsubmit="return confirm('Tolak pendaftar ini?')"></form>

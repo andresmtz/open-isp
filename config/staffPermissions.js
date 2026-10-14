@@ -13,40 +13,48 @@ const { getSetting, saveSettings } = require('./settingsManager');
 
 const ID = '\\d+';
 
-// Lo mínimo para trabajar: panel, consulta de clientes, facturas, planes, zonas, su asistencia y su reporte.
+// Lo mínimo para trabajar: panel (sin ingresos), planes, zonas y su asistencia.
 const BASE = [
   ['GET', '^/$'],
   ['GET', '^/api/stats$'],
   ['GET|POST', '^/logout$'],
   ['GET', '^/set-active-router$'],
-  ['GET', '^/customers$'],
-  ['GET', `^/customers/${ID}/(payment-info|promise-preview|sticker-onu)$`],
-  ['GET', `^/api/customers/${ID}/(billing-year|paid-months|pppoe-traffic)$`],
-  ['GET', '^/api/customers/live-sessions$'],
-  ['GET', `^/api/odps/${ID}/ports$`],
-  ['GET', '^/onu-stickers$'],
-  ['GET', '^/billing$'],
-  ['GET', `^/billing/${ID}/(pdf|print|print-thermal)$`],
-  ['GET', `^/api/billing/unpaid/${ID}$`],
   ['GET', '^/packages$'],
   ['GET', '^/areas$'],
   ['GET|POST', '^/cashiers/attendance(/checkin|/checkout)?$'],
-  ['GET', '^/cashiers/reports$'],
 ];
 
+// `needs`: al habilitar un permiso se habilitan también estos (no se puede cobrar sin ver clientes y facturas).
 const CATALOG = [
-  { key: 'cobrar', label: 'Cobrar y registrar pagos', help: 'Cobrar a clientes (pago total o parcial) y marcar facturas como pagadas.', def: true, rules: [
+  { key: 'ver_clientes', label: 'Ver clientes', help: 'Lista y ficha de clientes, conexión, consumo y etiquetas de ONU. Solo consulta.', def: true, rules: [
+    ['GET', '^/customers$'],
+    ['GET', `^/customers/${ID}/sticker-onu$`],
+    ['GET', `^/api/customers/${ID}/pppoe-traffic$`],
+    ['GET', '^/api/customers/live-sessions$'],
+    ['GET', `^/api/odps/${ID}/ports$`],
+    ['GET', '^/onu-stickers$'],
+  ] },
+  { key: 'ver_facturas', label: 'Ver facturas y deudas', help: 'Facturas, deuda de cada cliente, imprimir facturas. Solo consulta.', def: true, rules: [
+    ['GET', '^/billing$'],
+    ['GET', `^/billing/${ID}/(pdf|print|print-thermal)$`],
+    ['GET', `^/api/billing/unpaid/${ID}$`],
+    ['GET', `^/api/customers/${ID}/(billing-year|paid-months)$`],
+    ['GET', `^/customers/${ID}/payment-info$`],
+  ] },
+  { key: 'cobrar', label: 'Cobrar y registrar pagos', help: 'Cobrar a clientes (pago total o parcial), marcar facturas como pagadas y ver su propio reporte de cobros.', def: true, needs: ['ver_clientes', 'ver_facturas'], rules: [
+    ['GET', '^/cashiers/reports$'],
     ['POST', `^/customers/${ID}/(receive|billing/pay)$`],
     ['POST', `^/billing/${ID}/pay$`],
     ['POST', '^/billing/pay-bulk$'],
   ] },
-  { key: 'enviar_facturas', label: 'Enviar facturas y comprobantes por WhatsApp', help: 'Botones de enviar factura o comprobante a un cliente.', def: true, rules: [
+  { key: 'enviar_facturas', label: 'Enviar facturas y comprobantes por WhatsApp', help: 'Botones de enviar factura o comprobante a un cliente.', def: true, needs: ['ver_facturas'], rules: [
     ['POST', `^/billing/${ID}/(whatsapp|send-pdf-wa)$`],
   ] },
-  { key: 'promesas', label: 'Dar promesas de pago', help: 'Respeta el máximo de días y de promesas por mes de Automatización.', def: true, rules: [
+  { key: 'promesas', label: 'Dar promesas de pago', help: 'Respeta el máximo de días y de promesas por mes de Automatización.', def: true, needs: ['ver_clientes', 'ver_facturas'], rules: [
+    ['GET', `^/customers/${ID}/promise-preview$`],
     ['POST', `^/customers/${ID}/promise$`],
   ] },
-  { key: 'clientes_alta', label: 'Agregar y editar clientes', help: 'Alta de clientes nuevos (crea el usuario PPPoE en el MikroTik), edición de datos y aprobación de solicitudes.', def: true, rules: [
+  { key: 'clientes_alta', label: 'Agregar y editar clientes', help: 'Alta de clientes nuevos (crea el usuario PPPoE en el MikroTik), edición de datos y aprobación de solicitudes.', def: true, needs: ['ver_clientes'], rules: [
     ['POST', '^/customers$'],
     ['POST', `^/customers/${ID}/(update|generate-pppoe)$`],
     ['POST', `^/registrations/${ID}/(approve|reject)$`],
@@ -59,6 +67,8 @@ const CATALOG = [
   ] },
   { key: 'mapa', label: 'Ver mapa de red', help: 'Solo consulta.', def: true, rules: [
     ['GET', '^/map$'],
+    ['GET', '^/api/customers/live-sessions$'],
+    ['GET', `^/api/odps/${ID}/ports$`],
     ['GET', `^/api/customers/${ID}/cable-path$`],
   ] },
   { key: 'whatsapp_chat', label: 'Chat de WhatsApp con clientes', help: 'Leer y responder conversaciones desde el número de la empresa. No incluye envíos masivos ni la configuración.', def: false, rules: [
@@ -66,10 +76,10 @@ const CATALOG = [
     ['GET', '^/api/whatsapp/(conversations|messages)$'],
     ['POST', '^/api/whatsapp/send-direct$'],
   ] },
-  { key: 'corte_manual', label: 'Cortar y reactivar manualmente', help: 'Botones de cortar, reactivar, desconectar y sincronizar con el MikroTik.', def: false, rules: [
+  { key: 'corte_manual', label: 'Cortar y reactivar manualmente', help: 'Botones de cortar, reactivar, desconectar y sincronizar con el MikroTik.', def: false, needs: ['ver_clientes'], rules: [
     ['POST', `^/customers/${ID}/(isolate|unisolate|disconnect|sync-mikrotik)$`],
   ] },
-  { key: 'facturar', label: 'Generar facturas y aplicar descuentos', help: 'Emitir facturas fuera del ciclo automático y aplicar descuentos.', def: false, rules: [
+  { key: 'facturar', label: 'Generar facturas y aplicar descuentos', help: 'Emitir facturas fuera del ciclo automático y aplicar descuentos.', def: false, needs: ['ver_clientes', 'ver_facturas'], rules: [
     ['POST', `^/customers/${ID}/billing/generate$`],
     ['POST', '^/billing/generate$'],
     ['POST', `^/billing/${ID}/discount$`],
@@ -80,13 +90,13 @@ const CATALOG = [
     ['GET', '^/reports(/export-csv|/pdf|/print)?$'],
     ['GET|POST', '^/finance/(cash-in|expenses)$'],
   ] },
-  { key: 'cobradores', label: 'Aprobar cobros de cobradores', help: 'Aprobar o rechazar lo que cargan los cobradores y conciliar pagos sin identificar.', def: false, rules: [
+  { key: 'cobradores', label: 'Aprobar cobros de cobradores', help: 'Aprobar o rechazar lo que cargan los cobradores y conciliar pagos sin identificar.', def: false, needs: ['ver_facturas'], rules: [
     ['GET', '^/collector-payments$'],
     ['POST', `^/collector-payments/${ID}/(approve|reject)$`],
     ['GET', '^/payment-unmatched$'],
     ['POST', `^/payment-unmatched/${ID}/(match|dismiss)$`],
   ] },
-  { key: 'exportar', label: 'Exportar el listado de clientes', help: 'Descargar la base de clientes en archivo.', def: false, rules: [
+  { key: 'exportar', label: 'Exportar el listado de clientes', help: 'Descargar la base de clientes en archivo.', def: false, needs: ['ver_clientes'], rules: [
     ['GET', '^/customers/export$'],
   ] },
   { key: 'inventario', label: 'Inventario', help: 'Ver y cargar stock (no borrar categorías).', def: false, rules: [
@@ -112,15 +122,22 @@ function current() {
   if (typeof stored === 'string') { try { stored = JSON.parse(stored); } catch (_) { stored = null; } }
   const out = {};
   for (const p of CATALOG) {
-    const v = stored && Object.prototype.hasOwnProperty.call(stored, p.key) ? stored[p.key] : p.def;
+    // Permisos nuevos que no estaban cuando el admin guardó: quedan apagados (nunca se otorga acceso sin que lo marque)
+    const v = stored && typeof stored === 'object' ? (Object.prototype.hasOwnProperty.call(stored, p.key) ? stored[p.key] : false) : p.def;
     out[p.key] = v === true || v === 'true' || v === 1 || v === '1' || v === 'on';
   }
+  return withNeeds(out);
+}
+
+function withNeeds(out) {
+  for (const p of CATALOG) if (out[p.key]) for (const n of (p.needs || [])) out[n] = true;
   return out;
 }
 
 function save(input) {
   const out = {};
   for (const p of CATALOG) out[p.key] = !!(input && (input[p.key] === true || input[p.key] === 'on' || input[p.key] === '1' || input[p.key] === 'true'));
+  withNeeds(out);
   saveSettings({ staff_permissions: out });
   return out;
 }

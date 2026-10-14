@@ -664,9 +664,43 @@ function customerIsolationIp(c) {
   return String((c && (c.pppoe_remote_address || c.static_ip)) || '').trim();
 }
 
+/**
+ * IP para la lista de corte. Si no está guardada, se busca en el MikroTik (IP fija del secret PPPoE o,
+ * si no tiene, la de su sesión activa) y se guarda en el cliente. Sin esto, cortar/reactivar caía en
+ * "cambiar perfil" y el cliente quedaba en la lista de corte después de pagar.
+ */
+async function resolveIsolationIp(customer, effectiveRouterId) {
+  const known = customerIsolationIp(customer);
+  if (known || !customer || !customer.pppoe_username) return known;
+  let conn = null;
+  try {
+    const mikrotikSvc = require('./mikrotikService');
+    conn = await mikrotikSvc.getConnection(effectiveRouterId || null);
+    const sec = (await conn.api.send(['/ppp/secret/print', `?name=${customer.pppoe_username}`]))[0] || {};
+    let ip = String(sec['remote-address'] || '').trim();
+    if (!ip) {
+      const act = (await conn.api.send(['/ppp/active/print', `?name=${customer.pppoe_username}`]))[0] || {};
+      ip = String(act.address || '').trim();
+      if (ip) return ip; // IP dinámica: se usa ahora pero no se guarda
+    }
+    if (ip) {
+      db.prepare("UPDATE customers SET pppoe_remote_address = ? WHERE id = ? AND COALESCE(pppoe_remote_address,'') = ''").run(ip, customer.id);
+      customer.pppoe_remote_address = ip;
+      logger.info(`[corte] ${customer.name}: IP ${ip} tomada del MikroTik y guardada en el cliente`);
+    }
+    return ip;
+  } catch (e) {
+    logger.warn(`[corte] No se pudo obtener la IP de ${customer.name} desde el MikroTik: ${e.message}`);
+    return '';
+  } finally {
+    try { if (conn && conn.api) conn.api.close(); } catch (_) {}
+  }
+}
+
 /** Aplica en el MikroTik el corte del cliente. Lanza error si el router falla. */
 async function applySuspendNetwork(customer, effectiveRouterId) {
   const mikrotikSvc = require('./mikrotikService');
+  if (isolationMethod() === 'address_list' && customer.connection_type !== 'hotspot') await resolveIsolationIp(customer, effectiveRouterId);
   if (isolationMethod() === 'address_list' && customerIsolationIp(customer) && customer.connection_type !== 'hotspot') {
     const r = await mikrotikSvc.addToIsolationList(customerIsolationIp(customer), `${customer.name || ''} | ${customer.pppoe_username || ''}`.trim(), effectiveRouterId);
     logger.info(`[suspendCustomer] ${customer.name}: IP ${r.address} ${r.already ? 'ya estaba' : 'agregada'} en la lista "${r.list}"`);
@@ -825,6 +859,7 @@ function _handleUnsuspendInvoice(id, customer, wasSuspended, targetStatus) {
 /** Aplica en el MikroTik el rehabilitación del cliente. Lanza error si el router falla. */
 async function applyActivateNetwork(customer, effectiveRouterId) {
   const mikrotikSvc = require('./mikrotikService');
+  if (isolationMethod() === 'address_list' && customer.connection_type !== 'hotspot') await resolveIsolationIp(customer, effectiveRouterId);
   if (isolationMethod() === 'address_list' && customerIsolationIp(customer) && customer.connection_type !== 'hotspot') {
     const r = await mikrotikSvc.removeFromIsolationList(customerIsolationIp(customer), effectiveRouterId);
     logger.info(`[activateCustomer] ${customer.name}: IP ${customerIsolationIp(customer)} quitada de la lista de corte (${r.removed || 0})`);

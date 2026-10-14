@@ -181,6 +181,9 @@ function routerContextMiddleware(req, res, next) {
   next();
 }
 
+// Personal de oficina: solo lo que el administrador habilitó (denegar por defecto)
+const staffPerms = require('../config/staffPermissions');
+router.use(staffPerms.guard);
 router.use(routerContextMiddleware);
 
 router.get('/set-active-router', requireAdminSession, (req, res) => {
@@ -529,6 +532,7 @@ async function createVoucherBatchAsync(batchId) {
 // Global locals middleware
 router.use((req, res, next) => {
   res.locals.session = req.session;
+  res.locals.can = (key) => staffPerms.has(req.session, key);
   // Contraseña de fábrica / débil: obligar a cambiarla antes de usar el panel
   if (req.session && req.session.isAdmin && req.session.mustChangePassword && !/^\/(account\/password|logout)(\/|$)/.test(req.path)) {
     return res.redirect('/admin/account/password');
@@ -602,11 +606,13 @@ router.post('/login', loginRateLimiter, express.urlencoded({ extended: true }), 
   // Check Cashier
   const cashier = adminSvc.authenticateCashier(username, password);
   if (cashier) {
-    req.session.isCashier = true;
-    req.session.cashierId = cashier.id;
-    req.session.cashierName = cashier.name;
-    req.session.cashierUsername = cashier.username;
-    return res.redirect('/admin');
+    return req.session.regenerate(() => {
+      req.session.isCashier = true;
+      req.session.cashierId = cashier.id;
+      req.session.cashierName = cashier.name;
+      req.session.cashierUsername = cashier.username;
+      req.session.save(() => res.redirect('/admin'));
+    });
   }
 
   res.render('admin/login', { title: 'Admin Login', company: company(), error: 'Usuario o contraseña incorrectos' });
@@ -986,7 +992,7 @@ router.post('/odps/:id/delete', requireAdminSession, restrictToAdmin, (req, res)
 
 // --- TECHNICIAN MANAGEMENT ---
 router.get('/technicians', requireAdminSession, requireSidebarMenuAccess('technicians'), restrictToAdmin, (req, res) => {
-  const technicians = adminSvc.getAllTechnicians();
+  const technicians = adminSvc.getAllTechnicians().map(({ password, ...t }) => t);
   res.render('admin/technicians', { title: 'Gestión de técnicos', company: company(), activePage: 'technicians', technicians, msg: flashMsg(req) });
 });
 
@@ -1018,14 +1024,22 @@ router.post('/technicians/:id/delete', requireAdminSession, restrictToAdmin, (re
 
 // --- CASHIER MANAGEMENT ---
 router.get('/cashiers', requireAdminSession, requireSidebarMenuAccess('cashiers'), restrictToAdmin, (req, res) => {
-  const cashiers = adminSvc.getAllCashiers();
-  res.render('admin/cashiers', { title: 'Gestión de cajeros', company: company(), activePage: 'cashiers', cashiers, msg: flashMsg(req) });
+  const cashiers = adminSvc.getAllCashiers().map(({ password, ...c }) => c);
+  res.render('admin/cashiers', { title: 'Personal de oficina', company: company(), activePage: 'cashiers', cashiers, msg: flashMsg(req),
+    permCatalog: staffPerms.CATALOG, perms: staffPerms.current(), minPass: require('../config/staffPassword').MIN_LENGTH });
+});
+
+router.post('/cashiers/permissions', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
+  const out = staffPerms.save(req.body || {});
+  try { auditSvc && auditSvc.logAuditTrail && auditSvc.logAuditTrail({ action: 'UPDATE', entity_type: 'staff_permissions', entity_id: 'cashier', actor_type: 'admin', actor_name: req.session.adminUser || 'admin', details: out, ip_address: req.ip }); } catch (_) {}
+  req.session._msg = { type: 'success', text: 'Permisos del personal guardados. Se aplican de inmediato.' };
+  res.redirect('/admin/cashiers');
 });
 
 router.post('/cashiers', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     adminSvc.createCashier(req.body);
-    req.session._msg = { type: 'success', text: 'Cajero agregado.' };
+    req.session._msg = { type: 'success', text: 'Usuario agregado.' };
   } catch (e) {
     req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
@@ -1035,7 +1049,9 @@ router.post('/cashiers', requireAdminSession, restrictToAdmin, express.urlencode
 router.post('/cashiers/:id/update', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
     adminSvc.updateCashier(req.params.id, req.body);
-    req.session._msg = { type: 'success', text: 'Datos del cajero actualizados.' };
+    // Con contraseña nueva o cuenta desactivada, se cierran sus sesiones abiertas
+    const closed = (String(req.body.password || '') !== '' || String(req.body.is_active) === '0') ? require('../config/staffPassword').closeCashierSessions(req.params.id) : 0;
+    req.session._msg = { type: 'success', text: 'Datos actualizados.' + (closed ? ` Se cerraron ${closed} sesión(es) abiertas.` : '') };
   } catch (e) {
     req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }
@@ -1044,7 +1060,8 @@ router.post('/cashiers/:id/update', requireAdminSession, restrictToAdmin, expres
 
 router.post('/cashiers/:id/delete', requireAdminSession, restrictToAdmin, (req, res) => {
   adminSvc.deleteCashier(req.params.id);
-  req.session._msg = { type: 'success', text: 'Cajero eliminado.' };
+  require('../config/staffPassword').closeCashierSessions(req.params.id);
+  req.session._msg = { type: 'success', text: 'Usuario eliminado.' };
   res.redirect('/admin/cashiers');
 });
 
@@ -1540,11 +1557,12 @@ router.get('/', requireAdminSession, requireSidebarMenuAccess('dashboard'), asyn
     const custStats = customerSvc.getCustomerStats();
     const settings = getSettings(); // Get current settings
     const chartYear = getCurrentTimeInfo().year;
-    const revenueMonthly = billingSvc.getMonthlyRevenue(chartYear);
-    const todayRevenue = billingSvc.getTodayRevenue();
+    const verFinanzas = staffPerms.has(req.session, 'finanzas');
+    const revenueMonthly = verFinanzas ? billingSvc.getMonthlyRevenue(chartYear) : [];
+    const todayRevenue = verFinanzas ? billingSvc.getTodayRevenue() : null;
     res.render('admin/dashboard', {
       title: 'Dashboard', company: company(), version: '2.0.0',
-      activePage: 'dashboard', billing, custStats, settings, revenueMonthly, todayRevenue, chartYear
+      activePage: 'dashboard', billing: verFinanzas ? billing : null, custStats, settings, revenueMonthly, todayRevenue, chartYear, verFinanzas
     });
   } catch (e) {
     logger.error('Admin dashboard error:', e);

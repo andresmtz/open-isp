@@ -756,10 +756,10 @@
       }
     },
     "cashiers": {
-      "add": "Agregar cajero",
-      "list": "Lista de cajeros",
-      "empty": "Todavía no hay cajeros.",
-      "confirm_delete": "¿Eliminar este cajero?",
+      "add": "Agregar usuario",
+      "list": "Personal de oficina (secretaría, caja)",
+      "empty": "Todavía no hay usuarios de oficina.",
+      "confirm_delete": "¿Eliminar este usuario? Se cierra su sesión.",
       "save_changes": "Guardar cambios",
       "table": {
         "name": "Nombre",
@@ -770,8 +770,8 @@
         "actions": "Acciones"
       },
       "modal": {
-        "add_title": "Agregar cajero",
-        "edit_title": "Editar cajero"
+        "add_title": "Agregar usuario de oficina",
+        "edit_title": "Editar usuario de oficina"
       },
       "form": {
         "full_name": "Nombre completo",
@@ -1122,7 +1122,7 @@
       "finance_report": "Reportes financieros",
       "customer_tickets": "Tickets de clientes",
       "technicians": "Técnicos",
-      "cashiers": "Cajeros",
+      "cashiers": "Personal de oficina",
       "agents": "Agentes",
       "agent_reports": "Reportes de agentes",
       "update": "Actualizar desde GitHub",

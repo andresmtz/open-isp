@@ -1,8 +1,7 @@
 const db = require('../config/database');
 
 function authenticate(username, password) {
-  const tech = db.prepare('SELECT * FROM technicians WHERE username = ? AND password = ? AND is_active = 1').get(username, password);
-  return tech;
+  return require('../config/staffPassword').authenticate('technicians', username, password);
 }
 
 function getTechById(id) {
@@ -96,7 +95,7 @@ function getAllTechnicians() {
 
 function createTechnician(data) {
   const stmt = db.prepare('INSERT INTO technicians (username, password, name, phone, area) VALUES (?, ?, ?, ?, ?)');
-  return stmt.run(data.username, data.password, data.name, data.phone || '', data.area || '');
+  return stmt.run(String(data.username || '').trim(), require('../config/staffPassword').hash(data.password), data.name, data.phone || '', data.area || '');
 }
 
 module.exports = {

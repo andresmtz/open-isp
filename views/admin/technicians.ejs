@@ -40,7 +40,6 @@
             <tr>
               <th><%= t('admin.technicians.table.name', 'Nama') %></th>
               <th><%= t('admin.technicians.table.username', 'Username') %></th>
-              <th><%= t('admin.technicians.table.password', 'Password') %></th>
               <th><%= t('admin.technicians.table.whatsapp', 'WhatsApp') %></th>
               <th><%= t('admin.technicians.table.area', 'Area Tugas') %></th>
               <th><%= t('admin.technicians.table.status', 'Status') %></th>
@@ -49,13 +48,12 @@
           </thead>
           <tbody>
             <% if (technicians.length === 0) { %>
-              <tr><td colspan="7" class="text-center text-muted" style="padding:20px"><%= t('admin.technicians.empty', 'Belum ada data teknisi.') %></td></tr>
+              <tr><td colspan="6" class="text-center text-muted" style="padding:20px"><%= t('admin.technicians.empty', 'Belum ada data teknisi.') %></td></tr>
             <% } else { %>
             <% technicians.forEach(tech => { %>
                 <tr>
                   <td><strong><%= tech.name %></strong></td>
                   <td><code><%= tech.username %></code></td>
-                  <td><span class="text-muted"><%= tech.password %></span></td>
                   <td><%= tech.phone || '-' %></td>
                   <td><%= tech.area || '-' %></td>
                   <td>
@@ -92,7 +90,7 @@
       <div class="mbody">
         <div class="fg"><label class="fl"><%= t('admin.technicians.form.full_name', 'Nama Lengkap') %></label><input type="text" name="name" class="fc" required></div>
         <div class="fg"><label class="fl"><%= t('admin.technicians.form.login_username', 'Username Login') %></label><input type="text" name="username" class="fc" required></div>
-        <div class="fg"><label class="fl"><%= t('admin.technicians.form.password', 'Password') %></label><input type="text" name="password" class="fc" required></div>
+        <div class="fg"><label class="fl"><%= t('admin.technicians.form.password', 'Password') %></label><input type="password" name="password" class="fc" required minlength="8" autocomplete="new-password"><div style="font-size:11px;color:var(--muted);margin-top:3px">Mínimo 8 caracteres. Se guarda cifrada.</div></div>
         <div class="fg"><label class="fl"><%= t('admin.technicians.form.whatsapp', 'No. WhatsApp') %></label><input type="text" name="phone" class="fc" placeholder="<%= t('admin.technicians.form.whatsapp_placeholder', 'Contoh: 08123456789') %>"></div>
         <div class="fg"><label class="fl"><%= t('admin.technicians.form.area', 'Area Tugas') %></label><input type="text" name="area" class="fc" placeholder="<%= t('admin.technicians.form.area_placeholder', 'Contoh: Kelurahan A, Blok B') %>"></div>
       </div>
@@ -112,7 +110,7 @@
       <div class="mbody">
         <div class="fg"><label class="fl"><%= t('admin.technicians.form.full_name', 'Nama Lengkap') %></label><input type="text" name="name" id="e-name" class="fc" required></div>
         <div class="fg"><label class="fl"><%= t('admin.technicians.form.login_username', 'Username Login') %></label><input type="text" name="username" id="e-username" class="fc" required></div>
-        <div class="fg"><label class="fl"><%= t('admin.technicians.form.password', 'Password') %></label><input type="text" name="password" id="e-password" class="fc" required></div>
+        <div class="fg"><label class="fl"><%= t('admin.technicians.form.password', 'Password') %></label><input type="password" name="password" id="e-password" class="fc" minlength="8" autocomplete="new-password" placeholder="Dejar vacío para no cambiarla"></div>
         <div class="fg"><label class="fl"><%= t('admin.technicians.form.whatsapp', 'No. WhatsApp') %></label><input type="text" name="phone" id="e-phone" class="fc"></div>
         <div class="fg"><label class="fl"><%= t('admin.technicians.form.area', 'Area Tugas') %></label><input type="text" name="area" id="e-area" class="fc"></div>
         <div class="fg">
@@ -142,7 +140,7 @@ function editTech(t) {
   document.getElementById('editForm').action = '/admin/technicians/' + t.id + '/update';
   document.getElementById('e-name').value = t.name;
   document.getElementById('e-username').value = t.username;
-  document.getElementById('e-password').value = t.password;
+  document.getElementById('e-password').value = '';
   document.getElementById('e-phone').value = t.phone || '';
   document.getElementById('e-area').value = t.area || '';
   document.getElementById('e-status').value = t.is_active;

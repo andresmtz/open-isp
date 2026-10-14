@@ -40,7 +40,6 @@
             <tr>
               <th><%= t('admin.cashiers.table.name', 'Nama') %></th>
               <th><%= t('admin.cashiers.table.username', 'Username') %></th>
-              <th><%= t('admin.cashiers.table.password', 'Password') %></th>
               <th><%= t('admin.cashiers.table.phone', 'No. HP') %></th>
               <th><%= t('admin.cashiers.table.status', 'Status') %></th>
               <th><%= t('admin.cashiers.table.actions', 'Aksi') %></th>
@@ -48,13 +47,12 @@
           </thead>
           <tbody>
             <% if (cashiers.length === 0) { %>
-              <tr><td colspan="6" class="text-center text-muted" style="padding:20px"><%= t('admin.cashiers.empty', 'Belum ada data kasir.') %></td></tr>
+              <tr><td colspan="5" class="text-center text-muted" style="padding:20px"><%= t('admin.cashiers.empty', 'Belum ada data kasir.') %></td></tr>
             <% } else { %>
               <% cashiers.forEach(c => { %>
                 <tr>
                   <td><strong><%= c.name %></strong></td>
                   <td><code><%= c.username %></code></td>
-                  <td><span class="text-muted"><%= c.password %></span></td>
                   <td><%= c.phone || '-' %></td>
                   <td>
                     <span class="badge <%= c.is_active ? 'bs' : 'bd' %>">
@@ -66,9 +64,9 @@
                     <div class="act">
                       <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                       <div class="act-menu">
-                        <button type="button" class="act-item" onclick='editCashier(<%- JSON.stringify(c).split('<').join('\\u003c') %>)'><i class="bi bi-pencil"></i> Editar cajero</button>
+                        <button type="button" class="act-item" onclick='editCashier(<%- JSON.stringify(c).split('<').join('\\u003c') %>)'><i class="bi bi-pencil"></i> Editar</button>
                         <div class="act-sep"></div>
-                        <button type="submit" form="kdel-<%= c.id %>" class="act-item danger"><i class="bi bi-trash"></i> Eliminar cajero</button>
+                        <button type="submit" form="kdel-<%= c.id %>" class="act-item danger"><i class="bi bi-trash"></i> Eliminar</button>
                       </div>
                     </div>
                   </td>
@@ -77,6 +75,30 @@
             <% } %>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <h6><i class="bi bi-shield-check"></i> ¿Qué puede hacer el personal de oficina?</h6>
+      </div>
+      <div class="card-bd">
+        <p style="font-size:13px;color:var(--muted);margin:0 0 12px">
+          Siempre puede: ver el panel (sin ingresos), consultar clientes y facturas, imprimir, ver planes y zonas, y su propio reporte de cobros.
+          Nunca puede: configuración, automatización, respaldos, MikroTik/OLT (cambios), usuarios, cancelar clientes, anular pagos, ajustar saldo a favor ni borrar nada.
+          Todo lo que hace queda registrado con su nombre.
+        </p>
+        <form action="/admin/cashiers/permissions" method="POST">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px">
+            <% permCatalog.forEach(function (p) { %>
+              <label style="display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">
+                <input type="checkbox" name="<%= p.key %>" value="1" <%= perms[p.key] ? 'checked' : '' %> style="margin-top:3px">
+                <span><strong style="font-size:13px"><%= p.label %></strong><br><span style="font-size:12px;color:var(--muted)"><%= p.help %></span></span>
+              </label>
+            <% }) %>
+          </div>
+          <div style="margin-top:12px;text-align:right"><button type="submit" class="btn btn-p btn-sm"><i class="bi bi-check-lg"></i> Guardar permisos</button></div>
+        </form>
       </div>
     </div>
   </div>
@@ -90,7 +112,7 @@
       <div class="mbody">
         <div class="fg"><label class="fl"><%= t('admin.cashiers.form.full_name', 'Nama Lengkap') %></label><input type="text" name="name" class="fc" required></div>
         <div class="fg"><label class="fl"><%= t('admin.cashiers.form.login_username', 'Username Login') %></label><input type="text" name="username" class="fc" required></div>
-        <div class="fg"><label class="fl"><%= t('admin.cashiers.form.password', 'Password') %></label><input type="text" name="password" class="fc" required></div>
+        <div class="fg"><label class="fl"><%= t('admin.cashiers.form.password', 'Password') %></label><input type="password" name="password" class="fc" required minlength="<%= minPass %>" autocomplete="new-password"><div style="font-size:11px;color:var(--muted);margin-top:3px">Mínimo <%= minPass %> caracteres. Se guarda cifrada: nadie puede verla después.</div></div>
         <div class="fg"><label class="fl"><%= t('admin.cashiers.form.phone', 'No. HP') %></label><input type="text" name="phone" class="fc" placeholder="<%= t('admin.cashiers.form.phone_placeholder', 'Contoh: 08123456789') %>"></div>
       </div>
       <div class="mf">
@@ -109,7 +131,7 @@
       <div class="mbody">
         <div class="fg"><label class="fl"><%= t('admin.cashiers.form.full_name', 'Nama Lengkap') %></label><input type="text" name="name" id="e-name" class="fc" required></div>
         <div class="fg"><label class="fl"><%= t('admin.cashiers.form.login_username', 'Username Login') %></label><input type="text" name="username" id="e-username" class="fc" required></div>
-        <div class="fg"><label class="fl"><%= t('admin.cashiers.form.password', 'Password') %></label><input type="text" name="password" id="e-password" class="fc" required></div>
+        <div class="fg"><label class="fl"><%= t('admin.cashiers.form.password', 'Password') %></label><input type="password" name="password" id="e-password" class="fc" minlength="<%= minPass %>" autocomplete="new-password" placeholder="Dejar vacío para no cambiarla"><div style="font-size:11px;color:var(--muted);margin-top:3px">Al cambiar la contraseña o desactivar la cuenta se cierran sus sesiones abiertas.</div></div>
         <div class="fg"><label class="fl"><%= t('admin.cashiers.form.phone', 'No. HP') %></label><input type="text" name="phone" id="e-phone" class="fc"></div>
         <div class="fg">
           <label class="fl"><%= t('admin.cashiers.form.account_status', 'Estado de la cuenta') %></label>
@@ -138,7 +160,7 @@ function editCashier(c) {
   document.getElementById('editForm').action = '/admin/cashiers/' + c.id + '/update';
   document.getElementById('e-name').value = c.name;
   document.getElementById('e-username').value = c.username;
-  document.getElementById('e-password').value = c.password;
+  document.getElementById('e-password').value = '';
   document.getElementById('e-phone').value = c.phone || '';
   document.getElementById('e-status').value = c.is_active;
   openModal('editCashierModal');

@@ -66,6 +66,7 @@
   </style>
 </head>
 <body>
+<% var _can = (typeof can === 'function') ? can : function () { return true; }; var _adm = !(typeof session !== 'undefined' && session && session.isCashier); %>
 <%- include('partials/sidebar', { activePage: 'customers', company }) %>
 <div class="mw">
   <div class="topbar">
@@ -147,15 +148,15 @@
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <h6 style="margin:0;"><i class="bi bi-people"></i> <%= t('admin.customers.list', 'Daftar Pelanggan') %> (<%= customers.length %>)</h6>
           <span id="bulkCustCount" class="badge" style="display:none;background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);font-size:11px;padding:4px 8px;"></span>
-          <button type="button" class="btn btn-d btn-sm" id="bulkCustDeleteBtn" style="display:none;"><i class="bi bi-trash"></i> <%= t('admin.cust.bulk_delete','Eliminar seleccionados') %></button>
+          <% if (_adm) { %><button type="button" class="btn btn-d btn-sm" id="bulkCustDeleteBtn" style="display:none;"><i class="bi bi-trash"></i> <%= t('admin.cust.bulk_delete','Eliminar seleccionados') %></button><% } %>
         </div>
         <div style="display:flex;gap:8px">
           <button type="button" class="btn btn-g btn-sm" onclick="window.print()" title="<%= t('admin.cust.tt_print_data','Cetak Data Pelanggan') %>"><i class="bi bi-printer"></i> <%= t('admin.cust.btn_print','Cetak') %></button>
           <a href="/admin/onu-stickers" class="btn btn-g btn-sm" title="<%= t('admin.cust.tt_print_sticker','Cetak Stiker Modem / ONU') %>"><i class="bi bi-qr-code-scan"></i> Stiker ONU</a>
-          <a href="/admin/customers/export" class="btn btn-g btn-sm"><i class="bi bi-file-earmark-excel"></i> <%= t('admin.customers.export_excel', 'Export Excel') %></a>
-          <button class="btn btn-g btn-sm" onclick="openModal('importModal')"><i class="bi bi-file-earmark-arrow-up"></i> <%= t('admin.customers.import_excel', 'Import Excel') %></button>
-          <button type="button" class="btn btn-g btn-sm" onclick="syncAllCust()"><i class="bi bi-arrow-repeat"></i> <%= t('admin.cust.apply_network','Terapkan ke Jaringan') %></button>
-          <button class="btn btn-p btn-sm" onclick="openModal('addModal')"><i class="bi bi-plus-lg"></i> <%= t('admin.customers.add', 'Tambah Pelanggan') %></button>
+          <% if (_can('exportar')) { %><a href="/admin/customers/export" class="btn btn-g btn-sm"><i class="bi bi-file-earmark-excel"></i> <%= t('admin.customers.export_excel', 'Export Excel') %></a><% } %>
+          <% if (_adm) { %><button class="btn btn-g btn-sm" onclick="openModal('importModal')"><i class="bi bi-file-earmark-arrow-up"></i> <%= t('admin.customers.import_excel', 'Import Excel') %></button><% } %>
+<% if (_adm) { %><button type="button" class="btn btn-g btn-sm" onclick="syncAllCust()"><i class="bi bi-arrow-repeat"></i> <%= t('admin.cust.apply_network','Terapkan ke Jaringan') %></button><% } %>
+          <% if (_can('clientes_alta')) { %><button class="btn btn-p btn-sm" onclick="openModal('addModal')"><i class="bi bi-plus-lg"></i> <%= t('admin.customers.add', 'Tambah Pelanggan') %></button><% } %>
         </div>
       </div>
       <div class="card-bd" style="padding-bottom:0">
@@ -363,7 +364,7 @@
                 <div class="act">
                   <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
-                    <% if (c.status === 'inactive') { %>
+                    <% if (c.status === 'inactive' && _can('clientes_alta')) { %>
                       <button type="button" class="act-item success" data-idx="<%= i %>" onclick="openRegCalc(+this.dataset.idx)"><i class="bi bi-calculator"></i> Calcular y aprobar</button>
                       <button type="submit" form="rej-<%= c.id %>" class="act-item danger"><i class="bi bi-x-lg"></i> <%= t('admin.cust.reject_reg','Tolak Pendaftar') %></button>
                       <div class="act-sep"></div>
@@ -374,9 +375,11 @@
                     <button type="button" class="act-item" onclick="copyCustIp(<%= i %>)"><i class="bi bi-hdd-network"></i> <%= t('admin.cust.copy_ip','Salin IP Pelanggan') %></button>
                     <button type="button" class="act-item success" onclick="openCustIp(<%= i %>)"><i class="bi bi-box-arrow-up-right"></i> <%= t('admin.cust.open_ip','Masuk ke IP Pelanggan') %></button>
                     <a class="act-item" href="/admin/customers/<%= c.id %>/sticker-onu" target="_blank"><i class="bi bi-qr-code"></i> Imprimir etiquetas ONU</a>
-                    <button type="button" class="act-item success" data-idx="<%= i %>" onclick="openGenInvoice(+this.dataset.idx)"><i class="bi bi-lightning-charge"></i> Generar factura</button>
+                    <% if (_can('facturar')) { %><button type="button" class="act-item success" data-idx="<%= i %>" onclick="openGenInvoice(+this.dataset.idx)"><i class="bi bi-lightning-charge"></i> Generar factura</button><% } %>
+                    <% if (_can('cobrar')) { %>
                     <button type="button" class="act-item primary" data-id="<%= c.id %>" onclick="openReceive(+this.dataset.id)"><i class="bi bi-wallet2"></i> Cobrar (monto libre)</button>
                     <button type="button" class="act-item primary" data-idx="<%= i %>" onclick="openPayInvoice(+this.dataset.idx)"><i class="bi bi-cash-coin"></i> Registrar pago por mes</button>
+                    <% } %>
                     <% if (typeof session !== 'undefined' && session && !session.isCashier) { %>
                       <% if (c.package_id && (c.package_promo_cycles || 0) > 0) { %>
                       <button type="submit" form="rpc-<%= c.id %>" class="act-item"><i class="bi bi-arrow-counterclockwise"></i> <%= t('admin.cust.reset_promo','Reset Siklus Promo') %></button>
@@ -385,19 +388,19 @@
                       <button type="submit" form="ipr-<%= c.id %>" class="act-item"><i class="bi bi-calendar2-check"></i> <%= t('admin.cust.prorata_followup','Tagihan Susulan Prorata') %></button>
                       <% } %>
                     <% } %>
-                    <% if (!c.pppoe_username) { %>
+                    <% if (!c.pppoe_username && _can('clientes_alta')) { %>
                       <button type="submit" form="gpp-<%= c.id %>" class="act-item primary"><i class="bi bi-key"></i> <%= t('admin.cust.gen_pppoe','Generate Akun PPPoE') %></button>
                     <% } %>
-                    <% if (c.status !== 'cancelled' && c.unpaid_count > 0) { %>
+                    <% if (c.status !== 'cancelled' && c.unpaid_count > 0 && _can('promesas')) { %>
                     <button type="button" class="act-item primary" data-id="<%= c.id %>" onclick="promiseCust(+this.dataset.id)"><i class="bi bi-hand-thumbs-up"></i> Promesa de pago</button>
                     <% } %>
-                    <button type="button" class="act-item" data-id="<%= c.id %>" onclick="syncCust(this)"><i class="bi bi-arrow-repeat"></i> Sincronizar con la red</button>
+                    <% if (_can('corte_manual')) { %><button type="button" class="act-item" data-id="<%= c.id %>" onclick="syncCust(this)"><i class="bi bi-arrow-repeat"></i> Sincronizar con la red</button><% } %>
                     <div class="act-sep"></div>
-                    <button type="button" class="act-item" data-idx="<%= i %>" onclick="editCust(+this.dataset.idx)"><i class="bi bi-pencil"></i> <%= t('admin.cust.btn_edit','Edit Pelanggan') %></button>
+                    <% if (_can('clientes_alta')) { %><button type="button" class="act-item" data-idx="<%= i %>" onclick="editCust(+this.dataset.idx)"><i class="bi bi-pencil"></i> <%= t('admin.cust.btn_edit','Edit Pelanggan') %></button><% } %>
                     <% if (typeof session !== 'undefined' && session && !session.isCashier && c.status !== 'cancelled') { %>
                     <button type="button" class="act-item danger" data-id="<%= c.id %>" onclick="cancelCustService(+this.dataset.id)"><i class="bi bi-x-octagon"></i> Cancelar servicio</button>
                     <% } %>
-                    <% if (c.status === 'inactive') { %>
+                    <% if (c.status === 'inactive' && _adm) { %>
                     <button type="submit" form="del-<%= c.id %>" class="act-item danger"><i class="bi bi-trash"></i> <%= t('admin.cust.btn_delete','Hapus Pelanggan') %></button>
                     <% } %>
                   </div>

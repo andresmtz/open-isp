@@ -26,11 +26,11 @@ const MENU_DEFINITIONS = [
     { key: 'radius_server', section: 'main', href: '/admin/radius-settings', icon: 'bi bi-broadcast', labelKey: 'admin.nav.radius_server', labelDefault: 'Servidor RADIUS', roles: ['admin'], activePages: ['radius_settings'] },
     { key: 'acs_pro', section: 'main', href: '/admin/acs', icon: 'bi bi-hdd-network', labelKey: 'admin.nav.acs_pro', labelDefault: 'GenieACS Pro', roles: ['admin'], activePages: ['acs_pro'] },
     { key: 'onu_provision', section: 'main', href: '/admin/onu-provision', icon: 'bi bi-hdd-network-fill', labelKey: 'admin.nav.onu_provision', labelDefault: 'Alta de ONU', roles: ['admin'], activePages: ['onu_provision'] },
-    { key: 'olts', section: 'main', href: '/admin/olts', icon: 'bi bi-hdd-fill', labelKey: 'admin.nav.olt_management', labelDefault: 'OLT', roles: ['admin'], activePages: ['olts'] },
+    { key: 'olts', section: 'main', href: '/admin/olts', icon: 'bi bi-hdd-fill', labelKey: 'admin.nav.olt_management', labelDefault: 'OLT', roles: ['admin', 'cashier'], activePages: ['olts'] },
     { key: 'monitoring', section: 'main', href: '/admin/monitoring', icon: 'bi bi-activity', labelKey: 'admin.nav.monitoring', labelDefault: 'Monitoreo del sistema', roles: ['admin'], activePages: ['monitoring'] }
   ] },
   { key: 'map', section: 'main', href: '/admin/map', icon: 'bi bi-map', labelKey: 'admin.nav.network_map', labelDefault: 'Mapa de red', roles: ['admin', 'cashier'], bottomNav: true, bottomNavOrder: 4, activePages: ['map'] },
-  { key: 'whatsapp', section: 'main', href: '/admin/whatsapp', icon: 'bi bi-whatsapp', labelKey: 'admin.nav.whatsapp', labelDefault: 'WhatsApp', roles: ['admin', 'cashier'], activePages: ['whatsapp','broadcast','whatsapp_live_chat','whatsapp_templates'] },
+  { key: 'whatsapp', section: 'main', href: '/admin/whatsapp', icon: 'bi bi-whatsapp', labelKey: 'admin.nav.whatsapp', labelDefault: 'WhatsApp', roles: ['admin', 'cashier'], cashierHref: '/admin/whatsapp/live-chat', activePages: ['whatsapp','broadcast','whatsapp_live_chat','whatsapp_templates'] },
   { key: 'automation', section: 'main', href: '/admin/automation', icon: 'bi bi-robot', labelKey: 'admin.nav.automation', labelDefault: 'Automatización', roles: ['admin'], activePages: ['automation'] },
 
   { key: 'grp_customers', section: 'billing', href: '/admin/customers', icon: 'bi bi-people', labelKey: 'admin.nav.customers', labelDefault: 'Clientes', roles: ['admin', 'cashier'], bottomNav: true, bottomNavOrder: 2, activePages: ['customers', 'onu_stickers'], children: [
@@ -68,7 +68,7 @@ const MENU_DEFINITIONS = [
 
   { key: 'grp_users', section: 'user_management', href: '/admin/technicians', icon: 'bi bi-person-gear', labelKey: 'admin.nav.grp_users', labelDefault: 'Usuarios', roles: ['admin', 'cashier'], activePages: ['technicians', 'cashiers', 'collectors', 'areas'], children: [
     { key: 'technicians', section: 'user_management', href: '/admin/technicians', icon: 'bi bi-person-gear', labelKey: 'admin.nav.technicians', labelDefault: 'Técnicos', roles: ['admin'], activePages: ['technicians'] },
-    { key: 'cashiers', section: 'user_management', href: '/admin/cashiers', icon: 'bi bi-person-vcard', labelKey: 'admin.nav.cashiers', labelDefault: 'Cajeros', roles: ['admin'], activePages: ['cashiers'] },
+    { key: 'cashiers', section: 'user_management', href: '/admin/cashiers', icon: 'bi bi-person-vcard', labelKey: 'admin.nav.cashiers', labelDefault: 'Personal de oficina', roles: ['admin'], activePages: ['cashiers'] },
     { key: 'collectors', section: 'user_management', href: '/admin/collectors', icon: 'bi bi-person-badge', labelKey: 'admin.nav.collectors', labelDefault: 'Cobradores', roles: ['admin'], activePages: ['collectors'] },
     { key: 'areas', section: 'user_management', href: '/admin/areas', icon: 'bi bi-geo-alt', labelKey: 'admin.nav.areas', labelDefault: 'Zonas', roles: ['admin', 'cashier'], activePages: ['areas'] }
   ] },
@@ -233,10 +233,25 @@ function sanitizeMenuStates(input) {
   return clean;
 }
 
+// Personal de oficina: además del rol, el menú se ve solo si tiene permiso (config/staffPermissions.js)
+function staffHref(menu) { return menu.cashierHref || menu.href; }
+function staffCanOpen(menu, session) {
+  const sp = require('../config/staffPermissions');
+  const path = String(staffHref(menu) || '').split('?')[0].replace(/^\/admin/, '') || '/';
+  return sp.allows(session, 'GET', path);
+}
+function staffFirstHref(menu, session) {
+  if (staffCanOpen(menu, session)) return staffHref(menu);
+  for (const ch of (menu.children || [])) {
+    if ((ch.roles || []).includes('cashier') && staffCanOpen(ch, session)) return staffHref(ch);
+  }
+  return null;
+}
+
 function isMenuAllowedForSession(menu, session) {
   const roles = Array.isArray(menu.roles) ? menu.roles : ['admin'];
   if (roles.includes('admin') && session && session.isAdmin) return true;
-  if (roles.includes('cashier') && session && session.isCashier) return true;
+  if (roles.includes('cashier') && session && session.isCashier) return !!staffFirstHref(menu, session);
   return false;
 }
 
@@ -258,6 +273,11 @@ function enrichMenu(menu, states) {
   return out;
 }
 
+function resolveForSession(menu, session) {
+  if (session && session.isCashier && !session.isAdmin) menu.hrefResolved = staffFirstHref(menu, session) || menu.hrefResolved;
+  return menu;
+}
+
 function getSidebarSections(session) {
   const states = getStoredMenuStates();
   return SECTION_DEFINITIONS.map((section) => {
@@ -265,11 +285,12 @@ function getSidebarSections(session) {
       .filter((menu) => menu.section === section.key)
       .filter((menu) => isMenuAllowedForSession(menu, session))
       .map((menu) => {
-        const enriched = enrichMenu(menu, states);
+        const enriched = resolveForSession(enrichMenu(menu, states), session);
         if (Array.isArray(enriched.children)) {
           enriched.children = enriched.children
             .filter((ch) => isMenuAllowedForSession(ch, session))
-            .filter((ch) => !ch.hidden);
+            .filter((ch) => !ch.hidden)
+            .map((ch) => resolveForSession(ch, session));
         }
         return enriched;
       })
@@ -287,7 +308,7 @@ function getBottomNavItems(session) {
   return MENU_DEFINITIONS
     .filter((menu) => menu.bottomNav)
     .filter((menu) => isMenuAllowedForSession(menu, session))
-    .map((menu) => enrichMenu(menu, states))
+    .map((menu) => resolveForSession(enrichMenu(menu, states), session))
     .filter((menu) => !menu.hidden)
     .sort((a, b) => (a.bottomNavOrder || 99) - (b.bottomNavOrder || 99));
 }

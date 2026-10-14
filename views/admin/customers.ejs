@@ -340,7 +340,9 @@
               <td class="text-center">
                 <% if (c.unpaid_count > 0) { %>
                   <span class="badge bd"><%= c.unpaid_count %> <%= t('admin.customers.unpaid_suffix', 'tagihan') %></span>
+                  <div style="font-size:11px;margin-top:3px;font-weight:700"><%= fmtMoney(c.unpaid_balance || 0) %></div>
                 <% } else { %><span class="text-muted" style="font-size:12px"><%= t('admin.customers.paid_label', 'Lunas') %></span><% } %>
+                <% if (Number(c.credit_balance || 0) > 0) { %><div style="font-size:11px;margin-top:3px;color:#10b981" title="Saldo a favor"><i class="bi bi-piggy-bank"></i> <%= fmtMoney(c.credit_balance) %></div><% } %>
               </td>
               <td style="white-space:nowrap">
                 <% if (c.status === 'inactive') { %>
@@ -373,7 +375,8 @@
                     <button type="button" class="act-item success" onclick="openCustIp(<%= i %>)"><i class="bi bi-box-arrow-up-right"></i> <%= t('admin.cust.open_ip','Masuk ke IP Pelanggan') %></button>
                     <a class="act-item" href="/admin/customers/<%= c.id %>/sticker-onu" target="_blank"><i class="bi bi-qr-code"></i> Imprimir etiquetas ONU</a>
                     <button type="button" class="act-item success" data-idx="<%= i %>" onclick="openGenInvoice(+this.dataset.idx)"><i class="bi bi-lightning-charge"></i> Generar factura</button>
-                    <button type="button" class="act-item primary" data-idx="<%= i %>" onclick="openPayInvoice(+this.dataset.idx)"><i class="bi bi-cash-coin"></i> Registrar pago</button>
+                    <button type="button" class="act-item primary" data-id="<%= c.id %>" onclick="openReceive(+this.dataset.id)"><i class="bi bi-wallet2"></i> Cobrar (monto libre)</button>
+                    <button type="button" class="act-item primary" data-idx="<%= i %>" onclick="openPayInvoice(+this.dataset.idx)"><i class="bi bi-cash-coin"></i> Registrar pago por mes</button>
                     <% if (typeof session !== 'undefined' && session && !session.isCashier) { %>
                       <% if (c.package_id && (c.package_promo_cycles || 0) > 0) { %>
                       <button type="submit" form="rpc-<%= c.id %>" class="act-item"><i class="bi bi-arrow-counterclockwise"></i> <%= t('admin.cust.reset_promo','Reset Siklus Promo') %></button>
@@ -2066,6 +2069,56 @@ document.getElementById('bulkCustDeleteBtn')?.addEventListener('click', function
 setTimeout(()=>document.querySelectorAll('.alert').forEach(a=>a.style.display='none'),4000);
 </script>
 <script>
+// Cobro de monto libre: pagos parciales y saldo a favor
+async function openReceive(id) {
+  try {
+    const info = await (await fetch('/admin/customers/' + id + '/payment-info', { headers: { Accept: 'application/json' } })).json();
+    if (!info.ok) { alert(info.message || 'Error'); return; }
+    const d = info.debt;
+    const old = document.getElementById('rcv-modal'); if (old) old.remove();
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+    const rows = d.items.length ? d.items.map(i => '<tr><td>' + esc(i.period) + '</td><td style="text-align:right">' + fmtMoney(i.amount) + '</td><td style="text-align:right">' + (i.paid ? fmtMoney(i.paid) : '-') + '</td><td style="text-align:right;font-weight:700">' + fmtMoney(i.balance) + '</td></tr>').join('')
+      : '<tr><td colspan="4" style="text-align:center;color:var(--muted)">Sin deuda</td></tr>';
+    const m = document.createElement('div');
+    m.id = 'rcv-modal';
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    m.innerHTML = '<div class="card" style="max-width:520px;width:100%;max-height:90vh;overflow:auto">'
+      + '<div class="card-hd"><h6><i class="bi bi-wallet2"></i> Cobrar — ' + esc(info.customer.name) + '</h6></div>'
+      + '<div style="padding:14px">'
+      + '<table class="dtbl" style="width:100%;font-size:12px"><thead><tr><th>Período</th><th style="text-align:right">Monto</th><th style="text-align:right">Pagado</th><th style="text-align:right">Saldo</th></tr></thead><tbody>' + rows + '</tbody></table>'
+      + '<div style="display:flex;justify-content:space-between;margin:10px 0;font-weight:800"><span>Deuda total</span><span>' + fmtMoney(d.total) + '</span></div>'
+      + (d.credit > 0 ? '<div style="display:flex;justify-content:space-between;margin-bottom:10px;color:#10b981;font-weight:700"><span><i class="bi bi-piggy-bank"></i> Saldo a favor</span><span>' + fmtMoney(d.credit) + '</span></div>' : '')
+      + '<div class="fg"><label class="fl">Monto recibido</label><input class="fc" id="rcv-amount" type="number" min="0" step="1" value="' + Math.max(0, d.total - (d.credit || 0)) + '"></div>'
+      + (d.credit > 0 && d.total > 0 ? '<label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="rcv-credit" checked> Usar saldo a favor</label>' : '')
+      + '<div class="form-row"><div class="fg"><label class="fl">Medio</label><select class="fs" id="rcv-method"><option>Efectivo</option><option>Transferencia</option><option>Giro</option><option>Depósito</option><option>Otro</option></select></div>'
+      + '<div class="fg" style="flex:2"><label class="fl">Nota</label><input class="fc" id="rcv-note" placeholder="Ej.: comprobante 1234"></div></div>'
+      + '<div class="hint" id="rcv-hint" style="margin:8px 0"></div>'
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="btn btn-g" type="button" id="rcv-cancel">Cancelar</button><button class="btn btn-p" type="button" id="rcv-ok"><i class="bi bi-check2"></i> Registrar cobro</button></div>'
+      + '</div></div>';
+    document.body.appendChild(m);
+    const amt = m.querySelector('#rcv-amount'), cr = m.querySelector('#rcv-credit'), hint = m.querySelector('#rcv-hint');
+    const upd = () => {
+      const a = Math.max(0, Number(amt.value) || 0) + (cr && cr.checked ? d.credit : 0);
+      if (!d.total) hint.textContent = 'Sin deuda: todo el monto queda como saldo a favor.';
+      else if (a < d.total) hint.textContent = 'Pago parcial: se cubre lo más antiguo primero; quedan ' + fmtMoney(d.total - a) + ' pendientes (el corte sigue según el ciclo).';
+      else if (a > d.total) hint.textContent = 'Cubre toda la deuda; ' + fmtMoney(a - d.total) + ' quedan como saldo a favor.';
+      else hint.textContent = 'Cubre toda la deuda.';
+    };
+    amt.addEventListener('input', upd); if (cr) cr.addEventListener('change', upd); upd();
+    m.querySelector('#rcv-cancel').onclick = () => m.remove();
+    m.querySelector('#rcv-ok').onclick = async (ev) => {
+      ev.target.disabled = true;
+      try {
+        const r = await fetch('/admin/customers/' + id + '/receive', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ amount: Number(amt.value) || 0, use_credit: !!(cr && cr.checked), method: m.querySelector('#rcv-method').value, note: m.querySelector('#rcv-note').value }) });
+        const j = await r.json();
+        alert(j.message || (j.ok ? 'Listo.' : 'Error'));
+        if (j.ok) location.reload(); else ev.target.disabled = false;
+      } catch (e) { alert('Error: ' + e.message); ev.target.disabled = false; }
+    };
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
 // Promesa de pago: habilita (si está cortado) hasta la fecha límite
 async function promiseCust(id) {
   try {

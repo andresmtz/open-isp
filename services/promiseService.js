@@ -29,8 +29,8 @@ function ensureSchema() {
 }
 
 function debtOf(customerId) {
-  const r = db.prepare("SELECT COUNT(*) n, COALESCE(SUM(amount),0) total FROM invoices WHERE customer_id=? AND status='unpaid'").get(customerId);
-  return { count: Number(r.n) || 0, total: Number(r.total) || 0 };
+  const d = require('./paymentReversalService').debtOf(customerId);
+  return { count: d.count, total: d.total };
 }
 
 function activePromise(customerId) {

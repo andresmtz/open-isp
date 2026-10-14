@@ -373,7 +373,7 @@ async function runAutoBillingReminder() {
 }
 
 function startCronJobs() {
-  try { require('./paymentReversalService').ensureSchema(); } catch (e) { logger.error('[CRON] Esquema de pagos: ' + e.message); }
+  try { require('./paymentReversalService').ensureSchema(); } catch (e) { logger.error('[CRON] Esquema de cobros: ' + e.message); }
   try { promiseSvc.ensureSchema(); } catch (e) { logger.error('[CRON] Esquema de promesas: ' + e.message); }
   // 1. Emisión automática de facturas según el ciclo configurado (día/hora/período en Configuración).
   //    Corre cada hora; solo actúa el día de emisión a partir de la hora fijada (idempotente).

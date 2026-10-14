@@ -87,6 +87,7 @@ function getAllCustomers(search = '', routerId = null, filterStatus = '', filter
            o.name as olt_name,
            odp.name as odp_name,
            (SELECT COUNT(*) FROM invoices WHERE customer_id=c.id AND status='unpaid') as unpaid_count,
+           (SELECT COALESCE(SUM(amount - COALESCE(amount_paid,0)),0) FROM invoices WHERE customer_id=c.id AND status='unpaid') as unpaid_balance,
            u.bytes_in, u.bytes_out
     FROM customers c
     LEFT JOIN packages p ON c.package_id = p.id
@@ -907,7 +908,7 @@ async function activateCustomer(id, targetStatus = 'active') {
 function cancellationPreview(id) {
   const c = getCustomerById(id);
   if (!c) throw new Error('Cliente no encontrado');
-  const pending = db.prepare("SELECT id, period_month, period_year, amount FROM invoices WHERE customer_id = ? AND status = 'unpaid' ORDER BY period_year, period_month").all(id);
+  const pending = db.prepare("SELECT id, period_month, period_year, amount - COALESCE(amount_paid,0) AS amount FROM invoices WHERE customer_id = ? AND status = 'unpaid' ORDER BY period_year, period_month").all(id);
   return {
     customer: { id: c.id, name: c.name, code: c.customer_code, status: c.status, pppoe: c.pppoe_username, ip: customerIsolationIp(c) },
     pendingInvoices: pending,

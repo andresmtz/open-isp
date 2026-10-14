@@ -166,6 +166,7 @@
                   <div style="font-size:10px;color:var(--muted);text-decoration:line-through"><%= APP_CUR %> <%= Number(inv.amount_before_discount||0).toLocaleString(APP_LOCALE) %></div>
                 <% } %>
                 <div><%= APP_CUR %> <%= inv.amount.toLocaleString(APP_LOCALE) %></div>
+                <% if (inv.status === 'unpaid' && Number(inv.amount_paid || 0) > 0) { %><div style="font-size:10px;margin-top:2px;color:#f59e0b;font-weight:700" title="Pago parcial">Parcial: pagado <%= fmtMoney(inv.amount_paid) %> · saldo <%= fmtMoney(inv.amount - inv.amount_paid) %></div><% } %>
                 <% if (Number(inv.discount_amount||0) > 0) { %>
                   <div style="font-size:10px;color:var(--danger);font-weight:700">Descuento <%= inv.discount_type==='percent' ? (inv.discount_value+'%') : '' %> -<%= APP_CUR %> <%= Number(inv.discount_amount).toLocaleString(APP_LOCALE) %></div>
                 <% } %>
@@ -220,6 +221,7 @@
                       <% } %>
                       <button type="submit" form="uni-<%= inv.id %>" class="act-item primary"><i class="bi bi-wifi"></i> <%= t('admin.bill.btn_unisolate','Buka Isolir') %></button>
                       <button type="submit" form="wa-<%= inv.id %>" class="act-item"><i class="bi bi-whatsapp"></i> Enviar factura por WhatsApp</button>
+                      <% if (Number(inv.amount_paid || 0) > 0 && (typeof session === 'undefined' || !session || !session.isCashier)) { %><button type="button" class="act-item warn" data-id="<%= inv.id %>" onclick="annulPayment(+this.dataset.id)"><i class="bi bi-arrow-counterclockwise"></i> Anular último cobro</button><% } %>
                     <%}else{%>
                       <a class="act-item" href="/admin/billing/<%= inv.id %>/print" target="_blank"><i class="bi bi-printer"></i> <%= t('admin.bill.btn_print_a4','Cetak Faktur (A4)') %></a>
                       <a class="act-item" href="/admin/billing/<%= inv.id %>/print-thermal" target="_blank"><i class="bi bi-receipt"></i> <%= t('admin.bill.btn_print_thermal','Imprimir ticket térmico') %></a>
@@ -561,9 +563,15 @@ async function annulPayment(id) {
     const pr = await (await fetch('/admin/billing/' + id + '/annul-preview', { headers: { Accept: 'application/json' } })).json();
     if (!pr.ok) { alert(pr.message || 'No se pudo preparar la anulación.'); return; }
     const money = (typeof fmtMoney === 'function') ? fmtMoney(pr.invoice.amount) : pr.invoice.amount;
-    let msg = 'ANULAR PAGO — ' + pr.customer.name + '\n\n'
-      + 'Factura ' + pr.invoice.period + ': ' + money + '\nPagada ' + (pr.invoice.paid_at || '') + ' por ' + (pr.invoice.paid_by || '-') + '\n\n'
-      + 'La factura vuelve a PENDIENTE.\nEstado del cliente: ' + pr.currentLabel + ' → ' + pr.targetLabel
+    if (pr.blocked) { alert(pr.blocked); return; }
+    const rc = pr.receipt;
+    let msg = 'ANULAR ' + (rc ? 'COBRO #' + rc.id : 'PAGO') + ' — ' + pr.customer.name + '\n\n'
+      + (rc ? 'Cobrado ' + rc.created_at + ' por ' + (rc.paid_by || '-') + (rc.method ? ' (' + rc.method + ')' : '') + ': ' + fmtMoney(rc.amount)
+          + (rc.credit_used ? ' + ' + fmtMoney(rc.credit_used) + ' de saldo a favor' : '') + '\n' : 'Factura ' + pr.invoice.period + ': ' + money + ', pagada ' + (pr.invoice.paid_at || '') + '\n')
+      + 'Se revierte en: ' + pr.allocations.map(a => a.period + ' ' + fmtMoney(a.amount)).join(', ') + '\n'
+      + (rc && rc.credit_added ? 'Se descuenta del saldo a favor: ' + fmtMoney(rc.credit_added) + '\n' : '')
+      + (rc && rc.credit_used ? 'Se devuelve al saldo a favor: ' + fmtMoney(rc.credit_used) + '\n' : '')
+      + '\nEstado del cliente: ' + pr.currentLabel + ' → ' + pr.targetLabel
       + (pr.networkChange ? '  (se aplica en el MikroTik)' : '') + '\n';
     if (pr.warnings && pr.warnings.length) msg += '\nATENCIÓN:\n' + pr.warnings.map(w => ' • ' + w).join('\n') + '\n';
     msg += '\nEscribí el motivo para confirmar:';

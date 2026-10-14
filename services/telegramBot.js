@@ -738,7 +738,7 @@ function initTelegram() {
   }
 
   function tgTunggakanText() {
-    const row = db.prepare("SELECT COUNT(*) c, COALESCE(SUM(amount),0) s FROM invoices WHERE status='unpaid'").get();
+    const row = db.prepare("SELECT COUNT(*) c, COALESCE(SUM(amount - COALESCE(amount_paid,0)),0) s FROM invoices WHERE status='unpaid'").get();
     const top = db.prepare("SELECT c.name, COALESCE(c.customer_code,'-') code, SUM(i.amount) t FROM invoices i JOIN customers c ON c.id=i.customer_id WHERE i.status='unpaid' GROUP BY i.customer_id ORDER BY t DESC LIMIT 8").all();
     let t = `💰 *DEUDAS*\n\nTotal: *${row.c} facturas*\nMonto: *${regional.currencySymbol()} ${Number(row.s).toLocaleString(regional.locale())}*\n`;
     if (top.length) { t += `\n*Top ${top.length}:*\n`; top.forEach((r, i) => { t += `${i + 1}. ${r.name} (${r.code}) — ${regional.currencySymbol()} ${Number(r.t).toLocaleString(regional.locale())}\n`; }); }

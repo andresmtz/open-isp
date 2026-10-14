@@ -108,6 +108,7 @@ function generateMonthlyInvoices(month, year) {
   let created = 0;
   const autoPaid = [];
   const voidPrevious = require('../config/billingCycle').get().voidPreviousUnpaid;
+  const createdFor = [];
   const run = db.transaction(() => {
     for (const c of customers) {
       if (existingIds.has(c.id)) continue;
@@ -126,9 +127,12 @@ function generateMonthlyInvoices(month, year) {
       }
 
       created++;
+      createdFor.push(c.id);
     }
   });
   run();
+  // Descontar saldo a favor de las facturas recién emitidas
+  for (const cid of createdFor) { try { require('./paymentReversalService').applyCredit(cid, 'Saldo a favor'); } catch (e) { logger.warn('[Billing] saldo a favor: ' + e.message); } }
   for (const ap of autoPaid) { try { notifyAutoPaid(ap.customer, ap.invoiceId, ap.periodText, ap.amount, ap.reason); } catch (e) {} }
   if (autoPaid.length) { try { logger.info(`[Billing] ${autoPaid.length} tagihan auto-lunas (auto isolir OFF / nominal 0).`); } catch (e) {} }
   return created;
@@ -163,6 +167,7 @@ function generateInvoiceForCustomer(customerId, month, year) {
 
   const ap = autoPayInvoiceIfNeeded(r.lastInsertRowid, customer, amount, notesAuto);
   if (ap) { try { notifyAutoPaid(ap.customer, ap.invoiceId, `${m}/${y}`, ap.amount, ap.reason); } catch (e) {} }
+  try { require('./paymentReversalService').applyCredit(cid, 'Saldo a favor'); } catch (e) { logger.warn('[Billing] saldo a favor: ' + e.message); }
 
   return { created: true, invoiceId: r.lastInsertRowid, customerName: customer.name };
 }
@@ -464,7 +469,7 @@ function deleteInvoice(id, actor = null) {
 function getInvoiceSummary(month, year) {
   const total  = db.prepare('SELECT COUNT(*) as count, SUM(amount) as total FROM invoices WHERE period_month=? AND period_year=?').get(month, year);
   const paid   = db.prepare("SELECT COUNT(*) as count, SUM(amount) as total FROM invoices WHERE period_month=? AND period_year=? AND status='paid'").get(month, year);
-  const unpaid = db.prepare("SELECT COUNT(*) as count, SUM(amount) as total FROM invoices WHERE period_month=? AND period_year=? AND status='unpaid'").get(month, year);
+  const unpaid = db.prepare("SELECT COUNT(*) as count, SUM(amount - COALESCE(amount_paid,0)) as total FROM invoices WHERE period_month=? AND period_year=? AND status='unpaid'").get(month, year);
   const voided = db.prepare("SELECT COUNT(*) as count, SUM(amount) as total FROM invoices WHERE period_month=? AND period_year=? AND status='void'").get(month, year);
   return { total, paid, unpaid, voided };
 }
@@ -487,7 +492,7 @@ function getDashboardStats() {
   const y = now.getFullYear();
   const totalRevenue  = db.prepare("SELECT SUM(amount) as t FROM invoices WHERE status='paid'").get();
   const thisMonth     = db.prepare("SELECT SUM(amount) as t FROM invoices WHERE status='paid' AND period_month=? AND period_year=?").get(m, y);
-  const pendingAmount = db.prepare("SELECT SUM(amount) as t FROM invoices WHERE status='unpaid'").get();
+  const pendingAmount = db.prepare("SELECT SUM(amount - COALESCE(amount_paid,0)) as t FROM invoices WHERE status='unpaid'").get();
   const unpaidCount   = db.prepare("SELECT COUNT(*) as c FROM invoices WHERE status='unpaid'").get();
   return {
     totalRevenue:  totalRevenue.t  || 0,
@@ -507,7 +512,7 @@ function getRecentPayments(limit = 8) {
 
 function getTopUnpaid(limit = 5) {
   return db.prepare(`
-    SELECT c.name, c.phone, COUNT(*) as unpaid_count, SUM(i.amount) as total_unpaid
+    SELECT c.name, c.phone, COUNT(*) as unpaid_count, SUM(i.amount - COALESCE(i.amount_paid,0)) as total_unpaid
     FROM invoices i JOIN customers c ON i.customer_id = c.id
     WHERE i.status='unpaid'
     GROUP BY c.id ORDER BY unpaid_count DESC LIMIT ?

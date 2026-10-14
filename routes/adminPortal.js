@@ -2335,6 +2335,44 @@ router.get('/customers/export', requireAdminSession, (req, res) => {
 });
 
 // ─── Cancelar servicio (manual) ───
+// Cobro de monto libre (pagos parciales / saldo a favor)
+router.get('/customers/:id/payment-info', requireAdminSession, (req, res) => {
+  try {
+    const pay = require('../services/paymentReversalService');
+    const c = customerSvc.getCustomerById(Number(req.params.id));
+    if (!c) throw new Error('Cliente no encontrado');
+    res.json({ ok: true, customer: { id: c.id, name: c.name, status: c.status }, debt: pay.debtOf(c.id), receipts: pay.receipts(c.id).slice(0, 10), isCashier: !!req.session.isCashier });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
+router.post('/customers/:id/receive', requireAdminSession, express.json(), async (req, res) => {
+  try {
+    const pay = require('../services/paymentReversalService');
+    const b = req.body || {};
+    const paidBy = resolvePaidByName(req, b.paid_by_name);
+    const r = pay.receive(Number(req.params.id), { amount: b.amount, method: b.method, note: b.note, paidBy, useCredit: !!b.use_credit, invoiceIds: b.invoice_ids });
+    // Si quedó sin deuda y estaba cortado, se habilita (igual que el cobro por factura)
+    const debt = pay.debtOf(r.customer.id);
+    let enabled = false;
+    if (!debt.count && r.customer.status === 'suspended') { await customerSvc.activateCustomer(r.customer.id); enabled = true; }
+    const parts = r.applied.map(a => `${a.period}: ${regional.formatMoney(a.amount)}${a.full ? ' (pagada)' : ' (parcial, falta ' + regional.formatMoney(a.remaining) + ')'}`);
+    let msg = `Cobro #${r.receiptId} registrado.` + (parts.length ? ' Aplicado a ' + parts.join('; ') + '.' : '');
+    if (r.creditUsed) msg += ` Se usó ${regional.formatMoney(r.creditUsed)} de saldo a favor.`;
+    if (r.creditAdded) msg += ` Saldo a favor: +${regional.formatMoney(r.creditAdded)}.`;
+    msg += debt.count ? ` Deuda restante: ${regional.formatMoney(debt.total)}.` : ' El cliente no tiene deuda.';
+    if (enabled) msg += ' Servicio habilitado.';
+    res.json({ ok: true, ...r, debt, enabled, message: msg });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
+router.post('/customers/:id/credit-adjust', requireAdminSession, express.json(), (req, res) => {
+  if (req.session.isCashier) return res.status(403).json({ ok: false, message: 'Solo el administrador puede ajustar el saldo a favor.' });
+  try {
+    const r = require('../services/paymentReversalService').adjustCredit(Number(req.params.id), req.body && req.body.delta, req.body && req.body.reason, req.session.adminUser || 'admin');
+    res.json({ ok: true, ...r, message: 'Saldo a favor actualizado: ' + regional.formatMoney(r.balance) });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
 router.get('/customers/:id/promise-preview', requireAdminSession, (req, res) => {
   try {
     res.json({ ok: true, ...require('../services/promiseService').preview(Number(req.params.id)) });
@@ -3809,7 +3847,7 @@ router.get('/reports', requireAdminSession, requireSidebarMenuAccess('reports'),
 
   const cashInYear = revenueYearDirect + agentDepositYear + customCashInYear;
   const cashInThisMonth = revenueThisMonthDirect + agentDepositThisMonth + customCashInMonth;
-  const pendingAmountRow = db.prepare("SELECT SUM(amount) as t FROM invoices WHERE status='unpaid'").get();
+  const pendingAmountRow = db.prepare("SELECT SUM(amount - COALESCE(amount_paid,0)) as t FROM invoices WHERE status='unpaid'").get();
   const pendingAmount = Number(pendingAmountRow?.t || 0);
 
   const voidedYearRow = db.prepare("SELECT COUNT(*) as c, SUM(amount) as t FROM invoices WHERE status='void' AND period_year = ?").get(yStr);
@@ -3926,7 +3964,7 @@ router.get('/reports/print', requireAdminSession, requireSidebarMenuAccess('repo
   
   const netProfitYear = cashInYear - expensesYear;
 
-  const pendingAmountRow = db.prepare("SELECT SUM(amount) as t FROM invoices WHERE status='unpaid' AND period_year = ?").get(filterYear);
+  const pendingAmountRow = db.prepare("SELECT SUM(amount - COALESCE(amount_paid,0)) as t FROM invoices WHERE status='unpaid' AND period_year = ?").get(filterYear);
   const pendingAmount = Number(pendingAmountRow?.t || 0);
 
   const expensesByCategory = db.prepare("SELECT category, SUM(amount) as total FROM expenses WHERE strftime('%Y', date) = ? GROUP BY category").all(yStr);

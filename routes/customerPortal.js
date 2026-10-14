@@ -119,15 +119,18 @@ function shouldSendWa(key, ttlMs = 15000) {
 /** Cocokkan session login (tag GenieACS / PPPoE / nomor) ke baris customers */
 function findCustomerProfileByLoginId(loginId) {
   if (!loginId) return null;
-  const cleanLogin = String(loginId).replace(/\D/g, '');
-  return customerSvc.getAllCustomers().find((c) => {
+  const login = String(loginId).trim();
+  const cleanLogin = login.replace(/\D/g, '');
+  const all = customerSvc.getAllCustomers();
+  // 1) Coincidencias exactas por identificador único (usuario PPPoE / etiqueta del equipo)
+  const exact = all.find((c) => (c.pppoe_username && c.pppoe_username === login) || (c.genieacs_tag && c.genieacs_tag === login));
+  if (exact) return exact;
+  // 2) Por teléfono: solo si el identificador realmente tiene dígitos (antes un usuario PPPoE sin números
+  //    coincidía con cualquier cliente SIN teléfono cargado y mostraba datos de otra persona)
+  if (cleanLogin.length < 6) return null;
+  return all.find((c) => {
     const cleanDb = String(c.phone || '').replace(/\D/g, '');
-    return (
-      cleanDb === cleanLogin ||
-      c.phone === loginId ||
-      c.genieacs_tag === loginId ||
-      c.pppoe_username === loginId
-    );
+    return (cleanDb && cleanDb === cleanLogin) || (c.phone && c.phone === login);
   }) || null;
 }
 
@@ -1772,7 +1775,7 @@ router.get('/dashboard', async (req, res) => {
   }
   
   const profile =
-    findCustomerProfileByLoginId(loginId) ||
+    _wifiProfile(req) ||
     (req.session.pppoe_username ? findCustomerProfileByLoginId(req.session.pppoe_username) : null);
 
   const uniqueCandidates = Array.from(new Set([
@@ -2075,11 +2078,7 @@ router.get('/api/pppoe-traffic', async (req, res) => {
   let username = String((req.session && req.session.pppoe_username) || '').trim();
 
   if (!username || !routerId) {
-    const cleanLogin = String(loginId).replace(/\D/g, '');
-    const profile = customerSvc.getAllCustomers().find(c => {
-      const cleanDb = String(c.phone || '').replace(/\D/g, '');
-      return cleanDb === cleanLogin || c.phone === loginId || c.genieacs_tag === loginId || c.pppoe_username === loginId;
-    }) || null;
+    const profile = findCustomerProfileByLoginId(loginId);
 
     if (!routerId && profile && profile.router_id) {
       routerId = Number(profile.router_id);
@@ -2234,6 +2233,9 @@ router.get('/api/pppoe-traffic', async (req, res) => {
 
 // ── WiFi real vía OLT (ONU VSOL compatibles) ─────────────────────────────────
 function _wifiProfile(req) {
+  // El id de cliente guardado al iniciar sesión manda; el identificador de login es respaldo
+  const cid = Number(req.session && req.session.customer_id) || 0;
+  if (cid) { const c = customerSvc.getAllCustomers().find(x => Number(x.id) === cid); if (c) return c; }
   const loginId = String(req.session?.phone ?? '').replace(/[\r\n\t]+/g, '').trim();
   return loginId ? findCustomerProfileByLoginId(loginId) : null;
 }
@@ -2499,11 +2501,7 @@ router.post('/change-tag', async (req, res) => {
     notif = dashboardNotif('ID/etiqueta actualizado.', 'success');
     
     // UPDATE DATABASE SQLITE IF MATCHING PROFILE FOUND
-    const profileToUpdate = customerSvc.getAllCustomers().find(c => {
-      const cleanLogin = oldTag.replace(/\D/g, '');
-      const cleanDb = (c.phone || '').replace(/\D/g, '');
-      return cleanDb === cleanLogin || c.phone === oldTag || c.genieacs_tag === oldTag;
-    });
+    const profileToUpdate = findCustomerProfileByLoginId(oldTag);
     
     if (profileToUpdate) {
       try {
@@ -2525,11 +2523,7 @@ router.post('/change-tag', async (req, res) => {
     searchToken = deviceData.pppoeUsername;
   }
   const invoices = billingSvc.getInvoicesByAny(searchToken);
-  const profile = customerSvc.getAllCustomers().find(c => {
-    const cleanLogin = resolvedPhone.replace(/\D/g, '');
-    const cleanDb = (c.phone || '').replace(/\D/g, '');
-    return cleanDb === cleanLogin || c.phone === resolvedPhone || c.pppoe_username === (deviceData ? deviceData.pppoeUsername : null);
-  });
+  const profile = findCustomerProfileByLoginId(resolvedPhone) || (deviceData && deviceData.pppoeUsername ? findCustomerProfileByLoginId(deviceData.pppoeUsername) : null);
   const tickets = profile ? ticketSvc.getTicketsByCustomerId(profile.id) : [];
 
   const states = sidebarMenuSvc.getStoredMenuStates();

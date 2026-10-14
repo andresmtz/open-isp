@@ -185,8 +185,10 @@ function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
       let ny = Math.max(ty, my) + 6;
       doc.roundedRect(LEFT, ny, W, 46, 8).fillAndStroke('#fefce8', '#fde68a');
       doc.fillColor('#92400e').fontSize(8.5).font('Helvetica-Bold').text('Nota', LEFT + 12, ny + 8);
-      const noteText = invoice.notes
-        ? String(invoice.notes).replace(/\n+/g, ' ').slice(0, 200)
+      // Referencias internas de la importación ("WispHub #622 | …") no se muestran al cliente
+      const cleanNotes = String(invoice.notes || '').replace(/WispHub\s*#\d+\s*\|?\s*/gi, '').replace(/\n+/g, ' ').trim();
+      const noteText = cleanNotes
+        ? cleanNotes.slice(0, 200)
         : (isPaid ? 'Pago recibido. Conserve este documento como comprobante de pago.' : 'Por favor, realice el pago antes de la fecha de vencimiento.');
       doc.fillColor('#92400e').fontSize(8).font('Helvetica').text(noteText, LEFT + 12, ny + 20, { width: W - 24, height: 22 });
 
@@ -200,7 +202,7 @@ function generateInvoicePdfBuffer(invoice, customer, settings = {}) {
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text('Atentamente,', 430, fy, { width: 125, align: 'center' });
       doc.moveTo(430, fy + 34).lineTo(555, fy + 34).strokeColor(INK).stroke();
       doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(managerName || companyName, 430, fy + 38, { width: 125, align: 'center' });
-      if (managerName) doc.fillColor(MUTED).fontSize(7.5).font('Helvetica').text(companyName, 430, fy + 49, { width: 125, align: 'center' });
+      if (managerName && managerName.trim().toLowerCase() !== String(companyName).trim().toLowerCase()) doc.fillColor(MUTED).fontSize(7.5).font('Helvetica').text(companyName, 430, fy + 49, { width: 125, align: 'center' });
 
       doc.end();
     } catch (err) {

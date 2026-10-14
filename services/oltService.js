@@ -2200,6 +2200,23 @@ function enrichOnusWithCustomerData(onus) {
         }
       }
 
+      // Comparación flexible: sin espacios/acentos/mayúsculas ("ZoiloPeraltaViera" = "Zoilo Peralta Viera"),
+      // o todas las palabras del nombre de la ONU (CamelCase) contenidas en el nombre de un único cliente.
+      if (!matched && nameClean) {
+        const compact = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+        const target = compact(onu.name);
+        if (target.length >= 5) {
+          matched = custs.find(c => compact(c.name) === target || compact(c.pppoe_username) === target) || null;
+          if (!matched) {
+            const words = String(onu.name).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length >= 3);
+            if (words.length >= 2) {
+              const hits = custs.filter(c => { const cw = String(c.name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); return words.every(w => cw.includes(w)); });
+              if (hits.length === 1) matched = hits[0];
+            }
+          }
+        }
+      }
+
       if (matched) {
         onu.customer_id = matched.id;
         onu.customer_name = matched.name;

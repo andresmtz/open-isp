@@ -740,7 +740,8 @@ const fetchVsolEponViaTelnet = async (olt) => {
   const cmds = ['configure terminal', 'interface epon 0/1', 'show onu auth-info all', 'show onu status all', 'show onu opm-diag all', 'exit', 'exit'];
   const out = await telnetLoginAndRun(olt.host, olt.web_user, olt.web_password, cmds,
     Object.assign(telnetOptsFromOlt(olt), { enablePassword: olt.enable_password || olt.web_password }));
-  const clean = String(out).replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace(/[^\x09\x0a\x0d\x20-\x7e]/g, '');
+  // La OLT pagina con " --More-- " + retrocesos: hay que quitarlo o la fila siguiente queda corrida.
+  const clean = String(out).replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace(/ ?--More-- ?[\x00\x08 ]*/g, '').replace(/[^\x09\x0a\x0d\x20-\x7e]/g, '');
   const auth = parseFixedTable(clean, 'ONU-ID      LLID', ['id', 'llid', 'status', 'mac', 'rtt', 'desc', 'type', 'authflag', 'exchange', 'authmode', 'loid']);
   const status = parseFixedTable(clean, 'ONU-ID      Status', ['id', 'status', 'mac', 'distance', 'rtt', 'lastReg', 'lastDereg', 'lastDeregReason', 'aliveTime', 'upgrade']);
   const opm = parseFixedTable(clean, 'ONU-ID      Temperature', ['id', 'temp', 'voltage', 'bias', 'tx', 'rx']);

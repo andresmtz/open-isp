@@ -41,19 +41,23 @@
               <th><%= t('admin.cashiers.table.name', 'Nama') %></th>
               <th><%= t('admin.cashiers.table.username', 'Username') %></th>
               <th><%= t('admin.cashiers.table.phone', 'No. HP') %></th>
+              <th>Permisos</th>
               <th><%= t('admin.cashiers.table.status', 'Status') %></th>
               <th><%= t('admin.cashiers.table.actions', 'Aksi') %></th>
             </tr>
           </thead>
           <tbody>
             <% if (cashiers.length === 0) { %>
-              <tr><td colspan="5" class="text-center text-muted" style="padding:20px"><%= t('admin.cashiers.empty', 'Belum ada data kasir.') %></td></tr>
+              <tr><td colspan="6" class="text-center text-muted" style="padding:20px"><%= t('admin.cashiers.empty', 'Belum ada data kasir.') %></td></tr>
             <% } else { %>
               <% cashiers.forEach(c => { %>
                 <tr>
                   <td><strong><%= c.name %></strong></td>
                   <td><code><%= c.username %></code></td>
                   <td><%= c.phone || '-' %></td>
+                  <td style="max-width:420px;font-size:12px">
+                    <% if (c.permSummary.length) { %><%= c.permSummary.join(' · ') %><% } else { %><span class="text-muted">Sin permisos (solo el panel)</span><% } %>
+                  </td>
                   <td>
                     <span class="badge <%= c.is_active ? 'bs' : 'bd' %>">
                       <%= c.is_active ? t('common.active', 'Aktif') : t('common.inactive', 'Nonaktif') %>
@@ -64,6 +68,7 @@
                     <div class="act">
                       <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                       <div class="act-menu">
+                        <button type="button" class="act-item primary" onclick='openPerms(<%- JSON.stringify({ id: c.id, name: c.name, perms: c.perms }).split("<").join("\\u003c").split("'").join("\\u0027") %>)'><i class="bi bi-shield-check"></i> Permisos</button>
                         <button type="button" class="act-item" onclick='editCashier(<%- JSON.stringify(c).split('<').join('\\u003c') %>)'><i class="bi bi-pencil"></i> Editar</button>
                         <div class="act-sep"></div>
                         <button type="submit" form="kdel-<%= c.id %>" class="act-item danger"><i class="bi bi-trash"></i> Eliminar</button>
@@ -78,36 +83,16 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-hd">
-        <h6><i class="bi bi-shield-check"></i> ¿Qué puede hacer el personal de oficina?</h6>
-      </div>
-      <div class="card-bd">
-        <p style="font-size:13px;color:var(--muted);margin:0 0 12px">
-          Siempre puede: ver el panel (sin ingresos), los planes, las zonas y marcar su asistencia. Lo demás depende de lo que marques abajo.
-          Nunca puede: configuración, automatización, respaldos, MikroTik/OLT (cambios), usuarios, cancelar clientes, anular pagos, ajustar saldo a favor ni borrar nada.
-          Todo lo que hace queda registrado con su nombre.
-        </p>
-        <form action="/admin/cashiers/permissions" method="POST">
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px">
-            <% permCatalog.forEach(function (p) { %>
-              <label style="display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer">
-                <input type="checkbox" name="<%= p.key %>" value="1" <%= perms[p.key] ? 'checked' : '' %> data-needs="<%= (p.needs || []).join(',') %>" class="perm-cb" style="margin-top:3px">
-                <span><strong style="font-size:13px"><%= p.label %></strong><br><span style="font-size:12px;color:var(--muted)"><%= p.help %></span>
-                <% if ((p.needs || []).length) { %><br><span style="font-size:11px;color:var(--muted)">Incluye: <%= p.needs.map(function (n) { var x = permCatalog.find(function (q) { return q.key === n; }); return x ? x.label : n; }).join(', ') %></span><% } %></span>
-              </label>
-            <% }) %>
-          </div>
-          <div style="margin-top:12px;text-align:right"><button type="submit" class="btn btn-p btn-sm"><i class="bi bi-check-lg"></i> Guardar permisos</button></div>
-        </form>
-      </div>
+    <div style="font-size:12.5px;color:var(--muted);margin:4px 2px 0">
+      <i class="bi bi-shield-check"></i> Cada persona tiene sus propios permisos (menú <b>⋮ → Permisos</b>). Siempre puede: ver el panel (sin ingresos), las zonas y marcar su asistencia.
+      Nunca puede: configuración, automatización, respaldos, cambios en MikroTik/OLT, usuarios, cancelar clientes, anular pagos, ajustar saldo a favor ni borrar nada. Todo lo que hace queda registrado con su nombre.
     </div>
   </div>
 </div>
 
 <!-- Modal Tambah -->
 <div class="mo" id="addCashierModal">
-  <div class="mb">
+  <div class="mb" style="max-width:860px">
     <form action="/admin/cashiers" method="POST">
       <div class="mh"><span class="mt"><%= t('admin.cashiers.modal.add_title', 'Tambah Kasir Baru') %></span><button type="button" class="mc" onclick="closeModal('addCashierModal')">&times;</button></div>
       <div class="mbody">
@@ -115,6 +100,17 @@
         <div class="fg"><label class="fl"><%= t('admin.cashiers.form.login_username', 'Username Login') %></label><input type="text" name="username" class="fc" required></div>
         <div class="fg"><label class="fl"><%= t('admin.cashiers.form.password', 'Password') %></label><input type="password" name="password" class="fc" required minlength="<%= minPass %>" autocomplete="new-password"><div style="font-size:11px;color:var(--muted);margin-top:3px">Mínimo <%= minPass %> caracteres. Se guarda cifrada: nadie puede verla después.</div></div>
         <div class="fg"><label class="fl"><%= t('admin.cashiers.form.phone', 'No. HP') %></label><input type="text" name="phone" class="fc" placeholder="<%= t('admin.cashiers.form.phone_placeholder', 'Contoh: 08123456789') %>"></div>
+        <div class="fg"><label class="fl">Permisos</label><div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">Arranca sin ningún permiso: marcá solo lo que necesita para su trabajo.</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px">
+            <% permCatalog.forEach(function (p) { %>
+              <label style="display:flex;gap:9px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer">
+                <input type="checkbox" name="perm_<%= p.key %>" value="1" data-key="<%= p.key %>" data-needs="<%= (p.needs || []).join(',') %>" class="perm-cb" style="margin-top:3px">
+                <span><strong style="font-size:12.5px"><%= p.label %></strong><br><span style="font-size:11.5px;color:var(--muted)"><%= p.help %></span>
+                <% if ((p.needs || []).length) { %><br><span style="font-size:11px;color:var(--muted)">Incluye: <%= p.needs.map(function (n) { var x = permCatalog.find(function (q) { return q.key === n; }); return x ? x.label : n; }).join(', ') %></span><% } %></span>
+              </label>
+            <% }) %>
+          </div>
+        </div>
       </div>
       <div class="mf">
         <button type="button" class="btn btn-g" onclick="closeModal('addCashierModal')"><%= t('common.cancel', 'Batal') %></button>
@@ -150,19 +146,51 @@
   </div>
 </div>
 
+<!-- Modal Permisos -->
+<div class="mo" id="permsModal">
+  <div class="mb" style="max-width:900px">
+    <form id="permsForm" method="POST">
+      <div class="mh"><span class="mt"><i class="bi bi-shield-check"></i> Permisos de <span id="p-name"></span></span><button type="button" class="mc" onclick="closeModal('permsModal')">&times;</button></div>
+      <div class="mbody">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px">
+            <% permCatalog.forEach(function (p) { %>
+              <label style="display:flex;gap:9px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer">
+                <input type="checkbox" name="perm_<%= p.key %>" value="1" data-key="<%= p.key %>" data-needs="<%= (p.needs || []).join(',') %>" class="perm-cb" form="permsForm" style="margin-top:3px">
+                <span><strong style="font-size:12.5px"><%= p.label %></strong><br><span style="font-size:11.5px;color:var(--muted)"><%= p.help %></span>
+                <% if ((p.needs || []).length) { %><br><span style="font-size:11px;color:var(--muted)">Incluye: <%= p.needs.map(function (n) { var x = permCatalog.find(function (q) { return q.key === n; }); return x ? x.label : n; }).join(', ') %></span><% } %></span>
+              </label>
+            <% }) %>
+          </div>
+      </div>
+      <div class="mf">
+        <button type="button" class="btn btn-g" onclick="closeModal('permsModal')"><%= t('common.cancel', 'Batal') %></button>
+        <button type="submit" class="btn btn-p"><i class="bi bi-check-lg"></i> Guardar permisos</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 const I18N = {
   confirmDeleteCashier: "<%= t('admin.cashiers.confirm_delete', 'Hapus kasir ini?') %>"
 };
 
-// Al marcar un permiso se marcan los que necesita; al desmarcar uno, se desmarcan los que dependen de él
+// Al marcar un permiso se marcan los que necesita; al desmarcar uno, se desmarcan los que dependen de él (dentro del mismo formulario)
 document.querySelectorAll('.perm-cb').forEach(function (cb) {
   cb.addEventListener('change', function () {
-    var all = Array.prototype.slice.call(document.querySelectorAll('.perm-cb'));
-    if (cb.checked) (cb.dataset.needs || '').split(',').filter(Boolean).forEach(function (n) { var d = document.querySelector('.perm-cb[name="' + n + '"]'); if (d) d.checked = true; });
-    else all.forEach(function (o) { if (o.checked && (o.dataset.needs || '').split(',').indexOf(cb.name) !== -1) o.checked = false; });
+    var box = cb.closest('form');
+    var get = function (k) { return box.querySelector('.perm-cb[data-key="' + k + '"]'); };
+    if (cb.checked) (cb.dataset.needs || '').split(',').filter(Boolean).forEach(function (n) { var d = get(n); if (d) d.checked = true; });
+    else box.querySelectorAll('.perm-cb').forEach(function (o) { if (o.checked && (o.dataset.needs || '').split(',').indexOf(cb.dataset.key) !== -1) o.checked = false; });
   });
 });
+function openPerms(c) {
+  var f = document.getElementById('permsForm');
+  f.action = '/admin/cashiers/' + c.id + '/permissions';
+  document.getElementById('p-name').textContent = c.name;
+  f.querySelectorAll('.perm-cb').forEach(function (cb) { cb.checked = !!(c.perms && c.perms[cb.dataset.key]); });
+  openModal('permsModal');
+}
 
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }

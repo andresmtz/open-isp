@@ -1024,22 +1024,36 @@ router.post('/technicians/:id/delete', requireAdminSession, restrictToAdmin, (re
 
 // --- CASHIER MANAGEMENT ---
 router.get('/cashiers', requireAdminSession, requireSidebarMenuAccess('cashiers'), restrictToAdmin, (req, res) => {
-  const cashiers = adminSvc.getAllCashiers().map(({ password, ...c }) => c);
+  staffPerms.ensureSchema();
+  const cashiers = adminSvc.getAllCashiers().map(({ password, permissions, ...c }) => {
+    const perms = staffPerms.current(c.id);
+    return { ...c, perms, permSummary: staffPerms.summary(perms) };
+  });
   res.render('admin/cashiers', { title: 'Personal de oficina', company: company(), activePage: 'cashiers', cashiers, msg: flashMsg(req),
-    permCatalog: staffPerms.CATALOG, perms: staffPerms.current(), minPass: require('../config/staffPassword').MIN_LENGTH });
+    permCatalog: staffPerms.CATALOG, minPass: require('../config/staffPassword').MIN_LENGTH });
 });
 
-router.post('/cashiers/permissions', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
-  const out = staffPerms.save(req.body || {});
-  try { auditSvc && auditSvc.logAuditTrail && auditSvc.logAuditTrail({ action: 'UPDATE', entity_type: 'staff_permissions', entity_id: 'cashier', actor_type: 'admin', actor_name: req.session.adminUser || 'admin', details: out, ip_address: req.ip }); } catch (_) {}
-  req.session._msg = { type: 'success', text: 'Permisos del personal guardados. Se aplican de inmediato.' };
+// Permisos de UNA persona (las casillas llegan como perm_<clave>)
+function permsFromBody(body) {
+  const out = {};
+  for (const p of staffPerms.CATALOG) out[p.key] = body && body['perm_' + p.key];
+  return out;
+}
+
+router.post('/cashiers/:id/permissions', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
+  const row = db.prepare('SELECT id, name FROM cashiers WHERE id = ?').get(req.params.id);
+  if (!row) { req.session._msg = { type: 'error', text: 'Usuario no encontrado.' }; return res.redirect('/admin/cashiers'); }
+  const out = staffPerms.save(row.id, permsFromBody(req.body));
+  try { auditSvc && auditSvc.logAuditTrail && auditSvc.logAuditTrail({ action: 'UPDATE', entity_type: 'staff_permissions', entity_id: String(row.id), actor_type: 'admin', actor_name: req.session.adminUser || 'admin', details: { usuario: row.name, permisos: out }, ip_address: req.ip }); } catch (_) {}
+  req.session._msg = { type: 'success', text: `Permisos de ${row.name} guardados. Se aplican de inmediato.` };
   res.redirect('/admin/cashiers');
 });
 
 router.post('/cashiers', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
   try {
-    adminSvc.createCashier(req.body);
-    req.session._msg = { type: 'success', text: 'Usuario agregado.' };
+    const r = adminSvc.createCashier(req.body);
+    staffPerms.save(r.lastInsertRowid, permsFromBody(req.body));
+    req.session._msg = { type: 'success', text: 'Usuario agregado con los permisos marcados.' };
   } catch (e) {
     req.session._msg = { type: 'error', text: 'Error:' + e.message };
   }

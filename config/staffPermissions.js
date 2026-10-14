@@ -2,14 +2,14 @@
  * Permisos del personal de oficina (sesiones de "cajero": secretaría, caja, atención).
  *
  * Regla general: TODO lo que no está habilitado acá queda prohibido (denegar por defecto).
- * El administrador elige qué puede hacer el personal en Usuarios → Personal de oficina.
- * Se guarda en el ajuste `staff_permissions` ({ clave: true|false }).
+ * El administrador elige qué puede hacer CADA persona en Usuarios → Personal de oficina → Permisos.
+ * Se guarda por usuario en cashiers.permissions (JSON { clave: true|false }).
  *
  * Siempre solo del administrador (no aparecen como opción): configuración, automatización,
  * respaldos, actualizaciones, routers/MikroTik/OLT (escritura), usuarios, planes (edición),
  * cancelar clientes, anular pagos, ajustar saldo a favor, borrar clientes o facturas, importar.
  */
-const { getSetting, saveSettings } = require('./settingsManager');
+const { getSetting } = require('./settingsManager');
 
 const ID = '\\d+';
 
@@ -117,33 +117,66 @@ const compile = (rules) => rules.map(([m, re]) => ({ methods: m.split('|'), re: 
 const BASE_C = compile(BASE);
 const CATALOG_C = CATALOG.map(p => ({ key: p.key, rules: compile(p.rules) }));
 
-function current() {
-  let stored = getSetting('staff_permissions', null);
-  if (typeof stored === 'string') { try { stored = JSON.parse(stored); } catch (_) { stored = null; } }
-  const out = {};
-  for (const p of CATALOG) {
-    // Permisos nuevos que no estaban cuando el admin guardó: quedan apagados (nunca se otorga acceso sin que lo marque)
-    const v = stored && typeof stored === 'object' ? (Object.prototype.hasOwnProperty.call(stored, p.key) ? stored[p.key] : false) : p.def;
-    out[p.key] = v === true || v === 'true' || v === 1 || v === '1' || v === 'on';
+// ── Permisos por persona (columna cashiers.permissions, JSON) ───────────────────────────
+let _schemaOk = false;
+function ensureSchema() {
+  if (_schemaOk) return;
+  const db = require('./database');
+  const cols = db.prepare('PRAGMA table_info(cashiers)').all().map(c => c.name);
+  if (!cols.includes('permissions')) {
+    db.exec('ALTER TABLE cashiers ADD COLUMN permissions TEXT');
+    // Migración: los usuarios que ya existían conservan los permisos generales que tenían
+    let legacy = getSetting('staff_permissions', null);
+    if (typeof legacy === 'string') { try { legacy = JSON.parse(legacy); } catch (_) { legacy = null; } }
+    if (legacy && typeof legacy === 'object') db.prepare('UPDATE cashiers SET permissions = ?').run(JSON.stringify(normalize(legacy)));
   }
-  return withNeeds(out);
+  _schemaOk = true;
 }
+
+const truthy = (v) => v === true || v === 'true' || v === 1 || v === '1' || v === 'on';
 
 function withNeeds(out) {
   for (const p of CATALOG) if (out[p.key]) for (const n of (p.needs || [])) out[n] = true;
   return out;
 }
 
-function save(input) {
+/** Solo claves conocidas; lo que falta queda apagado (nunca se otorga acceso sin que el admin lo marque). */
+function normalize(input) {
   const out = {};
-  for (const p of CATALOG) out[p.key] = !!(input && (input[p.key] === true || input[p.key] === 'on' || input[p.key] === '1' || input[p.key] === 'true'));
-  withNeeds(out);
-  saveSettings({ staff_permissions: out });
+  for (const p of CATALOG) out[p.key] = !!(input && truthy(input[p.key]));
+  return withNeeds(out);
+}
+
+const _cache = new Map(); // id → { at, perms } (evita leer la BD varias veces por página)
+function current(cashierId) {
+  const id = Number(cashierId) || 0;
+  const hit = _cache.get(id);
+  if (hit && Date.now() - hit.at < 3000) return hit.perms;
+  ensureSchema();
+  let raw = null;
+  try { raw = require('./database').prepare('SELECT permissions FROM cashiers WHERE id = ?').get(id); } catch (_) {}
+  let obj = null;
+  try { obj = raw && raw.permissions ? JSON.parse(raw.permissions) : null; } catch (_) { obj = null; }
+  const perms = normalize(obj);
+  _cache.set(id, { at: Date.now(), perms });
+  return perms;
+}
+
+function save(cashierId, input) {
+  ensureSchema();
+  const out = normalize(input);
+  require('./database').prepare('UPDATE cashiers SET permissions = ? WHERE id = ?').run(JSON.stringify(out), Number(cashierId));
+  _cache.delete(Number(cashierId));
   return out;
 }
 
+/** Resumen corto para la lista de usuarios. */
+function summary(perms) {
+  return CATALOG.filter(p => perms[p.key]).map(p => p.label);
+}
+
 const isStaff = (session) => !!(session && session.isCashier && !session.isAdmin);
-const has = (session, key) => !isStaff(session) || !!current()[key];
+const has = (session, key) => !isStaff(session) || !!current(session.cashierId)[key];
 
 /** ¿Puede esta sesión hacer METHOD path? (path relativo a /admin). Los administradores siempre pueden. */
 function allows(session, method, path) {
@@ -152,7 +185,7 @@ function allows(session, method, path) {
   const p = String(path || '/').replace(/\/+$/, '') || '/';
   const hit = (rules) => rules.some(r => r.methods.includes(m) && r.re.test(p));
   if (hit(BASE_C)) return true;
-  const perms = current();
+  const perms = current(session.cashierId);
   return CATALOG_C.some(c => perms[c.key] && hit(c.rules));
 }
 
@@ -181,4 +214,4 @@ function redactMoney(session, rows) {
   return rows.map(r => { const o = { ...r }; for (const f of MONEY_FIELDS) delete o[f]; return o; });
 }
 
-module.exports = { CATALOG, BASE, current, save, allows, has, isStaff, guard, redactMoney };
+module.exports = { CATALOG, BASE, current, save, normalize, summary, ensureSchema, allows, has, isStaff, guard, redactMoney };

@@ -100,8 +100,8 @@ const DEFAULT_MENU_STATES = {
   radius_server: STATE_VISIBLE,
   map: STATE_VISIBLE,
   acs_pro: STATE_VISIBLE,
-  onu_provision: STATE_VISIBLE,
-  olts: STATE_HIDDEN,
+  onu_provision: STATE_HIDDEN, // sus comandos son para GPON por SSH; no usar con VSOL EPON
+  olts: STATE_VISIBLE,
   whatsapp: STATE_VISIBLE,
   automation: STATE_VISIBLE,
   broadcast: STATE_VISIBLE,

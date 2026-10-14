@@ -37,3 +37,19 @@ services:
       timeout: 5s
       retries: 3
       start_period: 45s
+
+  # WhatsApp (GoWA). Sin puertos publicados: solo Open-ISP lo alcanza por la red interna
+  # (http://gowa:3000). Usuario/contraseña en docker-data/gowa.env (APP_BASIC_AUTH=usuario:clave).
+  # Versión fija: actualizar a mano después de probar.
+  gowa:
+    image: aldinokemal2104/go-whatsapp-web-multidevice:v9.5.0
+    container_name: gowa
+    restart: unless-stopped
+    command: rest
+    env_file:
+      - ./docker-data/gowa.env
+    environment:
+      - TZ=America/Asuncion
+    volumes:
+      - ./docker-data/gowa:/app/storages
+

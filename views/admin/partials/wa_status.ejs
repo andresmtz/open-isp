@@ -1,0 +1,7 @@
+<% if (typeof waStatus !== 'undefined' && waStatus) { %>
+  <% if (waStatus.ok) { %>
+    <div class="alert alert-s" style="margin-bottom:14px"><i class="bi bi-whatsapp"></i> WhatsApp habilitado (<%= waStatus.gateway.toUpperCase() %>): las automatizaciones envían mensajes.</div>
+  <% } else { %>
+    <div class="alert alert-d" style="margin-bottom:14px"><i class="bi bi-whatsapp"></i> <b>WhatsApp inactivo:</b> <%= waStatus.reason %>. Ningún mensaje automático se envía (recordatorios, avisos de corte, comprobantes, códigos de acceso de clientes) hasta que se habilite y configure en <a href="/admin/whatsapp">WhatsApp</a>.</div>
+  <% } %>
+<% } %>

@@ -209,7 +209,7 @@ router.get('/set-active-router', requireAdminSession, (req, res) => {
 
 async function trySendWhatsappPayment(customerPhone, message) {
   try {
-    if (!getSetting('whatsapp_enabled', false)) return false;
+    if (!require('../config/waGate').ready()) return false;
     const to = String(customerPhone || '').trim();
     if (!to) return false;
     const waNotify = require('../services/waNotifyService');
@@ -529,6 +529,7 @@ async function createVoucherBatchAsync(batchId) {
 // Global locals middleware
 router.use((req, res, next) => {
   res.locals.session = req.session;
+  try { res.locals.waStatus = require('../config/waGate').status(); } catch (_) { res.locals.waStatus = null; }
   res.locals.sidebarSections = sidebarMenuSvc.getSidebarSections(req.session);
   res.locals.sidebarBottomNavItems = sidebarMenuSvc.getBottomNavItems(req.session);
   res.locals.settings = getSettings();
@@ -3290,7 +3291,7 @@ router.post('/billing/:id/qris-clear', requireAdminSession, (req, res) => {
 
 router.post('/billing/:id/whatsapp', requireAdminSession, async (req, res) => {
   try {
-    const waEnabled = getSetting('whatsapp_enabled', false);
+    const waEnabled = require('../config/waGate').ready();
     const billingEnabled = getSetting('whatsapp_billing_to_customer_enabled', true);
     if (!waEnabled) throw new Error('Las notificaciones de WhatsApp están desactivadas en Configuración.');
     if (!billingEnabled) throw new Error('El envío de facturas por WhatsApp a los clientes está desactivado.');
@@ -4398,8 +4399,18 @@ router.get('/automation', requireAdminSession, requireSidebarMenuAccess('automat
   res.render('admin/automation', {
     title: 'Automation', company: comp, activePage: 'automation', msg: flashMsg(req),
     getSetting, autoBillingMsg, selectedTplKey, billingTemplates: _bsvc.TEMPLATE_LABELS, runs: runs, isolateDays: isolateDays,
-    cycle: require('../config/billingCycle').get(), cyclePreview: require('../config/billingCycle').preview()
+    cycle: require('../config/billingCycle').get(), cyclePreview: require('../config/billingCycle').preview(),
+    netQueue: require('../services/networkQueueService').list({ includeDone: false }),
+    netQueueRecent: require('../services/networkQueueService').list({ includeDone: true, limit: 20 })
   });
+});
+
+router.post('/network-queue/:id/retry', requireAdminSession, async (req, res) => {
+  try {
+    const r = await require('../services/networkQueueService').retryNow(Number(req.params.id));
+    req.session._msg = { type: r === 'done' ? 'success' : 'error', text: r === 'done' ? 'Acción aplicada en el MikroTik.' : (r === 'skipped' ? 'El cliente ya no requiere acción de red.' : 'El MikroTik volvió a fallar; se sigue reintentando.') };
+  } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
+  res.redirect('/admin/automation#red');
 });
 
 router.post('/automation/billing-cycle', requireAdminSession, requireMainAdmin, express.urlencoded({ extended: true }), (req, res) => {

@@ -72,7 +72,7 @@ function addMessageVariation(message, index) {
 
 async function runAutoBillingReminder() {
     const enabled = getSetting('whatsapp_auto_billing_enabled', false);
-    const waEnabled = getSetting('whatsapp_enabled', false);
+    const waEnabled = require('../config/waGate').ready();
     const billingEnabled = getSetting('whatsapp_billing_to_customer_enabled', true);
     if (!enabled || !waEnabled || !billingEnabled) return { target: 0, sent: 0, failed: 0, skipped: 'disabled' };
 
@@ -374,6 +374,7 @@ async function runAutoBillingReminder() {
 
 function startCronJobs() {
   try { require('./paymentReversalService').ensureSchema(); } catch (e) { logger.error('[CRON] Esquema de cobros: ' + e.message); }
+  try { require('./networkQueueService').ensureSchema(); } catch (e) { logger.error('[CRON] Esquema de cola de red: ' + e.message); }
   try { promiseSvc.ensureSchema(); } catch (e) { logger.error('[CRON] Esquema de promesas: ' + e.message); }
   // 1. Emisión automática de facturas según el ciclo configurado (día/hora/período en Configuración).
   //    Corre cada hora; solo actúa el día de emisión a partir de la hora fijada (idempotente).
@@ -401,6 +402,18 @@ function startCronJobs() {
       if (pr.kept || pr.broken) logger.info(`[CRON] Promesas de pago: ${pr.kept} cumplidas, ${pr.broken} vencidas (cortadas).`);
     } catch (e) { logger.error('[CRON] Revisión de promesas: ' + e.message); }
     finally { _promiseBusy = false; }
+  });
+
+  // Cola de reintentos de red (MikroTik): cada minuto aplica lo que el router no confirmó.
+  let _netqBusy = false;
+  cron.schedule('* * * * *', async () => {
+    if (_netqBusy) return;
+    _netqBusy = true;
+    try {
+      const r = await require('./networkQueueService').processDue();
+      if (r && (r.done || r.failed)) logger.info(`[CRON] Cola de red: ${r.done} aplicadas, ${r.retry} a reintentar, ${r.failed} agotadas.`);
+    } catch (e) { logger.error('[CRON] Cola de red: ' + e.message); }
+    finally { _netqBusy = false; }
   });
 
   // 2. Corte automático: cada hora. Corta a quien tenga una factura impaga cuyo momento de corte
@@ -479,7 +492,7 @@ function startCronJobs() {
     if (inMigrationMode('aviso de deuda')) return; 
     try {
       const enabled = getSetting('arrears_notice_enabled', true) !== false && getSetting('arrears_notice_enabled', true) !== 'false';
-      if (!enabled || !getSetting('whatsapp_enabled', false)) return;
+      if (!enabled || !require('../config/waGate').ready()) return;
       const noticeSvc = require('./arrearsNoticeService');
       const batas = Math.max(1, Number(getSetting('auto_deactivate_months', 3) || 3));
       const rows = db.prepare(`
@@ -859,7 +872,7 @@ function startCronJobs() {
 
 async function sendAutoLunasRecap(pMonth, pYear) {
   try {
-    if (!getSetting('whatsapp_enabled', false)) return { sent: false, reason: 'wa_off' };
+    if (!require('../config/waGate').ready()) return { sent: false, reason: 'wa_off' };
     if (getSetting('autolunas_recap_enabled', true) === false) return { sent: false, reason: 'recap_off' };
     const now = new Date();
     const m = Number(pMonth) || (now.getMonth() + 1);

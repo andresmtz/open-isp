@@ -50,6 +50,7 @@ async function sendText(phone, text) {
 }
 
 async function sendMetaImage(phone, buffer, caption) {
+  if (!require('../config/waGate').ready()) return false;
   try {
     const phoneId = getSetting('meta_phone_number_id', '');
     const token = getSetting('meta_access_token', '');
@@ -73,6 +74,7 @@ async function sendMetaImage(phone, buffer, caption) {
 }
 
 async function sendImage(phone, imageBuffer, caption) {
+  if (!require('../config/waGate').ready()) return false;
   const gw = gateway();
   caption = spx(caption || '');
   try {
@@ -91,6 +93,7 @@ async function sendImage(phone, imageBuffer, caption) {
 }
 
 async function sendDocument(phone, docBuffer, filename, caption, mimetype) {
+  if (!require('../config/waGate').ready()) return false;
   const gw = gateway();
   const fn = filename || 'file.pdf';
   caption = spx(caption || '');
@@ -118,6 +121,7 @@ function normalizeNum(p) {
 }
 
 async function sendToStaff(text) {
+  if (!require('../config/waGate').ready()) return false;
   const set = new Set();
   try {
     const admins = getSetting('whatsapp_admin_numbers', []);
@@ -134,6 +138,7 @@ async function sendToStaff(text) {
 
 let _connCache = { at: 0, val: false };
 async function isConnected() {
+  if (!require('../config/waGate').ready()) return false;
   const now = Date.now();
   if (now - _connCache.at < 5000) return _connCache.val;
   const gw = gateway();
@@ -157,6 +162,7 @@ async function isConnected() {
 
 // Notifikasi untuk ADMIN/monitoring → Telegram (utama). WA (sendToStaff) sebagai fallback.
 async function notifyAdmin(text) {
+  if (!require('../config/waGate').ready()) return false;
   try {
     const tg = require('./telegramBot');
     if (tg && typeof tg.notifyAdmin === 'function') {

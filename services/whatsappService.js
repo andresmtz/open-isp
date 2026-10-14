@@ -141,6 +141,7 @@ function formatUnpaidInvoicesSummary(unpaidInvoices) {
  * @param {object} options Opsi tambahan: { templateName, parameters, langCode, url, filename }
  */
 async function sendWhatsAppMessage(toPhone, messageText, options = {}) {
+  require('../config/waGate').assertReady();
   messageText = regional.applyPlaceholders(messageText);
   const gatewayType = getSetting('wa_gateway_type', 'gowa'); // 'baileys', 'fonnte', or 'meta'
 

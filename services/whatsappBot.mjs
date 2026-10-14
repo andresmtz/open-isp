@@ -1042,6 +1042,7 @@ function loadWhatsappAdminSendList() {
  * @param {string} priority - Priority level: 'high', 'medium', 'low'
  */
 export async function sendMonitoringAlert(message, priority = 'medium') {
+  { const { createRequire } = await import('module'); const _rq = createRequire(import.meta.url); if (!_rq('../config/waGate.js').ready()) return false; }
   const gatewayType = getSetting('wa_gateway_type', 'gowa');
   if (gatewayType === 'baileys' && (!currentSock || whatsappStatus._connection !== 'open')) {
     logger.warn('[WhatsApp] Bot belum siap (koneksi belum terbuka), tidak dapat mengirim alert monitoring');
@@ -1149,6 +1150,7 @@ export async function simulateHumanTyping(sock, jid, text = '') {
 }
 
 export async function sendWA(to, text, options = {}) {
+  { const { createRequire } = await import('module'); const _rq = createRequire(import.meta.url); if (!_rq('../config/waGate.js').ready()) return false; }
   const gatewayType = getSetting('wa_gateway_type', 'gowa');
 
   let finalText = text;
@@ -1229,6 +1231,7 @@ export async function sendWA(to, text, options = {}) {
 }
 
 export async function sendWAImage(to, imageBuffer, caption = '', options = {}) {
+  { const { createRequire } = await import('module'); const _rq = createRequire(import.meta.url); if (!_rq('../config/waGate.js').ready()) return false; }
   const gatewayType = getSetting('wa_gateway_type', 'gowa');
 
   let finalCaption = caption;
@@ -1296,6 +1299,7 @@ export async function sendWAImage(to, imageBuffer, caption = '', options = {}) {
 }
 
 export async function sendWADocument(to, documentBuffer, filename = 'Invoice.pdf', caption = '', mimetype = 'application/pdf', options = {}) {
+  { const { createRequire } = await import('module'); const _rq = createRequire(import.meta.url); if (!_rq('../config/waGate.js').ready()) return false; }
   const gatewayType = getSetting('wa_gateway_type', 'gowa');
 
   let finalCaption = caption;

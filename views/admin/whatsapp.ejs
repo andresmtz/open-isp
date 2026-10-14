@@ -36,6 +36,7 @@
     </div>
   </div>
   <div class="page">
+    <%- include('partials/wa_status') %>
     <% const waTab = 'status'; %>
     <% if (msg) { %>
     <div class="alert alert-<%= msg.type==='success'?'s':'d' %>" data-flash="1">

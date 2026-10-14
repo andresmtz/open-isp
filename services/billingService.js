@@ -737,7 +737,7 @@ function autoPayInvoiceIfNeeded(invoiceId, customer, amount, existingNotes) {
 function notifyAutoPaid(customer, invoiceId, periodText, amount, reason) {
   try {
     if (!customer || !customer.phone) return;
-    if (!getSetting('whatsapp_enabled', false)) return;
+    if (!require('../config/waGate').ready()) return;
     const waSvc = require('./whatsappService');
     if (!waSvc || typeof waSvc.sendWhatsAppMessage !== 'function') return;
     const msg = `✅ *FACTURA PAGADA*\n\nEstimado/a *${customer.name}*,\nLa factura del período *${periodText}* por *${regional.currencySymbol()} ${Number(amount || 0).toLocaleString(regional.locale())}* quedó *PAGADA automáticamente por el sistema* (${reason}).\n\nLa factura queda registrada. Gracias.`;
@@ -777,7 +777,7 @@ function autoLunasUnpaidForCustomer(customerId, opts = {}) {
 function notifyAutoPaidPolite(customer, items) {
   try {
     if (!customer || !customer.phone) return;
-    if (!getSetting('whatsapp_enabled', false)) return;
+    if (!require('../config/waGate').ready()) return;
     if (getSetting('autolunas_notify_enabled', true) === false) return;
     const waSvc = require('./whatsappService');
     if (!waSvc || typeof waSvc.sendWhatsAppMessage !== 'function') return;

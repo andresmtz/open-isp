@@ -225,6 +225,16 @@
             <div style="font-size:10px; color:var(--muted); margin-top:4px"><%= t('admin.set.link_hint','Digunakan untuk menyusun tautan login pelanggan yang dikirim via WhatsApp. Contoh: ') %><span class="mono">https://portal.su-dominio.com</span></div>
           </div>
           <div class="fg">
+            <label class="fl">Dominios del panel de administración</label>
+            <input class="fc" name="admin_hostnames" value="<%= settings.admin_hostnames || '' %>" placeholder="admin.su-dominio.com">
+            <div style="font-size:10px; color:var(--muted); margin-top:4px">Al entrar a estos dominios se abre directamente el login del administrador. Varios: separados por coma.</div>
+          </div>
+          <div class="fg">
+            <label class="fl">Dominios solo para clientes</label>
+            <input class="fc" name="portal_hostnames" value="<%= settings.portal_hostnames || '' %>" placeholder="clientes.su-dominio.com">
+            <div style="font-size:10px; color:var(--muted); margin-top:4px">Por estos dominios el panel de administración no responde (más seguro). Dejar vacío si usás un solo dominio para todo.</div>
+          </div>
+          <div class="fg">
             <label class="fl"><%= t('admin.set.id_prefix','Prefix ID Pelanggan') %></label>
             <input class="fc" name="customer_id_prefix" value="<%= settings.customer_id_prefix || 'SKY' %>" placeholder="SKY" style="text-transform:uppercase" maxlength="12">
             <div style="font-size:10px; color:var(--muted); margin-top:4px">Formato del ID de cliente: <span class="mono">PREFIX-angka</span> (ejemplo: <span class="mono"><%= (settings.customer_id_prefix || 'SKY') %>-48213</span>). Solo los números después del guion. ID <b>permanen</b> y automático para clientes nuevos.</div>

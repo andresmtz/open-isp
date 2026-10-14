@@ -73,6 +73,19 @@ const app = express();
 
 // Kompresi gzip (performa: respons HTML/CSS/JS lebih kecil)
 app.use(compression());
+
+// Dominios (Configuración → Dominios públicos):
+//  - admin_hostnames: entrar a la raíz de esos dominios lleva directo al login del administrador.
+//  - portal_hostnames: por esos dominios el panel de administración no responde (solo portal de clientes).
+// Vacíos = sin cambios. Lista separada por comas; pensado para que cada instalación use sus dominios.
+app.use((req, res, next) => {
+  const list = (k) => String(getSetting(k, '') || '').toLowerCase().split(/[\s,]+/).filter(Boolean);
+  const host = String(req.hostname || '').toLowerCase();
+  if (!host) return next();
+  if (list('admin_hostnames').includes(host) && req.path === '/') return res.redirect(302, '/admin/login');
+  if (list('portal_hostnames').includes(host) && /^\/(admin|app\/admin)(\/|$)/.test(req.path)) return res.status(404).send('Not found');
+  next();
+});
 app.use('/speedtest', require('./routes/speedtest'));
 
 const isProduction = process.env.NODE_ENV === 'production';

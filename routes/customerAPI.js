@@ -3067,9 +3067,10 @@ router.post('/auth/login', apiLoginLimiter, (req, res) => {
   }
 
   // 1. Check Root Administrator
-  const adminUser = String(getSetting('admin_username', 'admin')).trim();
-  const adminPass = String(getSetting('admin_password', '') || '').trim();
-  if (adminPass && inputUser.toLowerCase() === adminUser.toLowerCase() && inputPass === adminPass) {
+  const _adminAuth = require('../config/adminAuth');
+  const adminUser = _adminAuth.username();
+  const _av = _adminAuth.hasPassword() ? _adminAuth.verify(inputUser, inputPass, null) : { ok: false };
+  if (_av.ok && !_av.mustChange) {
     const adminObj = { id: 1, name: 'Administrator', username: adminUser, role: 'admin' };
     const token = generateApiToken({ id: 1, adminId: 1, name: 'Administrator', username: adminUser, role: 'admin' });
     return res.json({

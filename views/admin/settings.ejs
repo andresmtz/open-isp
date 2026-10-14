@@ -415,11 +415,11 @@
           <div class="form-row">
             <div class="fg">
               <label class="fl"><%= t('admin.set.admin_user','Username Admin') %></label>
-              <input class="fc" name="admin_username" value="<%= settings.admin_username || '' %>">
+              <input class="fc" value="<%= settings.admin_username || 'admin' %>" disabled>
             </div>
             <div class="fg">
-              <label class="fl"><%= t('admin.set.admin_pass','Password Admin') %></label>
-              <input class="fc" type="password" name="admin_password" value="<%= settings.admin_password || '' %>">
+              <label class="fl">Contraseña del administrador</label>
+              <a class="btn btn-g" href="/admin/account/password"><i class="bi bi-key"></i> Cambiar usuario / contraseña</a>
             </div>
           </div>
           <div class="fg">

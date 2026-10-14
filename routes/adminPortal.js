@@ -529,6 +529,10 @@ async function createVoucherBatchAsync(batchId) {
 // Global locals middleware
 router.use((req, res, next) => {
   res.locals.session = req.session;
+  // Contraseña de fábrica / débil: obligar a cambiarla antes de usar el panel
+  if (req.session && req.session.isAdmin && req.session.mustChangePassword && !/^\/(account\/password|logout)(\/|$)/.test(req.path)) {
+    return res.redirect('/admin/account/password');
+  }
   try { res.locals.waStatus = require('../config/waGate').status(); } catch (_) { res.locals.waStatus = null; }
   res.locals.sidebarSections = sidebarMenuSvc.getSidebarSections(req.session);
   res.locals.sidebarBottomNavItems = sidebarMenuSvc.getBottomNavItems(req.session);
@@ -551,6 +555,26 @@ try {
 } catch (e) {}
 
 // ─── AUTH ROUTES ───────────────────────────────────────────────────────────
+router.get('/account/password', requireAdminSession, restrictToAdmin, (req, res) => {
+  const adminAuth = require('../config/adminAuth');
+  res.render('admin/account_password', { company: company(), error: null, ok: null, forced: !!req.session.mustChangePassword,
+    username: adminAuth.username(), needCurrent: adminAuth.hasPassword() || !adminAuth.isDirectLan(req), minLength: adminAuth.MIN_LENGTH });
+});
+
+router.post('/account/password', requireAdminSession, restrictToAdmin, loginRateLimiter, express.urlencoded({ extended: true }), (req, res) => {
+  const adminAuth = require('../config/adminAuth');
+  const view = (error, ok) => res.render('admin/account_password', { company: company(), error, ok, forced: !!req.session.mustChangePassword,
+    username: adminAuth.username(), needCurrent: adminAuth.hasPassword() || !adminAuth.isDirectLan(req), minLength: adminAuth.MIN_LENGTH });
+  try {
+    const r = adminAuth.change({ current: req.body.current, next: req.body.next, confirm: req.body.confirm, newUsername: req.body.username }, req);
+    req.session.mustChangePassword = false;
+    req.session.adminUser = r.username;
+    try { auditSvc && auditSvc.logAuditTrail && auditSvc.logAuditTrail({ action: 'UPDATE', entity_type: 'admin_password', entity_id: 'admin', actor_type: 'admin', actor_name: r.username, details: { changed: true }, ip_address: req.ip }); } catch (_) {}
+    view(null, 'Contraseña actualizada.');
+  } catch (e) { view(e.message, null); }
+});
+
+
 router.get('/login', (req, res) => {
   if (req.session?.isAdmin || req.session?.isCashier) return res.redirect('/admin');
   res.render('admin/login', { title: 'Admin Login', company: company(), error: null });
@@ -558,10 +582,18 @@ router.get('/login', (req, res) => {
 
 router.post('/login', loginRateLimiter, express.urlencoded({ extended: true }), (req, res) => {
   const { username, password } = req.body;
-  if (username === getSetting('admin_username', 'admin') && password === getSetting('admin_password', 'demo-isp123')) {
-    req.session.isAdmin = true;
-    req.session.adminUser = username;
-    return res.redirect('/admin');
+  const adminAuth = require('../config/adminAuth');
+  const v = adminAuth.verify(username, password, req);
+  if (v.ok) {
+    return req.session.regenerate(() => {
+      req.session.isAdmin = true;
+      req.session.adminUser = adminAuth.username();
+      req.session.mustChangePassword = !!v.mustChange;
+      req.session.save(() => res.redirect(v.mustChange ? '/admin/account/password' : '/admin'));
+    });
+  }
+  if (v.reason === 'no_password_remote') {
+    return res.render('admin/login', { title: 'Admin Login', company: company(), error: 'El administrador todavía no tiene contraseña propia. Ingresá una vez desde la red local para crearla.' });
   }
   
   // Check Cashier
@@ -4843,6 +4875,8 @@ router.post('/api/telegram/sync', requireAdminSession, async (req, res) => {
 router.post('/settings', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
   try {
     const newSettings = { ...req.body };
+    // Las credenciales del administrador solo se cambian en /admin/account/password
+    delete newSettings.admin_password; delete newSettings.admin_password_hash; delete newSettings.admin_username;
     if (newSettings.whatsapp_enabled === 'true') newSettings.whatsapp_enabled = true;
     else if (newSettings.whatsapp_enabled === 'false') newSettings.whatsapp_enabled = false;
     if (newSettings.voucher_enabled === 'true') newSettings.voucher_enabled = true;

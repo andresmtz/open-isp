@@ -79,9 +79,8 @@ const VALIDATION_RULES = {
   },
   admin_password: {
     type: 'string',
-    minLength: 6,
-    required: true,
-    description: 'Password admin (min 6 karakter)'
+    required: false,
+    description: 'Obsoleto: la contraseña se guarda como hash en admin_password_hash'
   },
   admin_api_key: {
     type: 'string',

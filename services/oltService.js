@@ -608,7 +608,7 @@ const telnetLoginAndRun = async (host, user, pass, commands, opts = {}) => {
 
   socket.end();
   socket.destroy();
-  return outputs.join('\n');
+  return opts.asArray ? outputs : outputs.join('\n');
 };
 
 const parseHiosoOnuTable = (text) => {
@@ -2939,5 +2939,7 @@ async function configureWanViaAcs(sn, data) {
   getAllOlts, getActiveOlts, getOltById, createOlt, updateOlt, deleteOlt, getOltStats, getAllOltsStats, testOltConnection, rebootOnu, renameOnu, authorizeOnu,
   configureOnuWan, configureZteWanViaGoApi, configureWanViaAcs,
   // Diekspor untuk kebutuhan tooling (scripts/olt-probe.js) — sumber profil yang sama
-  BRAND_PROFILES, SYSTEM_OIDS, telnetLoginAndRun, telnetOptsFromOlt
+  BRAND_PROFILES, SYSTEM_OIDS, telnetLoginAndRun, telnetOptsFromOlt,
+  // Gestión de ONU VSOL (services/onuManageService.js)
+  fetchVsolEponViaTelnet, enrichOnusWithCustomerData
 };

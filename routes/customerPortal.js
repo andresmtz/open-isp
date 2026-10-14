@@ -1929,6 +1929,9 @@ router.get('/dashboard', async (req, res) => {
   if (_notice.active) _notifs.push({ type: 'warning', title: _notice.label || _t('pwa.r.net_info','Info Jaringan'), message: (_notice.text || '') + (_notice.estimateText ? (' ' + _t('common.estimated_done','Finalización estimada') + ': ' + _notice.estimateText) : ''), time: _t('pwa.r.service_info','Información del servicio') });
   _paid.slice(0, 3).forEach(inv => _notifs.push({ type: 'payment', title: _t('pwa.r.payment_success','Pago recibido'), message: _t('pwa.r.bill_prefix','Tagihan') + ' ' + _periodLabel(inv) + ' ' + _t('pwa.r.amount_of','sebesar') + ' ' + _fmt(inv.amount) + ' ' + _t('pwa.r.has_paid','quedó PAGADA.'), time: _t('pwa.r.system_confirmed','Confirmado por el sistema') }));
   if (_unpaid) _notifs.push({ type: 'warning', title: _t('pwa.r.monthly_reminder','Recordatorio de factura mensual'), message: _t('pwa.r.bill_prefix','Tagihan') + ' ' + _periodLabel(_unpaid) + ' ' + _t('pwa.r.amount_of','sebesar') + ' ' + _fmt(_unpaid.amount) + ' ' + _t('pwa.r.awaiting','está pendiente de pago.'), time: _t('pwa.r.due','Jatuh Tempo') });
+  // ONU VSOL gestionable desde la OLT (services/onuManageService.js): WiFi real y puertos con cable
+  let _onuInv = null;
+  try { _onuInv = _prof.id ? require('../services/onuManageService').forCustomer(_prof.id) : null; } catch (_) { _onuInv = null; }
   const __portal = {
     title: _t('pwa.title','Portal del cliente'),
     company: (settings && settings.company_header) || 'OPEN-ISP',
@@ -1958,6 +1961,14 @@ router.get('/dashboard', async (req, res) => {
     notifications: _notifs,
     notif: msgNotif,
     customerId: (_prof.id || null),
+    onuManaged: !!(_onuInv && _onuInv.compatible === 1),
+    ...(_onuInv ? {
+      onuDetected: true,
+      onuOnline: /online/i.test(_onuInv.status || ''),
+      onuModel: _onuInv.type || String(_dev.model || '-'),
+      ssid: _onuInv.ssid_name || String(_dev.ssid || '-'),
+      lanPorts: (function () { try { return JSON.parse(_onuInv.lan_ports || '[]'); } catch (_) { return []; } })()
+    } : {}),
     version: (function () { try { return require('../package.json').version || '2.4.0'; } catch (e) { return '2.4.0'; } })(),
     speedtestUrl: String((settings && settings.speedtest_url) || '').trim(),
     speedtestMode: String((settings && settings.speedtest_mode) || 'iframe').trim() || 'iframe',
@@ -2219,6 +2230,30 @@ router.get('/api/pppoe-traffic', async (req, res) => {
   } finally {
     if (conn && conn.api) conn.api.close();
   }
+});
+
+// ── WiFi real vía OLT (ONU VSOL compatibles) ─────────────────────────────────
+function _wifiProfile(req) {
+  const loginId = String(req.session?.phone ?? '').replace(/[\r\n\t]+/g, '').trim();
+  return loginId ? findCustomerProfileByLoginId(loginId) : null;
+}
+router.get('/wifi', async (req, res) => {
+  const profile = _wifiProfile(req);
+  if (!profile) return res.status(401).json({ ok: false, message: 'La sesión venció. Vuelva a ingresar.' });
+  try {
+    const d = await require('../services/onuManageService').readDetail(profile.id, { includeKeys: true });
+    if (!d.ok || d.compatible !== 1) return res.json({ ok: false, managed: d.compatible === 1, message: d.message || 'Su equipo no permite ver ni cambiar el WiFi desde el portal.' });
+    res.json({ ok: true, managed: true, name: d.wifi24 && d.wifi24.name, name5g: d.wifi5 && d.wifi5.name, key: d.wifi24 && d.wifi24.key,
+      ports: d.ports, cablesConnected: d.cablesConnected });
+  } catch (e) { res.status(500).json({ ok: false, message: 'No se pudo consultar su equipo en este momento. Intente más tarde.' }); }
+});
+router.post('/wifi', async (req, res) => {
+  const profile = _wifiProfile(req);
+  if (!profile) return res.status(401).json({ ok: false, message: 'La sesión venció. Vuelva a ingresar.' });
+  try {
+    const r = await require('../services/onuManageService').changeWifi(profile.id, { name: req.body && req.body.name, key: req.body && req.body.key }, { type: 'customer', name: profile.name });
+    res.json({ ok: true, name: r.name, name5g: r.name5g, message: `Listo. Sus redes ahora son "${r.name}" y "${r.name5g}". Vuelva a conectar sus equipos con la clave nueva.` });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 
 router.post('/change-ssid', async (req, res) => {

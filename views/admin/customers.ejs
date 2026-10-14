@@ -394,6 +394,7 @@
                     <% if (c.status !== 'cancelled' && c.unpaid_count > 0 && _can('promesas')) { %>
                     <button type="button" class="act-item primary" data-id="<%= c.id %>" onclick="promiseCust(+this.dataset.id)"><i class="bi bi-hand-thumbs-up"></i> Promesa de pago</button>
                     <% } %>
+                    <% if (_adm || _can('wifi_clientes')) { %><button type="button" class="act-item primary" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="openOnu(+this.dataset.id, this.dataset.name)"><i class="bi bi-router"></i> Equipo y WiFi</button><% } %>
                     <% if (_can('corte_manual')) { %><button type="button" class="act-item" data-id="<%= c.id %>" onclick="syncCust(this)"><i class="bi bi-arrow-repeat"></i> Sincronizar con la red</button><% } %>
                     <div class="act-sep"></div>
                     <% if (_can('clientes_alta')) { %><button type="button" class="act-item" data-idx="<%= i %>" onclick="editCust(+this.dataset.idx)"><i class="bi bi-pencil"></i> <%= t('admin.cust.btn_edit','Edit Pelanggan') %></button><% } %>
@@ -2180,6 +2181,75 @@ async function cancelCustService(id) {
     location.reload();
   } catch (e) { alert('Error: ' + e.message); }
 }
+</script>
+<!-- ═══ Equipo y WiFi (ONU VSOL vía OLT) ═══ -->
+<div class="mo" id="onuModal">
+  <div class="mb" style="max-width:640px">
+    <div class="mh"><span class="mt"><i class="bi bi-router"></i> Equipo y WiFi — <span id="onu-cust"></span></span><button class="mc" onclick="closeModal('onuModal')">&times;</button></div>
+    <div class="mbody" id="onu-body"><div style="padding:20px;text-align:center;color:var(--muted)"><i class="bi bi-arrow-repeat"></i> Consultando la ONU…</div></div>
+  </div>
+</div>
+<script>
+(function () {
+  var cur = { id: null, name: '' };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); };
+  function row(k, v) { return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">' + k + '</span><span style="text-align:right">' + v + '</span></div>'; }
+  async function load(keys) {
+    var body = document.getElementById('onu-body');
+    if (!keys) body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)"><i class="bi bi-arrow-repeat"></i> Consultando la ONU…</div>';
+    var d;
+    try { d = await (await fetch('/admin/customers/' + cur.id + '/onu' + (keys ? '?keys=1' : ''), { headers: { Accept: 'application/json' } })).json(); }
+    catch (e) { body.innerHTML = '<div class="alert alert-d">No se pudo consultar: ' + esc(e.message) + '</div>'; return; }
+    if (!d.found) { body.innerHTML = '<div class="alert alert-d">' + esc(d.message || 'No se encontró la ONU de este cliente.') + '</div><div style="font-size:12px;color:var(--muted)">La ONU se asocia al cliente por su usuario PPPoE o por el nombre cargado en la OLT. Revisá en Red → Inventario de ONU.</div>'; return; }
+    var h = '';
+    h += row('ONU', '<code>' + esc(d.onu_ref) + '</code> · ' + esc(d.type || '?'));
+    h += row('Estado', /online/i.test(d.status || '') ? '<span class="badge bs">En línea</span>' : '<span class="badge bd">Desconectada</span>');
+    if (d.compatible !== 1) {
+      h += row('Gestión del WiFi', '<span class="badge bd">No disponible</span>');
+      h += '<div style="font-size:12px;color:var(--muted);margin-top:8px">' + esc(d.caps || 'Esta ONU no fue comprobada todavía o no permite cambios desde la OLT.') + '</div>';
+      body.innerHTML = h + histHtml(d.history); return;
+    }
+    if (!d.ok) { body.innerHTML = h + '<div class="alert alert-d" style="margin-top:10px">' + esc(d.message) + '</div>' + histHtml(d.history); return; }
+    var w24 = d.wifi24 || {}, w5 = d.wifi5 || {};
+    h += row('WAN', esc(d.wan && d.wan.mode || '-') + ' · ' + esc(d.wan && d.wan.user || '-') + ' · ' + (/connected/i.test(d.wan && d.wan.status || '') ? '<span class="badge bs">conectada</span>' : '<span class="badge bd">' + esc(d.wan && d.wan.status || '-') + '</span>'));
+    h += row('Equipos por cable', (d.ports || []).map(function (p) { return 'LAN' + p.port + ' ' + (p.up ? '<span class="badge bs">conectado</span>' : '<span class="badge bm">libre</span>'); }).join(' ') + ' <b>(' + d.cablesConnected + ')</b>');
+    h += row('WiFi 2.4 GHz', '<b>' + esc(w24.name) + '</b> ' + (w24.enabled ? '' : '<span class="badge bd">apagada</span>'));
+    h += row('WiFi 5 GHz', '<b>' + esc(w5.name) + '</b> ' + (w5.enabled ? '' : '<span class="badge bd">apagada</span>'));
+    h += row('Clave', keys ? ('<code>' + esc(w24.key) + '</code>' + (d.sameKey ? '' : ' · 5G: <code>' + esc(w5.key) + '</code>')) : '<button type="button" class="btn btn-g btn-sm" onclick="onuLoad(true)"><i class="bi bi-eye"></i> Ver clave</button>');
+    if (!d.conventionOk || !d.sameKey) h += '<div class="alert alert-w" style="margin-top:8px;font-size:12px">La red 5G no sigue la convención (mismo nombre + "-5G" y misma clave). Podés corregirlo con el formulario de abajo.</div>';
+    h += '<div style="font-size:11.5px;color:var(--muted);margin-top:6px">La cantidad de equipos por WiFi requiere TR-069 (próxima etapa). Por ahora se ven los puertos con cable.</div>';
+    h += '<div style="margin-top:14px;padding:12px;border:1px solid var(--border);border-radius:10px">'
+      + '<div style="font-weight:700;margin-bottom:8px"><i class="bi bi-pencil"></i> Cambiar WiFi</div>'
+      + '<div class="fg"><label class="fl">Nombre de la red (2.4 GHz)</label><input class="fc" id="onu-n" value="' + esc(w24.name) + '" maxlength="28"><div style="font-size:11px;color:var(--muted);margin-top:3px">Sin espacios. La red 5G se llamará igual + <b>-5G</b>.</div></div>'
+      + '<div class="fg"><label class="fl">Clave nueva (para las dos redes)</label><input class="fc" id="onu-k" type="text" minlength="8" maxlength="63" autocomplete="off" placeholder="mínimo 8 caracteres"></div>'
+      + '<div style="font-size:11.5px;color:var(--warning);margin-bottom:8px"><i class="bi bi-exclamation-triangle"></i> Los equipos del cliente se desconectan y tienen que volver a conectarse con la clave nueva. El cliente recibe la clave por WhatsApp.</div>'
+      + '<button type="button" class="btn btn-p btn-sm" id="onu-save" onclick="onuSave()"><i class="bi bi-check-lg"></i> Aplicar, verificar y guardar</button> <span id="onu-res" style="font-size:12px"></span></div>';
+    body.innerHTML = h + histHtml(d.history);
+  }
+  function histHtml(list) {
+    if (!list || !list.length) return '';
+    return '<div style="margin-top:14px;font-weight:700;font-size:13px">Historial de cambios</div>' + list.map(function (c) {
+      var st = c.status === 'ok' ? '<span class="badge bs">ok</span>' : c.status === 'failed' ? '<span class="badge bd" title="' + esc(c.error) + '">falló (' + esc(c.step) + ')</span>' : '<span class="badge bw">' + esc(c.step) + '</span>';
+      return '<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)">' + esc(c.created_at) + ' · ' + esc(c.ssid_name) + ' · ' + (c.by_type === 'customer' ? 'cliente' : esc(c.by_name || c.by_type)) + ' · ' + st + '</div>';
+    }).join('');
+  }
+  window.onuLoad = load;
+  window.openOnu = function (id, name) { cur = { id: id, name: name }; document.getElementById('onu-cust').textContent = name; openModal('onuModal'); load(false); };
+  window.onuSave = async function () {
+    var n = document.getElementById('onu-n').value.trim(), k = document.getElementById('onu-k').value;
+    var res = document.getElementById('onu-res'), btn = document.getElementById('onu-save');
+    if (!n || k.length < 8) { res.innerHTML = '<span style="color:var(--danger)">Completá el nombre y una clave de 8 caracteres o más.</span>'; return; }
+    if (!confirm('¿Cambiar el WiFi a "' + n + '" / "' + n + '-5G"? Los equipos del cliente se van a desconectar.')) return;
+    btn.disabled = true; res.innerHTML = '<i class="bi bi-arrow-repeat"></i> Aplicando y verificando… (puede tardar unos segundos)';
+    try {
+      var r = await fetch('/admin/customers/' + cur.id + '/onu/wifi', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ name: n, key: k }) });
+      var j = await r.json();
+      res.innerHTML = '<span style="color:' + (j.ok ? 'var(--success)' : 'var(--danger)') + '">' + esc(j.message) + '</span>';
+      if (j.ok) setTimeout(function () { load(false); }, 1500);
+    } catch (e) { res.innerHTML = '<span style="color:var(--danger)">Error de conexión: ' + esc(e.message) + '</span>'; }
+    btn.disabled = false;
+  };
+})();
 </script>
 </body>
 </html>

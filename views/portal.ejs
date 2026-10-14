@@ -1387,7 +1387,17 @@
                     <p class="wifi-label"><%= t('pwa.net.f_password','Password') %></p>
                     <p class="wifi-val" id="wifi-pwd">********</p>
                   </div>
+                  <% if (portal.onuManaged) { %><div class="wifi-actions"><button type="button" class="wifi-btn" onclick="revealWifiKey(this)" title="Ver clave"><i class="ph ph-eye"></i></button></div><% } %>
                 </div>
+                <% if (portal.onuManaged && portal.lanPorts && portal.lanPorts.length) { %>
+                <div class="wifi-row">
+                  <div class="wifi-ico"><i class="ph-fill ph-laptop"></i></div>
+                  <div class="wifi-meta">
+                    <p class="wifi-label">Equipos conectados por cable</p>
+                    <p class="wifi-val" id="wifi-cables"><%= portal.lanPorts.filter(function (p) { return p.up; }).length %> de <%= portal.lanPorts.length %> puertos</p>
+                  </div>
+                </div>
+                <% } %>
               </div>
 
 
@@ -1579,8 +1589,9 @@
         <label class="field-label" for="ssid-input"><%= t('pwa.net.ssid','Nama WiFi (SSID)') %></label>
         <div class="field-input-wrap">
           <i class="ph-fill ph-wifi-high" style="color:var(--lime);font-size:16px;"></i>
-          <input class="field-input" type="text" id="ssid-input" value="OPEN-ISP-AD" placeholder="<%= t('pwa.wifi.name_ph','Nombre del WiFi') %>" maxlength="32" autocomplete="off">
+          <input class="field-input" type="text" id="ssid-input" value="" placeholder="<%= t('pwa.wifi.name_ph','Nombre del WiFi') %>" maxlength="28" autocomplete="off">
         </div>
+        <p class="field-hint">Sin espacios (puede usar guion o guion bajo). Su red de 5 GHz se va a llamar igual, terminada en <b>-5G</b>.</p>
       </div>
 
       <div class="field">
@@ -1589,7 +1600,12 @@
           <i class="ph-fill ph-lock-key" style="color:var(--lime);font-size:16px;"></i>
           <input class="field-input" type="password" id="pwd-input" value="" placeholder="<%= t('pwa.wifi.pwd_ph','Password baru (min. 8 karakter)') %>" minlength="8" maxlength="63" autocomplete="new-password">
         </div>
-        <p class="field-hint"><%= t('pwa.wifi.password_hint','Minimal 8 karakter. Gunakan kombinasi huruf, angka, dan simbol.') %></p>
+        <p class="field-hint">Mínimo 8 caracteres, sin espacios. La misma clave se usa en las dos redes (2.4 y 5 GHz).</p>
+      </div>
+
+      <div style="margin:4px 0 14px;padding:12px 14px;border-radius:14px;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.35);color:var(--text);font-size:12.5px;line-height:1.45">
+        <b style="color:#f59e0b">⚠ Importante:</b> al guardar, <b>todos sus equipos se desconectan del WiFi</b> (celulares, TV, computadoras).
+        Para volver a usar internet tiene que conectarlos otra vez a la red nueva con la clave nueva. Si alguien más usa su WiFi, avísele la clave nueva.
       </div>
 
       <div class="modal-actions">
@@ -2044,13 +2060,50 @@
       icon.className = 'ph ph-eye text-lg';
     }
   }
-  function saveWifiSetting() {
-    const ssid = document.getElementById('ssid-input').value.trim();
-    const pwd = document.getElementById('pwd-input').value;
-    if (!ssid) { showToast('<%= t('pwa.js.ssid_empty','El SSID no puede quedar vacío') %>', true); return; }
-    if (pwd.length < 8) { showToast('La contraseña debe tener al menos 8 caracteres', true); return; }
-    runAction({ loading: '<%= t('pwa.js.saving_wifi','Menyimpan pengaturan WiFi...') %>', success: '<%= t('pwa.js.wifi_saved','Pengaturan WiFi tersimpan') %>', icon: 'ph-bold ph-wifi-high', duration: 1600, onDone: () => { wifi.ssid = ssid; wifi.pwd = pwd; renderWifi(); closeSettingModal(); } });
+  // Cambio real del WiFi a través de la OLT (solo ONU compatibles). Aplica, verifica y guarda en el equipo.
+  function _busy(on, text, ok) {
+    const ov = document.getElementById('busy'), ico = document.getElementById('busy-ico'), txt = document.getElementById('busy-text');
+    if (on) { busy = true; ov.classList.remove('done'); ico.innerHTML = '<i class="ph ph-circle-notch busy-spin"></i>'; txt.textContent = text; ov.classList.add('show'); return; }
+    ov.classList.add('done'); ico.innerHTML = ok ? '<i class="ph-fill ph-check-circle"></i>' : '<i class="ph-fill ph-x-circle"></i>'; txt.textContent = text;
+    setTimeout(() => { ov.classList.remove('show'); busy = false; }, ok ? 1200 : 2200);
   }
+  async function saveWifiOlt() {
+    const P = window.__PORTAL__ || {};
+    if (!P.onuManaged) {
+      showToast('Su equipo no permite el cambio automático del WiFi. Escríbanos por WhatsApp y lo hacemos por usted.', true);
+      if (P.waPhone) setTimeout(() => window.open('https://wa.me/' + P.waPhone + '?text=' + encodeURIComponent('Hola, quiero cambiar el nombre/clave de mi WiFi. Cliente: ' + (P.name || '')), '_blank'), 1200);
+      return;
+    }
+    let ssid = document.getElementById('ssid-input').value.trim();
+    const pwd = document.getElementById('pwd-input').value;
+    if (/-5G$/i.test(ssid)) ssid = ssid.slice(0, -3);
+    if (!/^[A-Za-z0-9_.\-]{1,28}$/.test(ssid)) { showToast('El nombre debe tener hasta 28 caracteres, sin espacios (letras, números, guion o guion bajo).', true); return; }
+    if (pwd.length < 8 || /\s/.test(pwd)) { showToast('La clave debe tener al menos 8 caracteres y no llevar espacios.', true); return; }
+    if (!confirm('Sus redes van a quedar como "' + ssid + '" y "' + ssid + '-5G".\n\nTodos sus equipos se van a desconectar del WiFi y tendrá que volver a conectarlos con la clave nueva.\n\n¿Continuar?')) return;
+    closeSettingModal();
+    _busy(true, 'Aplicando el cambio en su equipo… no cierre la página');
+    try {
+      const r = await fetch('/customer/wifi', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'fetch' }, body: JSON.stringify({ name: ssid, key: pwd }) });
+      const j = await r.json().catch(() => ({ ok: false, message: 'Respuesta inválida del servidor.' }));
+      _busy(false, j.ok ? 'WiFi actualizado' : 'No se pudo cambiar', !!j.ok);
+      setTimeout(() => showToast(j.message || (j.ok ? 'Listo' : 'Ocurrió un error'), !j.ok), 900);
+      if (j.ok) { wifi.ssid = j.name; renderWifi(); }
+    } catch (e) { _busy(false, 'Sin conexión', false); setTimeout(() => showToast('No se pudo contactar al servidor. Revise su conexión.', true), 900); }
+  }
+  async function revealWifiKey(btn) {
+    const el = document.getElementById('wifi-pwd');
+    if (el.dataset.shown === '1') { el.textContent = '********'; el.dataset.shown = ''; return; }
+    btn.disabled = true; el.textContent = 'consultando…';
+    try {
+      const j = await (await fetch('/customer/wifi', { headers: { 'Accept': 'application/json' } })).json();
+      if (j.ok) { el.textContent = j.key || '-'; el.dataset.shown = '1'; if (j.name) { wifi.ssid = j.name; document.getElementById('wifi-ssid').textContent = j.name + ' / ' + (j.name5g || ''); }
+        const c = document.getElementById('wifi-cables'); if (c && j.ports) c.textContent = j.cablesConnected + ' de ' + j.ports.length + ' puertos'; }
+      else { el.textContent = '********'; showToast(j.message || 'No se pudo consultar su equipo.', true); }
+    } catch (e) { el.textContent = '********'; showToast('No se pudo consultar su equipo.', true); }
+    btn.disabled = false;
+  }
+  window.revealWifiKey = revealWifiKey;
+  window.saveWifiOlt = saveWifiOlt;
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !busy) { closeSettingModal(); closeConfirm(); }
   });
@@ -2426,7 +2479,7 @@ window.__PORTAL__ = <%- portalJson %>;
       if (s.pppoeOnline) { btn.disabled = false; btn.style.opacity=''; btn.style.filter=''; btn.style.cursor=''; btn.innerHTML = '<i class="ph-bold ph-arrow-clockwise text-base"></i> Reconnect PPPoE'; }
       else { btn.disabled = true; btn.style.opacity='.45'; btn.style.filter='grayscale(.5)'; btn.style.cursor='not-allowed'; btn.innerHTML = '<i class="ph-bold ph-arrow-clockwise text-base"></i> PPPoE Offline'; }
     }
-    var w = document.getElementById('wifi-ssid'); if (w) w.textContent = s.ssid;
+    var w = document.getElementById('wifi-ssid'); if (w && !(window.__PORTAL__ || {}).onuManaged) w.textContent = s.ssid;
   }
   function _refreshSummary(){
     return fetch('/customer/api/device-summary', { cache:'no-store', credentials:'same-origin' })
@@ -2435,6 +2488,7 @@ window.__PORTAL__ = <%- portalJson %>;
   window.pollOnu = function(){ realAction('/customer/api/device/refresh', {loading:'<%= t('pwa.js.polling','Memperbarui status ONU...') %>', success:'<%= t('pwa.js.polled','Status ONU diperbarui') %>', onDone:_refreshSummary}); };
   window.refreshDevices = function(){ realAction('/customer/api/device/refresh', {loading:'<%= t('pwa.js.loading_devices','Memuat perangkat...') %>', success:'<%= t('pwa.js.devices_updated','Daftar perangkat diperbarui') %>', onDone:_refreshSummary}); };
   window.saveWifiSetting = function(){
+    if ((window.__PORTAL__ || {}).onuManaged && window.saveWifiOlt) return window.saveWifiOlt(); // ONU VSOL: cambio real vía OLT
     if ((window.__PORTAL__ || {}).onuDetected === false) { showToast('<%= t('pwa.js.onu_missing_wifi','ONU tidak terdeteksi — ubah sandi tidak dapat dilakukan.') %>', true); setTimeout(window.openOnuModal, 900); return; }
     var ssid = document.getElementById('ssid-input').value.trim();
     var pwd  = document.getElementById('pwd-input').value;

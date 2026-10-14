@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Inventario de ONU | <%= company %></title>
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<%- include('partials/sidebar', { activePage: 'onu_inventory', company }) %>
+<% const _adm = !(typeof session !== 'undefined' && session && session.isCashier);
+   const total = rows.length, comp = rows.filter(r => r.compatible === 1).length, nocomp = rows.filter(r => r.compatible === 0).length, sin = rows.filter(r => r.compatible == null).length;
+   const types = {}; rows.forEach(r => { const k = r.type || '?'; types[k] = types[k] || { total: 0, comp: 0, no: 0 }; types[k].total++; if (r.compatible === 1) types[k].comp++; if (r.compatible === 0) types[k].no++; }); %>
+<div class="mw">
+  <div class="topbar">
+    <div class="tb-title">
+      <button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+      <i class="bi bi-router"></i><span>Inventario de ONU</span>
+    </div>
+    <div class="tb-right">
+      <% if (_adm) { %>
+      <form action="/admin/onu-inventory/sync" method="POST" style="display:inline" data-loading="Consultando la OLT…">
+        <button class="btn btn-p btn-sm"><i class="bi bi-arrow-repeat"></i> Actualizar</button>
+      </form>
+      <form action="/admin/onu-inventory/sync" method="POST" style="display:inline" data-loading="Comprobando todas las ONU…">
+        <input type="hidden" name="force" value="1"><button class="btn btn-g btn-sm" title="Vuelve a comprobar la compatibilidad de todas las ONU en línea"><i class="bi bi-shield-check"></i> Comprobar todas</button>
+      </form>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="page">
+    <% if (msg) { %><div class="alert alert-<%= msg.type==='error'?'d':'s' %>" data-flash="1"><%= msg.text %></div><% } %>
+
+    <div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px">
+      <div class="card" style="margin:0;padding:14px"><div style="font-size:11px;color:var(--muted)">ONU registradas</div><div style="font-size:24px;font-weight:800"><%= total %></div></div>
+      <div class="card" style="margin:0;padding:14px"><div style="font-size:11px;color:var(--muted)">Gestionables (WiFi desde el sistema)</div><div style="font-size:24px;font-weight:800;color:var(--success)"><%= comp %></div></div>
+      <div class="card" style="margin:0;padding:14px"><div style="font-size:11px;color:var(--muted)">No compatibles</div><div style="font-size:24px;font-weight:800;color:var(--danger)"><%= nocomp %></div></div>
+      <div class="card" style="margin:0;padding:14px"><div style="font-size:11px;color:var(--muted)">Sin comprobar (apagadas)</div><div style="font-size:24px;font-weight:800;color:var(--muted)"><%= sin %></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><h6><i class="bi bi-diagram-2"></i> Por tipo de equipo</h6></div>
+      <div class="tbl-wrap"><table class="dtbl">
+        <thead><tr><th>Tipo</th><th>Cantidad</th><th>Gestionables</th><th>No compatibles</th></tr></thead>
+        <tbody>
+          <% Object.entries(types).sort((a, b) => b[1].total - a[1].total).forEach(([k, v]) => { %>
+            <tr><td><code><%= k %></code></td><td><%= v.total %></td><td style="color:var(--success)"><%= v.comp %></td><td style="color:var(--danger)"><%= v.no %></td></tr>
+          <% }) %>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><h6><i class="bi bi-wifi"></i> Últimos cambios de WiFi</h6></div>
+      <div class="tbl-wrap"><table class="dtbl">
+        <thead><tr><th>Fecha</th><th>Cliente</th><th>Red</th><th>Pedido por</th><th>Resultado</th></tr></thead>
+        <tbody>
+          <% if (!changes.length) { %><tr><td colspan="5" class="text-muted" style="padding:16px;text-align:center">Todavía no hubo cambios.</td></tr><% } %>
+          <% changes.forEach(ch => { %>
+            <tr>
+              <td style="white-space:nowrap"><%= ch.created_at %></td>
+              <td><%= ch.customer_name || ch.customer_id %></td>
+              <td><%= ch.ssid_name %> / <%= ch.ssid_name %>-5G</td>
+              <td><%= ch.by_type === 'customer' ? 'Cliente (portal)' : (ch.by_name || ch.by_type) %></td>
+              <td>
+                <% if (ch.status === 'ok') { %><span class="badge bs">Verificado y guardado</span>
+                <% } else if (ch.status === 'failed') { %><span class="badge bd">Falló en: <%= ch.step %></span><div style="font-size:11px;color:var(--muted);margin-top:3px"><%= ch.error %></div>
+                <% } else { %><span class="badge bw">En curso (<%= ch.step %>)</span><% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><h6><i class="bi bi-list-ul"></i> ONU</h6></div>
+      <div class="tbl-wrap"><table class="dtbl">
+        <thead><tr><th>Posición</th><th>Nombre en la OLT</th><th>Cliente</th><th>Tipo</th><th>Estado</th><th>Gestionable</th><th>WiFi 2.4</th><th>Comprobada</th></tr></thead>
+        <tbody>
+          <% rows.forEach(r => { %>
+            <tr>
+              <td style="white-space:nowrap"><code><%= r.onu_ref %></code></td>
+              <td><%= r.name || '-' %></td>
+              <td><%= r.customer_name || '—' %></td>
+              <td><code><%= r.type || '?' %></code></td>
+              <td><span class="badge <%= /online/i.test(r.status || '') ? 'bs' : 'bd' %>"><%= /online/i.test(r.status || '') ? 'En línea' : 'Desconectada' %></span></td>
+              <td>
+                <% if (r.compatible === 1) { %><span class="badge bs"><i class="bi bi-check-lg"></i> Sí</span>
+                <% } else if (r.compatible === 0) { %><span class="badge bd" title="<%= r.caps || '' %>">No</span>
+                <% } else { %><span class="badge bm">Sin comprobar</span><% } %>
+              </td>
+              <td><%= r.ssid_name || '-' %></td>
+              <td style="white-space:nowrap;font-size:12px;color:var(--muted)"><%= r.checked_at || '-' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -21,11 +21,12 @@ const VALID_STATES = new Set([STATE_VISIBLE, STATE_HIDDEN, STATE_LOCKED]);
 
 const MENU_DEFINITIONS = [
   { key: 'dashboard', section: 'main', href: '/admin', icon: 'bi bi-speedometer2', labelKey: 'admin.nav.dashboard', labelDefault: 'Panel', roles: ['admin', 'cashier'], bottomNav: true, bottomNavOrder: 1, activePages: ['dashboard'] },
-  { key: 'network', section: 'main', href: '/admin/mikrotik', icon: 'bi bi-diagram-3', labelKey: 'admin.nav.network', labelDefault: 'Red', roles: ['admin', 'cashier'], activePages: ['mikrotik', 'radius_settings', 'acs_pro', 'onu_provision', 'olts', 'monitoring'], children: [
+  { key: 'network', section: 'main', href: '/admin/mikrotik', icon: 'bi bi-diagram-3', labelKey: 'admin.nav.network', labelDefault: 'Red', roles: ['admin', 'cashier'], activePages: ['mikrotik', 'radius_settings', 'acs_pro', 'onu_provision', 'olts', 'onu_inventory', 'monitoring'], children: [
     { key: 'mikrotik', section: 'main', href: '/admin/mikrotik', icon: 'bi bi-router', labelKey: 'admin.nav.mikrotik', labelDefault: 'MikroTik', roles: ['admin', 'cashier'], activePages: ['mikrotik'] },
     { key: 'radius_server', section: 'main', href: '/admin/radius-settings', icon: 'bi bi-broadcast', labelKey: 'admin.nav.radius_server', labelDefault: 'Servidor RADIUS', roles: ['admin'], activePages: ['radius_settings'] },
     { key: 'acs_pro', section: 'main', href: '/admin/acs', icon: 'bi bi-hdd-network', labelKey: 'admin.nav.acs_pro', labelDefault: 'GenieACS Pro', roles: ['admin'], activePages: ['acs_pro'] },
     { key: 'onu_provision', section: 'main', href: '/admin/onu-provision', icon: 'bi bi-hdd-network-fill', labelKey: 'admin.nav.onu_provision', labelDefault: 'Alta de ONU', roles: ['admin'], activePages: ['onu_provision'] },
+    { key: 'onu_inventory', section: 'main', href: '/admin/onu-inventory', icon: 'bi bi-router', labelKey: 'admin.nav.onu_inventory', labelDefault: 'Inventario de ONU', roles: ['admin', 'cashier'], activePages: ['onu_inventory'] },
     { key: 'olts', section: 'main', href: '/admin/olts', icon: 'bi bi-hdd-fill', labelKey: 'admin.nav.olt_management', labelDefault: 'OLT', roles: ['admin', 'cashier'], activePages: ['olts'] },
     { key: 'monitoring', section: 'main', href: '/admin/monitoring', icon: 'bi bi-activity', labelKey: 'admin.nav.monitoring', labelDefault: 'Monitoreo del sistema', roles: ['admin'], activePages: ['monitoring'] }
   ] },

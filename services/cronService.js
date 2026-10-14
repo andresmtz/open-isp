@@ -421,6 +421,15 @@ function startCronJobs() {
   });
 
   // Aviso de deuda periódico a clientes cortados: se evalúa cada hora (minuto 30) y envía a la hora configurada.
+  // Inventario de ONU VSOL (tipo, compatibilidad, cliente): cada 6 horas, y una vez 3 minutos después de arrancar
+  try { require('./onuManageService').ensureSchema(); } catch (e) {}
+  const onuSync = async () => {
+    try { const r = await require('./onuManageService').syncInventory(); if (r.olts) logger.info(`[CRON] Inventario ONU: ${r.onus} ONU, ${r.checked} comprobadas, ${r.compatible} compatibles` + (r.errors.length ? ' · errores: ' + r.errors.join('; ') : '')); }
+    catch (e) { logger.error('[CRON] Inventario ONU: ' + e.message); }
+  };
+  cron.schedule('15 */6 * * *', onuSync);
+  setTimeout(onuSync, 3 * 60 * 1000);
+
   cron.schedule('30 * * * *', async () => {
     if (inMigrationMode('aviso de deuda a cortados', true)) return;
     try { await require('./cutDebtNoticeService').run(); } catch (e) { logger.error('[CRON] Aviso a cortados: ' + e.message); }

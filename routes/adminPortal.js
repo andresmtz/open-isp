@@ -620,6 +620,51 @@ router.post('/login', loginRateLimiter, express.urlencoded({ extended: true }), 
 
 router.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/admin/login'); });
 
+// ─── EQUIPO Y WIFI DEL CLIENTE (ONU VSOL vía OLT) ───────────────────────────
+router.get('/customers/:id/onu', requireAdminSession, async (req, res) => {
+  const onuMgr = require('../services/onuManageService');
+  try {
+    const wantKeys = req.query.keys === '1';
+    const d = await onuMgr.readDetail(Number(req.params.id), { includeKeys: wantKeys });
+    if (wantKeys && d.ok) {
+      try { auditSvc && auditSvc.logAuditTrail && auditSvc.logAuditTrail({ action: 'VIEW', entity_type: 'wifi_key', entity_id: String(req.params.id), actor_type: req.session.isAdmin ? 'admin' : 'cashier', actor_name: req.session.adminUser || req.session.cashierName || '-', details: { onu: d.onu_ref }, ip_address: req.ip }); } catch (_) {}
+    }
+    res.json({ ...d, history: onuMgr.history(Number(req.params.id), 10) });
+  } catch (e) { res.status(500).json({ ok: false, message: e.message }); }
+});
+
+router.post('/customers/:id/onu/wifi', requireAdminSession, express.json(), async (req, res) => {
+  const onuMgr = require('../services/onuManageService');
+  const actor = req.session.isAdmin ? { type: 'admin', name: req.session.adminUser || 'admin' } : { type: 'staff', name: req.session.cashierName || 'oficina' };
+  try {
+    const r = await onuMgr.changeWifi(Number(req.params.id), { name: req.body && req.body.name, key: req.body && req.body.key }, actor);
+    try { auditSvc && auditSvc.logAuditTrail && auditSvc.logAuditTrail({ action: 'UPDATE', entity_type: 'wifi', entity_id: String(req.params.id), actor_type: actor.type, actor_name: actor.name, details: { red: r.name, red5g: r.name5g }, ip_address: req.ip }); } catch (_) {}
+    res.json({ ok: true, message: `Listo: "${r.name}" y "${r.name5g}" con la clave nueva. Verificado y guardado en la ONU.`, ...r });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
+router.post('/customers/:id/onu/recheck', requireAdminSession, async (req, res) => {
+  const onuMgr = require('../services/onuManageService');
+  try {
+    const r = await onuMgr.syncInventory({ force: true });
+    res.json({ ok: true, message: `Inventario actualizado: ${r.onus} ONU, ${r.compatible} compatibles.`, ...r });
+  } catch (e) { res.status(500).json({ ok: false, message: e.message }); }
+});
+
+router.get('/onu-inventory', requireAdminSession, (req, res) => {
+  const onuMgr = require('../services/onuManageService');
+  res.render('admin/onu_inventory', { title: 'Inventario de ONU', company: company(), activePage: 'onu_inventory',
+    rows: onuMgr.inventory(), changes: onuMgr.recentChanges(30), msg: flashMsg(req) });
+});
+
+router.post('/onu-inventory/sync', requireAdminSession, restrictToAdmin, async (req, res) => {
+  try {
+    const r = await require('../services/onuManageService').syncInventory({ force: req.body && req.body.force === '1' });
+    req.session._msg = { type: r.errors.length ? 'error' : 'success', text: `Inventario actualizado: ${r.onus} ONU, ${r.checked} comprobadas, ${r.compatible} compatibles.` + (r.errors.length ? ' Errores: ' + r.errors.join('; ') : '') };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo actualizar: ' + e.message }; }
+  res.redirect('/admin/onu-inventory');
+});
+
 // ─── OLT MANAGEMENT ────────────────────────────────────────────────────────
 router.get('/olts', requireAdminSession, async (req, res) => {
   const olts = oltSvc.getAllOlts();
@@ -2302,8 +2347,9 @@ router.post('/customers/:id/generate-pppoe', requireAdminSession, async (req, re
         '📍 *Dirección:*' + ((cust && cust.address) || '-') + '\n\n' +
         'Configurá el equipo del cliente con estos datos.';
       await waNotify.notifyAdmin(credMsg);
+      await waNotify.notifyInstallers(credMsg);
     } catch (e) {}
-    req.session._msg = { type: 'success', text: 'Cuenta PPPoE creada:' + g.username + ' / ' + g.password + ' (credenciales enviadas al administrador y a los técnicos).' };
+    req.session._msg = { type: 'success', text: 'Cuenta PPPoE creada:' + g.username + ' / ' + g.password + ' (credenciales enviadas al administrador y a los técnicos con permiso de instalaciones).' };
   } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo generar la cuenta PPPoE:' + e.message }; }
   res.redirect(req.get('Referrer') || '/admin/customers');
 });
@@ -4371,6 +4417,7 @@ router.post('/registrations/:id/approve', requireAdminSession, express.urlencode
           '📍 *Dirección:*' + (cust.address || '-') + '\n\n' +
           'Configurá el equipo del cliente con estos datos.';
         await waNotify.notifyAdmin(credMsg);
+        await waNotify.notifyInstallers(credMsg);
       }
     } catch (e) { try { logger.error('[RegApprove] staff cred error: ' + e.message); } catch (_) {} }
 

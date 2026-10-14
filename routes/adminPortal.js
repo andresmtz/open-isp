@@ -569,8 +569,11 @@ router.post('/account/password', requireAdminSession, restrictToAdmin, loginRate
     const r = adminAuth.change({ current: req.body.current, next: req.body.next, confirm: req.body.confirm, newUsername: req.body.username }, req);
     req.session.mustChangePassword = false;
     req.session.adminUser = r.username;
+    // Cerrar todas las demás sesiones del panel (por si alguien entró con la contraseña anterior)
+    let closed = 0;
+    try { closed = db.prepare("DELETE FROM sessions WHERE sid <> ? AND (sess LIKE '%\"isAdmin\":true%' OR sess LIKE '%\"isCashier\":true%')").run(req.sessionID).changes; } catch (_) {}
     try { auditSvc && auditSvc.logAuditTrail && auditSvc.logAuditTrail({ action: 'UPDATE', entity_type: 'admin_password', entity_id: 'admin', actor_type: 'admin', actor_name: r.username, details: { changed: true }, ip_address: req.ip }); } catch (_) {}
-    view(null, 'Contraseña actualizada.');
+    view(null, 'Contraseña actualizada.' + (closed ? ` Se cerraron ${closed} sesión(es) abiertas en otros dispositivos.` : ''));
   } catch (e) { view(e.message, null); }
 });
 

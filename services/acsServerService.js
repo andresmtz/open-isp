@@ -1557,8 +1557,9 @@ async function performConnectionRequest(deviceId) {
     };
 
     // Fallback ke kredensial Connection Request default bila device belum punya
-    const CR_USER_DEFAULT = process.env.ACS_CR_USER || 'admin';
-    const CR_PASS_DEFAULT = process.env.ACS_CR_PASS || 'acsadmin12345';
+    const { getSetting: _gs } = require('../config/settingsManager');
+    const CR_USER_DEFAULT = _gs('acs_cr_username', '') || process.env.ACS_CR_USER || 'admin';
+    const CR_PASS_DEFAULT = _gs('acs_cr_password', '') || process.env.ACS_CR_PASS || 'acsadmin12345';
     const crUser = device.connection_request_user || CR_USER_DEFAULT;
     const crPass = device.connection_request_pass || CR_PASS_DEFAULT;
 

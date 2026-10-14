@@ -2025,7 +2025,9 @@ app.post(['/donasi/confirm', '/api/donasi/confirm'], async (req, res) => {
 
 // Mount built-in ACS server endpoint (TR-069)
 const acsServerService = require('./services/acsServerService');
-app.post('/acs', express.raw({ type: ['text/xml', 'application/soap+xml', 'application/xml', 'text/plain'], limit: '2mb' }), acsServerService.handleCwmpRequest);
+// TR-069: también aquí exige las credenciales de CPE; el acceso de las ONU es por el puerto propio (config/acsListener.js)
+app.post('/acs', require('./config/acsListener').requireCpeAuth, express.raw({ type: ['text/xml', 'application/soap+xml', 'application/xml', 'text/plain'], limit: '2mb' }), acsServerService.handleCwmpRequest);
+try { require('./config/acsListener').start(); } catch (e) { logger.error('[ACS] ' + e.message); }
 
 // Landing page untuk scan QR stiker modem ONU pelanggan
 app.get('/app/connect', (req, res) => {

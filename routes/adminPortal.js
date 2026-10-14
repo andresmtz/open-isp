@@ -5438,10 +5438,51 @@ router.get('/api/genieacs/test', requireAdmin, async (req, res) => {
 });
 
 // ─── API ROUTES (existing) ──────────────────────────────────────────────────
+// ONUs leídas de la(s) OLT, con el mismo formato que los equipos de GenieACS.
+// Se usan cuando GenieACS no está configurado o no devuelve equipos.
+async function oltOnuDevices() {
+  const oltSvc = require('../services/oltService');
+  const olts = (oltSvc.getActiveOlts ? oltSvc.getActiveOlts() : []) || [];
+  const custs = db.prepare('SELECT id, name, pppoe_username, pppoe_remote_address FROM customers').all();
+  const byId = new Map(custs.map(c => [c.id, c]));
+  const out = [];
+  let weak = 0;
+  for (const o of olts) {
+    const s = await oltSvc.getOltStats(o.id, true);
+    if (!s || s.error || !Array.isArray(s.onus)) continue;
+    weak += Number(s.onus_weak || 0);
+    for (const u of s.onus) {
+      const c = u.customer_id ? byId.get(u.customer_id) : null;
+      const isOn = String(u.status).toLowerCase() === 'online';
+      const m = /\((\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})\)/.exec(u.offline_reason || '');
+      out.push({
+        id: String(u.id), tags: [c ? c.name : u.name], serialNumber: String(u.sn || '-'),
+        lastInform: m ? `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}` : null, lastInformLabel: '-', lastInformAgo: '-',
+        lastSync: null, lastSyncLabel: 'OLT', lastSyncAgo: '-', syncInProgress: false, syncPendingCount: 0,
+        syncStatusLabel: (o.name || 'OLT') + ' · ' + u.id,
+        status: isOn ? 'online' : 'offline',
+        pppoeIP: c && c.pppoe_remote_address ? c.pppoe_remote_address : '-',
+        pppoeUsername: c && c.pppoe_username ? c.pppoe_username : u.name,
+        rxPower: String(u.rx || '-'), uptime: String(u.uptime || '-'), model: String(u.firmware || '-'),
+        softwareVersion: u.distance && u.distance !== '-' ? 'Distancia ' + u.distance : '-',
+        userConnected: '-', ssid: '-', note: isOn ? '' : (u.offline_reason || ''),
+        acs_server_id: 'olt', acs_server_name: o.name || 'OLT', source: 'olt',
+      });
+    }
+  }
+  return { devices: out, weak };
+}
+
 router.get('/api/stats', requireAdmin, async (req, res) => {
   try {
     const result = await customerDevice.listAllDevices(999999);
-    if (!result.ok) return res.json({ error: result.message });
+    if (!result.ok || !result.devices || !result.devices.length) {
+      const od = await oltOnuDevices();
+      if (od.devices.length || !result.ok) {
+        const online = od.devices.filter(d => d.status === 'online').length;
+        return res.json({ total: od.devices.length, online, offline: od.devices.length - online, warning: od.weak, source: 'olt', lastUpdate: getNowLocalISO() });
+      }
+    }
     const mikrotikService = require('../services/mikrotikService');
     const activeSessionsMap = await mikrotikService.getActivePppoeSessionsMap().catch(() => new Map());
 
@@ -5468,7 +5509,15 @@ router.get('/api/devices', requireAdmin, async (req, res) => {
   try {
     const { search, status, limit = 999999, offset = 0 } = req.query;
     const result = await customerDevice.listAllDevices(999999);
-    if (!result.ok) return res.json({ error: result.message });
+    if (!result.ok || !result.devices || !result.devices.length) {
+      const od = await oltOnuDevices();
+      if (od.devices.length || !result.ok) {
+        let devs = od.devices;
+        if (search) { const s = String(search).toLowerCase(); devs = devs.filter(d => [d.id, d.serialNumber, d.pppoeUsername, d.pppoeIP, ...(d.tags || [])].some(v => String(v || '').toLowerCase().includes(s))); }
+        if (status && status !== 'all') devs = devs.filter(d => d.status === String(status).toLowerCase());
+        return res.json({ devices: devs, total: od.devices.length, source: 'olt' });
+      }
+    }
     const mikrotikService = require('../services/mikrotikService');
     const activeSessionsMap = await mikrotikService.getActivePppoeSessionsMap().catch(() => new Map());
 

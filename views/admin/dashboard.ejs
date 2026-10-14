@@ -682,6 +682,7 @@ async function loadDevices() {
             ${syncBadge}
           </td>
           <td style="white-space:nowrap">
+            ${d.source === 'olt' ? `<a class="btn btn-g btn-sm" href="/admin/olts" title="Datos leídos de la OLT (sin GenieACS)"><i class="bi bi-hdd-fill"></i> Ver en OLT</a>` : `
             <div class="act">
               <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
               <div class="act-menu">
@@ -693,7 +694,7 @@ async function loadDevices() {
                 <button type="button" class="act-item danger btn-dev-reboot" data-tag="${(d.tags && d.tags[0]) || d.id}"><i class="bi bi-power"></i> ${I18N.titleReboot}</button>
                 <button type="button" class="act-item danger btn-dev-delete" data-id="${d.id}" data-acs="${d.acs_server_id || 'legacy'}"><i class="bi bi-trash"></i> <%= t('admin.dash.del_device','Hapus Perangkat') %></button>
               </div>
-            </div>
+            </div>`}
           </td>
         </tr>`;
       }).join('');
@@ -744,7 +745,7 @@ function renderOfflineList(offlineDevices) {
     return `<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
       <div>
         <div style="font-size:13px;font-weight:600">${(d.pppoeUsername && d.pppoeUsername !== 'N/A' && d.pppoeUsername !== '-') ? d.pppoeUsername : (d.tags.join(', ') || '-')}</div>
-        <div style="font-size:11px;color:var(--muted)">${d.serialNumber}</div>
+        <div style="font-size:11px;color:var(--muted)">${d.serialNumber}${d.note ? ' · ' + d.note : ''}</div>
       </div>
       <div style="text-align:right">
         <span class="badge bd">${I18N.offlineBadge}</span>

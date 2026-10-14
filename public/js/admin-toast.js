@@ -93,7 +93,7 @@
     var el = document.getElementById('nfOv');
     if (!el) {
       el = document.createElement('div'); el.id = 'nfOv'; el.className = 'nf-ov';
-      el.innerHTML = '<div class="nf-card" role="alertdialog" aria-live="assertive"><div class="nf-spin"></div><i class="bi nf-ic"></i><div class="nf-title"></div><div class="nf-msg"></div><button type="button" class="nf-close">Tutup</button></div>';
+      el.innerHTML = '<div class="nf-card" role="alertdialog" aria-live="assertive"><div class="nf-spin"></div><i class="bi nf-ic"></i><div class="nf-title"></div><div class="nf-msg"></div><button type="button" class="nf-close">Cerrar</button></div>';
       document.body.appendChild(el);
       el.querySelector('.nf-close').addEventListener('click', hideOv);
       el.addEventListener('click', function (e) { if (e.target === el) hideOv(); });
@@ -161,7 +161,7 @@
     try {
       var t = String(msg == null ? '' : msg);
       var low = t.toLowerCase();
-      var isErr = /gagal|error|tidak |invalid|tidak valid|kosong|forbidden|ditolak|harus|wajib|salah|exception|kedaluwarsa|tidak ditemukan|not found|401|403|500/.test(low);
+      var isErr = /gagal|error|tidak |invalid|tidak valid|kosong|forbidden|ditolak|harus|wajib|salah|exception|kedaluwarsa|tidak ditemukan|not found|401|403|500|no se pudo|no tenés permiso|no tiene permiso|inválid|incorrect|obligatori|falló|fallo|no encontrad|vencid/.test(low);
       var type = isErr ? 'error' : 'success';
       window.notify(type, isErr ? 'Error' : 'Listo', t.replace(/\n/g, '<br>'));
     } catch (e) { try { _nativeAlert(msg); } catch (_) { } }

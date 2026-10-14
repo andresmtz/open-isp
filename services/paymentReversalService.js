@@ -102,7 +102,7 @@ function preview(invoiceId) {
     invoice: { id: inv.id, period: `${inv.period_month}/${inv.period_year}`, amount: inv.amount, paid_at: inv.paid_at, paid_by: inv.paid_by_name },
     customer: { id: c.id, name: c.name, status: c.status },
     target, targetLabel: labels[target] || target, currentLabel: labels[c.status] || c.status,
-    networkChange: target !== c.status && c.status !== 'cancelled',
+    networkChange: c.status !== 'cancelled' && ((target === 'suspended') !== (c.status === 'suspended')),
     restorePromise: snap && target === 'ditangguhkan' ? snap.prev_promise_until : null,
     warnings, hasSnapshot: !!snap,
   };

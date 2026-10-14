@@ -716,17 +716,20 @@ function queueBootstrapTasksIfNeeded(deviceId, currentParams) {
       }
 
       // Queue task to configure Periodic Inform (300 seconds) + kredensial Connection Request
-      const ACS_CR_USER = process.env.ACS_CR_USER || 'admin';
-      const ACS_CR_PASS = process.env.ACS_CR_PASS || 'acsadmin12345';
+      // Credenciales propias (ajustes acs_cr_*), nunca las de fábrica; intervalo configurable
+      const { getSetting: _gs } = require('../config/settingsManager');
+      const ACS_CR_USER = _gs('acs_cr_username', '') || process.env.ACS_CR_USER || 'admin';
+      const ACS_CR_PASS = _gs('acs_cr_password', '') || process.env.ACS_CR_PASS || 'acsadmin12345';
+      const INFORM_SEC = String(Math.max(60, Number(_gs('acs_inform_interval', 300)) || 300));
       const informPvs = [];
       if (isTr181) {
         informPvs.push(['Device.ManagementServer.PeriodicInformEnable', 'true', 'xsd:boolean']);
-        informPvs.push(['Device.ManagementServer.PeriodicInformInterval', '300', 'xsd:unsignedInt']);
+        informPvs.push(['Device.ManagementServer.PeriodicInformInterval', INFORM_SEC, 'xsd:unsignedInt']);
         informPvs.push(['Device.ManagementServer.ConnectionRequestUsername', ACS_CR_USER, 'xsd:string']);
         informPvs.push(['Device.ManagementServer.ConnectionRequestPassword', ACS_CR_PASS, 'xsd:string']);
       } else {
         informPvs.push(['InternetGatewayDevice.ManagementServer.PeriodicInformEnable', 'true', 'xsd:boolean']);
-        informPvs.push(['InternetGatewayDevice.ManagementServer.PeriodicInformInterval', '300', 'xsd:unsignedInt']);
+        informPvs.push(['InternetGatewayDevice.ManagementServer.PeriodicInformInterval', INFORM_SEC, 'xsd:unsignedInt']);
         informPvs.push(['InternetGatewayDevice.ManagementServer.ConnectionRequestUsername', ACS_CR_USER, 'xsd:string']);
         informPvs.push(['InternetGatewayDevice.ManagementServer.ConnectionRequestPassword', ACS_CR_PASS, 'xsd:string']);
       }

@@ -643,6 +643,18 @@ router.post('/customers/:id/onu/wifi', requireAdminSession, express.json(), asyn
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 
+router.get('/customers/:id/onu/clients', requireAdminSession, async (req, res) => {
+  const cl = require('../services/onuClientsService');
+  try {
+    if (req.query.refresh === '1') await cl.refresh(Number(req.params.id));
+    res.json({ ok: true, ...cl.summary(Number(req.params.id)) });
+  } catch (e) { res.status(500).json({ ok: false, message: e.message }); }
+});
+router.post('/customers/:id/onu/clients/name', requireAdminSession, express.json(), (req, res) => {
+  try { require('../services/onuClientsService').setName(Number(req.params.id), req.body && req.body.mac, req.body && req.body.name); res.json({ ok: true }); }
+  catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
 router.post('/customers/:id/onu/recheck', requireAdminSession, async (req, res) => {
   const onuMgr = require('../services/onuManageService');
   try {

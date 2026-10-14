@@ -104,8 +104,8 @@ const CATALOG = [
     ['POST', `^/inventory/(stock/add|item/add|item/edit/${ID})$`],
   ] },
   { key: 'wifi_clientes', label: 'Gestionar WiFi de clientes', help: 'Ver el equipo del cliente (ONU, redes 2.4/5G, puertos con cable), ver la clave del WiFi y cambiarla. Recibe aviso por WhatsApp si un cambio falla.', def: false, needs: ['ver_clientes'], rules: [
-    ['GET', `^/customers/${ID}/onu$`],
-    ['POST', `^/customers/${ID}/onu/(wifi|recheck)$`],
+    ['GET', `^/customers/${ID}/onu(/clients)?$`],
+    ['POST', `^/customers/${ID}/onu/(wifi|recheck|clients/name)$`],
   ] },
   { key: 'red_ver', label: 'Ver estado de la red', help: 'MikroTik, OLT y ONU en modo consulta. No puede cambiar nada.', def: false, rules: [
     ['GET', '^/mikrotik(/display)?$'],

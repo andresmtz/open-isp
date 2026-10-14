@@ -1057,6 +1057,38 @@
             </div>
           </div>
 
+          <!-- MI WIFI (fácil de encontrar: primera tarjeta debajo de la credencial) -->
+          <div class="wifi-panel" id="mywifi-card" style="padding:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <p style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;color:var(--text);display:flex;align-items:center;gap:8px"><i class="ph-fill ph-wifi-high" style="color:var(--lime)"></i> Mi WiFi</p>
+              <% if (portal.onuManaged) { %><span style="font-size:11px;color:var(--muted)">Redes de su casa</span><% } %>
+            </div>
+            <% if (portal.onuManaged) { %>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px">
+                  <p style="font-size:10.5px;color:var(--muted)">Red normal (2.4 GHz)</p>
+                  <p class="wifi-val" id="mw-ssid24"><%= portal.ssid %></p>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px">
+                  <p style="font-size:10.5px;color:var(--muted)">Red rápida (5 GHz)</p>
+                  <p class="wifi-val" id="mw-ssid5"><%= portal.ssid && portal.ssid !== '-' ? portal.ssid + '-5G' : '-' %></p>
+                </div>
+              </div>
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <div><p style="font-size:10.5px;color:var(--muted)">Clave del WiFi (sirve para las dos redes)</p><p class="wifi-val" id="mw-key">••••••••</p></div>
+                <button type="button" class="btn-ghost press" style="padding:8px 12px;font-size:13px;display:flex;align-items:center;gap:6px" onclick="myWifiKey(this)"><i class="ph ph-eye"></i> Ver</button>
+              </div>
+              <button type="button" class="btn-ghost press" style="width:100%;padding:12px;font-size:14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px" onclick="openMyDevices()">
+                <span style="display:flex;align-items:center;gap:8px"><i class="ph ph-device-mobile" style="font-size:18px"></i> Equipos conectados</span>
+                <span style="display:flex;align-items:center;gap:6px"><b id="mw-count">ver</b><i class="ph-bold ph-caret-right"></i></span>
+              </button>
+              <button type="button" class="btn-lime press" style="width:100%;padding:13px;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="openSettingModal()"><i class="ph ph-gear-six"></i> Cambiar nombre o clave</button>
+            <% } else { %>
+              <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Para cambiar el nombre o la clave de su WiFi, escríbanos y lo hacemos por usted.</p>
+              <a href="https://wa.me/<%= portal.waPhone %>?text=<%= encodeURIComponent('Hola, quiero cambiar el nombre o la clave de mi WiFi. Cliente: ' + portal.name + ' (' + portal.code + ')') %>" target="_blank" rel="noopener" class="btn-lime press" style="width:100%;padding:13px;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none"><i class="ph-fill ph-whatsapp-logo"></i> Pedir cambio por WhatsApp</a>
+            <% } %>
+          </div>
+
           <!-- TAGIHAN -->
           <div class="bill-card"<% if (portal.bill) { %> style="background:linear-gradient(135deg,#FCA5A5 0%,#EF4444 55%,#B91C1C 100%);color:#fff;box-shadow:0 14px 32px -16px rgba(239,68,68,.6),inset 0 1px 0 rgba(255,255,255,.35)"<% } %>>
             <div class="min-w-0 relative z-10">
@@ -1578,6 +1610,21 @@
 
   </main>
 
+  <!-- ═══════════════ MODAL: Equipos conectados ═══════════════ -->
+  <div class="modal-backdrop" id="devices-modal" onclick="if(event.target===this)closeMyDevices()">
+    <div class="modal-sheet" role="dialog" aria-modal="true">
+      <div class="modal-grip"></div>
+      <h3 class="modal-title">Equipos conectados</h3>
+      <p class="modal-sub" id="dev-sub">Consultando su equipo…</p>
+      <div id="dev-list" style="max-height:52vh;overflow:auto"></div>
+      <p style="font-size:11.5px;color:var(--muted);margin:10px 0">¿No reconoce un equipo? Cambie la clave del WiFi con el botón "Cambiar nombre o clave".</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeMyDevices()">Cerrar</button>
+        <button type="button" class="btn-save" onclick="loadMyDevices(true)">Actualizar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══════════════ MODAL: Setting WiFi ═══════════════ -->
   <div class="modal-backdrop" id="setting-modal" onclick="if(event.target===this)closeSettingModal()">
     <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="setting-title">
@@ -2087,7 +2134,7 @@
       const j = await r.json().catch(() => ({ ok: false, message: 'Respuesta inválida del servidor.' }));
       _busy(false, j.ok ? 'WiFi actualizado' : 'No se pudo cambiar', !!j.ok);
       setTimeout(() => showToast(j.message || (j.ok ? 'Listo' : 'Ocurrió un error'), !j.ok), 900);
-      if (j.ok) { wifi.ssid = j.name; renderWifi(); }
+      if (j.ok) { wifi.ssid = j.name; renderWifi(); const a = document.getElementById('mw-ssid24'), b = document.getElementById('mw-ssid5'); if (a) a.textContent = j.name; if (b) b.textContent = j.name5g; }
     } catch (e) { _busy(false, 'Sin conexión', false); setTimeout(() => showToast('No se pudo contactar al servidor. Revise su conexión.', true), 900); }
   }
   async function revealWifiKey(btn) {
@@ -2104,6 +2151,51 @@
   }
   window.revealWifiKey = revealWifiKey;
   window.saveWifiOlt = saveWifiOlt;
+
+  // ── Tarjeta "Mi WiFi" ──
+  async function myWifiKey(btn) {
+    const el = document.getElementById('mw-key');
+    if (el.dataset.shown === '1') { el.textContent = '••••••••'; el.dataset.shown = ''; btn.innerHTML = '<i class="ph ph-eye"></i> Ver'; return; }
+    btn.disabled = true; el.textContent = 'consultando…';
+    try {
+      const j = await (await fetch('/customer/wifi', { headers: { 'Accept': 'application/json' } })).json();
+      if (j.ok) {
+        el.textContent = j.key || '-'; el.dataset.shown = '1'; btn.innerHTML = '<i class="ph ph-eye-slash"></i> Ocultar';
+        if (j.name) { document.getElementById('mw-ssid24').textContent = j.name; document.getElementById('mw-ssid5').textContent = j.name5g || (j.name + '-5G'); }
+      } else { el.textContent = '••••••••'; showToast(j.message || 'No se pudo consultar su equipo.', true); }
+    } catch (e) { el.textContent = '••••••••'; showToast('No se pudo consultar su equipo.', true); }
+    btn.disabled = false;
+  }
+  window.myWifiKey = myWifiKey;
+  const _escH = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  async function loadMyDevices(refresh) {
+    const sub = document.getElementById('dev-sub'), list = document.getElementById('dev-list');
+    sub.textContent = refresh ? 'Consultando su equipo… (unos segundos)' : 'Cargando…';
+    if (refresh) list.innerHTML = '';
+    try {
+      const j = await (await fetch('/customer/devices' + (refresh ? '?refresh=1' : ''), { headers: { 'Accept': 'application/json' } })).json();
+      if (!j.ok) { sub.textContent = j.message || 'No se pudo consultar.'; return; }
+      document.getElementById('mw-count').textContent = j.total;
+      const parts = (j.bands || []).map(b => (b.band === '5G' ? 'red rápida' : 'red normal') + ': ' + b.count);
+      parts.push('por cable: ' + j.cables);
+      sub.textContent = j.total + ' conectados ahora (' + parts.join(' · ') + ')';
+      if (!j.tr069) { list.innerHTML = '<p style="font-size:13px;color:var(--muted)">Su equipo todavía no informa la lista de equipos conectados por WiFi.</p>'; return; }
+      list.innerHTML = (j.devices || []).map(d => '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border)">'
+        + '<div style="display:flex;align-items:center;gap:10px"><i class="ph ph-device-mobile" style="font-size:20px;color:var(--lime)"></i>'
+        + '<div><p style="font-size:14px;font-weight:600;color:var(--text)">' + _escH(d.name || d.guess) + '</p><p style="font-size:11.5px;color:var(--muted)">' + _escH(d.conn) + '</p></div></div>'
+        + '<button type="button" class="btn-ghost press" style="padding:6px 10px;font-size:12px" data-mac="' + _escH(d.mac) + '" data-name="' + _escH(d.name || '') + '" onclick="nameMyDevice(this)">' + (d.name ? 'Cambiar nombre' : 'Ponerle nombre') + '</button></div>').join('')
+        || '<p style="font-size:13px;color:var(--muted)">No hay equipos activos en este momento.</p>';
+    } catch (e) { sub.textContent = 'No se pudo consultar su equipo en este momento.'; }
+  }
+  window.loadMyDevices = loadMyDevices;
+  window.openMyDevices = function () { document.getElementById('devices-modal').classList.add('open'); loadMyDevices(true); };
+  window.closeMyDevices = function () { document.getElementById('devices-modal').classList.remove('open'); };
+  window.nameMyDevice = async function (btn) {
+    const n = prompt('¿Cómo se llama este equipo? (ej.: Celular de mamá, Televisor)', btn.dataset.name || '');
+    if (n === null) return;
+    await fetch('/customer/devices/name', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'fetch' }, body: JSON.stringify({ mac: btn.dataset.mac, name: n }) });
+    loadMyDevices(false);
+  };
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !busy) { closeSettingModal(); closeConfirm(); }
   });

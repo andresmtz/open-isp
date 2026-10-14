@@ -2217,7 +2217,7 @@ async function cancelCustService(id) {
     h += row('WiFi 5 GHz', '<b>' + esc(w5.name) + '</b> ' + (w5.enabled ? '' : '<span class="badge bd">apagada</span>'));
     h += row('Clave', keys ? ('<code>' + esc(w24.key) + '</code>' + (d.sameKey ? '' : ' · 5G: <code>' + esc(w5.key) + '</code>')) : '<button type="button" class="btn btn-g btn-sm" onclick="onuLoad(true)"><i class="bi bi-eye"></i> Ver clave</button>');
     if (!d.conventionOk || !d.sameKey) h += '<div class="alert alert-w" style="margin-top:8px;font-size:12px">La red 5G no sigue la convención (mismo nombre + "-5G" y misma clave). Podés corregirlo con el formulario de abajo.</div>';
-    h += '<div style="font-size:11.5px;color:var(--muted);margin-top:6px">La cantidad de equipos por WiFi requiere TR-069 (próxima etapa). Por ahora se ven los puertos con cable.</div>';
+    h += '<div id="onu-clients" style="margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:10px"><div style="color:var(--muted);font-size:12px"><i class="bi bi-arrow-repeat"></i> Consultando equipos conectados…</div></div>';
     h += '<div style="margin-top:14px;padding:12px;border:1px solid var(--border);border-radius:10px">'
       + '<div style="font-weight:700;margin-bottom:8px"><i class="bi bi-pencil"></i> Cambiar WiFi</div>'
       + '<div class="fg"><label class="fl">Nombre de la red (2.4 GHz)</label><input class="fc" id="onu-n" value="' + esc(w24.name) + '" maxlength="28"><div style="font-size:11px;color:var(--muted);margin-top:3px">Sin espacios. La red 5G se llamará igual + <b>-5G</b>.</div></div>'
@@ -2225,7 +2225,33 @@ async function cancelCustService(id) {
       + '<div style="font-size:11.5px;color:var(--warning);margin-bottom:8px"><i class="bi bi-exclamation-triangle"></i> Los equipos del cliente se desconectan y tienen que volver a conectarse con la clave nueva. El cliente recibe la clave por WhatsApp.</div>'
       + '<button type="button" class="btn btn-p btn-sm" id="onu-save" onclick="onuSave()"><i class="bi bi-check-lg"></i> Aplicar, verificar y guardar</button> <span id="onu-res" style="font-size:12px"></span></div>';
     body.innerHTML = h + histHtml(d.history);
+    loadClients(true);
   }
+  async function loadClients(refresh) {
+    var box = document.getElementById('onu-clients'); if (!box) return;
+    if (refresh) box.innerHTML = '<div style="color:var(--muted);font-size:12px"><i class="bi bi-arrow-repeat"></i> Pidiendo datos frescos a la ONU…</div>';
+    var c;
+    try { c = await (await fetch('/admin/customers/' + cur.id + '/onu/clients' + (refresh ? '?refresh=1' : ''), { headers: { Accept: 'application/json' } })).json(); }
+    catch (e) { box.innerHTML = '<div style="color:var(--danger);font-size:12px">No se pudo consultar los equipos.</div>'; return; }
+    var hd = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b><i class="bi bi-phone"></i> Equipos conectados: ' + (c.total || 0) + '</b>'
+      + '<button type="button" class="btn btn-g btn-sm" onclick="onuClients(true)"><i class="bi bi-arrow-repeat"></i> Actualizar</button></div>';
+    if (!c.tr069) { box.innerHTML = hd + '<div style="font-size:12px;color:var(--muted)">Por cable: ' + c.cables + ' de ' + c.lanPorts + ' puertos. La lista de equipos por WiFi necesita TR-069 en esta ONU (todavía no activado).</div>'; return; }
+    var b = (c.bands || []).map(function (x) { return '<span class="badge bs" style="margin-right:6px">WiFi ' + esc(x.band) + ' (' + esc(x.ssid) + '): ' + x.count + '</span>'; }).join('') + '<span class="badge bm">Cable: ' + c.cables + ' de ' + c.lanPorts + '</span>';
+    var list = (c.devices || []).map(function (d) {
+      return '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">'
+        + '<span><b>' + esc(d.name || d.guess) + '</b> <span style="color:var(--muted)">' + esc(d.conn) + ' · ' + esc(d.ip || '') + ' · <code>' + esc(d.mac) + '</code></span></span>'
+        + '<button type="button" class="btn btn-g btn-sm" data-mac="' + esc(d.mac) + '" data-name="' + esc(d.name || '') + '" onclick="onuName(this)" title="Ponerle nombre"><i class="bi bi-tag"></i></button></div>';
+    }).join('');
+    box.innerHTML = hd + '<div style="margin-bottom:8px">' + b + '</div>' + (list || '<div style="font-size:12px;color:var(--muted)">La ONU no informó equipos activos.</div>')
+      + '<div style="font-size:11px;color:var(--muted);margin-top:6px">Datos de la ONU vía TR-069 · último informe ' + esc(c.updatedAt || '-') + '. La ONU no informa nombres: se pueden poner con <i class="bi bi-tag"></i>.</div>';
+  }
+  window.onuClients = loadClients;
+  window.onuName = async function (btn) {
+    var n = prompt('Nombre para este equipo (ej.: Celular de Juan, Televisor):', btn.dataset.name || '');
+    if (n === null) return;
+    await fetch('/admin/customers/' + cur.id + '/onu/clients/name', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ mac: btn.dataset.mac, name: n }) });
+    loadClients(false);
+  };
   function histHtml(list) {
     if (!list || !list.length) return '';
     return '<div style="margin-top:14px;font-weight:700;font-size:13px">Historial de cambios</div>' + list.map(function (c) {

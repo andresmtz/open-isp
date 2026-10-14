@@ -2247,6 +2247,24 @@ router.get('/wifi', async (req, res) => {
       ports: d.ports, cablesConnected: d.cablesConnected });
   } catch (e) { res.status(500).json({ ok: false, message: 'No se pudo consultar su equipo en este momento. Intente más tarde.' }); }
 });
+// Equipos conectados (TR-069 + OLT) y nombres que el cliente les pone
+router.get('/devices', async (req, res) => {
+  const profile = _wifiProfile(req);
+  if (!profile) return res.status(401).json({ ok: false, message: 'La sesión venció. Vuelva a ingresar.' });
+  const cl = require('../services/onuClientsService');
+  try {
+    if (req.query.refresh === '1') await cl.refresh(profile.id, { waitMs: 12000 });
+    const s = cl.summary(profile.id);
+    res.json({ ok: true, ...s, devices: s.devices.map(({ ip, ...d }) => d) });
+  } catch (e) { res.status(500).json({ ok: false, message: 'No se pudo consultar su equipo en este momento.' }); }
+});
+router.post('/devices/name', (req, res) => {
+  const profile = _wifiProfile(req);
+  if (!profile) return res.status(401).json({ ok: false, message: 'La sesión venció. Vuelva a ingresar.' });
+  try { require('../services/onuClientsService').setName(profile.id, req.body && req.body.mac, req.body && req.body.name); res.json({ ok: true }); }
+  catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
 router.post('/wifi', async (req, res) => {
   const profile = _wifiProfile(req);
   if (!profile) return res.status(401).json({ ok: false, message: 'La sesión venció. Vuelva a ingresar.' });

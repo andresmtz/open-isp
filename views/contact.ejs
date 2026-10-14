@@ -40,7 +40,7 @@
   <div class="prose">
     <p class="lead" style="text-align:center"><%= t('customer.pages.contact.p1', 'Tim support kami tersedia untuk melayani pertanyaan teknis, bantuan pembayaran, atau informasi pemasangan baru.') %></p>
 
-    <% let waContact = settings.company_phone || (settings.whatsapp_admin_numbers ? settings.whatsapp_admin_numbers[0] : ''); let waLink = waContact ? `https://wa.me/${waContact.replace(/\D/g, '')}` : '#'; %>
+    <% let waContact = settings.company_whatsapp || settings.company_phone || ''; let waLink = waContact ? `https://wa.me/${waContact.replace(/\D/g, '')}` : '#'; %>
 
     <div class="contact-list">
       <a href="<%= waLink %>" class="contact-item">

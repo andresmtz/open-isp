@@ -42,12 +42,10 @@ function fmtRp(n) { return regional.currencySymbol() + ' ' + Math.round(Number(n
 
 function companyInfo(settings) {
   const s = settings || {};
-  const phone = (Array.isArray(s.whatsapp_admin_numbers) && s.whatsapp_admin_numbers[0])
-    ? '+' + regional.normalizePhone(s.whatsapp_admin_numbers[0])
-    : (s.company_phone || '-');
+  const phone = regional.publicContactPhone(s) || '-';
   return {
     name: s.company_header || 'OPEN-ISP',
-    sub: s.company_subheader || 'PT Artha Mega Data',
+    sub: s.company_subheader || '',
     address: s.company_address || 'Proveedor de servicios de internet',
     phone,
     email: s.company_email || '',

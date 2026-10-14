@@ -545,8 +545,8 @@
           <div>
             <div class="company-title"><%= company %></div>
             <div class="company-details"><%= settings.company_address || 'Proveedor de servicios de internet' %></div>
-            <% if (settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers.length > 0) { %>
-            <div class="company-details">Telp/WA: +<%= settings.whatsapp_admin_numbers[0] %></div>
+            <% const _tel = String(settings.company_whatsapp || settings.company_phone || '').trim(); if (_tel) { %>
+            <div class="company-details">Tel./WhatsApp: <%= _tel %></div>
             <% } %>
           </div>
         </div>
@@ -557,7 +557,7 @@
         <div class="invoice-num"># <%= invNo %></div>
         <div>
           <% if (isPaid) { %>
-          <span class="status-badge paid"><span class="badge-dot"></span>LUNAS</span>
+          <span class="status-badge paid"><span class="badge-dot"></span>PAGADA</span>
           <% } else { %>
           <span class="status-badge unpaid"><span class="badge-dot"></span>PENDIENTE</span>
           <% } %>
@@ -614,9 +614,9 @@
     <!-- Table Items -->
     <div class="items-table-container">
       <% if (isPaid) { %>
-      <div class="watermark-stamp paid">LUNAS</div>
+      <div class="watermark-stamp paid">PAGADA</div>
       <% } else { %>
-      <div class="watermark-stamp unpaid">TAGIHAN</div>
+      <div class="watermark-stamp unpaid">PENDIENTE</div>
       <% } %>
 
       <table class="items-table">
@@ -680,7 +680,7 @@
         <div class="sig-title">Atentamente,</div>
         <div class="sig-line"></div>
         <div class="sig-name"><%= settings.company_manager || 'Administración' %></div>
-        <div class="sig-role">Manajer Operasional</div>
+        <div class="sig-role"><%= settings.company_header || '' %></div>
       </div>
     </div>
 

@@ -3253,6 +3253,7 @@ router.post('/billing/pay-bulk', requireAdminSession, express.urlencoded({ exten
         if (Number.isFinite(customerId) && customerId > 0) touchedCustomerIds.add(customerId);
         const wasPaid = String(inv.status || '').toLowerCase() === 'paid';
         billingSvc.markAsPaid(id, paidBy, notes);
+        if (!wasPaid) billingSvc.setPaymentMethod(id, req.body && req.body.payment_method);
         if (!wasPaid) {
           if (!paidByCustomer.has(customerId)) paidByCustomer.set(customerId, []);
           paidByCustomer.get(customerId).push({
@@ -3341,6 +3342,7 @@ router.post('/billing/:id/pay', requireAdminSession, express.urlencoded({ extend
     const wasPaid = String(inv.status || '').toLowerCase() === 'paid';
     if (!wasPaid) {
       billingSvc.markAsPaid(req.params.id, paidBy, req.body.notes);
+      billingSvc.setPaymentMethod(req.params.id, req.body && req.body.payment_method);
     }
     
     // Check if customer is currently suspended and has no more unpaid invoices
@@ -6060,9 +6062,7 @@ router.get('/vouchers/batches/:id/print', requireAdminSession, (req, res) => {
   let renderedHtml = '';
   let templateError = '';
   const builtinTemplate = (name) => {
-    const phone = (Array.isArray(settings.whatsapp_admin_numbers) && settings.whatsapp_admin_numbers.length > 0)
-      ? ('+' + String(settings.whatsapp_admin_numbers[0]))
-      : String(settings.company_phone || '');
+    const phone = regional.publicContactPhone(settings);
     const companyName = settings.company_header || company();
     const timeStamp = new Date().toISOString();
     const priceNumber = Number(batch.price || 0);
@@ -6181,9 +6181,7 @@ body{margin:0;font-family:Arial,sans-serif;color:#0f172a}
         templateError = 'La plantilla pegada todavía está en formato PHP (Mikhmon). Aquí solo se admiten plantillas HTML con marcadores (%username%, etc.).';
       }
 
-      const phone = (Array.isArray(settings.whatsapp_admin_numbers) && settings.whatsapp_admin_numbers.length > 0)
-        ? ('+' + String(settings.whatsapp_admin_numbers[0]))
-        : String(settings.company_phone || '');
+      const phone = regional.publicContactPhone(settings);
       const timeStamp = new Date().toISOString();
       const priceNumber = Number(batch.price || 0);
       const priceText = priceNumber.toLocaleString(regional.locale());

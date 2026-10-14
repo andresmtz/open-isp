@@ -388,6 +388,15 @@ function renewCustomerPrepaidValidity(customerId, multiplier = 1) {
   }
 }
 
+/** Guarda la forma de pago elegida al cobrar (se muestra en el PDF de la factura). */
+let _pmOk = false;
+function setPaymentMethod(invoiceId, method) {
+  const m = String(method || '').trim();
+  if (!m) return;
+  if (!_pmOk) { try { db.exec('ALTER TABLE invoices ADD COLUMN payment_method TEXT'); } catch (_) {} _pmOk = true; }
+  try { db.prepare('UPDATE invoices SET payment_method = ? WHERE id = ?').run(m.slice(0, 40), invoiceId); } catch (_) {}
+}
+
 function markAsPaid(invoiceId, paidByName, notes, actor = null) {
   const invId = Number(invoiceId);
   if (!invId) return { changes: 0, error: 'Invalid invoice ID' };
@@ -815,6 +824,7 @@ function updatePaymentInfo(invoiceId, data) {
 }
 
 module.exports = {
+  setPaymentMethod,
   autoLunasUnpaidForCustomer,
   getInvoicesByAny,
   getUnpaidInvoicesByCustomerId,

@@ -27,7 +27,7 @@ function generateFinanceReportPdfBuffer(o) {
       const LEFT = 40, RIGHT = 555, W = RIGHT - LEFT;
       const modeLabel = (mode === 'before') ? 'SEBELUM PAJAK' : 'SESUDAH PAJAK';
       const periodStr = filterMonth ? `${MNS[filterMonth - 1]} ${filterYear}` : `Tahun ${filterYear}`;
-      const companyPhone = settings.company_phone || (settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers[0]) || '-';
+      const companyPhone = require('../config/regional').publicContactPhone(settings) || '-';
       const companyAddress = settings.company_address || 'Proveedor de servicios de internet';
 
       // ── Header band ──

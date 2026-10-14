@@ -112,6 +112,16 @@ function toLocalPhone(input) {
   return phoneTrunkPrefix() + national;
 }
 
+/**
+ * Teléfono de contacto que ve el CLIENTE (facturas, PDF, impresiones): WhatsApp de la empresa o teléfono de la empresa.
+ * Nunca los "números de administrador para avisos" (son personales, solo para alertas internas).
+ */
+function publicContactPhone(settings) {
+  const s = settings || {};
+  const raw = String(s.company_whatsapp || s.company_phone || '').trim();
+  return raw ? (toLocalPhone(raw) || raw) : '';
+}
+
 /** Variantes equivalentes de un número (para búsquedas en BD / ACS). */
 function phoneVariants(input) {
   const full = normalizePhone(input);
@@ -156,6 +166,7 @@ function clientConfig() {
 }
 
 module.exports = {
+  publicContactPhone,
   DEFAULTS,
   locale,
   timezone,

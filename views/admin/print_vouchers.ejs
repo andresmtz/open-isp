@@ -184,7 +184,7 @@
               <div class="right-meta"><i class="bi bi-hourglass-split"></i> <%= formatValidity(batch.validity) %></div>
             <% } %>
           </div>
-          <div class="wa-btm">CS/WA: <%= (settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers.length > 0) ? '+' + settings.whatsapp_admin_numbers[0] : (settings.company_phone || '-') %></div>
+          <div class="wa-btm">WhatsApp: <%= settings.company_whatsapp || settings.company_phone || '-' %></div>
         </div>
       <% }) %>
     </div>

@@ -2175,8 +2175,9 @@ router.get('/api/pppoe-traffic', async (req, res) => {
               iface,
               source: 'monitor-traffic',
               uptime,
-              rxMbps: (Number(rxBps) || 0) / 1e6,
-              txMbps: (Number(txBps) || 0) / 1e6
+              // La interfaz PPPoE se mide desde el router: tx = lo que BAJA el cliente, rx = lo que SUBE
+              rxMbps: (Number(txBps) || 0) / 1e6,
+              txMbps: (Number(rxBps) || 0) / 1e6
             });
           }
         } catch {}
@@ -2232,8 +2233,9 @@ router.get('/api/pppoe-traffic', async (req, res) => {
       });
     }
 
-    const rxMbps = (dIn * 8) / (dtMs / 1000) / 1e6;
-    const txMbps = (dOut * 8) / (dtMs / 1000) / 1e6;
+    // Bytes "in" del router = subida del cliente; "out" = bajada. rxMbps se entrega como BAJADA del cliente.
+    const rxMbps = (dOut * 8) / (dtMs / 1000) / 1e6;
+    const txMbps = (dIn * 8) / (dtMs / 1000) / 1e6;
 
     return res.json({
       ok: true,

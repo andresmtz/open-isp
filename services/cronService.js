@@ -653,8 +653,10 @@ function startCronJobs() {
             const cust = customerMap.get(username);
             if (!cust) continue;
 
-            const totalIn = parseInt(s['bytes-in']) || 0;
-            const totalOut = parseInt(s['bytes-out']) || 0;
+            // Convención del consumo (igual que lo importado de WispHub): "in" = BAJADA del cliente, "out" = SUBIDA.
+            // El MikroTik cuenta desde el router: su "out" es lo que baja el cliente.
+            const totalIn = parseInt(s['bytes-out']) || 0;
+            const totalOut = parseInt(s['bytes-in']) || 0;
 
             const now = new Date();
             const currentUsage = usageSvc.getUsage(cust.id, now.getMonth()+1, now.getFullYear());

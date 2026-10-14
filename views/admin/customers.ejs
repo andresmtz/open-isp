@@ -281,8 +281,10 @@
                   const session = username && typeof activeSessionsMap !== 'undefined' && activeSessionsMap && activeSessionsMap.get ? activeSessionsMap.get(username) : null;
                   const isOnline = !!session;
                   
-                  const rxBytes = session && session.bytesIn ? session.bytesIn : (c.bytes_in || 0);
-                  const txBytes = session && session.bytesOut ? session.bytesOut : (c.bytes_out || 0);
+                  // MikroTik informa desde el router: "in" = lo que SUBE el cliente, "out" = lo que BAJA
+                  // Sesión en vivo (vista del router): bytesOut = bajada. Consumo guardado: bytes_in = bajada.
+                  const rxBytes = session && session.bytesOut ? session.bytesOut : (c.bytes_in || 0);
+                  const txBytes = session && session.bytesIn ? session.bytesIn : (c.bytes_out || 0);
                   
                   function fmtB(b) {
                     const num = Number(b) || 0;
@@ -310,8 +312,8 @@
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Desconectado</div>
                 <% } %>
                 <div style="font-size:11px;margin-top:4px;display:flex;gap:6px;font-family:monospace;flex-wrap:wrap">
-                  <span style="color:#38bdf8" title="Download (Receive)"><i class="bi bi-arrow-down"></i>RX: <strong class="conn-rx"><%= fmtB(rxBytes) %></strong></span>
-                  <span style="color:#f472b6" title="Upload (Transmit)"><i class="bi bi-arrow-up"></i>TX: <strong class="conn-tx"><%= fmtB(txBytes) %></strong></span>
+                  <span style="color:#38bdf8" title="Bajada del cliente"><i class="bi bi-arrow-down"></i>Bajada: <strong class="conn-rx"><%= fmtB(rxBytes) %></strong></span>
+                  <span style="color:#f472b6" title="Subida del cliente"><i class="bi bi-arrow-up"></i>Subida: <strong class="conn-tx"><%= fmtB(txBytes) %></strong></span>
                 </div>
               </td>
               <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
@@ -1149,12 +1151,12 @@
         <div class="vd-panel" style="padding:12px">
           <div class="vd-grid2">
             <div class="vd-stat" style="background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.25)">
-              <div style="font-size:11px;color:#38bdf8;font-weight:700"><i class="bi bi-arrow-down-circle"></i> RX (Download)</div>
+              <div style="font-size:11px;color:#38bdf8;font-weight:700"><i class="bi bi-arrow-down-circle"></i> Bajada (descarga)</div>
               <div id="v_rx_fmt" class="vd-stat-num">-</div>
               <div id="v_rx_bytes" style="font-size:11px;color:var(--muted)">0 Bytes</div>
             </div>
             <div class="vd-stat" style="background:rgba(244,114,182,.1);border-color:rgba(244,114,182,.25)">
-              <div style="font-size:11px;color:#f472b6;font-weight:700"><i class="bi bi-arrow-up-circle"></i> TX (Upload)</div>
+              <div style="font-size:11px;color:#f472b6;font-weight:700"><i class="bi bi-arrow-up-circle"></i> Subida (carga)</div>
               <div id="v_tx_fmt" class="vd-stat-num">-</div>
               <div id="v_tx_bytes" style="font-size:11px;color:var(--muted)">0 Bytes</div>
             </div>
@@ -1376,8 +1378,8 @@ function viewCustDetail(idx) {
     if (document.getElementById('v_conn_type')) document.getElementById('v_conn_type').textContent = (c.connection_type || 'pppoe').toUpperCase();
     if (document.getElementById('v_uptime')) document.getElementById('v_uptime').textContent = session ? (session.uptime || 'Active') : 'Desconectado (offline)';
 
-    const rxBytes = session && session.bytesIn ? session.bytesIn : (c.bytes_in || 0);
-    const txBytes = session && session.bytesOut ? session.bytesOut : (c.bytes_out || 0);
+    const rxBytes = session && session.bytesOut ? session.bytesOut : (c.bytes_in || 0);  // bajada del cliente
+    const txBytes = session && session.bytesIn ? session.bytesIn : (c.bytes_out || 0);  // subida del cliente
     const totalBytes = rxBytes + txBytes;
 
     if (document.getElementById('v_rx_fmt')) document.getElementById('v_rx_fmt').textContent = formatBytesVal(rxBytes);
@@ -1446,8 +1448,8 @@ async function fetchLiveSessions() {
       const ipEl = cell.querySelector('.conn-ip');
 
       if (s) {
-        if (rxEl) rxEl.textContent = formatBytesVal(s.bytesIn);
-        if (txEl) txEl.textContent = formatBytesVal(s.bytesOut);
+        if (rxEl) rxEl.textContent = formatBytesVal(s.bytesOut); // bajada del cliente
+        if (txEl) txEl.textContent = formatBytesVal(s.bytesIn);  // subida del cliente
         if (uptimeEl) uptimeEl.textContent = s.uptime || '-';
         if (ipEl) ipEl.textContent = s.ip || '-';
       }
@@ -1467,8 +1469,8 @@ function updateDetailModalLive(idx) {
   const username = String(c.pppoe_username || c.hotspot_username || c.name || '').trim().toLowerCase();
   const session = activeSessionsMapObj.get(username);
   if (session) {
-    const rxBytes = session.bytesIn || 0;
-    const txBytes = session.bytesOut || 0;
+    const rxBytes = session.bytesOut || 0; // bajada del cliente
+    const txBytes = session.bytesIn || 0;  // subida del cliente
     const totalBytes = rxBytes + txBytes;
 
     if (document.getElementById('v_rx_fmt')) document.getElementById('v_rx_fmt').textContent = formatBytesVal(rxBytes);
@@ -2234,7 +2236,7 @@ async function cancelCustService(id) {
     var c;
     try { c = await (await fetch('/admin/customers/' + cur.id + '/onu/clients' + (refresh ? '?refresh=1' : ''), { headers: { Accept: 'application/json' } })).json(); }
     catch (e) { box.innerHTML = '<div style="color:var(--danger);font-size:12px">No se pudo consultar los equipos.</div>'; return; }
-    var hd = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b><i class="bi bi-phone"></i> Equipos conectados: ' + (c.total || 0) + '</b>'
+    var hd = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b><i class="bi bi-phone"></i> Equipos conectados: ' + (c.total || 0) + (c.tr069 && c.unidentified ? ' <span style="font-weight:400;color:var(--muted);font-size:12px">(' + c.identified + ' identificados)</span>' : '') + '</b>'
       + '<button type="button" class="btn btn-g btn-sm" onclick="onuClients(true)"><i class="bi bi-arrow-repeat"></i> Actualizar</button></div>';
     if (!c.tr069) { box.innerHTML = hd + '<div style="font-size:12px;color:var(--muted)">Por cable: ' + c.cables + ' de ' + c.lanPorts + ' puertos. La lista de equipos por WiFi necesita TR-069 en esta ONU (todavía no activado).</div>'; return; }
     var b = (c.bands || []).map(function (x) { return '<span class="badge bs" style="margin-right:6px">WiFi ' + esc(x.band) + ' (' + esc(x.ssid) + '): ' + x.count + '</span>'; }).join('') + '<span class="badge bm">Cable: ' + c.cables + ' de ' + c.lanPorts + '</span>';
@@ -2243,7 +2245,8 @@ async function cancelCustService(id) {
         + '<span><b>' + esc(d.name || d.guess) + '</b> <span style="color:var(--muted)">' + esc(d.conn) + ' · ' + esc(d.ip || '') + ' · <code>' + esc(d.mac) + '</code></span></span>'
         + '<button type="button" class="btn btn-g btn-sm" data-mac="' + esc(d.mac) + '" data-name="' + esc(d.name || '') + '" onclick="onuName(this)" title="Ponerle nombre"><i class="bi bi-tag"></i></button></div>';
     }).join('');
-    box.innerHTML = hd + '<div style="margin-bottom:8px">' + b + '</div>' + (list || '<div style="font-size:12px;color:var(--muted)">La ONU no informó equipos activos.</div>')
+    var extra = c.unidentified ? '<div style="font-size:12px;color:var(--muted);padding:6px 0">+ ' + c.unidentified + ' equipo(s) conectado(s) que la ONU cuenta pero no detalla (este modelo no informa la lista completa de la red 2.4).</div>' : '';
+    box.innerHTML = hd + '<div style="margin-bottom:8px">' + b + '</div>' + (list || '<div style="font-size:12px;color:var(--muted)">La ONU no informó equipos activos.</div>') + extra
       + '<div style="font-size:11px;color:var(--muted);margin-top:6px">Datos de la ONU vía TR-069 · último informe ' + esc(c.updatedAt || '-') + '. La ONU no informa nombres: se pueden poner con <i class="bi bi-tag"></i>.</div>';
   }
   window.onuClients = loadClients;

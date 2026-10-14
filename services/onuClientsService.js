@@ -127,9 +127,12 @@ function summary(customerId) {
     });
   }
   const wifiTotal = bands.reduce((s, b) => s + b.count, 0);
+  const total = Math.max(wifiTotal + cables, devices.length);
+  // Algunas ONU informan la cantidad por red pero no el detalle de todos los equipos (lista 2.4 vacía en Realtek):
+  // se muestra el total real y cuántos están identificados.
   return {
     tr069: true, updatedAt: dev.last_inform, bands, cables, lanPorts: lan.length,
-    total: wifiTotal + cables, devices,
+    total, identified: devices.length, unidentified: Math.max(0, total - devices.length), devices,
   };
 }
 

@@ -2191,6 +2191,7 @@
         + '<div><p style="font-size:14px;font-weight:600;color:var(--text)">' + _escH(d.name || d.guess) + '</p><p style="font-size:11.5px;color:var(--muted)">' + _escH(d.conn) + '</p></div></div>'
         + '<button type="button" class="btn-ghost press" style="padding:6px 10px;font-size:12px" data-mac="' + _escH(d.mac) + '" data-name="' + _escH(d.name || '') + '" onclick="nameMyDevice(this)">' + (d.name ? 'Cambiar nombre' : 'Ponerle nombre') + '</button></div>').join('')
         || '<p style="font-size:13px;color:var(--muted)">No hay equipos activos en este momento.</p>';
+      if (j.unidentified) list.innerHTML += '<p style="font-size:12.5px;color:var(--muted);padding:10px 4px">+ ' + j.unidentified + ' equipo(s) más conectado(s) que su módem no identifica por nombre.</p>';
     } catch (e) { sub.textContent = 'No se pudo consultar su equipo en este momento.'; }
   }
   window.loadMyDevices = loadMyDevices;

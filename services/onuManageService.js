@@ -304,6 +304,8 @@ async function changeWifi(customerId, { name, key }, actor = {}, { notify = true
       return { ok: true };
     });
     db.prepare("UPDATE wifi_changes SET status = 'ok', step = 'listo', finished_at = (NOW_LOCAL()) WHERE id = ?").run(change);
+    // El WiFi vigente queda guardado en la ficha (sirve para una ONU de reemplazo aunque esta no encienda)
+    try { require('./customerEquipmentService').saveWifi(customerId, v.name, v.key); } catch (_) {}
     db.prepare('UPDATE onu_inventory SET ssid_name = ? WHERE id = ?').run(v.name, inv.id);
     if (actor.type === 'customer') _cooldown.set(customerId, Date.now());
     if (notify) notifyCustomer(customerId, v, actor).catch(() => {});

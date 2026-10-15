@@ -18,6 +18,7 @@ const BASE = [
   ['POST', `^/tickets/${ID}/update$`],        // solo sus reclamos (se valida en la ruta)
   ['GET', `^/customers/${ID}/house/${ID}$`],    // foto de la casa del cliente de una orden suya (nunca la cédula)
   ['POST', `^/orders/${ID}/equipment$`],         // etiqueta de la ONU, MAC y WiFi del cliente (solo sus órdenes de instalación)
+  ['POST', `^/orders/${ID}/replace$`],           // cambio de ONU en una orden de asistencia suya
 ];
 
 const CATALOG = [

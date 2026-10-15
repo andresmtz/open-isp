@@ -32,7 +32,7 @@ let _schemaOk = false;
 function ensureSchema() {
   if (_schemaOk) return;
   const cols = db.prepare('PRAGMA table_info(customers)').all().map(c => c.name);
-  for (const [c, t] of [['reg_provision_status', 'TEXT'], ['reg_provision_log', 'TEXT'], ['reg_label_read', 'TEXT']]) if (!cols.includes(c)) db.exec(`ALTER TABLE customers ADD COLUMN ${c} ${t}`);
+  for (const [c, t] of [['reg_provision_status', 'TEXT'], ['reg_provision_log', 'TEXT'], ['reg_label_read', 'TEXT'], ['repl_pending', 'TEXT']]) if (!cols.includes(c)) db.exec(`ALTER TABLE customers ADD COLUMN ${c} ${t}`);
   _schemaOk = true;
 }
 
@@ -61,7 +61,7 @@ async function notifyAll(customer, text) {
 }
 
 /** Configura la ONU vinculada al cliente. Devuelve { ok, step, message }. No lanza excepciones. */
-async function provision(customerId, { actor = 'sistema' } = {}) {
+async function provision(customerId, { actor = 'sistema', mode = 'install' } = {}) {
   ensureSchema();
   const id = Number(customerId);
   const c = db.prepare('SELECT * FROM customers WHERE id=?').get(id);
@@ -100,7 +100,7 @@ async function provision(customerId, { actor = 'sistema' } = {}) {
     finish({ ok: false, step: 'manual', message: why });
     await notifyAll(c, `🛠️ *ONU identificada — configurar a mano*\nCliente: ${c.name}\nONU: ${inv.onu_ref} · ${String(inv.mac || '').toUpperCase()} · ${inv.type || ''}\nEsta ONU ${why}.\n` +
       (r.ok ? `Ya quedó nombrada en la OLT como *${U}* (write file).\n` : `No se pudo poner la descripción: ${r.message}\n`) +
-      `\nCargar en la ONU: WAN PPPoE usuario y clave *${U}*` + (c.reg_wifi_ssid ? `, WiFi "${c.reg_wifi_ssid}" / "${c.reg_wifi_ssid}-5G"` : '') + `.\nDespués marcar "Instalación realizada".`);
+      `\nCargar en la ONU: WAN PPPoE usuario y clave *${U}*` + (c.reg_wifi_ssid ? `, WiFi "${c.reg_wifi_ssid}" / "${c.reg_wifi_ssid}-5G"` : '') + (mode === 'replace' ? `.\nDespués tocar "Confirmar cambio de equipo" en Equipo (da de baja la ONU vieja).` : `.\nDespués marcar "Instalación realizada".`));
     return { ok: false, manual: true, step: 'manual', message: `ONU ${why}: configurar WAN y WiFi a mano.` };
   }
   let step = 'inicio';
@@ -196,6 +196,11 @@ async function provision(customerId, { actor = 'sistema' } = {}) {
   note(`MikroTik: sesión activa ${session.address || ''}`);
   finish({ ok: true, step: 'listo', message: 'ok' });
 
+  if (mode === 'replace') {
+    logger.info(`[Provisión] ${c.name}: ONU de reemplazo ${inv.onu_ref} configurada`);
+    return { ok: true, step: 'listo', message: `ONU ${inv.onu_ref} configurada. ${wifiMsg}`, session, inv };
+  }
+
   // 7. Instalación realizada (factura con la fecha real + bienvenida) y orden cerrada
   let done = null;
   try {
@@ -238,14 +243,131 @@ async function fromLabel(customerId, images, { actor = 'técnico' } = {}) {
   return { linked: true, provisioned: r.ok, message: m.how + ' · ' + r.message };
 }
 
+// ── Cambio de equipo (asistencia técnica) ──────────────────────────────────────────────────
+const REPLACE_REASONS = { falla: 'La ONU no enciende o falla', electrico: 'Daño eléctrico', cambio_modelo: 'Cambio de modelo / mejora', otro: 'Otro motivo' };
+
+/** Da de baja una ONU en la OLT (solo esa: número y puerto validados; nunca "all"/"offline") y guarda (write file). */
+async function deregisterOnu(old, { by = '' } = {}) {
+  const m = /^EPON0\/(\d+):(\d+)$/.exec(String(old && old.onu_ref || ''));
+  if (!m || Number(m[1]) !== Number(old.port) || Number(m[2]) !== Number(old.onu_id)) throw new Error('Referencia de la ONU vieja inválida; no se da de baja.');
+  const N = Number(old.onu_id);
+  if (!Number.isInteger(N) || N < 1 || N > 65535) throw new Error('Número de ONU inválido.');
+  const { runOnPort, getOlt, serial, writeOlt } = onuMgr()._internal;
+  const olt = getOlt(old.olt_id);
+  await serial(async () => {
+    try { await runOnPort(olt, Number(old.port), [`no onu auth onuid ${N}`]); }
+    finally { await writeOlt(olt); }
+  });
+  db.prepare('DELETE FROM onu_inventory WHERE olt_id=? AND onu_ref=?').run(old.olt_id, old.onu_ref);
+  logger.info(`[Cambio de equipo] ONU ${old.onu_ref} (${old.mac}) dada de baja en la OLT por ${by}`);
+}
+
+/** Cierra el cambio: da de baja la vieja y actualiza el historial de equipos. */
+async function finishReplacement(customerId, { by = '', ticketId = null, reason = '' } = {}) {
+  ensureSchema();
+  const id = Number(customerId);
+  const c = db.prepare('SELECT * FROM customers WHERE id=?').get(id);
+  const pend = c && c.repl_pending ? JSON.parse(c.repl_pending) : null;
+  const eq = require('./customerEquipmentService');
+  const newInv = onuMgr().forCustomer(id);
+  if (!newInv) throw new Error('No hay ONU nueva vinculada.');
+  const oldEq = eq.current(id);
+  let dereg = 'no había ONU anterior registrada';
+  if (pend && pend.old) {
+    const still = db.prepare('SELECT * FROM onu_inventory WHERE olt_id=? AND onu_ref=?').get(pend.old.olt_id, pend.old.onu_ref);
+    if (still && String(still.mac || '').toLowerCase() === String(pend.old.mac || '').toLowerCase()) {
+      try { await deregisterOnu(still, { by }); dereg = `ONU anterior ${pend.old.onu_ref} dada de baja en la OLT`; }
+      catch (e) { dereg = `NO se pudo dar de baja la ONU anterior ${pend.old.onu_ref}: ${e.message}`; }
+    } else dereg = `la ONU anterior ${pend.old.onu_ref} ya no figuraba en la OLT`;
+  }
+  if (oldEq && oldEq.onu_ref !== newInv.onu_ref) eq.retire(oldEq.id, { reason: (pend && pend.reason) || reason || 'Cambio de equipo', by });
+  eq.attach(id, newInv, { by, ticketId: (pend && pend.ticketId) || ticketId });
+  db.prepare("UPDATE customers SET repl_pending=NULL WHERE id=?").run(id);
+  const tId = (pend && pend.ticketId) || ticketId;
+  if (tId) db.prepare("UPDATE tickets SET technician_notes=TRIM(COALESCE(technician_notes,'') || ' Equipo cambiado: ' || ?), updated_at=(NOW_LOCAL()) WHERE id=?").run(`${newInv.onu_ref} ${String(newInv.mac || '').toUpperCase()}`, tId);
+  try { db.prepare("INSERT INTO customer_events (customer_id, type, old_value, new_value) VALUES (?, 'install', NULL, ?)").run(id, `Cambio de equipo: ${oldEq ? oldEq.onu_ref + ' → ' : ''}${newInv.onu_ref} (${(pend && pend.reason) || reason || '-'}; por ${by})`); } catch (_) {}
+  return { ok: true, dereg, newInv };
+}
+
+/**
+ * Cambio de ONU desde una orden de asistencia: lee la etiqueta de la nueva, la configura con la misma cuenta y el WiFi
+ * guardado (o el nuevo que cargue el técnico) y, si todo anda, da de baja la vieja. Si algo falla, la vieja NO se toca.
+ */
+async function replaceOnu(customerId, images, { reasonKey = 'falla', reasonText = '', ticketId = null, actor = 'técnico', wifi = null } = {}) {
+  ensureSchema();
+  const id = Number(customerId);
+  const c = db.prepare('SELECT * FROM customers WHERE id=?').get(id);
+  if (!c || !['active', 'suspended', 'ditangguhkan'].includes(c.status)) throw new Error('Solo se cambia el equipo de un cliente con servicio.');
+  const reason = (REPLACE_REASONS[reasonKey] || REPLACE_REASONS.otro) + (String(reasonText || '').trim() ? ': ' + String(reasonText).trim().slice(0, 150) : '');
+  const reader = require('./labelReaderService');
+  const inst = require('./installationService');
+  const readMacs = [];
+  for (const img of images || []) { try { (await reader.read(img)).macs.forEach(m => readMacs.push(m)); } catch (_) {} }
+  db.prepare('UPDATE customers SET reg_label_read=? WHERE id=?').run(readMacs.length ? readMacs.map(m => `${reader.pretty(m.mac)} (${m.source})`).join(', ') : 'sin lectura', id);
+  const old = onuMgr().forCustomer(id);
+  const oldSnap = old ? { olt_id: old.olt_id, onu_ref: old.onu_ref, port: old.port, onu_id: old.onu_id, mac: old.mac } : null;
+  // WiFi para la nueva: el que cargue el técnico o el guardado en la ficha
+  const w = (wifi && wifi.ssid) ? { ssid: wifi.ssid, key: wifi.key || c.wifi_key } : { ssid: c.wifi_ssid, key: c.wifi_key };
+  if (w.ssid && w.key) {
+    const v = onuMgr().validate(String(w.ssid), String(w.key));
+    db.prepare("UPDATE customers SET reg_wifi_ssid=?, reg_wifi_key=?, reg_wifi_status='pendiente' WHERE id=?").run(v.name, v.key, id);
+  } else db.prepare("UPDATE customers SET reg_wifi_status=NULL WHERE id=?").run(id);
+  const pend = { old: oldSnap, reason, ticketId, actor, macs: readMacs.map(m => m.mac), at: new Date().toISOString() };
+  db.prepare('UPDATE customers SET repl_pending=?, reg_provision_status=NULL WHERE id=?').run(JSON.stringify(pend), id);
+
+  const cands = await inst.onuCandidates(id);
+  const m = reader.matchCandidates(readMacs, cands);
+  if (!m.match) {
+    await notifyAll(c, `🔎 *Cambio de equipo — falta identificar la ONU nueva*
+Cliente: ${c.name}
+${m.how}
+ONU nuevas en la OLT: ${cands.length ? cands.map(x => `${x.onu_ref} ${String(x.mac).toUpperCase()}`).join(', ') : 'ninguna todavía (¿está conectada la fibra?)'}.
+El sistema reintenta cada 2 minutos; o elegila en el panel (Equipo).`);
+    return { ok: false, message: m.how };
+  }
+  return applyReplacement(id, m.match, { how: m.how, actor });
+}
+
+async function applyReplacement(customerId, cand, { how = '', actor = '' } = {}) {
+  const id = Number(customerId);
+  const c = db.prepare('SELECT * FROM customers WHERE id=?').get(id);
+  // la nueva pasa a ser la ONU del cliente (la vieja queda registrada en la OLT hasta confirmar)
+  db.transaction(() => {
+    db.prepare('UPDATE onu_inventory SET customer_id=NULL WHERE customer_id=?').run(id);
+    db.prepare('UPDATE onu_inventory SET customer_id=?, checked_at=NULL WHERE onu_ref=? AND olt_id=?').run(id, cand.onu_ref, cand.olt_id);
+  })();
+  try { await onuMgr().syncInventory(); } catch (_) {}
+  const inv = onuMgr().forCustomer(id);
+  if (!inv) return { ok: false, message: 'No se pudo vincular la ONU nueva.' };
+  const r = await provision(id, { actor, mode: 'replace' });
+  if (r.manual) return { ok: false, manual: true, message: 'ONU nueva no compatible: configurar a mano y luego "Confirmar cambio de equipo".' };
+  if (!r.ok) return r;   // la vieja no se toca; provision ya avisó el paso que falló
+  const f = await finishReplacement(id, { by: actor });
+  await notifyAll(c, `✅ *Cambio de equipo completo*
+Cliente: ${c.name}
+ONU nueva: ${inv.onu_ref} · ${String(inv.mac || '').toUpperCase()} (${how})
+${r.message}
+${f.dereg}.
+Guardado en la ONU y en la OLT (write file).`);
+  return { ok: true, message: 'Cambio de equipo completo.' };
+}
+
 /** Reintento periódico: instalaciones asignadas con MAC leída cuya ONU todavía no apareció en la OLT. */
 async function retryPending() {
   if (!enabled()) return;
   ensureSchema();
+  const inst = require('./installationService');
+  // cambios de equipo esperando que la ONU nueva aparezca en la OLT
+  for (const r of db.prepare("SELECT id, repl_pending FROM customers WHERE repl_pending IS NOT NULL AND COALESCE(reg_provision_status,'') = ''").all()) {
+    let p = null; try { p = JSON.parse(r.repl_pending); } catch (_) {}
+    if (!p || !p.macs || !p.macs.length) continue;
+    const cands = await inst.onuCandidates(r.id);
+    const m = require('./labelReaderService').matchCandidates(p.macs.map(x => ({ mac: x, source: 'código de barras' })), cands);
+    if (m.match) await applyReplacement(r.id, m.match, { how: m.how + ' (reintento)', actor: p.actor || 'reintento automático' });
+  }
   const rows = db.prepare(`SELECT id, reg_onu_mac FROM customers WHERE status='inactive' AND reg_status='approved'
     AND reg_onu_mac IS NOT NULL AND COALESCE(reg_provision_status,'') = ''`).all();
   if (!rows.length) return;
-  const inst = require('./installationService');
   for (const r of rows) {
     if (onuMgr().forCustomer(r.id)) continue;
     const cands = await inst.onuCandidates(r.id);
@@ -256,4 +378,4 @@ async function retryPending() {
   }
 }
 
-module.exports = { ensureSchema, provision, fromLabel, retryPending, enabled, lanBinding };
+module.exports = { ensureSchema, provision, fromLabel, retryPending, enabled, lanBinding, replaceOnu, applyReplacement, finishReplacement, deregisterOnu, REPLACE_REASONS };

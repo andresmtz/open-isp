@@ -402,6 +402,7 @@
                     <button type="button" class="act-item" onclick="viewCustDetail(<%= i %>)"><i class="bi bi-eye"></i> <%- t('admin.cust.view_detail','Lihat Detail &amp; MikroTik') %></button>
                     <% } %>
                     <button type="button" class="act-item" data-id="<%= c.id %>" onclick="openHistory(+this.dataset.id)"><i class="bi bi-clock-history"></i> Historial</button>
+                    <% if (c.status !== 'inactive') { %><button type="button" class="act-item" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="openEquip(+this.dataset.id, this.dataset.name)"><i class="bi bi-router"></i> Equipo e historial</button><% } %>
                     <button type="button" class="act-item" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="openDocs(+this.dataset.id, this.dataset.name)"><i class="bi bi-images"></i> Fotos y documentos</button>
                     <% if (c.status !== 'inactive') { %>
                     <div class="act-sep"></div>
@@ -1868,6 +1869,9 @@ async function eqLoad(){
   var b = document.getElementById('eq_body');
   if (!j.ok) { b.innerHTML = '<div class="text-danger">' + _esc(j.message) + '</div>'; return; }
   var c = j.customer;
+  var wifiBox = document.getElementById('eq_ssid').closest('div[style*="border-top"]');
+  if (c.status !== 'inactive') { if (wifiBox) wifiBox.style.display = 'none'; eqRenderActive(j); return; }
+  if (wifiBox) wifiBox.style.display = '';
   document.getElementById('eq_ssid').value = c.reg_wifi_ssid || '';
   document.getElementById('eq_key').value = '';
   document.getElementById('eq_mac').value = (c.reg_onu_mac || '').toUpperCase();
@@ -1895,6 +1899,36 @@ async function eqLoad(){
   if (!c.pppoe_username) h += '<button class="btn btn-g btn-sm" style="margin-top:6px" onclick="if(confirm(\'¿Crear ahora el usuario PPPoE y su IP en el MikroTik para configurar la ONU a mano?\'))eqPost({create_account:1})"><i class="bi bi-person-plus"></i> Crear usuario PPPoE e IP (configuración a mano)</button>';
   h += '</div></div>';
   b.innerHTML = h;
+}
+function eqRenderActive(j){
+  var c = j.customer, b = document.getElementById('eq_body');
+  var cur = j.equipment.find(function(e){ return e.status === 'activa'; });
+  var h = '';
+  if (j.pending) {
+    h += '<div style="padding:10px;border:2px solid #f59e0b;border-radius:10px;margin-bottom:10px"><b><i class="bi bi-arrow-repeat"></i> Cambio de equipo en curso</b><div style="font-size:12px;margin-top:4px">Motivo: ' + _esc(j.pending.reason || '-') + ' · pedido por ' + _esc(j.pending.actor || '-') + '<br>Lectura de la etiqueta: ' + _esc(c.reg_label_read || '-') + '<br>Configuración: ' + _esc(c.reg_provision_status || 'esperando la ONU nueva en la OLT') + '</div>'
+      + (j.linked && (!j.pending.old || j.linked.onu_ref !== j.pending.old.onu_ref) ? '<button class="btn btn-p btn-sm" style="margin-top:8px" onclick="if(confirm(\'¿Confirmar el cambio? Se da de baja la ONU vieja en la OLT (write file) y se actualiza el historial.\'))eqPost({confirm_replace:1})"><i class="bi bi-check2-circle"></i> Confirmar cambio de equipo</button>' : '') + '</div>';
+  }
+  h += '<div style="display:flex;gap:12px;flex-wrap:wrap">';
+  h += '<div style="flex:0 0 220px">' + (cur && cur.photo ? '<a href="' + cur.photo + '" target="_blank"><img src="' + cur.photo + '" style="width:100%;border-radius:10px;border:1px solid var(--border)"></a>' : '<div class="text-muted" style="font-size:12px;padding:30px 8px;text-align:center;border:1px dashed var(--border);border-radius:10px">Sin foto de la etiqueta.<br>Se agrega en la próxima visita del técnico o en Fotos y documentos.</div>') + '</div>';
+  h += '<div style="flex:1;min-width:240px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Equipo actual</div>';
+  h += cur ? '<div style="font-size:13px;line-height:1.7"><b>' + _esc(cur.type || 'ONU') + '</b><br>MAC <span class="mono">' + _esc(String(cur.mac || '').toUpperCase()) + '</span><br>OLT: ' + _esc(cur.onu_ref || '-') + '<br>Desde: ' + _esc(String(cur.installed_at || '-').slice(0, 10)) + (cur.installed_by ? ' · ' + _esc(cur.installed_by) : '') + '</div>' : '<div class="text-muted" style="font-size:12px">Sin equipo registrado.</div>';
+  h += '<div style="font-size:13px;margin-top:8px"><i class="bi bi-wifi"></i> WiFi guardado: <b>' + _esc(c.wifi_ssid || '—') + '</b>' + (c.wifi_ssid ? ' / ' + _esc(c.wifi_ssid) + '-5G' : '') + (j.canKey && c.wifi_ssid ? ' <button class="btn btn-g btn-sm" style="padding:2px 8px" onclick="eqRevealKey(this)">Ver clave</button>' : '') + '</div>';
+  if (j.money) h += '<div style="margin-top:10px"><button class="btn btn-g btn-sm" onclick="eqCharge()"><i class="bi bi-plus-circle"></i> Agregar cargo (ej. ONU dañada)</button>' + (Number(c.carry_over) > 0 ? ' <span style="font-size:12px;color:#f59e0b">Pendiente para la próxima factura: ' + fmtMoney(c.carry_over) + '</span>' : '') + '</div>';
+  h += '</div></div>';
+  var past = j.equipment.filter(function(e){ return e.status !== 'activa'; });
+  h += '<div style="font-weight:700;font-size:13px;margin:14px 0 6px">Historial de equipos (' + j.equipment.length + ')</div>';
+  h += past.length ? past.map(function(e){ return '<div style="display:flex;gap:10px;align-items:center;padding:8px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px">' + (e.photo ? '<a href="' + e.photo + '" target="_blank"><img src="' + e.photo + '" style="width:64px;height:48px;object-fit:cover;border-radius:6px"></a>' : '<div style="width:64px;height:48px;border-radius:6px;background:rgba(148,163,184,.1)"></div>') + '<div style="font-size:12px"><b>' + _esc(e.type || 'ONU') + '</b> · ' + _esc(String(e.mac || '').toUpperCase()) + ' · ' + _esc(e.onu_ref || '') + '<br>' + _esc(String(e.installed_at || '').slice(0, 10)) + ' → ' + _esc(String(e.removed_at || '').slice(0, 10)) + ' · ' + _esc(e.removed_reason || '') + (e.removed_by ? ' (' + _esc(e.removed_by) + ')' : '') + '</div></div>'; }).join('') : '<div class="text-muted" style="font-size:12px">Sin cambios de equipo.</div>';
+  b.innerHTML = h;
+}
+async function eqRevealKey(btn){
+  var r = await fetch('/admin/customers/' + _eqId + '/equipment', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ reveal_wifi: 1 }) });
+  var j = await r.json(); if (!j.ok) { alert(j.message || 'Error'); return; }
+  btn.outerHTML = '<span class="mono" style="font-weight:700">' + _esc(j.key || '—') + '</span>';
+}
+function eqCharge(){
+  var a = prompt('Monto del cargo (se suma a la próxima factura):', ''); if (a === null) return;
+  var r = prompt('Motivo del cargo:', 'Reposición de ONU dañada'); if (r === null) return;
+  eqPost({ charge: 1, amount: String(a).replace(/\D/g, ''), reason: r });
 }
 async function eqPost(body){
   var r = await fetch('/admin/customers/' + _eqId + '/equipment', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) });

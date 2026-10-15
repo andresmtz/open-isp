@@ -177,6 +177,12 @@ router.get('/', requireTechSession, (req, res) => {
     for (const t of myTickets) {
       t.housePhotos = (t.customer_id && ['open', 'in_progress'].includes(t.status))
         ? docs.list(t.customer_id, { kinds: ['casa'] }).map(d => `/tech/customers/${t.customer_id}/house/${d.id}`) : [];
+      if (t.kind !== 'install' && t.customer_id && ['open', 'in_progress'].includes(t.status)) {
+        const c = db.prepare("SELECT status, wifi_ssid, package_id FROM customers WHERE id=?").get(t.customer_id) || {};
+        const pkg = c.package_id ? db.prepare('SELECT name FROM packages WHERE id=?').get(c.package_id) : null;
+        const eqCur = (() => { try { return require('../services/customerEquipmentService').current(t.customer_id); } catch (_) { return null; } })();
+        t.support = { active: ['active', 'suspended', 'ditangguhkan'].includes(c.status), wifi: c.wifi_ssid || '', plan: pkg ? pkg.name : '', onu: eqCur ? `${eqCur.type || 'ONU'} · ${String(eqCur.mac || '').toUpperCase()}` : '' };
+      }
       if (t.kind === 'install' && t.customer_id) {
         const c = db.prepare('SELECT reg_wifi_ssid, reg_wifi_status, reg_onu_mac FROM customers WHERE id=?').get(t.customer_id) || {};
         t.equipment = { ssid: c.reg_wifi_ssid || '', status: c.reg_wifi_status || '', mac: c.reg_onu_mac || '', labels: docs.list(t.customer_id, { kinds: ['etiqueta'] }).length };
@@ -226,6 +232,24 @@ router.post('/orders/:ticketId/equipment', requireTechSession, equipUpload.array
     if (wantsJson) return res.status(400).json({ ok: false, message: e.message });
     req.session._msg = { type: 'error', text: e.message };
   }
+  res.redirect('/tech');
+});
+
+// Cambio de equipo en una orden de asistencia: foto de la etiqueta de la ONU nueva, motivo y (opcional) WiFi nuevo
+router.post('/orders/:ticketId/replace', requireTechSession, equipUpload.array('label', 3), async (req, res) => {
+  try {
+    const t = db.prepare('SELECT * FROM tickets WHERE id=?').get(Number(req.params.ticketId));
+    if (!t || Number(t.technician_id) !== Number(req.session.techId) || /^install/.test(String(t.kind || '')) || !['open', 'in_progress'].includes(t.status) || !t.customer_id) throw new Error('Orden no disponible.');
+    if (!(req.files || []).length) throw new Error('Subí la foto de la etiqueta de la ONU nueva.');
+    const by = `técnico ${req.session.techName || ''}`.trim();
+    const docs = require('../services/customerDocumentService');
+    for (const f of req.files) await docs.add(t.customer_id, 'etiqueta', f.buffer, by);
+    const imgs = req.files.map(f => f.buffer);
+    const wifi = String(req.body.ssid || '').trim() ? { ssid: String(req.body.ssid).trim(), key: String(req.body.key || '') } : null;
+    setImmediate(() => require('../services/onuAutoProvisionService').replaceOnu(t.customer_id, imgs, { reasonKey: req.body.reason, reasonText: req.body.detail, ticketId: t.id, actor: by, wifi })
+      .catch(e => require('../config/logger').logger.warn('[Cambio de equipo] ' + e.message)));
+    req.session._msg = { type: 'success', text: 'Foto recibida: se está identificando y configurando la ONU nueva (1 a 3 minutos). Te llega el resultado por WhatsApp. La ONU vieja se da de baja recién cuando la nueva funcione.' };
+  } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
   res.redirect('/tech');
 });
 

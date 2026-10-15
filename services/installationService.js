@@ -512,6 +512,11 @@ async function linkOnu(customerId, onuRef, by = '') {
     db.prepare('UPDATE onu_inventory SET customer_id=?, checked_at=NULL WHERE onu_ref=?').run(id, row.onu_ref);
   })();
   logger.info(`[Instalación] ONU ${row.onu_ref} (${row.mac}) vinculada al cliente ${id} por ${by}`);
+  // Historial de equipos: queda como equipo activo, con la foto de la etiqueta y la orden de instalación
+  try {
+    const t = db.prepare("SELECT id FROM tickets WHERE customer_id=? AND kind='install' AND status IN ('open','in_progress') ORDER BY id DESC LIMIT 1").get(id);
+    require('./customerEquipmentService').attach(id, row, { by, ticketId: t ? t.id : null });
+  } catch (e) { logger.warn('[Equipo] ' + e.message); }
   try { await require('./onuManageService').syncInventory(); } catch (_) {}   // comprueba si permite gestionar el WiFi
   const wifi = await tryApplyWifi(id, by).catch(e => ({ ok: false, message: e.message }));
   return { onu: db.prepare('SELECT onu_ref, mac, type, compatible FROM onu_inventory WHERE onu_ref=?').get(row.onu_ref), wifi };

@@ -2618,13 +2618,21 @@ router.get('/customers/:id/equipment', requireAdminSession, async (req, res) => 
     const id = Number(req.params.id);
     const inst = require('../services/installationService'); inst.ensureSchema();
     require('../services/onuAutoProvisionService').ensureSchema();
-    const c = db.prepare('SELECT id, name, pppoe_username, reg_wifi_ssid, reg_wifi_status, reg_onu_mac, reg_label_read, reg_provision_status, reg_provision_log FROM customers WHERE id=?').get(id);
+    const eqSvc = require('../services/customerEquipmentService'); eqSvc.ensureSchema();
+    const c = db.prepare('SELECT id, name, status, pppoe_username, reg_wifi_ssid, reg_wifi_status, reg_onu_mac, reg_label_read, reg_provision_status, reg_provision_log, wifi_ssid, wifi_updated_at, repl_pending, COALESCE(carry_over,0) carry_over FROM customers WHERE id=?').get(id);
     if (!c) throw new Error('Cliente no encontrado');
     const docs = require('../services/customerDocumentService');
     const labels = docs.list(id, { kinds: ['etiqueta'] }).map(d => `/admin/customers/${id}/documents/${d.id}`);
     const linked = require('../services/onuManageService').forCustomer(id);
-    const candidates = linked ? [] : await inst.onuCandidates(id);
-    res.json({ ok: true, customer: c, labels, linked, candidates, autoProvision: require('../services/onuAutoProvisionService').enabled() });
+    const cs = db.prepare('SELECT status FROM customers WHERE id=?').get(id) || {};
+    const candidates = (linked || cs.status !== 'inactive') ? [] : await inst.onuCandidates(id);
+    const docUrl = (dId) => dId ? `/admin/customers/${id}/documents/${dId}` : null;
+    const equipment = eqSvc.history(id).map(e => ({ ...e, photo: docUrl(e.label_doc_id) }));
+    let pending = null; try { pending = c.repl_pending ? JSON.parse(c.repl_pending) : null; } catch (_) {}
+    const canKey = !req.session.isCashier || staffPerms.has(req.session, 'wifi_clientes');
+    delete c.repl_pending;
+    res.json({ ok: true, customer: c, labels, linked, candidates: c.status === 'inactive' ? candidates : [], equipment, pending, canKey,
+      money: staffPerms.has(req.session, 'ver_facturas'), autoProvision: require('../services/onuAutoProvisionService').enabled() });
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 router.post('/customers/:id/equipment', requireAdminSession, express.json(), async (req, res) => {
@@ -2634,6 +2642,22 @@ router.post('/customers/:id/equipment', requireAdminSession, express.json(), asy
     const inst = require('../services/installationService');
     let out = {};
     if (b.ssid || b.key || b.mac) out = await inst.setEquipment(Number(req.params.id), { ssid: b.ssid, key: b.key, mac: b.mac }, actor);
+    const cid0 = Number(req.params.id);
+    if (b.reveal_wifi) {
+      if (req.session.isCashier && !staffPerms.has(req.session, 'wifi_clientes')) throw new Error('Sin permiso para ver la clave del WiFi.');
+      const w = db.prepare('SELECT wifi_ssid, wifi_key FROM customers WHERE id=?').get(cid0) || {};
+      try { auditSvc && auditSvc.logAuditTrail && auditSvc.logAuditTrail({ action: 'VIEW_WIFI_KEY', entity_type: 'customer', entity_id: String(cid0), actor_type: req.session.isCashier ? 'cashier' : 'admin', actor_name: actor, ip_address: req.ip }); } catch (_) {}
+      return res.json({ ok: true, ssid: w.wifi_ssid || '', key: w.wifi_key || '' });
+    }
+    if (b.confirm_replace) {
+      const f = await require('../services/onuAutoProvisionService').finishReplacement(cid0, { by: actor });
+      return res.json({ ok: true, message: 'Cambio de equipo confirmado: ' + f.dereg + '.' });
+    }
+    if (b.charge) {
+      if (!staffPerms.has(req.session, 'ver_facturas')) throw new Error('Sin permiso para cargos.');
+      const r = require('../services/customerEquipmentService').addCharge(cid0, b.amount, b.reason, actor);
+      return res.json({ ok: true, message: `Cargo de ${regional.formatMoney(r.amount)} agregado: se suma a la próxima factura.` });
+    }
     if (b.create_account) { const a = await inst.ensureNetworkAccount(Number(req.params.id)); out.wifi = { message: `Usuario PPPoE ${a.user} (clave según la convención) con IP ${a.ip}${a.created ? ' creado' : ' ya existía'} en el MikroTik.` }; }
     if (b.onu_ref) out = await inst.linkOnu(Number(req.params.id), b.onu_ref, actor);
     const prov = require('../services/onuAutoProvisionService');

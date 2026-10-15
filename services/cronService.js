@@ -398,6 +398,17 @@ function startCronJobs() {
   // Promesas de pago: cada minuto. Corta en el minuto exacto en que vence la promesa (hora local) y
   // cierra como cumplidas las de clientes que ya no deben nada.
   let _promiseBusy = false;
+  // Equipo de cada cliente: registro inicial y WiFi guardado en la ficha (services/customerEquipmentService.js)
+  setTimeout(async () => {
+    try {
+      const eq = require('./customerEquipmentService');
+      const n = eq.backfill(); if (n) logger.info(`[Equipo] ${n} equipos registrados (registro inicial)`);
+      await eq.snapshotWifi();
+    } catch (e) { logger.warn('[Equipo] ' + e.message); }
+  }, 4 * 60 * 1000);
+  cron.schedule('30 3 * * 0', async () => {
+    try { const eq = require('./customerEquipmentService'); eq.backfill(); await eq.snapshotWifi(); } catch (e) { logger.warn('[Equipo] ' + e.message); }
+  }, { timezone: getSetting('timezone', 'America/Asuncion') || 'America/Asuncion' });
   cron.schedule('*/2 * * * *', async () => {
     // ONU de instalaciones con etiqueta leída que todavía no aparecían en la OLT (services/onuAutoProvisionService.js)
     try { await require('./onuAutoProvisionService').retryPending(); } catch (e) { logger.warn('[Provisión] reintento: ' + e.message); }

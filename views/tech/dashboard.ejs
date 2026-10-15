@@ -51,6 +51,26 @@
           <% _msg = _msg.slice(_rm[0].length); %>
         <% } %>
         <div style="white-space:pre-wrap"><%= _msg %></div>
+        <% if (ticket.support) { var sp = ticket.support; %>
+          <div class="muted" style="font-size:12px;margin-top:8px"><i class="bi bi-box-seam"></i> Plan: <%= sp.plan || '-' %><% if (sp.onu) { %> · <i class="bi bi-router"></i> Equipo actual: <%= sp.onu %><% } %></div>
+          <% if (sp.active) { %>
+          <details style="margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:12px">
+            <summary style="font-weight:700;font-size:13px;cursor:pointer"><i class="bi bi-arrow-repeat"></i> Cambiar equipo (ONU)</summary>
+            <form method="POST" action="/tech/orders/<%= ticket.id %>/replace" enctype="multipart/form-data" style="margin-top:8px" onsubmit="return confirm('¿Cambiar la ONU del cliente? Conectá la ONU nueva a la fibra antes de enviar.')">
+              <label style="font-size:12px;display:block;margin:4px 0 2px">Motivo</label>
+              <select name="reason" class="p-input" style="width:100%"><option value="falla">La ONU no enciende o falla</option><option value="electrico">Daño eléctrico</option><option value="cambio_modelo">Cambio de modelo / mejora</option><option value="otro">Otro motivo</option></select>
+              <input name="detail" class="p-input" placeholder="Detalle (opcional)" maxlength="150" style="width:100%;margin-top:6px">
+              <label style="font-size:12px;display:block;margin:8px 0 2px">Foto de la etiqueta de la ONU NUEVA</label>
+              <input type="file" name="label" accept="image/*" multiple required class="p-input" style="width:100%">
+              <label style="font-size:12px;display:block;margin:8px 0 2px">WiFi: se mantiene <b><%= sp.wifi || 'el guardado' %></b>. Si el cliente quiere otro:</label>
+              <input name="ssid" class="p-input" maxlength="28" pattern="[A-Za-z0-9_.\-]{1,28}" placeholder="Nombre nuevo (opcional)" style="width:100%">
+              <input name="key" class="p-input" minlength="8" maxlength="63" placeholder="Clave nueva (opcional)" style="width:100%;margin-top:6px" autocomplete="off">
+              <div class="muted" style="font-size:11px;margin-top:6px">La ONU vieja se da de baja recién cuando la nueva funcione.</div>
+              <button class="btn btn-primary btn-sm" style="margin-top:8px;width:100%"><i class="bi bi-upload"></i> Cambiar equipo</button>
+            </form>
+          </details>
+          <% } %>
+        <% } %>
         <% if (ticket.equipment) { var eq = ticket.equipment; %>
           <form method="POST" action="/tech/orders/<%= ticket.id %>/equipment" enctype="multipart/form-data" style="margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:12px">
             <div style="font-weight:700;font-size:13px;margin-bottom:6px"><i class="bi bi-router"></i> Datos del equipo del cliente</div>

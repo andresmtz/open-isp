@@ -16,7 +16,7 @@ const db = require('../config/database');
 const { logger } = require('../config/logger');
 
 const ROOT = path.join(__dirname, '..', 'database', 'documents');
-const KINDS = { cedula: 'Cédula', casa: 'Casa', etiqueta: 'Etiqueta de la ONU', otro: 'Otro' };
+const KINDS = { cedula: 'Cédula', casa: 'Casa', etiqueta: 'Etiqueta de la ONU', retiro: 'Equipo retirado', otro: 'Otro' };
 const MAX_PER_KIND = 6;
 
 let _schemaOk = false;

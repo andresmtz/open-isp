@@ -29,7 +29,7 @@ function config() {
 async function allocate(routerId) {
   const c = config();
   const used = new Set([toInt(c.local)]);
-  for (const r of db.prepare("SELECT pppoe_remote_address a, static_ip b FROM customers").all()) {
+  for (const r of db.prepare("SELECT pppoe_remote_address a, static_ip b FROM customers WHERE status != 'cancelled'").all()) {
     if (isIp(r.a)) used.add(toInt(r.a));
     if (isIp(r.b)) used.add(toInt(r.b));
   }

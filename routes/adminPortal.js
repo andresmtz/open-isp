@@ -1845,6 +1845,7 @@ router.get('/customers/:id/sticker-onu', requireAdminSession, async (req, res) =
 
 // ─── CUSTOMERS ─────────────────────────────────────────────────────────────
 router.get('/customers', requireAdminSession, requireSidebarMenuAccess('customers'), async (req, res) => {
+  try { require('../services/withdrawalService').ensureSchema(); } catch (_) {}
   const { search = '', status: filterStatus = '', area: filterArea = '',
     package_id: filterPackage = '', collector_id: filterCollector = '', olt_id: filterOlt = '',
     connection_type: filterConn = '', billing: filterBilling = '', auto_isolate: filterAuto = '' } = req.query;
@@ -2750,25 +2751,73 @@ router.post('/customers/:id/promise', requireAdminSession, express.json(), async
 });
 
 router.get('/customers/:id/cancel-preview', requireAdminSession, (req, res) => {
-  if (req.session.isCashier) return res.status(403).json({ ok: false, message: 'Solo el administrador puede cancelar clientes.' });
-  try { return res.json({ ok: true, ...customerSvc.cancellationPreview(Number(req.params.id)) }); }
-  catch (e) { return res.status(400).json({ ok: false, message: e.message }); }
+  try {
+    const pr = customerSvc.cancellationPreview(Number(req.params.id));
+    if (req.session.isCashier) {
+      // La oficina no ve montos: solo cuántas facturas se anulan
+      pr.pendingInvoices = pr.pendingInvoices.map(i => ({ period_month: i.period_month, period_year: i.period_year }));
+      delete pr.pendingTotal; delete pr.carryOver;
+      pr.hideAmounts = true;
+    }
+    return res.json({ ok: true, ...pr });
+  } catch (e) { return res.status(400).json({ ok: false, message: e.message }); }
 });
 
 router.post('/customers/:id/cancel', requireAdminSession, express.json(), async (req, res) => {
-  if (req.session.isCashier) return res.status(403).json({ ok: false, message: 'Solo el administrador puede cancelar clientes.' });
   try {
-    const r = await customerSvc.cancelCustomer(Number(req.params.id), {
+    const id = Number(req.params.id);
+    const c = customerSvc.getCustomerById(id);
+    if (!c) throw new Error('Cliente no encontrado');
+    const hasEquip = (() => { try { return !!db.prepare('SELECT 1 FROM onu_inventory WHERE customer_id=?').get(id); } catch (_) { return false; } })();
+    if (c.withdraw_status !== 'retirado' && hasEquip) {
+      // La oficina solo cancela con el equipo ya retirado; el administrador puede forzarlo (equipo no recuperado)
+      if (req.session.isCashier) throw new Error('El equipo todavía no fue retirado. Generá la orden de retiro; cuando el técnico lo marque como retirado, vas a poder cancelar.');
+      if (!(req.body && req.body.force)) return res.status(409).json({ ok: false, needsForce: true, message: 'El equipo todavía no figura como retirado.' });
+    }
+    const actorName = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'admin');
+    const r = await customerSvc.cancelCustomer(id, {
       reason: req.body && req.body.reason,
-      actor: { type: 'admin', name: req.session.adminUser || 'admin', ip: req.ip }
+      actor: { type: req.session.isCashier ? 'cashier' : 'admin', name: actorName, ip: req.ip }
     });
     const net = r.network.readOnly
-      ? ' MikroTik en SOLO LECTURA: el router no se modificó (borrá el usuario PPPoE en WispHub/MikroTik).'
-      : ` Router: usuario PPPoE borrado (${r.network.secretRemoved}), IP liberada (${r.network.ipReleased}).`;
-    return res.json({ ok: true, message: `Servicio cancelado. Facturas anuladas: ${r.voidedInvoices}.` + net, ...r });
+      ? ' MikroTik en SOLO LECTURA: el router no se modificó (borrá el usuario PPPoE en el MikroTik).'
+      : ` Usuario PPPoE borrado del MikroTik${r.network.secretRemoved ? '' : ' (no existía)'}; IP ${r.network.freedIp || '-'} liberada.`;
+    const olt = r.network.olt || { removed: [], errors: [] };
+    const oltTxt = olt.removed.length ? ` ONU ${olt.removed.join(', ')} dada de baja en la OLT (guardado con write file).` : (olt.errors.length ? '' : ' No había ONU registrada en la OLT.');
+    const oltErr = olt.errors.length ? ` ⚠️ OLT: ${olt.errors.join('; ')} — revisala a mano.` : '';
+    const inv = req.session.isCashier ? (r.voidedInvoices ? ' Facturas pendientes anuladas.' : '') : ` Facturas anuladas: ${r.voidedInvoices}.`;
+    return res.json({ ok: true, message: `Servicio cancelado.${inv}${net}${oltTxt}${oltErr}`, voidedInvoices: r.voidedInvoices });
   } catch (e) {
     return res.status(400).json({ ok: false, message: e.message });
   }
+});
+
+// ── Retiro de equipo ──────────────────────────────────────────────
+router.post('/customers/:id/withdraw', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    const b = req.body || {};
+    const r = await require('../services/withdrawalService').create(Number(req.params.id), { installer: b.installer, reason: b.reason, notes: b.notes, actor });
+    req.session._msg = { type: 'success', text: `Orden de retiro N.º ${r.ticketId} asignada a ${r.installer.name}.` + (r.notified ? ' Se le enviaron los datos por WhatsApp.' : ' No se pudo avisar por WhatsApp: usá "Reenviar datos".') };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se generó la orden de retiro: ' + e.message }; }
+  res.redirect(req.get('Referrer') || '/admin/customers');
+});
+router.post('/customers/:id/withdraw/resend', requireAdminSession, async (req, res) => {
+  try {
+    const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    const r = await require('../services/withdrawalService').resend(Number(req.params.id), { actor });
+    req.session._msg = r.ok ? { type: 'success', text: `Datos del retiro reenviados a ${r.installer.name}${r.phone ? ' (' + r.phone + ')' : ''}.` }
+      : { type: 'error', text: `No se pudo enviar el WhatsApp a ${r.installer.name}${r.phone ? ' (' + r.phone + ')' : ''}.` };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo reenviar: ' + e.message }; }
+  res.redirect(req.get('Referrer') || '/admin/customers');
+});
+router.post('/customers/:id/withdraw/cancel', requireAdminSession, express.urlencoded({ extended: true }), (req, res) => {
+  try {
+    const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    require('../services/withdrawalService').cancelOrder(Number(req.params.id), { actor, reason: req.body && req.body.reason });
+    req.session._msg = { type: 'success', text: 'Orden de retiro anulada. El cliente sigue como estaba.' };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo anular: ' + e.message }; }
+  res.redirect(req.get('Referrer') || '/admin/customers');
 });
 
 router.post('/customers/import', requireAdminSession, upload.single('file'), async (req, res) => {

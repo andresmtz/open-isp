@@ -77,6 +77,28 @@
           </details>
           <% } %>
         <% } %>
+        <% if (ticket.withdraw) { var wd = ticket.withdraw; %>
+          <div style="margin-top:10px;padding:10px;border:2px solid #f59e0b;border-radius:12px">
+            <div style="font-weight:800;font-size:13px;margin-bottom:6px"><i class="bi bi-box-arrow-in-down"></i> Equipo a retirar</div>
+            <div style="font-size:13px;line-height:1.6"><b><%= wd.type %></b><% if (wd.mac) { %><br>MAC: <span style="font-family:monospace;font-weight:700"><%= wd.mac %></span><% } %></div>
+            <div class="muted" style="font-size:11px;margin-top:2px">Revisá que la MAC de la etiqueta coincida antes de llevártelo.</div>
+            <% if (wd.label) { %><a href="<%= wd.label %>" target="_blank" rel="noopener"><img src="<%= wd.label %>" class="p-img" alt="Etiqueta del equipo" style="margin-top:8px;max-width:220px"></a><% } %>
+            <form method="POST" action="/tech/orders/<%= ticket.id %>/retiro" enctype="multipart/form-data" style="margin-top:10px" onsubmit="return confirm('¿Confirmás que ya tenés el equipo en tu poder?')">
+              <label style="font-size:12px;display:block;margin:4px 0 2px">Foto de la etiqueta del equipo retirado *</label>
+              <input type="file" name="label" accept="image/*" multiple required class="p-input" style="width:100%">
+              <input name="notes" class="p-input" maxlength="300" placeholder="Notas (opcional): ej. también retiré el router" style="width:100%;margin-top:6px">
+              <button class="p-btn success" style="margin-top:8px"><i class="bi bi-check-circle-fill"></i> Equipo retirado</button>
+            </form>
+            <details style="margin-top:8px">
+              <summary style="font-size:13px;font-weight:700;cursor:pointer;color:#ef4444"><i class="bi bi-x-circle"></i> No se pudo retirar</summary>
+              <form method="POST" action="/tech/orders/<%= ticket.id %>/retiro-fallido" style="margin-top:8px">
+                <select name="motive" class="p-input" style="width:100%"><% Object.keys(wd.fails).forEach(function(k){ %><option value="<%= k %>"><%= wd.fails[k] %></option><% }); %></select>
+                <input name="detail" class="p-input" maxlength="200" placeholder="Detalle (opcional)" style="width:100%;margin-top:6px">
+                <button class="btn btn-sm" style="margin-top:8px;width:100%;border:1px solid #ef4444;color:#ef4444"><i class="bi bi-send"></i> Avisar a la oficina</button>
+              </form>
+            </details>
+          </div>
+        <% } %>
         <% if (ticket.equipment) { var eq = ticket.equipment; %>
           <form method="POST" action="/tech/orders/<%= ticket.id %>/equipment" enctype="multipart/form-data" style="margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:12px">
             <div style="font-weight:700;font-size:13px;margin-bottom:6px"><i class="bi bi-router"></i> Datos del equipo del cliente</div>
@@ -117,7 +139,9 @@
         <% } %>
       </div>
 
+      <% if (ticket.kind !== 'retiro') { %>
       <button type="button" class="p-btn success" onclick="openResolve(<%= ticket.id %>)"><i class="bi bi-check-circle-fill"></i> <%= t('tech.ticket.mark_resolved', 'Tandai Selesai') %></button>
+      <% } %>
     </div>
 
     <!-- Modal Selesai -->

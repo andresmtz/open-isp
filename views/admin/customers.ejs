@@ -273,6 +273,22 @@
                   <% if (c.reg_cancel_reason) { %><div style="font-size:11px;margin-top:4px;color:#f59e0b;font-weight:700"><i class="bi bi-pause-circle"></i> <%= c.reg_cancel_reason %></div><% } %>
                   <button type="button" class="btn btn-sm btn-p" style="margin-top:6px;padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" onclick="openRegCalc(+this.dataset.id)"><i class="bi bi-tools"></i> Aprobar e instalar</button>
                 <% } %>
+                <% if (c.withdraw_status && c.status !== 'cancelled' && c.status !== 'inactive') { var _wd = String(c.withdraw_info || ''), _wdWho = _wd.split('|')[0].split(':').slice(2).join(':'); %>
+                  <% if (c.withdraw_status === 'pendiente') { %>
+                    <div style="font-size:11px;margin-top:4px;color:#f59e0b;font-weight:700"><i class="bi bi-box-arrow-in-down"></i> Retiro de equipo asignado<%= _wdWho ? ' a ' + _wdWho : '' %></div>
+                    <% if (_can('clientes_alta')) { %><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+                      <form method="POST" action="/admin/customers/<%= c.id %>/withdraw/resend" style="display:inline" onsubmit="return confirm('¿Reenviar por WhatsApp los datos del retiro?')"><button class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap"><i class="bi bi-whatsapp"></i> Reenviar datos</button></form>
+                      <form method="POST" action="/admin/customers/<%= c.id %>/withdraw/cancel" style="display:inline" onsubmit="var r=prompt('¿Anular la orden de retiro? (ej. el cliente pagó) Motivo:','El cliente regularizó'); if(r===null) return false; this.reason.value=r; return true;"><input type="hidden" name="reason"><button class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap"><i class="bi bi-x-circle"></i> Anular retiro</button></form>
+                    </div><% } %>
+                  <% } else if (c.withdraw_status === 'retirado') { %>
+                    <div style="font-size:11px;margin-top:4px;color:var(--success);font-weight:700"><i class="bi bi-check2-circle"></i> Equipo retirado — listo para cancelar</div>
+                    <div class="text-muted" style="font-size:11px"><%= _wd %></div>
+                    <% if (_adm || _can('clientes_baja')) { %><button type="button" class="btn btn-sm" style="margin-top:6px;padding:4px 10px;font-size:12px;white-space:nowrap;background:var(--danger);color:#fff" data-id="<%= c.id %>" onclick="cancelCustService(+this.dataset.id)"><i class="bi bi-x-octagon"></i> Cancelar servicio</button><% } %>
+                  <% } else if (c.withdraw_status === 'no_retirado') { %>
+                    <div style="font-size:11px;margin-top:4px;color:var(--danger);font-weight:700"><i class="bi bi-exclamation-triangle"></i> <%= _wd %></div>
+                    <% if (_can('clientes_alta')) { %><button type="button" class="btn btn-sm btn-g" style="margin-top:6px;padding:4px 10px;font-size:12px" data-id="<%= c.id %>" data-name="<%= c.name %>" data-st="<%= c.status %>" onclick="openWithdraw(this)"><i class="bi bi-arrow-repeat"></i> Nueva orden de retiro</button><% } %>
+                  <% } %>
+                <% } %>
                 <% if (_can('cobrar') && c.status !== 'cancelled' && c.status !== 'inactive') { %>
                   <button type="button" class="btn btn-sm <%= c.unpaid_count > 0 ? 'btn-p' : 'btn-g' %>" style="margin-top:6px;padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" onclick="openReceive(+this.dataset.id)" title="<%= c.unpaid_count > 0 ? 'Registrar el pago de la deuda' : 'Sin deuda: el pago queda como saldo a favor' %>"><i class="bi bi-cash-coin"></i> Registrar pago</button>
                 <% } %>
@@ -440,7 +456,10 @@
                     <div class="act-sep"></div>
                     <% } %>
                     <% if (_can('clientes_alta')) { %><button type="button" class="act-item" data-idx="<%= i %>" onclick="editCust(+this.dataset.idx)"><i class="bi bi-pencil"></i> <%= t('admin.cust.btn_edit','Edit Pelanggan') %></button><% } %>
-                    <% if (typeof session !== 'undefined' && session && !session.isCashier && c.status !== 'cancelled' && c.status !== 'inactive') { %>
+                    <% if (_can('clientes_alta') && c.status !== 'cancelled' && c.status !== 'inactive' && c.withdraw_status !== 'pendiente' && c.withdraw_status !== 'retirado') { %>
+                    <button type="button" class="act-item" data-id="<%= c.id %>" data-name="<%= c.name %>" data-st="<%= c.status %>" onclick="openWithdraw(this)"><i class="bi bi-box-arrow-in-down"></i> Orden de retiro de equipo</button>
+                    <% } %>
+                    <% if (c.status !== 'cancelled' && c.status !== 'inactive' && (_adm || (_can('clientes_baja') && c.withdraw_status === 'retirado'))) { %>
                     <button type="button" class="act-item danger" data-id="<%= c.id %>" onclick="cancelCustService(+this.dataset.id)"><i class="bi bi-x-octagon"></i> Cancelar servicio</button>
                     <% } %>
                     <% if (c.status === 'inactive' && _adm) { %>
@@ -1230,6 +1249,26 @@
         <button type="submit" class="btn vd-danger"><i class="bi bi-power"></i> <%= t('admin.cust.disconnect_mt','Putus Sesi MikroTik') %></button>
       </form>
     </div>
+  </div>
+</div>
+
+<!-- Orden de retiro de equipo -->
+<div class="mo" id="withdrawModal">
+  <div class="mb" style="max-width:520px">
+    <div class="mh"><span class="mt" id="wd_title"><i class="bi bi-box-arrow-in-down"></i> Orden de retiro de equipo</span><button class="mc" onclick="closeModal('withdrawModal')">&times;</button></div>
+    <form method="POST" id="wd_form" data-loading="Generando la orden…">
+      <div class="mbody">
+        <div class="hint" style="margin-bottom:10px">El cliente queda como está (no se toca la red). Cuando quien retira marque <b>Equipo retirado</b>, vas a poder <b>Cancelar servicio</b>: ahí se borra el usuario PPPoE, se libera la IP, se da de baja la ONU en la OLT y se anulan las facturas pendientes.</div>
+        <div class="fg"><label class="fl">¿Quién retira el equipo? *</label><select class="fs" name="installer" id="wd_installer" required></select></div>
+        <div class="fg"><label class="fl">Motivo</label>
+          <select class="fs" name="reason" id="wd_reason"><option value="mora">Falta de pago</option><option value="baja">El cliente pidió la baja</option><option value="mudanza">Mudanza / cambio de domicilio</option><option value="otro">Otro motivo</option></select></div>
+        <div class="fg"><label class="fl">Notas para quien retira (opcional)</label><textarea class="fc" name="notes" rows="2" maxlength="300" placeholder="Ej.: llamar antes, retirar también el router"></textarea></div>
+      </div>
+      <div class="mf">
+        <button type="button" class="btn btn-g" onclick="closeModal('withdrawModal')">Cancelar</button>
+        <button type="submit" class="btn btn-p"><i class="bi bi-send"></i> Generar y avisar</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -2039,6 +2078,17 @@ async function cancelInstall(id, name){
   document.getElementById('ci_motive').innerHTML = Object.keys(m.reasons).map(function(k){ return '<option value="' + k + '">' + m.reasons[k] + '</option>'; }).join('');
   openModal('cancelInstModal');
 }
+async function openWithdraw(btn){
+  var id = +btn.dataset.id, name = btn.dataset.name, st = btn.dataset.st;
+  var m = await _loadInstMeta();
+  document.getElementById('wd_title').innerHTML = '<i class="bi bi-box-arrow-in-down"></i> Retiro de equipo — ' + _esc(name);
+  document.getElementById('wd_form').action = '/admin/customers/' + id + '/withdraw';
+  document.getElementById('wd_reason').value = (st === 'active') ? 'baja' : 'mora';
+  var sel = document.getElementById('wd_installer'), groups = {};
+  sel.innerHTML = '<option value="">-- Elegí --</option>';
+  m.installers.forEach(function(i){ var g = i.group || '', parent = sel; if (g) { if (!groups[g]) { groups[g] = document.createElement('optgroup'); groups[g].label = g; sel.appendChild(groups[g]); } parent = groups[g]; } var o = document.createElement('option'); o.value = i.key; o.textContent = i.name; parent.appendChild(o); });
+  openModal('withdrawModal');
+}
 async function openReassign(id, name){
   var m = await _loadInstMeta();
   document.getElementById('ra_title').textContent = 'Reasignar instalador — ' + name;
@@ -2493,22 +2543,32 @@ async function cancelCustService(id) {
     const pr = await (await fetch('/admin/customers/' + id + '/cancel-preview', { headers: { Accept: 'application/json' } })).json();
     if (!pr.ok) { alert(pr.message || 'No se pudo preparar la cancelación.'); return; }
     const c = pr.customer;
+    const per = i => String(i.period_month).padStart(2, '0') + '/' + i.period_year;
     const inv = pr.pendingInvoices.length
-      ? pr.pendingInvoices.map(i => '   • ' + String(i.period_month).padStart(2, '0') + '/' + i.period_year + ': ' + fmtMoney(i.amount)).join('\n') + '\n   Total: ' + fmtMoney(pr.pendingTotal)
+      ? (pr.hideAmounts ? '   • ' + pr.pendingInvoices.map(per).join(', ')
+        : pr.pendingInvoices.map(i => '   • ' + per(i) + ': ' + fmtMoney(i.amount)).join('\n') + '\n   Total: ' + fmtMoney(pr.pendingTotal))
       : '   (no tiene facturas pendientes)';
-    const msg = 'CANCELAR SERVICIO de ' + c.name + (c.code ? ' (' + c.code + ')' : '') + '\n\n'
-      + 'En el MikroTik:\n   • Se borra el usuario PPPoE "' + (c.pppoe || '-') + '"\n   • Se libera la IP ' + (c.ip || '-') + ' (sale de la lista de corte)\n\n'
+    const onu = (pr.onu || []).length ? pr.onu.map(o => '   • Se da de baja la ONU ' + o.onu_ref + ' (' + String(o.mac || '').toUpperCase() + ') y se guarda (write file)').join('\n') : '   • No tiene ONU registrada en la OLT';
+    const wd = pr.withdraw && pr.withdraw.status === 'retirado' ? '✅ ' + pr.withdraw.info + '\n\n'
+      : ((pr.onu || []).length ? '⚠️ EL EQUIPO NO FIGURA COMO RETIRADO.\n\n' : '');
+    const msg = 'CANCELAR SERVICIO de ' + c.name + (c.code ? ' (' + c.code + ')' : '') + '\n\n' + wd
+      + 'En el MikroTik:\n   • Se borra el usuario PPPoE "' + (c.pppoe || '-') + '"\n   • Se libera la IP ' + (c.ip || '-') + ' (queda libre para otro cliente)\n\n'
+      + 'En la OLT:\n' + onu + '\n\n'
       + 'Facturas pendientes que se ANULAN (quedan en el historial, fuera de estadísticas):\n' + inv + '\n\n'
       + (pr.carryOver ? 'Saldo trasladado pendiente que se descarta: ' + fmtMoney(pr.carryOver) + '\n\n' : '')
       + 'El cliente y todo su historial se conservan.\n\nEscribí el motivo para confirmar:';
-    const reason = prompt(msg, 'Equipo no recuperado / cliente no ubicable');
+    const reason = prompt(msg, pr.withdraw && pr.withdraw.status === 'retirado' ? 'Baja con equipo retirado' : 'Equipo no recuperado / cliente no ubicable');
     if (reason === null) return;
     if (reason.trim().length < 3) { alert('El motivo es obligatorio.'); return; }
-    const r = await fetch('/admin/customers/' + id + '/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ reason: reason.trim() }) });
-    const j = await r.json();
+    const send = async (force) => (await fetch('/admin/customers/' + id + '/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ reason: reason.trim(), force: !!force }) })).json();
+    let j = await send(false);
+    if (!j.ok && j.needsForce) {
+      if (!confirm('El equipo todavía no figura como retirado.\n\n¿Cancelar igual (equipo no recuperado)? Se da de baja la ONU en la OLT de todas formas.')) return;
+      j = await send(true);
+    }
     if (!j.ok) { alert('No se canceló: ' + (j.message || 'error')); return; }
     alert(j.message);
-    location.reload();
+    setTimeout(function(){ location.reload(); }, 2500);
   } catch (e) { alert('Error: ' + e.message); }
 }
 </script>

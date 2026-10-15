@@ -631,4 +631,5 @@ module.exports = {
   ensureNetworkAccount, completeInstallation, cancelInstallation, reassignInstallation, resendToInstaller, reactivateRequest, CANCEL_REASONS, setEquipment, onuCandidates, linkOnu, tryApplyWifi,
   ensureSchema, firstInvoicePlan, defaultDueDate, installers, findInstaller, parseLocation,
   createRequest, approve, sendWelcome, renderWelcome, onTicketStatus, DEFAULT_WELCOME,
+  _sendTo: sendTo, _tellInstaller: tellInstaller, _officeRecipients: officeRecipients,
 };

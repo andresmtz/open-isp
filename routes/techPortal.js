@@ -177,7 +177,13 @@ router.get('/', requireTechSession, (req, res) => {
     for (const t of myTickets) {
       t.housePhotos = (t.customer_id && ['open', 'in_progress'].includes(t.status))
         ? docs.list(t.customer_id, { kinds: ['casa'] }).map(d => `/tech/customers/${t.customer_id}/house/${d.id}`) : [];
-      if (t.kind !== 'install' && t.customer_id && ['open', 'in_progress'].includes(t.status)) {
+      if (t.kind === 'retiro' && t.customer_id && ['open', 'in_progress'].includes(t.status)) {
+        const ws = require('../services/withdrawalService');
+        const e = ws.equipmentOf(t.customer_id);
+        const lab = e.labelDocId ? docs.get(e.labelDocId) : docs.list(t.customer_id, { kinds: ['etiqueta'] })[0];
+        t.withdraw = { type: e.type || 'ONU', mac: e.mac, onu: e.onu_ref, label: lab ? `/tech/customers/${t.customer_id}/label/${lab.id}` : '', fails: ws.FAIL_REASONS };
+      }
+      if (!/^(install|retiro)/.test(String(t.kind || '')) && t.customer_id && ['open', 'in_progress'].includes(t.status)) {
         const c = db.prepare("SELECT status, wifi_ssid, package_id FROM customers WHERE id=?").get(t.customer_id) || {};
         const pkg = c.package_id ? db.prepare('SELECT name FROM packages WHERE id=?').get(c.package_id) : null;
         const eqCur = (() => { try { return require('../services/customerEquipmentService').current(t.customer_id); } catch (_) { return null; } })();
@@ -262,6 +268,42 @@ router.post('/orders/:ticketId/replace', requireTechSession, equipUpload.array('
   res.redirect('/tech');
 });
 
+// Retiro de equipo: el técnico ya tiene el equipo (foto de la etiqueta) o no se pudo retirar (motivo)
+function ownWithdrawTicket(req) {
+  const t = db.prepare('SELECT * FROM tickets WHERE id=?').get(Number(req.params.ticketId));
+  if (!t || Number(t.technician_id) !== Number(req.session.techId) || t.kind !== 'retiro' || !['open', 'in_progress'].includes(t.status)) throw new Error('Orden no disponible.');
+  return t;
+}
+router.post('/orders/:ticketId/retiro', requireTechSession, equipUpload.array('label', 3), async (req, res) => {
+  try {
+    const t = ownWithdrawTicket(req);
+    if (!(req.files || []).length) throw new Error('Subí la foto de la etiqueta del equipo retirado.');
+    const by = `técnico ${req.session.techName || ''}`.trim();
+    const r = await require('../services/withdrawalService').markRetrieved(t.customer_id, { images: req.files.map(f => f.buffer), notes: req.body.notes, by, ticketId: t.id });
+    req.session._msg = { type: 'success', text: `Retiro registrado (${r.check}). La oficina ya fue avisada.` };
+  } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
+  res.redirect('/tech');
+});
+router.post('/orders/:ticketId/retiro-fallido', requireTechSession, express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const t = ownWithdrawTicket(req);
+    const by = `técnico ${req.session.techName || ''}`.trim();
+    await require('../services/withdrawalService').markFailed(t.customer_id, { motive: req.body.motive, detail: req.body.detail, by, ticketId: t.id });
+    req.session._msg = { type: 'success', text: 'Listo: quedó registrado que no se pudo retirar. La oficina ya fue avisada.' };
+  } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
+  res.redirect('/tech');
+});
+
+// Foto de la etiqueta del equipo a retirar (solo con una orden abierta de ese cliente)
+router.get('/customers/:cid/label/:docId', requireTechSession, (req, res) => {
+  const docs = require('../services/customerDocumentService');
+  const d = docs.get(req.params.docId);
+  if (!d || !['etiqueta', 'retiro'].includes(d.kind) || Number(d.customer_id) !== Number(req.params.cid) || !docs.techHasCustomer(req.session.techId, d.customer_id)) return res.status(404).send('No disponible');
+  const fp = docs.filePath(d);
+  if (!fp) return res.status(404).send('No disponible');
+  res.type('jpg').sendFile(fp);
+});
+
 // Foto de la casa: solo si el técnico tiene una orden abierta o en curso de ese cliente
 router.get('/customers/:cid/house/:docId', requireTechSession, (req, res) => {
   const docs = require('../services/customerDocumentService');
@@ -343,6 +385,8 @@ router.post('/tickets/:id/update', requireTechSession, upload.array('photos', 10
     const own = db.prepare('SELECT technician_id FROM tickets WHERE id = ?').get(ticketId);
     if (!own || Number(own.technician_id) !== Number(techId)) throw new Error('este reclamo no está asignado a vos');
     if (!['in_progress', 'resolved'].includes(String(status))) throw new Error('estado inválido');
+    const _k = db.prepare('SELECT kind FROM tickets WHERE id = ?').get(ticketId);
+    if (_k && _k.kind === 'retiro' && String(status) === 'resolved') throw new Error('Para cerrar un retiro usá "Equipo retirado" o "No se pudo retirar".');
     
     // Prepare photo data
     let photoPaths = [];

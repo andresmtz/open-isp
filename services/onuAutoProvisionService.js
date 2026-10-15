@@ -256,12 +256,20 @@ async function deregisterOnu(old, { by = '' } = {}) {
   if (!Number.isInteger(N) || N < 1 || N > 65535) throw new Error('Número de ONU inválido.');
   const { runOnPort, getOlt, serial, writeOlt } = onuMgr()._internal;
   const olt = getOlt(old.olt_id);
-  await serial(async () => {
+  // Verificación en vivo: en esa posición tiene que estar la MISMA ONU (misma MAC); si no, no se toca nada
+  const nm = (x) => String(x || '').toLowerCase().replace(/[^0-9a-f]/g, '');
+  const gone = await serial(async () => {
+    const live = (await require('./oltService').fetchVsolEponViaTelnet(olt)).find(r => r.id === old.onu_ref);
+    if (!live) return true;
+    if (!nm(live.mac) || nm(live.mac) !== nm(old.mac)) throw new Error(`En ${old.onu_ref} hay otra ONU (MAC ${live.mac || '?'}, se esperaba ${old.mac || '?'}); no se da de baja.`);
     try { await runOnPort(olt, Number(old.port), [`no onu auth onuid ${N}`]); }
     finally { await writeOlt(olt); }
+    return false;
   });
   db.prepare('DELETE FROM onu_inventory WHERE olt_id=? AND onu_ref=?').run(old.olt_id, old.onu_ref);
-  logger.info(`[Cambio de equipo] ONU ${old.onu_ref} (${old.mac}) dada de baja en la OLT por ${by}`);
+  if (gone) { logger.info(`[Baja de ONU] ${old.onu_ref} ya no figura en la OLT; solo se quita del inventario`); return { alreadyGone: true }; }
+  logger.info(`[Baja de ONU] ${old.onu_ref} (${old.mac}) dada de baja en la OLT por ${by}`);
+  return { removed: true };
 }
 
 /** Cierra el cambio: da de baja la vieja y actualiza el historial de equipos. */

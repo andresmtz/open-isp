@@ -981,7 +981,9 @@ function cancellationPreview(id) {
     customer: { id: c.id, name: c.name, code: c.customer_code, status: c.status, pppoe: c.pppoe_username, ip: customerIsolationIp(c) },
     pendingInvoices: pending,
     pendingTotal: pending.reduce((a, i) => a + Number(i.amount || 0), 0),
-    carryOver: Number(c.carry_over || 0)
+    carryOver: Number(c.carry_over || 0),
+    onu: (() => { try { const r = db.prepare('SELECT onu_ref, mac, type FROM onu_inventory WHERE customer_id = ?').all(id); return r; } catch (_) { return []; } })(),
+    withdraw: { status: c.withdraw_status || null, info: c.withdraw_info || '' }
   };
 }
 
@@ -1011,13 +1013,40 @@ async function cancelCustomer(id, { reason, actor } = {}) {
     }
   }
 
-  // 2) Base de datos (en una transacción)
   const by = String((actor && (actor.name || actor.username)) || 'admin');
+
+  // 2) OLT: se da de baja la ONU del cliente (no onu auth onuid N + write file). Si falla, se cancela igual y se avisa.
+  const olt = { removed: [], errors: [] };
+  try {
+    const rows = db.prepare('SELECT * FROM onu_inventory WHERE customer_id = ?').all(id);
+    const prov = require('./onuAutoProvisionService');
+    for (const r of rows) {
+      try { await prov.deregisterOnu(r, { by: `cancelación (${by})` }); olt.removed.push(r.onu_ref); }
+      catch (e) { olt.errors.push(`${r.onu_ref}: ${e.message}`); }
+    }
+  } catch (e) { if (!/no such table/i.test(e.message)) olt.errors.push(e.message); }
+  network.olt = olt;
+  // Historial de equipos: el equipo actual queda como retirado
+  try {
+    const eqSvc = require('./customerEquipmentService');
+    const cur = eqSvc.current(id);
+    if (cur) eqSvc.retire(cur.id, { reason: c.withdraw_status === 'retirado' ? 'Baja del servicio (equipo retirado)' : 'Baja del servicio (equipo no recuperado)', by });
+  } catch (_) {}
+  const freedIp = c.pppoe_remote_address || c.static_ip || '';
+
+  // 3) Base de datos (en una transacción)
   const voided = db.transaction(() => {
     const r = db.prepare("UPDATE invoices SET status = 'void', voided_at = NOW_LOCAL(), void_reason = ? WHERE customer_id = ? AND status = 'unpaid'")
       .run(`Cancelación del servicio: ${why}`, id);
     // El saldo trasladado a una próxima factura que no se va a emitir se descarta (queda en la auditoría)
     db.prepare("UPDATE customers SET status = 'cancelled', cancelled_at = NOW_LOCAL(), cancel_reason = ?, cancelled_by = ?, auto_isolate = 0, carry_over = 0 WHERE id = ?").run(why, by, id);
+    // La IP queda libre para otro cliente (el usuario PPPoE ya se borró del MikroTik)
+    db.prepare("UPDATE customers SET pppoe_remote_address = NULL, static_ip = '' WHERE id = ?").run(id);
+    try {
+      db.prepare("INSERT INTO customer_events (customer_id, type, old_value, new_value) VALUES (?, 'install', NULL, ?)").run(id,
+        `Servicio cancelado por ${by}: ${why}. Usuario PPPoE ${c.pppoe_username || '-'} borrado, IP ${freedIp || '-'} liberada` +
+        (olt.removed.length ? `, ONU ${olt.removed.join(', ')} dada de baja en la OLT` : '') + (olt.errors.length ? `. OLT: ${olt.errors.join('; ')}` : '') + '.');
+    } catch (_) {}
     return r.changes;
   })();
 
@@ -1029,6 +1058,7 @@ async function cancelCustomer(id, { reason, actor } = {}) {
       ip_address: (actor && actor.ip) || null
     });
   } catch (_) {}
+  network.freedIp = freedIp;
   logger.info(`[cancelCustomer] "${c.name}" (ID ${id}) cancelado. Facturas anuladas: ${voided}. Router: ${JSON.stringify(network)}`);
   return { ok: true, voidedInvoices: voided, network };
 }

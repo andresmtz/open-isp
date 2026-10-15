@@ -7,7 +7,7 @@
  *
  * Siempre solo del administrador (no aparecen como opción): configuración, automatización,
  * respaldos, actualizaciones, routers/MikroTik/OLT (escritura), usuarios, planes (edición),
- * cancelar clientes, anular pagos, ajustar saldo a favor, borrar clientes o facturas, importar.
+ * anular pagos, ajustar saldo a favor, borrar clientes o facturas, importar.
  */
 const { getSetting } = require('./settingsManager');
 
@@ -68,7 +68,12 @@ const CATALOG = [
     ['GET|POST', `^/customers/${ID}/equipment$`],
     ['GET', `^/customers/${ID}/onu-power$`],
     ['GET', `^/registrations/${ID}/plan$`],
+    ['POST', `^/customers/${ID}/withdraw(/(resend|cancel))?$`],
     ['GET', '^/api/mikrotik/(users|profiles|hotspot-user-profiles)(/\\d+)?$'],
+  ] },
+  { key: 'clientes_baja', label: 'Cancelar servicios (después del retiro del equipo)', help: 'Solo cuando el técnico ya marcó el equipo como retirado. Borra el usuario PPPoE, libera la IP, da de baja la ONU en la OLT y anula las facturas pendientes.', def: false, needs: ['clientes_alta'], rules: [
+    ['GET', `^/customers/${ID}/cancel-preview$`],
+    ['POST', `^/customers/${ID}/cancel$`],
   ] },
   { key: 'reclamos', label: 'Reclamos de clientes', help: 'Ver, crear y actualizar reclamos (no borrarlos).', def: true, rules: [
     ['GET', '^/tickets$'],

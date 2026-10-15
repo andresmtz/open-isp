@@ -16,7 +16,7 @@
     <div class="val" style="color:var(--success)"><%= _done.length %></div>
   </button>
 </div>
-<style>.tech-tab.on{outline:2px solid var(--primary);outline-offset:-2px}</style>
+<style>.tech-tab.on{outline:2px solid var(--primary);outline-offset:-2px}.prov-spin{display:inline-block;animation:provspin 1s linear infinite}@keyframes provspin{to{transform:rotate(360deg)}}</style>
 
 <div id="tab-active">
 <div class="p-sec"><i class="bi bi-list-task"></i> <%= t('tech.dashboard.active_tasks', 'Tugas Aktif Anda') %> (<%= tickets.length %>)</div>
@@ -103,6 +103,15 @@
           </div>
         <% } %>
         <% if (ticket.equipment) { var eq = ticket.equipment; %>
+          <div style="margin-top:10px;padding:10px;border-radius:12px;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.35);font-size:12.5px;line-height:1.55">
+            <div style="font-weight:800;margin-bottom:4px"><i class="bi bi-list-ol"></i> Cómo terminar esta instalación</div>
+            1. Confirmá con el cliente el cobro del primer mes (regla de arriba).<br>
+            2. Instalá y conectá la ONU a la fibra; esperá que la luz PON quede fija.<br>
+            3. Abajo: sacá la <b>foto de la etiqueta</b>, cargá el <b>WiFi</b> que eligió el cliente y tocá <b>Guardar datos del equipo</b>.<br>
+            4. Esperá en esta pantalla: la ONU se configura sola (1 a 3 minutos) y vas viendo el avance.<br>
+            5. Cuando aparezca <b>✅ Instalación completa</b>, la orden se cierra sola y pasa a <b>Resueltos hoy</b> con la potencia. Cobrá y listo: no tenés que cerrar nada.<br>
+            <span class="muted">Si no se puede instalar, usá <b>No se pudo instalar</b> (más abajo).</span>
+          </div>
           <form method="POST" action="/tech/orders/<%= ticket.id %>/equipment" enctype="multipart/form-data" style="margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:12px">
             <div style="font-weight:700;font-size:13px;margin-bottom:6px"><i class="bi bi-router"></i> Datos del equipo del cliente</div>
             <label style="font-size:12px;display:block;margin:6px 0 2px">Foto de la etiqueta de la ONU <%= eq.labels ? '(' + eq.labels + ' cargada' + (eq.labels > 1 ? 's' : '') + ')' : '' %></label>
@@ -127,7 +136,7 @@
             </form>
           </details>
           <% if (eq.labels) { %>
-            <div id="prov-<%= ticket.id %>" class="prov-watch" data-id="<%= ticket.id %>" style="margin-top:8px;padding:10px;border-radius:12px;border:1px solid var(--border);font-size:13px"><i class="bi bi-hourglass-split"></i> Configurando la ONU automáticamente… (1 a 3 minutos). Esta pantalla se actualiza sola.</div>
+            <div id="prov-<%= ticket.id %>" class="prov-watch" data-start="<%= Date.now() %>" data-id="<%= ticket.id %>" style="margin-top:8px;padding:10px;border-radius:12px;border:1px solid var(--border);font-size:13px"><i class="bi bi-hourglass-split"></i> Configurando la ONU automáticamente… (1 a 3 minutos). Esta pantalla se actualiza sola.</div>
           <% } %>
         <% } %>
         <% if (ticket.housePhotos && ticket.housePhotos.length) { %>
@@ -294,8 +303,15 @@ async function measurePower(id, btn){
         if (j.resolved) { b.innerHTML = '<b style="color:#10b981"><i class="bi bi-check-circle-fill"></i> ¡Instalación completa!</b> Actualizando…'; setTimeout(function(){ location.hash = 'resueltos'; location.reload(); }, 1500); return; }
         if (j.provision === 'ok') b.innerHTML = '<b style="color:#10b981"><i class="bi bi-check-circle-fill"></i> ONU configurada.</b>';
         else if (j.provision.indexOf('error') === 0) b.innerHTML = '<b style="color:#ef4444"><i class="bi bi-exclamation-triangle-fill"></i> La configuración automática falló (' + j.provision.slice(7) + ').</b> La oficina ya fue avisada; esperá su indicación.';
-        else if (j.label && j.label !== 'sin lectura') b.innerHTML = '<i class="bi bi-hourglass-split"></i> Etiqueta leída: ' + j.label + '. Configurando la ONU… Esta pantalla se actualiza sola.';
+        else if (j.label && j.label !== 'sin lectura') {
+          var secs = Math.round((Date.now() - (b._t0 = b._t0 || Date.now())) / 1000);
+          b.innerHTML = '<div><i class="bi bi-check-circle" style="color:#10b981"></i> Etiqueta leída: ' + j.label + '</div>'
+            + '<div style="margin-top:4px"><i class="bi bi-arrow-repeat prov-spin"></i> <b>Configurando la ONU…</b> (' + Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0') + ')</div>'
+            + '<div class="muted" style="font-size:12px;margin-top:4px">Internet, WiFi y guardado. No cierres esta pantalla; se actualiza sola.'
+            + (secs > 300 ? '<br><b style="color:#f59e0b">Está demorando más de lo normal: llamá a la oficina.</b>' : '') + '</div>';
+        }
         else if (j.label === 'sin lectura') b.innerHTML = '<b style="color:#f59e0b"><i class="bi bi-camera"></i> No se pudo leer la etiqueta.</b> Sacá otra foto más de cerca, con buena luz, y volvé a guardar.';
+        else b.innerHTML = '<i class="bi bi-hourglass-split"></i> Leyendo la foto de la etiqueta… (puede tardar hasta 1 minuto)';
       }).catch(function(){});
     });
   }

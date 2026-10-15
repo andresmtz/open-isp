@@ -267,6 +267,23 @@ async function measurePower(id, btn){
   } catch (e) { box.textContent = 'Error: ' + e.message; }
   if (btn) btn.disabled = false;
 }
+// Si cambian las órdenes (una se cerró sola, llegó una nueva o se reasignó) o se actualizó el sistema, el panel se recarga solo
+(function(){
+  var sig = <%- JSON.stringify(typeof ordersSig !== 'undefined' ? ordersSig : '') %>, ver = null, busy = false;
+  function check(){
+    if (busy || document.hidden) return;
+    if (document.querySelector('form input[type=file]') && Array.prototype.some.call(document.querySelectorAll('form input[type=file]'), function(i){ return i.files && i.files.length; })) return; // no recargar con fotos elegidas sin enviar
+    if (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+    busy = true;
+    fetch('/tech/state', { headers: { Accept: 'application/json' }, cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(j){
+      busy = false; if (!j || !j.ok) return;
+      if (ver === null) ver = j.v;
+      if (j.sig !== sig || j.v !== ver) location.reload();
+    }).catch(function(){ busy = false; });
+  }
+  setInterval(check, 15000);
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) check(); });
+})();
 // Orden de instalación con la etiqueta cargada: se consulta el avance cada 8 s; al completarse se recarga el panel
 (function(){
   var boxes = document.querySelectorAll('.prov-watch'); if (!boxes.length) return;

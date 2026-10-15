@@ -214,6 +214,7 @@ router.get('/', requireTechSession, (req, res) => {
     stats,
     tickets: myTickets,
     recentDone,
+    ordersSig: ordersSig(techId),
     msg: flashMsg(req)
   });
 });
@@ -235,7 +236,7 @@ router.post('/orders/:ticketId/equipment', requireTechSession, equipUpload.array
     try {
       await require('../services/waNotifyService').notifyAdmin(`📦 *Datos del equipo cargados* — ${c ? c.name : ''}\nPor: ${by}\n` +
         [photos ? `Foto(s) de la etiqueta: ${photos}` : '', ...r.saved].filter(Boolean).join('\n') +
-        `\n\n${r.wifi && r.wifi.ok ? '✅ ' + r.wifi.message : '👉 Vinculá la ONU en Clientes → Inscriptos → "Equipo".'}`);
+        `\n\n${r.wifi && r.wifi.ok ? '✅ ' + r.wifi.message : (photos ? '⏳ Leyendo la etiqueta y configurando la ONU automáticamente: te llega el resultado.' : '👉 Falta la foto de la etiqueta, o vinculá la ONU en Clientes → Inscriptos → "Equipo".')}`);
     } catch (_) {}
     // Lectura de la etiqueta y configuración automática de la ONU (en segundo plano: tarda 1 a 3 minutos)
     if (photos) {
@@ -250,6 +251,17 @@ router.post('/orders/:ticketId/equipment', requireTechSession, equipUpload.array
     req.session._msg = { type: 'error', text: e.message };
   }
   res.redirect('/tech');
+});
+
+// Firma de la lista de órdenes del técnico: si cambia (orden cerrada sola, nueva orden, reasignación), el panel se recarga
+const STARTED = Date.now(); // cambia con cada actualización del sistema: el panel abierto se recarga solo
+function ordersSig(techId) {
+  const rows = db.prepare("SELECT id, status, kind FROM tickets WHERE technician_id = ? AND (status != 'resolved' OR date(updated_at) = date(NOW_LOCAL())) ORDER BY id").all(techId);
+  return rows.map(r => `${r.id}:${r.status}:${r.kind || ''}`).join('|');
+}
+router.get('/state', requireTechSession, (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ ok: true, sig: ordersSig(req.session.techId), v: STARTED });
 });
 
 // Estado de una orden de instalación: avance de la configuración automática de la ONU
@@ -300,7 +312,8 @@ router.post('/orders/:ticketId/no-install', requireTechSession, express.urlencod
     if (motive === 'otro' && String(req.body.detail || '').trim().length < 3) throw new Error('Contá brevemente por qué no se pudo instalar.');
     await inst.cancelInstallation(t.customer_id, { motive, reason: req.body.detail, outcome: 'postpone', actor: `técnico ${req.session.techName || ''}`.trim(), fromInstaller: true });
     req.session._msg = { type: 'success', text: 'Listo: quedó registrado que no se pudo instalar. La oficina ya fue avisada.' };
-  } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
+    require('../config/logger').logger.info(`[Técnico] ${req.session.techName}: orden ${req.params.ticketId} → no se pudo instalar (${motive})`);
+  } catch (e) { req.session._msg = { type: 'error', text: e.message }; require('../config/logger').logger.warn(`[Técnico] ${req.session.techName}: no-install orden ${req.params.ticketId}: ${e.message}`); }
   res.redirect('/tech');
 });
 
@@ -511,7 +524,8 @@ router.post('/tickets/:id/update', requireTechSession, upload.array('photos', 10
     // -------------------------------------------------
 
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'No se pudo actualizar el reclamo:' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo actualizar el reclamo: ' + e.message };
+    require('../config/logger').logger.warn(`[Técnico] ${req.session.techName}: actualizar orden ${req.params.id}: ${e.message}`);
   }
   res.redirect('/tech');
 });

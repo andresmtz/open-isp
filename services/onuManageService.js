@@ -295,7 +295,19 @@ async function changeWifi(customerId, { name, key }, actor = {}, { notify = true
         if (a24 && a5 && a24.name === v.name && a24.key === v.key && a5.name === v.name + SUFFIX_5G && a5.key === v.key) break;
       }
       if (!(a24 && a24.name === v.name && a24.key === v.key)) throw new Error('la red 2.4 no quedó con los datos nuevos');
-      if (!(a5 && a5.name === v.name + SUFFIX_5G && a5.key === v.key)) throw new Error('la red 5G no quedó con los datos nuevos');
+      if (!(a5 && a5.name === v.name + SUFFIX_5G && a5.key === v.key)) {
+        // Algunas ONU con firmware viejo aceptan el cambio de la 5G por la OLT pero no lo aplican: se hace por TR-069
+        setStep('5G por TR-069');
+        const ok5 = await set5gViaTr069(customerId, a5 ? a5.name : '', v.name + SUFFIX_5G, v.key);
+        if (ok5) {
+          for (let i = 0; i < 5; i++) {
+            await new Promise(r => setTimeout(r, 2000));
+            a5 = parseSsid((await runOnPort(olt, inv.port, [`show onu ${id} pri wifi_ssid ${SSID_5}`]))[0]);
+            if (a5 && a5.name === v.name + SUFFIX_5G && a5.key === v.key) break;
+          }
+        }
+        if (!(a5 && a5.name === v.name + SUFFIX_5G && a5.key === v.key)) throw new Error('la red 5G no quedó con los datos nuevos' + (ok5 ? '' : ' (y la ONU no responde por TR-069)'));
+      }
       setStep('guardado');
       const sv = await runOnPort(olt, inv.port, [`onu ${id} pri save_config`]);
       if (/%|error|fail/i.test(sv[0])) throw new Error('no se pudo guardar en la memoria de la ONU');
@@ -320,6 +332,33 @@ async function changeWifi(customerId, { name, key }, actor = {}, { notify = true
     err.changeId = change;
     throw err;
   }
+}
+
+/** Cambia la red 5G por TR-069 (respaldo para ONU que ignoran el cambio por la OLT). Devuelve true si la ONU lo confirmó. */
+async function set5gViaTr069(customerId, currentName, name, key) {
+  try {
+    const dev = require('./onuClientsService').acsDevice(customerId);
+    if (!dev) return false;
+    let p = {}; try { p = JSON.parse(dev.params || '{}') || {}; } catch (_) {}
+    const val = (k) => { const x = p[k]; return x && typeof x === 'object' ? (x.value ?? x._value ?? '') : (x ?? ''); };
+    const IGD = 'InternetGatewayDevice.LANDevice.1.WLANConfiguration.';
+    const idx = Object.keys(p).map(k => (new RegExp('^' + IGD.replace(/\./g, '\\.') + '(\\d+)\\.SSID$').exec(k) || [])[1]).filter(Boolean)
+      .find(i => { const s = String(val(IGD + i + '.SSID')); return (currentName && s === currentName) || /-5G$/i.test(s); });
+    if (!idx) return false;
+    const acs = require('./acsServerService');
+    const t = acs.createBuiltinTask(dev.id, 'setParameterValues', { parameterValues: [
+      [IGD + idx + '.SSID', name, 'xsd:string'],
+      [IGD + idx + '.PreSharedKey.1.KeyPassphrase', key, 'xsd:string'],
+    ] });
+    if (!t || !t.taskId) return false;
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 1000));
+      const r = db.prepare('SELECT status FROM acs_tasks WHERE id = ?').get(t.taskId);
+      if (r && r.status === 'completed') { logger.info(`[ONU] 5G de cliente ${customerId} cambiada por TR-069 (WLAN ${idx})`); return true; }
+      if (r && /fail|skip/.test(r.status)) return false;
+    }
+    return false;
+  } catch (e) { logger.warn('[ONU] 5G por TR-069: ' + e.message); return false; }
 }
 
 function history(customerId, limit = 10) {

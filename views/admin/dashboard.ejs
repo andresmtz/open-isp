@@ -173,25 +173,25 @@
       <!-- STATUS JARINGAN (ONU) -->
       <div class="dash-sec-title"><i class="bi bi-router"></i> <%= t('admin.dashboard.network_status','Status Jaringan (ONU)') %></div>
       <div class="stat-grid">
-        <div class="sc p">
+        <div class="sc p" style="cursor:pointer" onclick="showMon('all')" title="Ver la lista">
           <i class="bi bi-router sc-icon"></i>
           <div class="sc-label"><%= t('admin.dashboard.total_onu','Total ONU') %></div>
           <div class="sc-val" id="stat-total"><span class="text-muted" style="font-size:16px">...</span></div>
           <div class="sc-sub"><%= t('admin.dashboard.onu_registered','Perangkat terdaftar') %></div>
         </div>
-        <div class="sc s">
+        <div class="sc s" style="cursor:pointer" onclick="showMon('online')" title="Ver la lista">
           <i class="bi bi-wifi sc-icon"></i>
           <div class="sc-label"><%= t('admin.dashboard.online','Online') %></div>
           <div class="sc-val" id="stat-online"><span class="text-muted" style="font-size:16px">...</span></div>
           <div class="sc-sub"><%= t('admin.dashboard.active_now','Aktif saat ini') %></div>
         </div>
-        <div class="sc d">
+        <div class="sc d" style="cursor:pointer" onclick="showMon('offline')" title="Ver la lista">
           <i class="bi bi-wifi-off sc-icon"></i>
           <div class="sc-label"><%= t('admin.dashboard.offline','Offline') %></div>
           <div class="sc-val" id="stat-offline"><span class="text-muted" style="font-size:16px">...</span></div>
           <div class="sc-sub"><%= t('admin.dashboard.no_response','Tidak merespons') %></div>
         </div>
-        <div class="sc w">
+        <div class="sc w" style="cursor:pointer" onclick="showMon('weak')" title="Ver la lista">
           <i class="bi bi-exclamation-triangle sc-icon"></i>
           <div class="sc-label"><%= t('admin.dashboard.warning','Warning') %></div>
           <div class="sc-val" id="stat-warning"><span class="text-muted" style="font-size:16px">...</span></div>
@@ -256,6 +256,7 @@
           <option value="all"><%= t('common.all_status', 'Semua Status') %></option>
           <option value="online"><%= t('admin.dashboard.online', 'Online') %></option>
           <option value="offline"><%= t('admin.dashboard.offline', 'Offline') %></option>
+          <option value="weak">Señal débil (advertencia)</option>
         </select>
         <button class="btn btn-g btn-sm" onclick="openGenieACSSettings()" title="<%= t('admin.dash.genieacs_title','Pengaturan GenieACS') %>">
           <i class="bi bi-gear"></i> GenieACS
@@ -516,6 +517,15 @@ function showTab(tab) {
   if (!isDash) loadDevices();
 }
 
+// Tarjetas de estado de la red: abren el monitoreo filtrado
+function showMon(status) {
+  const sel = document.getElementById('filter-status');
+  if (sel) sel.value = status || 'all';
+  const q = document.getElementById('search-device'); if (q) q.value = '';
+  showTab('monitoring');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // ── MODAL HELPERS ──────────────────────────────────────────────
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
@@ -686,7 +696,8 @@ async function loadDevices() {
           </td>
           <td>
             <div><span class="badge ${isOn ? 'ds-on' : 'ds-off'}"><span class="dot ${isOn ? 'dot-on' : 'dot-off'}"></span>${isOn ? I18N.online : I18N.offline}</span></div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px" title="RX Power"><i class="bi bi-activity"></i> ${d.rxPower}</div>
+            <div style="font-size:11px;margin-top:4px;color:${d.weak ? 'var(--warning)' : 'var(--muted)'}" title="${d.weak ? 'Señal débil: revisar fibra o conectores' : 'RX Power'}"><i class="bi bi-${d.weak ? 'exclamation-triangle' : 'activity'}"></i> ${d.rxPower}</div>
+            ${!isOn && d.note ? `<div style="font-size:11px;color:var(--danger);margin-top:2px;max-width:220px;white-space:normal">${String(d.note).replace(/[<>&]/g, '')}</div>` : ''}
             <div style="font-size:11px;color:var(--muted)" title="Uptime"><i class="bi bi-clock-history"></i> ${d.uptime}</div>
             <div style="font-size:11px;color:var(--muted)" title="${I18N.lastSync}"><i class="bi bi-hourglass-split"></i> ${d.lastSyncAgo || '-'}</div>
             ${syncBadge}

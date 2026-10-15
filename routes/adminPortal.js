@@ -5730,6 +5730,8 @@ async function mergedDevices() {
       note: o.note, oltRef: o.syncStatusLabel, tr069: true };
   });
   for (const a of acsList) if (!used.has(a)) out.push(a);
+  // Advertencia = en línea con señal débil (mismo umbral que la OLT: menos de -27 dBm)
+  for (const d of out) { const n = parseFloat(d.rxPower); d.weak = d.status === 'online' && Number.isFinite(n) && n < -27; }
   return { devices: out, weak: od.weak || 0, oltCount: od.devices.length, tr069Count: acsList.length };
 }
 
@@ -5737,7 +5739,7 @@ router.get('/api/stats', requireAdmin, async (req, res) => {
   try {
     const m = await mergedDevices();
     const online = m.devices.filter(d => d.status === 'online').length;
-    res.json({ total: m.devices.length, online, offline: m.devices.length - online, warning: m.weak, tr069: m.tr069Count, lastUpdate: getNowLocalISO() });
+    res.json({ total: m.devices.length, online, offline: m.devices.length - online, warning: m.devices.filter(d => d.weak).length, tr069: m.tr069Count, lastUpdate: getNowLocalISO() });
   } catch (e) {
     res.status(500).json({ error: 'Failed to get stats', detail: e.message });
   }
@@ -5759,7 +5761,8 @@ router.get('/api/devices', requireAdmin, async (req, res) => {
         (String(d.pppoeUsername || '') !== 'N/A' && String(d.pppoeUsername || '').toLowerCase().includes(q)) ||
         matchingPppoes.has(String(d.pppoeUsername || '').toLowerCase()));
     }
-    if (status && status !== 'all') devices = devices.filter(d => d.status === String(status).toLowerCase());
+    if (status === 'weak') devices = devices.filter(d => d.weak);
+    else if (status && status !== 'all') devices = devices.filter(d => d.status === String(status).toLowerCase());
     const total = devices.length;
     const paginated = devices.slice(parseInt(offset), parseInt(offset) + parseInt(limit));
     res.json({ devices: paginated, total, tr069: m.tr069Count, limit: parseInt(limit), offset: parseInt(offset) });

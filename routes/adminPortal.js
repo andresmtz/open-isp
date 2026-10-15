@@ -5595,11 +5595,13 @@ async function oltOnuDevices() {
   const custs = db.prepare('SELECT id, name, pppoe_username, pppoe_remote_address FROM customers').all();
   const byId = new Map(custs.map(c => [c.id, c]));
   const out = [];
+  const health = [];
   let weak = 0;
   for (const o of olts) {
     const s = await oltSvc.getOltStats(o.id, true);
     if (!s || s.error || !Array.isArray(s.onus)) continue;
     weak += Number(s.onus_weak || 0);
+    if (s.health && s.health.ok) health.push({ name: o.name || 'OLT', uptime: s.uptime, ...s.health });
     for (const u of s.onus) {
       const c = u.customer_id ? byId.get(u.customer_id) : null;
       const isOn = String(u.status).toLowerCase() === 'online';
@@ -5619,7 +5621,7 @@ async function oltOnuDevices() {
       });
     }
   }
-  return { devices: out, weak };
+  return { devices: out, weak, health };
 }
 
 // Lista de equipos: la OLT es la base (todas las ONU, compatibles o no con TR-069); las que además
@@ -5678,14 +5680,14 @@ async function mergedDevices() {
   for (const a of acsList) if (!used.has(a)) out.push(a);
   // Advertencia = en línea con señal débil (mismo umbral que la OLT: menos de -27 dBm)
   for (const d of out) { const n = parseFloat(d.rxPower); d.weak = d.status === 'online' && Number.isFinite(n) && n < -27; }
-  return { devices: out, weak: od.weak || 0, oltCount: od.devices.length, tr069Count: acsList.length };
+  return { devices: out, weak: od.weak || 0, oltCount: od.devices.length, tr069Count: acsList.length, oltHealth: od.health || [] };
 }
 
 router.get('/api/stats', requireAdmin, async (req, res) => {
   try {
     const m = await mergedDevices();
     const online = m.devices.filter(d => d.status === 'online').length;
-    res.json({ total: m.devices.length, online, offline: m.devices.length - online, warning: m.devices.filter(d => d.weak).length, tr069: m.tr069Count, lastUpdate: getNowLocalISO() });
+    res.json({ total: m.devices.length, online, offline: m.devices.length - online, warning: m.devices.filter(d => d.weak).length, tr069: m.tr069Count, olts: m.oltHealth, lastUpdate: getNowLocalISO() });
   } catch (e) {
     res.status(500).json({ error: 'Failed to get stats', detail: e.message });
   }

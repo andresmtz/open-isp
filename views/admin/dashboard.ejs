@@ -198,6 +198,7 @@
           <div class="sc-sub"><%= t('admin.dashboard.needs_attention','Perlu perhatian') %></div>
         </div>
       </div>
+      <div data-olt-health style="margin:-6px 0 16px"></div>
       <div class="dash-main-grid">
         <div class="card" style="margin:0">
           <div class="card-hd"><h6><i class="bi bi-pie-chart"></i> <%= t('admin.dashboard.onu_status_title','Status ONU') %></h6></div>
@@ -245,6 +246,8 @@
         <div class="sc d m-card" data-f="offline" style="cursor:pointer" onclick="showMon('offline')" title="Ver las desconectadas"><i class="bi bi-wifi-off sc-icon"></i><div class="sc-label"><%= t('admin.dashboard.offline', 'Offline') %></div><div class="sc-val" id="m-offline">-</div></div>
         <div class="sc w m-card" data-f="weak" style="cursor:pointer" onclick="showMon('weak')" title="Ver las que tienen señal débil"><i class="bi bi-exclamation-triangle sc-icon"></i><div class="sc-label"><%= t('admin.dashboard.warning','Warning') %></div><div class="sc-val" id="m-weak">-</div><div class="sc-sub">Señal débil</div></div>
       </div>
+
+      <div data-olt-health style="margin:-8px 0 16px"></div>
 
       <!-- Search & Filter -->
       <div class="srow" style="margin-bottom:16px">
@@ -517,6 +520,24 @@ function showTab(tab) {
   if (!isDash) loadDevices();
 }
 
+// Salud de la OLT (CPU, memoria, temperatura de los módulos PON, tiempo encendida)
+function renderOltHealth(list) {
+  var html = (list || []).map(function (o) {
+    var lvl = function (v, warn, crit) { return v == null ? 'var(--muted)' : (v >= crit ? 'var(--danger)' : (v >= warn ? 'var(--warning)' : 'var(--success)')); };
+    var tw = Number(o.tempWarn) || 60;
+    var chip = function (icon, label, val, color, title) { return '<div title="' + (title || '') + '" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:12px;background:var(--card,rgba(255,255,255,.02))"><i class="bi bi-' + icon + '" style="color:' + color + '"></i><div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">' + label + '</div><div style="font-weight:800;color:' + color + '">' + val + '</div></div></div>'; };
+    var ports = (o.ports || []).map(function (p) { return p.port + ': ' + p.temp.toFixed(1) + ' °C (TX ' + p.txPower + ' dBm)'; }).join(' · ');
+    return '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:stretch">'
+      + '<div style="display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;padding:0 4px"><i class="bi bi-hdd-fill"></i> ' + (o.name || 'OLT') + '</div>'
+      + chip('cpu', 'CPU', o.cpu != null ? o.cpu + ' %' : '-', lvl(o.cpu, 70, 90))
+      + chip('memory', 'Memoria', o.ram != null ? o.ram + ' %' : '-', lvl(o.ram, 80, 92))
+      + chip('thermometer-half', 'Temperatura', o.temp != null ? o.temp.toFixed(1) + ' °C' : '-', lvl(o.temp, tw - 10, tw), 'Módulo PON más caliente. ' + ports + (o.fan ? ' · Ventilador: ' + o.fan.mode + (o.fan.threshold ? ' (enciende a ' + o.fan.threshold + ' °C)' : '') : ''))
+      + chip('clock-history', 'Encendida', o.uptime || '-', 'var(--text)')
+      + '</div>';
+  }).join('');
+  document.querySelectorAll('[data-olt-health]').forEach(function (el) { el.innerHTML = html; });
+}
+
 // Tarjetas de estado de la red: abren el monitoreo filtrado
 function showMon(status) {
   const sel = document.getElementById('filter-status');
@@ -546,6 +567,8 @@ async function loadStats() {
     document.getElementById('stat-online').textContent  = online;
     document.getElementById('stat-offline').textContent = offline;
     document.getElementById('stat-warning').textContent = d.warning || 0;
+    var _mw = document.getElementById('m-weak'); if (_mw) _mw.textContent = d.warning || 0;
+    renderOltHealth(d.olts || []);
 
     // Monitoring mini stats
     document.getElementById('m-total').textContent  = total;

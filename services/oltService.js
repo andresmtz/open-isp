@@ -1699,6 +1699,19 @@ async function getOltStats(id, full = false) {
   const promise = (async () => {
     try {
       const result = await getOltStatsInternal(id, full);
+      // VSOL por telnet no informa CPU/memoria/temperatura: se completan desde su web (services/oltHealthService.js)
+      if (result && !result.error && (result.cpu === 'N/A' || result.temp === 'N/A')) {
+        try {
+          const h = await require('./oltHealthService').health(getOltById(id));
+          if (h && h.ok) {
+            if (h.cpu != null) result.cpu = `${h.cpu}%`;
+            if (h.ram != null) result.ram = `${h.ram}%`;
+            if (h.temp != null) result.temp = `${h.temp.toFixed(1)}°C`;
+            if (h.uptime && (!result.uptime || result.uptime === 'N/A')) result.uptime = h.uptime;
+            result.health = h;
+          }
+        } catch (_) {}
+      }
       if (result && !result.error) {
         statsCache.set(cacheKey, {
           data: result,

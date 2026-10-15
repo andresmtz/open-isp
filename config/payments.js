@@ -18,11 +18,14 @@ function gatewaysEnabled() { return on(getSetting('payment_gateways_enabled', fa
  *   wisphub_migration wisphub_migration_enabled  herramienta de migración desde WispHub (Sistema → Migración WispHub)
  *   github_update     github_update_enabled      "Actualizar desde GitHub" (traería el código original y pisaría
  *                                                las personalizaciones de esta instalación)
+ *   staff_attendance  staff_attendance_enabled   control de asistencia del personal
  */
 const FEATURES = {
   gateways: { setting: 'payment_gateways_enabled', routes: null },
   wisphub_migration: { setting: 'wisphub_migration_enabled', routes: [/^\/admin\/wisphub/i] },
   github_update: { setting: 'github_update_enabled', routes: [/^\/admin\/update/i] },
+  // Control de asistencia del personal (entrada/salida con foto): oficina, técnicos y cobradores
+  staff_attendance: { setting: 'staff_attendance_enabled', routes: [/^\/admin\/(cashiers\/)?attendance/i, /^\/admin\/api\/attendance/i, /^\/(tech|collector)\/(api\/)?attendance/i] },
 };
 function featureEnabled(name) { const f = FEATURES[name]; return !!f && on(getSetting(f.setting, false)); }
 
@@ -56,6 +59,7 @@ function isGatewayPath(p) { return GATEWAY_ROUTES.some(re => re.test(String(p ||
 function guard(req, res, next) {
   const gw = gatewaysEnabled();
   res.locals.gatewaysOn = gw;
+  res.locals.attendanceOn = featureEnabled('staff_attendance');
   if (!gw && isGatewayPath(req.path)) return res.status(404).send('No disponible');
   for (const [name, f] of Object.entries(FEATURES)) {
     if (f.routes && f.routes.some(re => re.test(req.path)) && !featureEnabled(name)) return res.status(404).send('No disponible');

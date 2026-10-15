@@ -1113,7 +1113,7 @@ router.get('/technicians', requireAdminSession, requireSidebarMenuAccess('techni
     return { ...t, perms, permSummary: techPerms.summary(perms) };
   });
   res.render('admin/technicians', { title: 'Gestión de técnicos', company: company(), activePage: 'technicians', technicians, msg: flashMsg(req),
-    permCatalog: techPerms.CATALOG });
+    permCatalog: techPerms.CATALOG.filter(p => p.key !== 'asistencia' || require('../config/payments').featureEnabled('staff_attendance')) });
 });
 
 function techPermsFromBody(body) {

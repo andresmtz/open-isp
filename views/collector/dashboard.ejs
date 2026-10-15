@@ -50,9 +50,9 @@
       <div class="d-flex gap-2">
         <button type="button" class="btn btn-outline-light btn-sm" id="topbarThemeBtn" title="Cambiar tema"><i class="bi bi-circle-half"></i></button>
         <a href="/lang/<%= lang === 'en' ? 'es' : 'en' %>" class="btn btn-outline-light btn-sm" style="text-decoration:none" title="<%= lang === 'en' ? 'Español' : 'English' %>"><i class="bi bi-translate"></i> <%= lang === 'en' ? 'ES' : 'EN' %></a>
-        <a class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1" href="/collector/attendance">
+<% if ((typeof attendanceOn !== 'undefined' && attendanceOn)) { %>        <a class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1" href="/collector/attendance">
           <i class="bi bi-calendar-check"></i> <%= t('collector.absensi','Absensi') %>
-        </a>
+        </a><% } %>
         <a class="btn btn-outline-light btn-sm" href="/collector/logout"><i class="bi bi-box-arrow-left"></i></a>
       </div>
     </div>
@@ -302,9 +302,9 @@
       <a class="bni <%= activeScope === 'multi' ? 'active' : '' %>" href="/collector?<%= qsMulti %>#data-tagihan">
         <i class="bi bi-layers"></i><span>&gt;1 <%= t('collector.month_short','Bln') %></span>
       </a>
-      <a class="bni" href="/collector/attendance">
+<% if ((typeof attendanceOn !== 'undefined' && attendanceOn)) { %>      <a class="bni" href="/collector/attendance">
         <i class="bi bi-calendar-check-fill"></i><span><%= t('collector.absensi','Absensi') %></span>
-      </a>
+      </a><% } %>
     </div>
   </div>
 

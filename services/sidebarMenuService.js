@@ -63,10 +63,10 @@ const MENU_DEFINITIONS = [
   { key: 'grp_service', section: 'service', href: '/admin/tickets', icon: 'bi bi-headset', labelKey: 'admin.nav.grp_service', labelDefault: 'Servicio', roles: ['admin', 'cashier'], activePages: ['tickets', 'inventory', 'attendance'], children: [
     { key: 'tickets', section: 'service', href: '/admin/tickets', icon: 'bi bi-headset', labelKey: 'admin.nav.customer_tickets', labelDefault: 'Reclamos de clientes', roles: ['admin', 'cashier'], activePages: ['tickets'] },
     { key: 'inventory', section: 'service', href: '/admin/inventory', icon: 'bi bi-boxes', labelKey: 'admin.nav.inventory', labelDefault: 'Inventario (stock)', roles: ['admin', 'cashier'], activePages: ['inventory'] },
-    { key: 'attendance', section: 'service', href: '/admin/attendance', icon: 'bi bi-calendar-check', labelKey: 'admin.nav.attendance', labelDefault: 'Asistencia del personal', roles: ['admin', 'cashier'], activePages: ['attendance'] }
+    { key: 'attendance', section: 'service', feature: 'staff_attendance', href: '/admin/attendance', icon: 'bi bi-calendar-check', labelKey: 'admin.nav.attendance', labelDefault: 'Asistencia del personal', roles: ['admin', 'cashier'], activePages: ['attendance'] }
   ] },
 
-  { key: 'cashier_attendance', section: 'cashier', href: '/admin/cashiers/attendance', icon: 'bi bi-calendar-check', labelKey: 'admin.nav.cashier_attendance', labelDefault: 'Mi asistencia', roles: ['cashier'], activePages: ['cashier_attendance'] },
+  { key: 'cashier_attendance', section: 'cashier', feature: 'staff_attendance', href: '/admin/cashiers/attendance', icon: 'bi bi-calendar-check', labelKey: 'admin.nav.cashier_attendance', labelDefault: 'Mi asistencia', roles: ['cashier'], activePages: ['cashier_attendance'] },
 
   { key: 'grp_users', section: 'user_management', href: '/admin/technicians', icon: 'bi bi-person-gear', labelKey: 'admin.nav.grp_users', labelDefault: 'Usuarios', roles: ['admin', 'cashier'], activePages: ['technicians', 'cashiers', 'collectors', 'areas'], children: [
     { key: 'technicians', section: 'user_management', href: '/admin/technicians', icon: 'bi bi-person-gear', labelKey: 'admin.nav.technicians', labelDefault: 'Técnicos', roles: ['admin'], activePages: ['technicians'] },

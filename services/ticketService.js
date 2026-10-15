@@ -3,7 +3,7 @@ const db = require('../config/database');
 function getAllTickets(status = null, opts = {}) {
   let query = `
     SELECT t.*, 
-           CASE WHEN t.customer_id IS NULL OR t.customer_id = 0 THEN 'Tugas Umum / Maintenance Admin' ELSE COALESCE(c.name, 'Cliente #' || t.customer_id) END as customer_name, 
+           CASE WHEN t.customer_id IS NULL OR t.customer_id = 0 THEN 'Tarea general / mantenimiento' ELSE COALESCE(c.name, 'Cliente #' || t.customer_id) END as customer_name, 
            COALESCE(c.phone, '-') as customer_phone, 
            COALESCE(c.address, '-') as customer_address, 
            tech.name as technician_name
@@ -41,7 +41,7 @@ function getTicketsByCustomerId(customerId) {
 function getTicketById(id) {
   return db.prepare(`
     SELECT t.*, 
-           CASE WHEN t.customer_id IS NULL OR t.customer_id = 0 THEN 'Tugas Umum / Maintenance Admin' ELSE COALESCE(c.name, 'Cliente #' || t.customer_id) END as customer_name, 
+           CASE WHEN t.customer_id IS NULL OR t.customer_id = 0 THEN 'Tarea general / mantenimiento' ELSE COALESCE(c.name, 'Cliente #' || t.customer_id) END as customer_name, 
            COALESCE(c.phone, '-') as customer_phone, 
            COALESCE(c.address, '-') as customer_address, 
            tech.name as technician_name

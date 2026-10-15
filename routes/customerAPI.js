@@ -2482,11 +2482,11 @@ router.post('/app/tech/tickets/update', requireTechApiAuth, async (req, res) => 
           const ticket = ticketService.getTicketById(ticketId);
           const tech = techSvc.getTechById(techId);
 
-          if (ticket && ticket.customer_phone) {
+          if (ticket && ticket.customer_phone && !/^(install|retiro)/.test(String(ticket.kind || ''))) {
             const waMsg = `✅ *RECLAMO RESUELTO*\n\n` +
               `🎫 *Ticket:* #${ticket.id}\n` +
               `👤 *Cliente:* ${ticket.customer_name}\n` +
-              `📝 *Subjek:* ${ticket.subject}\n` +
+              `📝 *Asunto:* ${ticket.subject}\n` +
               `🛠️ *Técnico:* ${tech?.name || 'Técnico de campo'}\n` +
               `💬 *Nota:* ${notes || 'Reparado'}\n\n` +
               `Su servicio de internet ya funciona con normalidad. ¡Gracias!`;
@@ -3456,7 +3456,7 @@ router.post('/tickets/create', requireCustomerApiAuth, async (req, res) => {
         const waMsg = `🎫 *NUEVO RECLAMO (app)*\n\n` +
                      `👤 *Cliente:* ${customer.name || 'Desconocido'}\n` +
                      `📞 *WhatsApp:* ${customer.phone || '-'}\n` +
-                     `📝 *Subjek:* ${subject}\n` +
+                     `📝 *Asunto:* ${subject}\n` +
                      `💬 *Mensaje:* ${message}\n\n` +
                      `Revisalo en el panel de administración/técnicos para darle seguimiento.`;
 

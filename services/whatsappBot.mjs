@@ -1838,7 +1838,7 @@ export async function processIncomingCommand({
               `👤 Agent: *${agent.name}* (@${agent.username})\n` +
               `💸 Nominal: ${regional.currencySymbol()} ${Number(amount || 0).toLocaleString(regional.locale())}\n` +
               `💳 Saldo: ${regional.currencySymbol()} ${Number(r.before || 0).toLocaleString(regional.locale())} ➜ ${regional.currencySymbol()} ${Number(r.after || 0).toLocaleString(regional.locale())}\n` +
-              `📝 Catatan: ${note}`
+              `📝 Nota: ${note}`
             );
           } catch (e) {
             await reply('❌ Gagal topup agent: ' + e.message);

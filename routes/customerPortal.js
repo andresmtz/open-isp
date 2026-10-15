@@ -2927,7 +2927,7 @@ router.post('/tickets/create', uploadCustomer.array('photos', 5), async (req, re
                      `👤 *Cliente:* ${customer ? customer.name : 'Desconocido'}\n` +
                      `📞 *WhatsApp:* ${customer ? customer.phone : '-'}\n` +
                      `📍 *Dirección:* ${customer ? customer.address : '-'}\n` +
-                     `📝 *Subjek:* ${subject}\n` +
+                     `📝 *Asunto:* ${subject}\n` +
                      `💬 *Mensaje:* ${message}${photoText}\n\n` +
                      `Revisalo en el panel de administración/técnicos para darle seguimiento.` + _links;
 

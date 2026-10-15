@@ -4067,7 +4067,7 @@ router.post('/tickets/create', requireAdminSession, express.urlencoded({ extende
         const techSvc = require('../services/techService');
         const tech = techId ? techSvc.getTechById(techId) : null;
 
-        const custName = cust ? cust.name : 'Tugas Umum / Maintenance Admin';
+        const custName = cust ? cust.name : 'Tarea general / mantenimiento';
         const custPhone = cust ? cust.phone : '-';
         const custAddr = cust ? cust.address : '-';
 
@@ -4162,12 +4162,12 @@ router.post('/tickets/:id/update', requireAdminSession, express.urlencoded({ ext
             const waMsg = `✅ *RECLAMO RESUELTO*\n\n` +
                          `🎫 *Ticket:* #${ticket.id}\n` +
                          `👤 *Cliente:* ${ticket.customer_name}\n` +
-                         `📝 *Subjek:* ${ticket.subject}\n` +
-                         `🛠️ *Petugas:* Admin\n\n` +
+                         `📝 *Asunto:* ${ticket.subject}\n` +
+                         `🛠️ *Atendido por:* Administración\n\n` +
                          `Su reclamo fue resuelto. ¡Gracias por su paciencia!`;
 
-            // Kirim ke Pelanggan
-            if (ticket.customer_phone) {
+            // Al cliente solo en reclamos (las órdenes de instalación y retiro tienen sus propios avisos)
+            if (ticket.customer_phone && !/^(install|retiro)/.test(String(ticket.kind || ''))) {
               await waNotify.sendText(ticket.customer_phone, waMsg);
             }
 
@@ -4176,7 +4176,7 @@ router.post('/tickets/:id/update', requireAdminSession, express.urlencoded({ ext
               const adminMsg = `✅ *TICKET RESUELTO (POR LA ADMINISTRACIÓN)*\n\n` +
                                `🎫 *Ticket:* #${ticket.id}\n` +
                                `👤 *Cliente:* ${ticket.customer_name}\n` +
-                               `📝 *Subjek:* ${ticket.subject}\n` +
+                               `📝 *Asunto:* ${ticket.subject}\n` +
                                `💬 *Mensaje:* ${ticket.message}`;
               const seen = new Set();
               for (const adminPhone of settings.whatsapp_admin_numbers) {

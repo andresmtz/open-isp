@@ -469,12 +469,12 @@ router.post('/tickets/:id/update', requireTechSession, upload.array('photos', 10
             const waMsg = `✅ *RECLAMO RESUELTO*\n\n` +
                          `🎫 *Ticket:* #${ticket.id}\n` +
                          `👤 *Cliente:* ${ticket.customer_name}\n` +
-                         `📝 *Subjek:* ${ticket.subject}\n` +
+                         `📝 *Asunto:* ${ticket.subject}\n` +
                          `🛠️ *Técnico:* ${req.session.techName}${photoText}\n\n` +
                          `Su reclamo fue resuelto. ¡Gracias por su paciencia!`;
 
-            // Kirim ke Pelanggan
-            if (ticket.customer_phone) {
+            // Al cliente solo en reclamos (las órdenes de instalación y retiro tienen sus propios avisos)
+            if (ticket.customer_phone && !/^(install|retiro)/.test(String(ticket.kind || ''))) {
               const digits = normalizeWaDigits(ticket.customer_phone);
               if (digits) {
                 const key = `ticket:resolved:customer:${ticketId}:${digits}`;
@@ -484,12 +484,12 @@ router.post('/tickets/:id/update', requireTechSession, upload.array('photos', 10
 
             // Kirim ke Admin dengan info foto
             if (settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers.length > 0) {
-              const notesText = notes ? `\n💬 *Catatan:* ${notes}` : '';
+              const notesText = notes ? `\n💬 *Notas:* ${notes}` : '';
               const adminMsg = `✅ *TICKET RESUELTO*\n\n` +
                                `🎫 *Ticket:* #${ticket.id}\n` +
                                `👤 *Cliente:* ${ticket.customer_name}\n` +
                                `🛠️ *Técnico:* ${req.session.techName}\n` +
-                               `📝 *Subjek:* ${ticket.subject}\n` +
+                               `📝 *Asunto:* ${ticket.subject}\n` +
                                `💬 *Mensaje:* ${ticket.message}${notesText}${photoText}`;
               const recipients = new Set();
               for (const adminPhone of settings.whatsapp_admin_numbers) {

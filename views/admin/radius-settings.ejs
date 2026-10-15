@@ -355,12 +355,12 @@
               <div class="form-row">
                 <div class="fg">
                   <label class="fl">Domain / Realm</label>
-                  <input type="text" name="pppoe_domain" class="fc" value="<%= (typeof settings!=='undefined'&&settings&&settings.pppoe_domain)||'openisp.id' %>" placeholder="openisp.id">
+                  <input type="text" name="pppoe_domain" class="fc" value="<%= (typeof settings!=='undefined'&&settings&&settings.pppoe_domain)||'' %>" placeholder="vacío = sin dominio">
                   <div class="hint"><%- t('admin.rds.username_hint','Username = pola + @ + domain. Contoh: <span class="mono">budi_santoso@openisp.id</span>') %></div>
                 </div>
                 <div class="fg">
                   <label class="fl"><%= t('admin.rds.default_pass','Password Default') %></label>
-                  <input type="text" name="pppoe_default_password" class="fc" value="<%= (typeof settings!=='undefined'&&settings&&settings.pppoe_default_password)||'openisp' %>" placeholder="openisp">
+                  <input type="text" name="pppoe_default_password" class="fc" value="<%= (typeof settings!=='undefined'&&settings&&settings.pppoe_default_password)||'' %>" placeholder="vacío = clave aleatoria por cliente">
                 </div>
               </div>
             </div>

@@ -34,8 +34,8 @@
             <input class="fc" type="number" min="0" step="1000" name="registration_install_fee" value="<%= installFee %>">
             <div class="hint">Se usa como "costo de instalación" en la estimación de la solicitud. Puede ser 0.</div>
           </div>
-          <div class="fg" style="min-width:160px"><label class="fl"><%= t('admin.vd.pppoe_domain','Domain PPPoE') %></label><input class="fc" name="pppoe_domain" value="<%= pppoeDomain %>" placeholder="sky.id"></div>
-          <div class="fg" style="min-width:180px"><label class="fl"><%= t('admin.vd.default_pppoe_pass','Password PPPoE Default') %></label><input class="fc" name="pppoe_default_password" value="<%= pppoeDefaultPassword %>"></div>
+          <div class="fg" style="min-width:160px"><label class="fl"><%= t('admin.vd.pppoe_domain','Domain PPPoE') %></label><input class="fc" name="pppoe_domain" value="<%= pppoeDomain %>" placeholder="vacío = sin dominio"></div>
+          <div class="fg" style="min-width:180px"><label class="fl"><%= t('admin.vd.default_pppoe_pass','Password PPPoE Default') %></label><input class="fc" name="pppoe_default_password" value="<%= pppoeDefaultPassword %>" placeholder="vacío = aleatoria por cliente"></div>
           <button class="btn btn-p" type="submit"><i class="bi bi-save"></i> <%= t('common.save','Simpan') %></button>
         </form>
       </div>

@@ -215,22 +215,27 @@ function assertCustomerUnique(data, excludeId) {
 }
 
 function slugifyPppoeName(name) {
-  return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 28) || 'user';
+  return String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 28) || 'user';
 }
 // Buat akun PPPoE otomatis: <nama>@<domain>, password default dari setting. Unik.
 function generatePppoeAccount(customerId) {
   const { getSetting } = require('../config/settingsManager');
   const c = getCustomerById(customerId);
   if (!c) throw new Error('Cliente no encontrado');
-  const domain = String(getSetting('pppoe_domain', 'sky.id') || 'sky.id').replace(/^@/, '').trim() || 'sky.id';
+  // Dominio opcional (pppoe_domain, ej. "empresa.com" → usuario@empresa.com); vacío = solo el nombre
+  const domain = String(getSetting('pppoe_domain', '') || '').replace(/^@/, '').trim();
+  const sfx = domain ? '@' + domain : '';
   const _pat = String(getSetting('pppoe_username_pattern', 'name') || 'name');
   const base = slugifyPppoeName(_pat === 'customer_code' ? (c.customer_code || c.name) : c.name);
-  let username = base + '@' + domain;
+  let username = base + sfx;
   let n = 1;
   while (db.prepare('SELECT id FROM customers WHERE pppoe_username = ? AND id != ?').get(username, customerId)) {
-    n++; username = base + n + '@' + domain;
+    n++; username = base + n + sfx;
   }
-  const password = String(getSetting('pppoe_default_password', 'openisp') || 'openisp');
+  // Clave: la fija de Configuración (pppoe_default_password) o, si no hay, una aleatoria por cliente
+  const fixed = String(getSetting('pppoe_default_password', '') || '').trim();
+  const password = fixed || require('crypto').randomBytes(6).toString('base64').replace(/[^A-Za-z0-9]/g, '').slice(0, 8).padEnd(8, '7');
   db.prepare("UPDATE customers SET pppoe_username=?, pppoe_password=?, connection_type = CASE WHEN connection_type IS NULL OR connection_type='' THEN 'pppoe' ELSE connection_type END WHERE id=?").run(username, password, customerId);
   return { username: username, password: password };
 }

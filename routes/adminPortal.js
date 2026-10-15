@@ -4461,8 +4461,8 @@ router.get('/vouchers-discounts', requireAdminSession, requireSidebarMenuAccess(
     vouchers: voucherSvc.list(),
     editVoucher: editId ? voucherSvc.getById(editId) : null,
     installFee: parseInt(getSetting('registration_install_fee', 0), 10) || 0,
-    pppoeDomain: String(getSetting('pppoe_domain', 'sky.id') || 'sky.id'),
-    pppoeDefaultPassword: String(getSetting('pppoe_default_password', 'openisp') || 'openisp'),
+    pppoeDomain: String(getSetting('pppoe_domain', '') || ''),
+    pppoeDefaultPassword: String(getSetting('pppoe_default_password', '') || ''),
     msg: flashMsg(req)
   });
 });
@@ -4499,8 +4499,8 @@ router.post('/vouchers-discounts/settings', requireAdminSession, express.urlenco
     if (fee <= 0) throw new Error('El costo de instalación no puede ser 0. Para hacerla gratis, usá un código de cupón.');
     saveSettings({
       registration_install_fee: fee,
-      pppoe_domain: String(req.body.pppoe_domain || 'sky.id').replace(/^@/, '').trim() || 'sky.id',
-      pppoe_default_password: String(req.body.pppoe_default_password || 'openisp').trim() || 'openisp'
+      pppoe_domain: String(req.body.pppoe_domain || '').replace(/^@/, '').trim(),
+      pppoe_default_password: String(req.body.pppoe_default_password || '').trim()
     });
     req.session._msg = { type: 'success', text: 'Costo de instalación guardado:' + regional.currencySymbol() + ' ' + fee.toLocaleString(regional.locale()) + '.' };
   } catch (e) { req.session._msg = { type: 'error', text: 'Error:' + e.message }; }
@@ -8609,8 +8609,8 @@ router.post('/radius-settings', requireAdminSession, restrictToAdmin, async (req
       radius_framed_pool: String(radius_framed_pool || 'pool-pppoe').trim(),
       pppoe_auto_generate: pppoe_auto_generate === '0' ? '0' : '1',
       pppoe_username_pattern: String(pppoe_username_pattern || 'name').trim() === 'customer_code' ? 'customer_code' : 'name',
-      pppoe_domain: String(pppoe_domain || 'sky.id').replace(/^@/, '').trim() || 'sky.id',
-      pppoe_default_password: String(pppoe_default_password || 'openisp').trim() || 'openisp',
+      pppoe_domain: String(pppoe_domain || '').replace(/^@/, '').trim(),
+      pppoe_default_password: String(pppoe_default_password || '').trim(),
       radius_use_profile: radius_use_profile === '1' ? '1' : '0'
     });
 

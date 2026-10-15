@@ -245,8 +245,8 @@
           </div>
           <div class="fg">
             <label class="fl"><%= t('admin.set.id_prefix','Prefix ID Pelanggan') %></label>
-            <input class="fc" name="customer_id_prefix" value="<%= settings.customer_id_prefix || 'SKY' %>" placeholder="SKY" style="text-transform:uppercase" maxlength="12">
-            <div style="font-size:10px; color:var(--muted); margin-top:4px">Formato del ID de cliente: <span class="mono">PREFIX-angka</span> (ejemplo: <span class="mono"><%= (settings.customer_id_prefix || 'SKY') %>-48213</span>). Solo los números después del guion. ID <b>permanen</b> y automático para clientes nuevos.</div>
+            <input class="fc" name="customer_id_prefix" value="<%= settings.customer_id_prefix || 'ISP' %>" placeholder="ISP" style="text-transform:uppercase" maxlength="12">
+            <div style="font-size:10px; color:var(--muted); margin-top:4px">Formato del ID de cliente: <span class="mono">PREFIX-angka</span> (ejemplo: <span class="mono"><%= (settings.customer_id_prefix || 'ISP') %>-48213</span>). Solo los números después del guion. ID <b>permanen</b> y automático para clientes nuevos.</div>
           </div>
           <div class="fg">
             <label class="fl"><%= t('admin.set.id_digits','Jumlah Digit Angka ID Pelanggan') %></label>

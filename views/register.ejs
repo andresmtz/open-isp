@@ -109,7 +109,7 @@
         <div class="chip-note" id="coordText"><%= t('customer.register.coord_none', 'Koordinat belum dipilih.') %></div>
       </div>
 
-      <div class="field">
+      <div class="field" style="display:none"><!-- cupones: no se usan (la instalación la cobra el instalador) -->
         <label for="voucher"><i class="bi bi-ticket-perforated"></i> <%= t('customer.register.form_voucher', 'Kode Voucher (Opsional)') %></label>
         <div class="wrap"><i class="bi bi-ticket-perforated lead-ic"></i>
           <input type="text" class="inp" id="voucher" name="voucher" placeholder="<%= t('customer.register.form_voucher_ph', 'mis. HEMAT50') %>" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()" autocapitalize="characters" autocomplete="off"></div>
@@ -131,7 +131,7 @@
           </select>
         </div>
 
-        <div id="regEstimate" style="display:none;border:1px solid var(--border);border-radius:14px;padding:14px;margin:6px 0 14px;background:var(--glass-2,rgba(17,22,34,.72))">
+        <div id="regEstimate" hidden style="display:none !important;border:1px solid var(--border);border-radius:14px;padding:14px;margin:6px 0 14px;background:var(--glass-2,rgba(17,22,34,.72))">
           <div style="font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:8px"><i class="bi bi-calculator" style="color:var(--primary)"></i> <%= t('customer.register.est_title', 'Estimasi Biaya Awal') %></div>
           <div style="display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0"><span><%= t('customer.register.est_install', 'Biaya Pasang') %></span><span id="reInstall"><%= APP_CUR %> 0</span></div>
           <div style="display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0"><span><%= t('customer.register.est_prorata', 'Paket Prorata') %> (<span id="reDays">0</span> <%= t('customer.register.est_days', 'hari') %>)</span><span id="reProrata"><%= APP_CUR %> 0</span></div>
@@ -255,6 +255,7 @@
   function regBack(){ document.getElementById('regStep2').style.display='none'; document.getElementById('regStep1').style.display='block'; }
   function currentPrice(){ var s=document.getElementById('package_id'); if(!s) return 0; var o=s.options[s.selectedIndex]; return (o && o.dataset)?Number(o.dataset.price||0):0; }
   function renderEstimate(){
+    return; // sin estimación: la instalación la cobra el instalador y la primera factura se define al aprobar
     var box=document.getElementById('regEstimate'); if(!box) return;
     var price=currentPrice(); if(!price){ box.style.display='none'; return; }
     var perDay = price / (REG.daysInMonth||30);

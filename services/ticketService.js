@@ -73,6 +73,7 @@ function createTicket(customerId, subject, message, extraData = {}) {
 }
 
 function updateTicketStatus(id, status, technicianId = undefined) {
+  setImmediate(() => { try { require('./installationService').onTicketStatus(id, status); } catch (_) {} });
   if (technicianId !== undefined) {
     const techId = (technicianId && parseInt(technicianId, 10) > 0) ? parseInt(technicianId, 10) : null;
     return db.prepare(`

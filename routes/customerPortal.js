@@ -1578,94 +1578,11 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    if (!name || !phone || !address || !package_id) {
-      throw new Error((res.locals.t || function(k,d){return d;})('customer.register.err_required', 'Todos los campos son obligatorios.'));
-    }
-    // Validasi nomor WhatsApp
-    {
-      if (!regional.isValidPhone(phone)) throw new Error((res.locals.t || function(k,d){return d;})('customer.register.err_phone', 'Número de WhatsApp inválido. Use el formato 08xxxxxxxx.').replace(/08x+/g, regional.phoneExample()));
-      phone = regional.toLocalPhone(phone);
-    }
-
-    const selectedPkg = packages.find(p => String(p.id) === String(package_id));
-    if (!selectedPkg) throw new Error((res.locals.t || function(k,d){return d;})('customer.register.err_pkg', 'No se encontró el plan elegido.'));
-    const bill = registrationService.computeBill(selectedPkg.price, { voucherCode: voucher });
-
-    // Buat pelanggan dengan status inactive (menunggu survei/pemasangan)
-    const ins = customerSvc.createCustomer({
-      name,
-      phone,
-      email,
-      nik,
-      address,
-      package_id,
-      lat: String(lat || '').trim(),
-      lng: String(lng || '').trim(),
-      status: 'inactive',
-      notes: 'Inscripto en línea'
-    });
-    const newCustId = ins && ins.lastInsertRowid ? Number(ins.lastInsertRowid) : null;
-    if (newCustId) {
-      try {
-        db.prepare('UPDATE customers SET reg_voucher_code=?, reg_install_fee=?, reg_prorata=?, reg_discount=?, reg_total=?, reg_due_date=?, reg_status=? WHERE id=?')
-          .run(bill.voucherCode || '', bill.installFee, bill.prorata, bill.discount, bill.total, bill.dueDate, 'pending', newCustId);
-      } catch (e) {}
-    }
-    if (bill.voucherValid) { try { voucherService.incrementUse(bill.voucherCode); } catch (e) {} }
-
-    // Kirim notifikasi ke Admin
-    if (settings.whatsapp_enabled && settings.whatsapp_admin_numbers && settings.whatsapp_admin_numbers.length > 0) {
-      const waNotify = require('../services/waNotifyService');
-      const selectedPkg = packages.find(p => p.id.toString() === package_id.toString());
-      const pkgName = selectedPkg ? selectedPkg.name : 'Desconocido';
-      
-      const adminMsg = `🔔 *NUEVA SOLICITUD DE INSTALACIÓN*\n\nUn nuevo interesado se registró desde la web:\n\n👤 *Nombre:* ${name}\n📞 *WhatsApp:* ${phone}\n📍 *Dirección:* ${address}\n📦 *Plan:* ${pkgName}\n🎟️ *Cupón:* ${bill.voucherCode || '-'}\n💰 *Pago inicial estimado:* ${regional.currencySymbol()} ${bill.total.toLocaleString(regional.locale())}\n\nRevisalo en el panel de administración.`;
-      const latStr = String(lat || '').trim();
-      const lngStr = String(lng || '').trim();
-      const mapLine = (latStr && lngStr) ? `\n🗺️ *Ubicación:* https://maps.google.com/?q=${encodeURIComponent(latStr)},${encodeURIComponent(lngStr)}` : '';
-      const finalAdminMsg = adminMsg + mapLine;
-      
-      const seen = new Set();
-      for (const adminPhone of settings.whatsapp_admin_numbers) {
-        let digits = String(adminPhone || '').replace(/\D/g, '');
-        if (!digits) continue;
-        digits = regional.normalizePhone(digits);
-        if (seen.has(digits)) continue;
-        seen.add(digits);
-        try { await waNotify.sendText(digits, finalAdminMsg); } catch(e) { /* ignore */ }
-      }
-    }
-
-    // Kirim notifikasi ke Teknisi Aktif
-    if (settings.whatsapp_enabled) {
-      try {
-        const waNotify = require('../services/waNotifyService');
-        const adminSvc = require('../services/adminService');
-        const technicians = require('../config/techPermissions').broadcastRecipients(); // solo técnicos con 'reclamos sin asignar'
-        
-        if (technicians.length > 0) {
-          const selectedPkg = packages.find(p => p.id.toString() === package_id.toString());
-          const pkgName = selectedPkg ? selectedPkg.name : 'Desconocido';
-          
-          const techMsg = `🔧 *NUEVA SOLICITUD — REQUIERE VISITA*\n\nUn nuevo interesado necesita una visita técnica:\n\n👤 *Nombre:* ${name}\n📞 *WhatsApp:* ${phone}\n📍 *Dirección:* ${address}\n📦 *Plan:* ${pkgName}\n\nCoordiná la fecha de visita con la administración.`;
-          const latStr = String(lat || '').trim();
-          const lngStr = String(lng || '').trim();
-          const mapLine = (latStr && lngStr) ? `\n🗺️ *Ubicación:* https://maps.google.com/?q=${encodeURIComponent(latStr)},${encodeURIComponent(lngStr)}` : '';
-          const finalTechMsg = techMsg + mapLine;
-          
-          const seenTech = new Set();
-          for (const tech of technicians) {
-            let digits = String(tech.phone || '').replace(/\D/g, '');
-            if (!digits) continue;
-            digits = regional.normalizePhone(digits);
-            if (seenTech.has(digits)) continue;
-            seenTech.add(digits);
-            try { await waNotify.sendText(digits, finalTechMsg); } catch(e) { /* ignore */ }
-          }
-        }
-      } catch(e) { /* ignore */ }
-    }
-
+    // Alta como Inscripto + aviso a administradores y oficina (nunca a técnicos): services/installationService.js
+    const _created = await require('../services/installationService').createRequest(
+      { name, phone, email, nik, address, package_id, lat, lng }, { source: 'Portal web' });
+    const newCustId = _created ? _created.id : null;
+    const bill = null;
     let _newCust = null; try { _newCust = newCustId ? customerSvc.getCustomerById(newCustId) : null; } catch (e) {}
     const _rcOk = registrationService.computeBill(0);
     res.render('register', { error: null, success: (res.locals.t || function(k,d){return d;})('customer.register.success', '¡Solicitud enviada! Nuestro equipo se comunicará con usted por WhatsApp a la brevedad.'), settings, packages, newCustomer: _newCust, bill: bill, regCalc: _rcOk, installFee: _rcOk.installFee });

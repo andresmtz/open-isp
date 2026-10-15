@@ -105,6 +105,11 @@
               <textarea class="fc" id="tmpl_deleted" name="whatsapp_deleted_message" rows="7" required style="width: 100%;"><%= templates.whatsapp_deleted_message %></textarea>
               <div style="font-size: 11px; color: var(--muted); margin-top: 6px;"><i class="bi bi-info-circle"></i> Variabel: <b style="color:var(--primary)">{{id_pelanggan}}</b>, <b>{{nama}}</b>, <b>{{bulan_nunggak}}</b>, <b>{{company}}</b>.</div>
             </div>
+            <div class="fg" style="margin-top: 20px;">
+              <label class="fl">Bienvenida (al cerrar la orden de instalación)</label>
+              <textarea class="fc" id="tmpl_welcome" name="whatsapp_welcome_message" rows="12" style="width: 100%;"><%= templates.whatsapp_welcome_message %></textarea>
+              <div style="font-size: 11px; color: var(--muted); margin-top: 6px;"><i class="bi bi-info-circle"></i> Variables: <b>{{nama}}</b> nombre, <b>{{id_pelanggan}}</b> ID de cliente, <b>{{paket}}</b> plan, <b>{{vencimiento}}</b> primer vencimiento, <b>{{link}}</b> portal de clientes, <b>{{pago}}</b> formas de pago (Configuración → Pantalla de corte), <b>{{company}}</b> empresa, <b>{{company_phone}}</b> teléfono.</div>
+            </div>
               <textarea class="fc" id="tmpl_arrears" name="whatsapp_arrears_warning_message" rows="8" required style="width: 100%;"><%= templates.whatsapp_arrears_warning_message %></textarea>
               <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">
                 <i class="bi bi-info-circle"></i> Variabel: <b style="color:var(--primary)">{{id_pelanggan}}</b> <span style="color:var(--primary)"><%= t('common.required','(wajib)') %></span>, <b>{{nama}}</b>, <b>{{paket}}</b>, <b>{{tagihan}}</b>, <b>{{rincian}}</b>, <b>{{bulan_nunggak}}</b>, <b>{{batas}}</b>, <b>{{link}}</b>, <b>{{company}}</b>.

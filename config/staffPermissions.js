@@ -60,6 +60,8 @@ const CATALOG = [
     ['POST', '^/customers$'],
     ['POST', `^/customers/${ID}/(update|generate-pppoe)$`],
     ['POST', `^/registrations/${ID}/(approve|reject)$`],
+    ['POST', '^/registrations$'],
+    ['GET', `^/registrations/${ID}/plan$`],
     ['GET', '^/api/mikrotik/(users|profiles|hotspot-user-profiles)(/\\d+)?$'],
   ] },
   { key: 'reclamos', label: 'Reclamos de clientes', help: 'Ver, crear y actualizar reclamos (no borrarlos).', def: true, rules: [

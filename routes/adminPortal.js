@@ -2413,9 +2413,8 @@ router.post('/customers/:id/generate-pppoe', requireAdminSession, async (req, re
         '📍 *Dirección:*' + ((cust && cust.address) || '-') + '\n\n' +
         'Configurá el equipo del cliente con estos datos.';
       await waNotify.notifyAdmin(credMsg);
-      await waNotify.notifyInstallers(credMsg);
     } catch (e) {}
-    req.session._msg = { type: 'success', text: 'Cuenta PPPoE creada:' + g.username + ' / ' + g.password + ' (credenciales enviadas al administrador y a los técnicos con permiso de instalaciones).' };
+    req.session._msg = { type: 'success', text: 'Cuenta PPPoE creada: ' + g.username + ' / ' + g.password + ' (credenciales enviadas al administrador).' };
   } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo generar la cuenta PPPoE:' + e.message }; }
   res.redirect(req.get('Referrer') || '/admin/customers');
 });
@@ -4405,110 +4404,41 @@ router.post('/customers/auto-deactivate-now', requireAdminSession, restrictToAdm
   }
 });
 
+// ─── SOLICITUDES DE INSTALACIÓN (Inscriptos): services/installationService.js ───
+router.post('/registrations', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    const c = await require('../services/installationService').createRequest(req.body || {}, { source: 'Panel', actor });
+    req.session._msg = { type: 'success', text: `Solicitud de instalación de ${c.name} cargada (Inscripto). Para asignarla: menú ⋮ → Aprobar e instalar.` };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo cargar la solicitud: ' + e.message }; }
+  res.redirect('/admin/customers?status=inactive');
+});
+
+router.get('/registrations/:id/plan', requireAdminSession, (req, res) => {
+  try {
+    const inst = require('../services/installationService');
+    const c = customerSvc.getCustomerById(Number(req.params.id));
+    if (!c) throw new Error('Inscripto no encontrado');
+    const pkg = c.package_id ? customerSvc.getPackageById(c.package_id) : null;
+    if (!pkg) throw new Error('El inscripto no tiene plan asignado');
+    const plan = inst.firstInvoicePlan(pkg.price, req.query.install, req.query.due);
+    res.json({ ok: true, customer: { id: c.id, name: c.name, phone: c.phone, address: c.address }, packageName: pkg.name, plan,
+      installers: inst.installers().map(i => ({ key: i.key, name: i.name, group: i.group || '', hasPhone: i.type === 'admin' || !!i.phone })) });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
 router.post('/registrations/:id/approve', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
   try {
-    const id = Number(req.params.id);
-    const cust = customerSvc.getCustomerById(id);
-    if (!cust) throw new Error('Inscripto no encontrado');
-    let total = parseInt(req.body.final_total, 10);
-    if (!Number.isFinite(total) || total < 0) total = Number(cust.reg_total || 0);
-
-    // Periode tagihan pertama = bulan jatuh tempo (acuan tgl 5)
-    const due = String(cust.reg_due_date || '');
-    let pMonth, pYear;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(due)) { pYear = Number(due.slice(0, 4)); pMonth = Number(due.slice(5, 7)); }
-    else { const ti = getCurrentTimeInfo(); pMonth = ti.month || (new Date().getMonth() + 1); pYear = ti.year || new Date().getFullYear(); }
-
-    // Auto-generate akun PPPoE bila belum ada (bisa dimatikan di Pengaturan RADIUS/PPPoE)
-    const _autoGenPppoe = getSetting('pppoe_auto_generate', '1') === '1';
-    let pppoeUser = cust.pppoe_username || '';
-    let pppoePass = cust.pppoe_password || '';
-    if (!pppoeUser && _autoGenPppoe) { try { const g = customerSvc.generatePppoeAccount(id); pppoeUser = g.username; pppoePass = g.password; } catch (e) {} }
-
-    // Provisioning: RADIUS baca DB langsung; mode MikroTik perlu push secret ke router
-    try {
-      const _radiusEnabled = getSetting('radius_enabled', '0') === '1';
-      const _isRadius = _radiusEnabled ? (Number(cust.is_radius) === 1 ? 1 : 0) : 0;
-      db.prepare('UPDATE customers SET is_radius=? WHERE id=?').run(_isRadius, id);
-      const _shouldSyncToMikrotik = !_radiusEnabled || !_isRadius;
-      if (_shouldSyncToMikrotik && pppoeUser) {
-        const _pkg = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
-        await mikrotikService.createPppoeSecret({
-          username: pppoeUser,
-          password: pppoePass,
-          profile: _pkg ? _pkg.name : '',
-          remoteAddress: cust.pppoe_remote_address || '',
-          routerId: cust.router_id || null
-        });
-        logger.info('[RegApprove] PPPoE secret dipush ke MikroTik: ' + pppoeUser + ' (profile ' + (_pkg ? _pkg.name : '-') + ')');
-      } else if (pppoeUser) {
-        logger.info('[RegApprove] Mode RADIUS - kredensial dibaca dari DB (tanpa push MikroTik): ' + pppoeUser);
-      }
-    } catch (e) { try { logger.error('[RegApprove] Provisioning PPPoE gagal: ' + e.message); } catch (_) {} }
-
-    const existingInv = db.prepare('SELECT id FROM invoices WHERE customer_id=? AND period_month=? AND period_year=?').get(id, pMonth, pYear);
-    if (!existingInv) {
-      db.prepare('INSERT INTO invoices (customer_id, period_month, period_year, amount, status, notes) VALUES (?,?,?,?,?,?)')
-        .run(id, pMonth, pYear, total, 'unpaid', 'Factura inicial de alta (instalación + prorrateo)');
-    }
-
-    const installDate = cust.install_date || String(cust.created_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
-    const inFee = parseInt(req.body.reg_install_fee, 10);
-    const inPro = parseInt(req.body.reg_prorata, 10);
-    const inDisc = parseInt(req.body.reg_discount, 10);
-    db.prepare('UPDATE customers SET status=?, reg_status=?, reg_total=?, reg_install_fee=COALESCE(?,reg_install_fee), reg_prorata=COALESCE(?,reg_prorata), reg_discount=COALESCE(?,reg_discount), install_date=? WHERE id=?')
-      .run('active', 'approved', total, Number.isFinite(inFee) ? inFee : null, Number.isFinite(inPro) ? inPro : null, Number.isFinite(inDisc) ? inDisc : null, installDate, id);
-
-    // Notifikasi WA ke pelanggan: tagihan pertama + QRIS dinamis
-    try {
-      const waNotify = require('../services/waNotifyService');
-      const invoiceQris = require('../services/invoiceQrisService');
-      const invRow = db.prepare('SELECT * FROM invoices WHERE customer_id=? AND period_month=? AND period_year=?').get(id, pMonth, pYear);
-      if (cust.phone && invRow) {
-        const q = invoiceQris.ensureInvoiceQris(invRow);
-        const mns = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-        const periodStr = (mns[pMonth - 1] || pMonth) + ' ' + pYear;
-        const pkg = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
-        const comp = getSetting('company_header', 'OPEN-ISP');
-        const caption = 'Hola *' + cust.name + '*,\n\n' +
-          '🎉 ¡Bienvenido/a! Le enviamos su primera factura de internet:\n\n' +
-          '📋 *RESUMEN DE LA FACTURA*\n' +
-          '• ID de cliente : *' + (cust.customer_code || '-') + '*\n' +
-          '• Plan          :' + (pkg ? pkg.name : (cust.package_name || '-')) + '\n' +
-          '• Monto         : *' + regional.currencySymbol() + ' ' + Number(invRow.amount || 0).toLocaleString(regional.locale()) + '*\n' +
-          '• Período       :' + periodStr + '\n\n' +
-          'Escanee el QR de arriba para pagar.\n\n' +
-          'Gracias.\n—' + comp;
-        if (q.payload) {
-          const QRCode = require('qrcode');
-          const png = await QRCode.toBuffer(q.payload, { width: 512, margin: 1 });
-          await waNotify.sendImage(cust.phone, png, caption);
-        } else {
-          await waNotify.sendText(cust.phone, caption);
-        }
-      }
-    } catch (e) { try { logger.error('[RegApprove] WA error: ' + e.message); } catch (_) {} }
-
-    // Kirim kredensial PPPoE ke admin & teknisi
-    try {
-      if (pppoeUser) {
-        const waNotify = require('../services/waNotifyService');
-        const pkgC = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
-        const credMsg = '🔑 *CREDENCIALES PPPoE DEL CLIENTE NUEVO*\n\n' +
-          '👤 *Nombre:*' + cust.name + '\n' +
-          '🆔 *ID:* ' + (cust.customer_code || '-') + '\n' +
-          '📦 *Plan:*' + (pkgC ? pkgC.name : (cust.package_name || '-')) + '\n' +
-          '📡 *PPPoE User:* *' + pppoeUser + '*\n' +
-          '🔒 *PPPoE Pass:* *' + (pppoePass || '-') + '*\n' +
-          '📍 *Dirección:*' + (cust.address || '-') + '\n\n' +
-          'Configurá el equipo del cliente con estos datos.';
-        await waNotify.notifyAdmin(credMsg);
-        await waNotify.notifyInstallers(credMsg);
-      }
-    } catch (e) { try { logger.error('[RegApprove] staff cred error: ' + e.message); } catch (_) {} }
-
-    req.session._msg = { type: 'success', text: 'Pendaftar ' + cust.name + ' aprobado (activo) + primera factura creada (' + regional.currencySymbol() + ' ' + total.toLocaleString(regional.locale()) + ', período' + pMonth + '/' + pYear + ').' };
-  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo aprobar:' + e.message }; }
+    const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    const b = req.body || {};
+    const r = await require('../services/installationService').approve(Number(req.params.id),
+      { installer: b.installer, installDate: b.install_date, dueDate: b.due_date, total: b.final_total, notes: b.installer_notes }, actor);
+    let text = `${r.customer.name}: alta aprobada. Instala ${r.installer.name} (orden de trabajo N.º ${r.ticketId}). ` +
+      `Primera factura ${regional.formatMoney(r.amount)}, vence el ${r.plan.dueDate.split('-').reverse().join('/')}.`;
+    text += r.installerNotified ? ' Se le enviaron los datos por WhatsApp.' : ' No se pudo avisar por WhatsApp a quien instala (revisá su teléfono).';
+    if (r.mkWarn) text += ' Atención: no se pudo crear el usuario PPPoE en el MikroTik: ' + r.mkWarn;
+    req.session._msg = { type: r.mkWarn ? 'error' : 'success', text };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo aprobar: ' + e.message }; }
   res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
 });
 
@@ -7063,7 +6993,8 @@ router.get('/whatsapp/templates', requireAdminSession, requireSidebarMenuAccess(
     whatsapp_arrears_warning_message: db.getAppSetting('whatsapp_arrears_warning_message', defaultArrears),
     whatsapp_autolunas_message: db.getAppSetting('whatsapp_autolunas_message', defaultAutolunas),
     whatsapp_deactivated_message: db.getAppSetting('whatsapp_deactivated_message', defaultDeactivated),
-    whatsapp_deleted_message: db.getAppSetting('whatsapp_deleted_message', defaultDeleted)
+    whatsapp_deleted_message: db.getAppSetting('whatsapp_deleted_message', defaultDeleted),
+    whatsapp_welcome_message: db.getAppSetting('whatsapp_welcome_message', require('../services/installationService').DEFAULT_WELCOME)
   };
 
   res.render('admin/whatsapp_templates', {
@@ -7096,6 +7027,7 @@ router.post('/whatsapp/templates', requireAdminSession, express.urlencoded({ ext
     db.saveAppSetting('whatsapp_autolunas_message', whatsapp_autolunas_message || '');
     db.saveAppSetting('whatsapp_deactivated_message', whatsapp_deactivated_message || '');
     db.saveAppSetting('whatsapp_deleted_message', whatsapp_deleted_message || '');
+    if (req.body.whatsapp_welcome_message !== undefined) db.saveAppSetting('whatsapp_welcome_message', req.body.whatsapp_welcome_message || '');
 
     req.session._msg = { type: 'success', text: 'Plantillas de WhatsApp guardadas.' };
   } catch (e) {

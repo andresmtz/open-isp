@@ -30,11 +30,12 @@ function getAssignedTickets(techId) {
 }
 
 function getOpenTickets() {
+  require('./installationService').ensureSchema(); // columna tickets.kind
   return db.prepare(`
     SELECT t.*, c.name as customer_name, c.phone as customer_phone, c.address as customer_address 
     FROM tickets t 
     JOIN customers c ON t.customer_id = c.id 
-    WHERE t.status = 'open'
+    WHERE t.status = 'open' AND COALESCE(t.kind, '') != 'install'
     ORDER BY t.created_at DESC
   `).all();
 }
@@ -62,6 +63,7 @@ function takeTicket(ticketId, techId) {
 
 function updateTicketStatus(ticketId, techId, status, extraData = {}) {
   const { notes, photos, photoMetadata } = extraData;
+  setImmediate(() => { try { require('./installationService').onTicketStatus(ticketId, status); } catch (_) {} });
   
   const updates = ['status = ?', 'updated_at = (NOW_LOCAL())'];
   const params = [status];

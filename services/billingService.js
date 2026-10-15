@@ -110,8 +110,11 @@ function generateMonthlyInvoices(month, year) {
   const voidPrevious = require('../config/billingCycle').get().voidPreviousUnpaid;
   const createdFor = [];
   const run = db.transaction(() => {
+    const periodKey = `${year}-${String(month).padStart(2, '0')}`;
     for (const c of customers) {
       if (existingIds.has(c.id)) continue;
+      // Clientes nuevos: la primera factura (proporcional + mensualidades) ya cubre hasta este período
+      if (c.first_invoice_period && periodKey <= String(c.first_invoice_period)) continue;
       const pkg = db.prepare('SELECT * FROM packages WHERE id=?').get(c.package_id);
       if (!pkg) continue;
       const { amount, bumpPromo: bump, notesAuto } = computeInvoiceAmountAndMeta(c, pkg, month, year);

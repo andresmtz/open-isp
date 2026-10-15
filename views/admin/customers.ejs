@@ -156,6 +156,7 @@
           <% if (_can('exportar')) { %><a href="/admin/customers/export" class="btn btn-g btn-sm"><i class="bi bi-file-earmark-excel"></i> <%= t('admin.customers.export_excel', 'Export Excel') %></a><% } %>
           <% if (_adm) { %><button class="btn btn-g btn-sm" onclick="openModal('importModal')"><i class="bi bi-file-earmark-arrow-up"></i> <%= t('admin.customers.import_excel', 'Import Excel') %></button><% } %>
 <% if (_adm) { %><button type="button" class="btn btn-g btn-sm" onclick="syncAllCust()"><i class="bi bi-arrow-repeat"></i> <%= t('admin.cust.apply_network','Terapkan ke Jaringan') %></button><% } %>
+          <% if (_can('clientes_alta')) { %><button class="btn btn-g btn-sm" onclick="openModal('newReqModal')" title="Cargar un interesado pendiente de instalación"><i class="bi bi-person-plus"></i> Nueva solicitud de instalación</button><% } %>
           <% if (_can('clientes_alta')) { %><button class="btn btn-p btn-sm" onclick="openModal('addModal')"><i class="bi bi-plus-lg"></i> <%= t('admin.customers.add', 'Tambah Pelanggan') %></button><% } %>
         </div>
       </div>
@@ -253,6 +254,9 @@
                   <i class="bi bi-info-circle-fill" style="font-size:12px;opacity:0.75;"></i>
                 </a>
                 <% if (c.customer_code) { %><div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px;" title="ID de cliente"><i class="bi bi-person-badge"></i> <%= c.customer_code %></div><% } %>
+                <% if (c.status === 'inactive' && c.reg_status !== 'rejected' && _can('clientes_alta')) { %>
+                  <button type="button" class="btn btn-sm btn-p" style="margin-top:6px;padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" onclick="openRegCalc(+this.dataset.id)"><i class="bi bi-tools"></i> Aprobar e instalar</button>
+                <% } %>
                 <% if (_can('cobrar') && c.status !== 'cancelled' && c.status !== 'inactive') { %>
                   <button type="button" class="btn btn-sm <%= c.unpaid_count > 0 ? 'btn-p' : 'btn-g' %>" style="margin-top:6px;padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" onclick="openReceive(+this.dataset.id)" title="<%= c.unpaid_count > 0 ? 'Registrar el pago de la deuda' : 'Sin deuda: el pago queda como saldo a favor' %>"><i class="bi bi-cash-coin"></i> Registrar pago</button>
                 <% } %>
@@ -370,7 +374,7 @@
                   <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
                     <% if (c.status === 'inactive' && _can('clientes_alta')) { %>
-                      <button type="button" class="act-item success" data-idx="<%= i %>" onclick="openRegCalc(+this.dataset.idx)"><i class="bi bi-calculator"></i> Calcular y aprobar</button>
+                      <button type="button" class="act-item success" data-id="<%= c.id %>" onclick="openRegCalc(+this.dataset.id)"><i class="bi bi-tools"></i> Aprobar e instalar</button>
                       <button type="submit" form="rej-<%= c.id %>" class="act-item danger"><i class="bi bi-x-lg"></i> <%= t('admin.cust.reject_reg','Tolak Pendaftar') %></button>
                       <div class="act-sep"></div>
                     <% } %>
@@ -1193,38 +1197,64 @@
 
 <!-- Modal Kalkulator Prorata (Setujui Pendaftar) -->
 <div class="mo" id="regCalcModal">
-  <div class="mb" style="max-width:540px">
-    <div class="mh"><span class="mt"><i class="bi bi-calculator"></i> <%- t('admin.cust.calc_reg','Kalkulator Prorata &mdash; Setujui Pendaftar') %></span><button class="mc" onclick="closeModal('regCalcModal')">&times;</button></div>
-    <form method="POST" id="regCalcForm">
+  <div class="mb" style="max-width:560px">
+    <div class="mh"><span class="mt"><i class="bi bi-tools"></i> Aprobar e instalar</span><button class="mc" onclick="closeModal('regCalcModal')">&times;</button></div>
+    <form method="POST" id="regCalcForm" onsubmit="return rcSubmit(this)">
       <div class="mbody">
         <div id="regCalcWho" style="font-size:13px;color:var(--muted);margin-bottom:12px"></div>
-        <div class="form-row">
-          <div class="fg"><label class="fl"><%= t('admin.cust.f_monthly_fee','Biaya Langganan Bulanan (Rp)') %></label><input class="fc" type="number" min="0" step="1000" id="rc_fee"></div>
-          <div class="fg"><label class="fl"><%= t('admin.cust.f_install_fee_rp','Biaya Pasang (Rp)') %></label><input class="fc" type="number" min="0" step="1000" id="rc_install"></div>
+        <div class="fg">
+          <label class="fl">¿Quién hace la instalación?</label>
+          <select class="fs" name="installer" id="rc_installer" required></select>
+          <div class="hint" style="margin-top:4px">Recibe por WhatsApp los datos del cliente, la ubicación y el usuario PPPoE. Si es un técnico, la orden aparece solo en su portal.</div>
         </div>
         <div class="form-row">
-          <div class="fg"><label class="fl"><%= t('admin.cust.start_use','Mulai Pakai') %></label><input class="fc" type="date" id="rc_start"></div>
-          <div class="fg"><label class="fl"><%= t('admin.cust.f_due','Jatuh Tempo (acuan tgl 5)') %></label><input class="fc" type="date" id="rc_due"></div>
-        </div>
-        <div class="form-row">
-          <div class="fg"><label class="fl"><%= t('admin.cust.f_voucher_disc_rp','Diskon Voucher (Rp)') %></label><input class="fc" type="number" min="0" step="1000" id="rc_discount"></div>
-          <div class="fg"><label class="fl"><%= t('admin.cust.f_days','Jumlah Hari') %></label><input class="fc" id="rc_days" readonly></div>
+          <div class="fg"><label class="fl">Fecha de instalación</label><input class="fc" type="date" name="install_date" id="rc_install_date" required></div>
+          <div class="fg"><label class="fl">Primer vencimiento</label><input class="fc" type="date" name="due_date" id="rc_due_date" required></div>
         </div>
         <div style="background:rgba(173,255,47,.08);border:1px solid var(--primary-glow);border-radius:12px;padding:12px;margin-top:6px">
-          <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span>Prorrateo del plan</span><span id="rc_prorata"><%= APP_CUR %> 0</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0"><span><%= t('admin.cust.f_install_fee','Biaya Pasang') %></span><span id="rc_install_out"><%= APP_CUR %> 0</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;color:var(--danger)"><span><%= t('admin.cust.f_voucher_disc','Diskon Voucher') %></span><span id="rc_disc_out">- <%= APP_CUR %> 0</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;padding:8px 0 2px;border-top:1px solid var(--border);margin-top:6px"><span>Total del pago inicial</span><span id="rc_total" style="color:var(--primary)"><%= APP_CUR %> 0</span></div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Primera factura (el costo de instalación lo cobra el instalador, no se factura)</div>
+          <div id="rc_lines"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:800;padding:8px 0 2px;border-top:1px solid var(--border);margin-top:6px;gap:10px">
+            <span>Total</span>
+            <input class="fc" type="number" min="0" step="1000" name="final_total" id="rc_total" style="max-width:170px;text-align:right;font-weight:800">
+          </div>
+          <div class="hint" id="rc_hint" style="margin-top:6px"></div>
         </div>
-        <div class="hint" id="rc_hint" style="margin-top:8px"></div>
-        <input type="hidden" name="final_total" id="rc_final">
-        <input type="hidden" name="reg_install_fee" id="rc_h_install">
-        <input type="hidden" name="reg_prorata" id="rc_h_prorata">
-        <input type="hidden" name="reg_discount" id="rc_h_disc">
+        <div class="fg" style="margin-top:10px"><label class="fl">Notas para el instalador (opcional)</label><textarea class="fc" name="installer_notes" rows="2" placeholder="Ej.: llamar antes, portón verde"></textarea></div>
       </div>
       <div class="mf">
-        <button type="button" class="btn btn-g" onclick="closeModal('regCalcModal')"><%= t('common.cancel','Batal') %></button>
-        <button type="submit" class="btn btn-s"><i class="bi bi-check-lg"></i> <%- t('admin.cust.approve_invoice','Setujui &amp; Buat Tagihan') %></button>
+        <button type="button" class="btn btn-g" onclick="closeModal('regCalcModal')">Cancelar</button>
+        <button type="submit" class="btn btn-s" id="rc_submit"><i class="bi bi-check-lg"></i> Aprobar y asignar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="mo" id="newReqModal">
+  <div class="mb" style="max-width:540px">
+    <div class="mh"><span class="mt"><i class="bi bi-person-plus"></i> Nueva solicitud de instalación</span><button class="mc" onclick="closeModal('newReqModal')">&times;</button></div>
+    <form method="POST" action="/admin/registrations" data-loading="Guardando…">
+      <div class="mbody">
+        <div class="hint" style="margin-bottom:10px">Queda como <b>Inscripto</b> (pendiente de instalación). Después se asigna con <b>Aprobar e instalar</b>.</div>
+        <div class="fg"><label class="fl">Nombre y apellido *</label><input class="fc" name="name" required></div>
+        <div class="form-row">
+          <div class="fg"><label class="fl">WhatsApp *</label><input class="fc" name="phone" inputmode="tel" placeholder="09xx xxx xxx" required></div>
+          <div class="fg"><label class="fl">Cédula</label><input class="fc" name="nik" inputmode="numeric"></div>
+        </div>
+        <div class="fg"><label class="fl">Dirección *</label><input class="fc" name="address" required></div>
+        <div class="fg"><label class="fl">Ubicación</label><input class="fc" name="location" placeholder="Link de Google Maps o coordenadas (-25.39, -57.14)"><div class="hint" style="margin-top:4px">Pegá el link que manda el cliente por WhatsApp.</div></div>
+        <div class="fg">
+          <label class="fl">Plan *</label>
+          <select class="fs" name="package_id" required>
+            <option value="">-- Elegí un plan --</option>
+            <% packages.filter(p => p.is_active !== 0).forEach(p => { %><option value="<%= p.id %>"><%= p.name %><% if (_can('ver_facturas') && p.price !== undefined) { %> — <%= APP_CUR %> <%= Number(p.price).toLocaleString(APP_LOCALE) %><% } %></option><% }) %>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Notas (opcional)</label><textarea class="fc" name="notes" rows="2"></textarea></div>
+      </div>
+      <div class="mf">
+        <button type="button" class="btn btn-g" onclick="closeModal('newReqModal')">Cancelar</button>
+        <button type="submit" class="btn btn-p"><i class="bi bi-check-lg"></i> Guardar solicitud</button>
       </div>
     </form>
   </div>
@@ -1708,48 +1738,50 @@ function editCust(idx) {
 }
 
 function rcFmt(n){ return APP_CUR + ' ' + Math.round(Number(n)||0).toLocaleString(APP_LOCALE); }
-function rcCompute(){
-  var fee = parseFloat(document.getElementById('rc_fee').value)||0;
-  var install = parseFloat(document.getElementById('rc_install').value)||0;
-  var disc = parseFloat(document.getElementById('rc_discount').value)||0;
-  var s = document.getElementById('rc_start').value;
-  var d = document.getElementById('rc_due').value;
-  var hint = document.getElementById('rc_hint');
-  if(!s || !d){ hint.textContent='Completá la fecha de inicio y de vencimiento.'; return; }
-  var sd = new Date(s), dd = new Date(d);
-  if(dd <= sd){ hint.textContent='El vencimiento debe ser posterior a la fecha de inicio.'; return; }
-  var diffDays = Math.max(1, Math.round((dd - sd)/86400000));
-  var daysInMonth = new Date(dd.getFullYear(), dd.getMonth()+1, 0).getDate();
-  var perDay = fee / daysInMonth;
-  var prorata = Math.round(diffDays * perDay);
-  var gross = prorata + install;
-  var dcap = Math.min(disc, gross);
-  var total = Math.max(0, gross - dcap);
-  document.getElementById('rc_days').value = diffDays + ' hari';
-  document.getElementById('rc_prorata').textContent = rcFmt(prorata);
-  document.getElementById('rc_install_out').textContent = rcFmt(install);
-  document.getElementById('rc_disc_out').textContent = '- ' + rcFmt(dcap);
-  document.getElementById('rc_total').textContent = rcFmt(total);
-  hint.textContent = 'Rumus: (' + rcFmt(fee) + ' / ' + daysInMonth + ' días) × ' + diffDays + ' días = ' + rcFmt(prorata);
-  document.getElementById('rc_final').value = total;
-  document.getElementById('rc_h_prorata').value = prorata;
-  document.getElementById('rc_h_install').value = install;
-  document.getElementById('rc_h_disc').value = dcap;
+var _rcId = null, _rcAuto = 0;
+async function rcLoad(first){
+  var q = new URLSearchParams();
+  if (!first) { q.set('install', document.getElementById('rc_install_date').value); q.set('due', document.getElementById('rc_due_date').value); }
+  var r = await fetch('/admin/registrations/' + _rcId + '/plan?' + q.toString(), { headers: { Accept: 'application/json' } });
+  var j = await r.json();
+  if (!j.ok) { document.getElementById('rc_hint').textContent = j.message || 'Error'; return null; }
+  var p = j.plan;
+  document.getElementById('rc_install_date').value = p.installDate;
+  document.getElementById('rc_due_date').value = p.dueDate;
+  document.getElementById('rc_lines').innerHTML = p.lines.map(function(l){ return '<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;gap:10px"><span>' + l.label + '</span><span>' + rcFmt(l.amount) + '</span></div>'; }).join('');
+  var tot = document.getElementById('rc_total');
+  if (first || Number(tot.value) === _rcAuto) tot.value = p.total;
+  _rcAuto = p.total;
+  var d = p.dueDate.split('-');
+  document.getElementById('rc_hint').textContent = 'Factura del período ' + d[1] + '/' + d[0] + ', vence el ' + d[2] + '/' + d[1] + '/' + d[0] + '. El ciclo mensual no vuelve a facturar ese mes.';
+  return j;
 }
-function openRegCalc(idx){
-  var c = customersData[idx]; if(!c) return;
-  var price = Number(c.package_price || 0) || 0;
-  document.getElementById('rc_fee').value = price;
-  document.getElementById('rc_install').value = Number(c.reg_install_fee||0);
-  document.getElementById('rc_discount').value = Number(c.reg_discount||0);
-  document.getElementById('rc_start').value = String(c.created_at||'').slice(0,10) || new Date().toISOString().slice(0,10);
-  document.getElementById('rc_due').value = c.reg_due_date || '';
-  document.getElementById('regCalcForm').action = '/admin/registrations/' + c.id + '/approve';
-  document.getElementById('regCalcWho').innerHTML = 'Cliente: <b>' + (c.name||'') + '</b> &bull; ' + (c.phone||'-') + (c.reg_voucher_code? (' &bull; Voucher <b>'+c.reg_voucher_code+'</b>'):'');
-  rcCompute();
+async function openRegCalc(id){
+  _rcId = id;
+  document.getElementById('regCalcForm').action = '/admin/registrations/' + id + '/approve';
+  document.getElementById('rc_lines').innerHTML = '';
+  document.getElementById('rc_hint').textContent = 'Calculando…';
   openModal('regCalcModal');
+  var j = await rcLoad(true); if (!j) return;
+  var c = j.customer;
+  document.getElementById('regCalcWho').innerHTML = 'Cliente: <b>' + String(c.name||'').replace(/</g,'&lt;') + '</b> &bull; ' + String(c.phone||'-').replace(/</g,'&lt;') + ' &bull; Plan <b>' + String(j.packageName||'').replace(/</g,'&lt;') + '</b>';
+  var sel = document.getElementById('rc_installer'), groups = {};
+  sel.innerHTML = '<option value="">-- Elegí quién instala --</option>';
+  j.installers.forEach(function(i){
+    var g = i.group || '';
+    var parent = sel;
+    if (g) { if (!groups[g]) { groups[g] = document.createElement('optgroup'); groups[g].label = g; sel.appendChild(groups[g]); } parent = groups[g]; }
+    var o = document.createElement('option'); o.value = i.key; o.textContent = i.name + (i.hasPhone ? '' : ' (sin teléfono: no recibe WhatsApp)'); parent.appendChild(o);
+  });
 }
-['rc_fee','rc_install','rc_discount','rc_start','rc_due'].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener('input', rcCompute); });
+['rc_install_date','rc_due_date'].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener('change', function(){ rcLoad(false); }); });
+function rcSubmit(f){
+  if (!f.installer.value) { alert('Elegí quién va a hacer la instalación.'); return false; }
+  var who = f.installer.options[f.installer.selectedIndex].textContent;
+  if (!confirm('¿Aprobar el alta y asignar la instalación a ' + who + '?\n\nSe crea el usuario PPPoE en el MikroTik, el cliente pasa a activo y se genera la primera factura de ' + rcFmt(f.final_total.value) + '.')) return false;
+  document.getElementById('rc_submit').disabled = true;
+  return true;
+}
 
 function openGenInvoice(idx) {
   const c = customersData[idx];

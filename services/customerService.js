@@ -1044,7 +1044,7 @@ async function cancelCustomer(id, { reason, actor } = {}) {
     db.prepare("UPDATE customers SET pppoe_remote_address = NULL, static_ip = '' WHERE id = ?").run(id);
     try {
       db.prepare("INSERT INTO customer_events (customer_id, type, old_value, new_value) VALUES (?, 'install', NULL, ?)").run(id,
-        `Servicio cancelado por ${by}: ${why}. Usuario PPPoE ${c.pppoe_username || '-'} borrado, IP ${freedIp || '-'} liberada` +
+        `Servicio cancelado por ${by}: ${why}. Usuario PPPoE ${c.pppoe_username || '-'} ${network.readOnly ? 'NO borrado (MikroTik en solo lectura)' : 'borrado del MikroTik'}, IP ${freedIp || '-'} liberada` +
         (olt.removed.length ? `, ONU ${olt.removed.join(', ')} dada de baja en la OLT` : '') + (olt.errors.length ? `. OLT: ${olt.errors.join('; ')}` : '') + '.');
     } catch (_) {}
     return r.changes;

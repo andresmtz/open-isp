@@ -262,7 +262,7 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
   if (who.type !== 'admin' && pppoeUser) {
     try { await waNotify().notifyAdmin(`🔑 *Alta de ${cust.name}*\nInstala: ${who.name}\nPPPoE: ${pppoeUser} / ${pppoePass || '-'}\nPrimera factura: ${regional.formatMoney(amount)} (vence ${fmtDate(plan.dueDate)})`); } catch (_) {}
   }
-  logger.info(`[Instalación] ${cust.name} aprobado por ${actor}; instala ${who.name}; orden #${ticketId}; primera factura ${amount} período ${periodKey}`);
+  logger.info(`[Instalación] ${cust.name}: instalación asignada por ${actor} a ${who.name}; orden #${ticketId}; primera factura estimada ${amount}`);
   return { customer: cust, installer: who, plan, amount, ticketId, pppoeUser, installerNotified, mkWarn };
 }
 

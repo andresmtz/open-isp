@@ -2044,7 +2044,6 @@ async function openReassign(id, name){
   sel.innerHTML = '<option value="">-- Elegí --</option>';
   m.installers.forEach(function(i){ var g = i.group || '', parent = sel; if (g) { if (!groups[g]) { groups[g] = document.createElement('optgroup'); groups[g].label = g; sel.appendChild(groups[g]); } parent = groups[g]; } var o = document.createElement('option'); o.value = i.key; o.textContent = i.name; parent.appendChild(o); });
   openModal('reassignModal');
-});
 }
 var _hist = [], _histF = 'all';
 var HIST_KINDS = { all: 'Todo', pago: 'Pagos', factura: 'Facturas', estado: 'Cortes y estado', promesa: 'Promesas', reclamo: 'Reclamos', wifi: 'WiFi y equipo', whatsapp: 'WhatsApp' };

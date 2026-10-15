@@ -1825,7 +1825,7 @@ router.get('/dashboard', async (req, res) => {
   const _invs = (invoices || []).slice().sort((a,b) => ((b.period_year*100)+(b.period_month||0)) - ((a.period_year*100)+(a.period_month||0)));
   const _unpaid = _invs.find(i => { const st = String(i.status || '').toLowerCase(); return ['paid','lunas','void','hangus','batal'].indexOf(st) === -1; });
   const _paid = _invs.filter(i => ['paid','lunas'].indexOf(String(i.status || '').toLowerCase()) !== -1);
-  const _isolirText = _unpaid ? _isolirOf(_unpaid.period_year, _unpaid.period_month)
+  let _isolirText = _unpaid ? _isolirOf(_unpaid.period_year, _unpaid.period_month)
     : (_paid[0] ? _isolirOf(_paid[0].period_year, (_paid[0].period_month || 1) + 1) : _isolirOf(_now.getFullYear(), _now.getMonth() + 1));
   let _bill = null, _detail = { name: _pkgName + (_speedDown !== '-' ? ' (' + _speedDown + ' Mbps)' : ''), period: '-', status: _t('pwa.home.paid','Lunas'), paid: true, amount: _fmt(0) };
   let _activeDaysText = _statusActive ? _t('common.active','Aktif') : _t('common.inactive','Inactivo'), _activePct = _statusActive ? 100 : 0;
@@ -1853,11 +1853,61 @@ router.get('/dashboard', async (req, res) => {
   } else if (_paid[0]) {
     _detail = { name: _pkgName + (_speedDown !== '-' ? ' (' + _speedDown + ' Mbps)' : ''), period: _periodLabel(_paid[0]), status: _t('pwa.home.paid','Lunas'), paid: true, amount: _fmt(_paid[0].amount) };
   }
-  const _history = _paid.slice(0, 6).map(i => ({
-    month: _periodLabel(i),
-    paidText: _t('pwa.r.paid_on','Dibayar') + (i.paid_at ? ' ' + String(i.paid_at).slice(0, 10) : ''),
-    amount: _fmt(i.amount), statusText: _t('pwa.status.paid','LUNAS')
-  }));
+  // ── Saldo real (pagos parciales, varios meses, saldo a favor) y vencimiento/corte según el ciclo ──
+  const _cyc = require('../config/billingCycle');
+  const _pay = require('../services/paymentReversalService');
+  let _debt = null;
+  try { _debt = _prof.id ? _pay.debtOf(_prof.id) : null; } catch (_) { _debt = null; }
+  const _fmtDate = (st) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(st || '')); return m ? (Number(m[3]) + ' de ' + _mNames[Number(m[2]) - 1] + ' ' + m[1]) : ''; };
+  const _perName = (p) => { const [m, y] = String(p).split('/').map(Number); return (_mNames[m - 1] || m) + ' ' + y; };
+  const _suspended = ['suspended', 'isolir'].indexOf(_statusRaw) !== -1;
+  let _debtLines = [], _credit = 0, _partialPaid = 0;
+  if (_debt) {
+    _credit = Number(_debt.credit || 0);
+    _debtLines = _debt.items.map(it => ({ label: _perName(it.period) + (it.paid ? ' (pagó ' + _fmt(it.paid) + ')' : ''), amount: _fmt(it.balance) }));
+    _partialPaid = _debt.items.reduce((s2, it) => s2 + Number(it.paid || 0), 0);
+  }
+  if (_debt && _debt.count > 0) {
+    const [_om, _oy] = String(_debt.items[0].period).split('/').map(Number);
+    const _dueSt = _cyc.dueStampFor(_oy, _om), _cutSt = _cyc.cutStampFor(_oy, _om, _prof);
+    const _nowSt = _cyc.nowStamp();
+    const _overdue = _nowSt > _dueSt;
+    _bill = Object.assign({}, _bill || {}, {
+      id: _debt.items[_debt.items.length - 1].id,
+      label: _debt.count === 1 ? ('Factura de ' + _perName(_debt.items[0].period)) : ('Deuda de ' + _debt.count + ' meses'),
+      amount: _fmt(_debt.total), amountUnique: _fmt(_debt.total), uniqueCode: 0,
+      metaText: (_partialPaid ? 'Pago parcial registrado · ' : 'Sin pagar · ') + (_overdue ? 'venció el ' : 'vence el ') + _fmtDate(_dueSt),
+      dueFull: (_overdue ? 'Venció el ' : 'Vence el ') + _fmtDate(_dueSt),
+      overdue: _overdue, total: _debt.total, count: _debt.count,
+    });
+    _isolirText = _suspended ? 'servicio cortado: se rehabilita al registrar el pago' : _fmtDate(_cutSt);
+    _detail = Object.assign({}, _detail, { period: _debt.items.map(it => _perName(it.period)).join(', '), status: _partialPaid ? 'Pago parcial' : _t('pwa.r.pending','Pendiente de pago'), paid: false, amount: _fmt(_debt.total) });
+    const _dl = Math.ceil((new Date(_dueSt.replace(' ', 'T')) - _now) / 86400000);
+    _activeDaysText = _suspended ? 'Servicio cortado' : (_dl > 0 ? (_dl + ' días para el vencimiento') : ('Venció hace ' + Math.abs(_dl) + ' días'));
+  } else if (_debt) {
+    _bill = null;
+    _isolirText = 'no corresponde (está al día)';
+    _activeDaysText = _statusActive ? 'Al día' : _activeDaysText;
+    _detail = Object.assign({}, _detail, { status: 'Al día', paid: true });
+  }
+  // Historial: pagos reales (cobros registrados) + facturas pagadas importadas sin cobro asociado
+  let _history = [];
+  try {
+    const _recs = _prof.id ? _pay.receipts(_prof.id).filter(r => !r.annulled_at && Number(r.amount) > 0) : [];
+    const _covered = new Set();
+    _recs.forEach(r => (r.allocations || []).forEach(a => _covered.add(a.invoice_id)));
+    _history = _recs.map(r => ({
+      sort: String(r.created_at || ''),
+      month: (r.allocations && r.allocations.length) ? r.allocations.map(a => _perName(a.period_month + '/' + a.period_year)).join(', ') : 'Saldo a favor',
+      paidText: 'Pagado el ' + String(r.created_at || '').slice(0, 10).split('-').reverse().join('/') + (r.method && r.method !== 'saldo a favor' ? ' · ' + r.method : ''),
+      amount: _fmt(r.amount), statusText: 'PAGADO',
+    })).concat(_paid.filter(i => !_covered.has(i.id)).map(i => ({
+      sort: String(i.paid_at || ''),
+      month: _periodLabel(i),
+      paidText: 'Pagado' + (i.paid_at ? ' el ' + String(i.paid_at).slice(0, 10).split('-').reverse().join('/') : ''),
+      amount: _fmt(i.amount_paid || i.amount), statusText: 'PAGADO',
+    }))).sort((x, y) => (y.sort > x.sort ? 1 : y.sort < x.sort ? -1 : 0)).slice(0, 24).map(({ sort, ...h }) => h);
+  } catch (_) { _history = []; }
   const _devices = ((_dev.connectedUsers) || []).slice(0, 12).map(u => ({
     name: (u.hostname && u.hostname !== '-') ? u.hostname : _t('pwa.r.device','Perangkat'),
     mac: u.mac || '-',
@@ -1929,7 +1979,10 @@ router.get('/dashboard', async (req, res) => {
       status: _statusText
     },
     isolirText: _isolirText,
-    refInvoiceId: _unpaid ? _unpaid.id : (_paid[0] ? _paid[0].id : null)
+    refInvoiceId: _unpaid ? _unpaid.id : (_paid[0] ? _paid[0].id : null),
+    debtLines: _debtLines, credit: _credit, creditText: _credit > 0 ? _fmt(_credit) : '',
+    payInfo: String((settings && settings.corte_payment_info) || '').trim(),
+    payWa: regional.normalizePhone(regional.publicContactPhone(settings) || '')
   };
   const _portalJson = JSON.stringify(__portal).split('<').join(String.fromCharCode(92) + 'u003c');
   res.render('portal', { portal: __portal, portalJson: _portalJson });
@@ -2335,16 +2388,39 @@ router.post('/change-password', async (req, res) => {
   res.redirect('/customer/dashboard');
 });
 
+// Reiniciar el módem del cliente por TR-069 (servidor propio). Responde JSON con el resultado real.
 router.post('/reboot', async (req, res) => {
-  const phone = req.session && req.session.phone;
-  if (!phone) return res.redirect('/customer/login');
-  const r = await requestReboot(phone);
-  
-  req.session._msg = r.ok
-    ? { type: 'success', text: 'Equipo reiniciado. Espere unos minutos.' }
-    : { type: 'danger', text: r.message || 'No se pudo reiniciar.' };
+  const profile = _wifiProfile(req);
+  if (!profile) return res.status(401).json({ success: false, message: 'La sesión venció. Vuelva a ingresar.' });
+  if (req.session && req.session.portalPreview) return res.status(403).json({ success: false, message: 'Vista previa: no se ejecutan acciones.' });
+  try {
+    const dev = require('../services/onuClientsService').acsDevice(profile.id);
+    if (!dev) return res.json({ success: false, message: 'Su módem no permite el reinicio remoto. Desenchúfelo 10 segundos y vuelva a enchufarlo.' });
+    const acs = require('../services/acsServerService');
+    const t = acs.createBuiltinTask(dev.id, 'reboot', {});
+    if (!t || !t.taskId) throw new Error('no se pudo enviar la orden');
+    logger.info(`[Portal] ${profile.name} pidió reiniciar su módem (tarea ${t.taskId})`);
+    try { require('../services/auditTrailService').logAuditTrail({ action: 'REBOOT_DEVICE', entity_type: 'device', entity_id: dev.id, actor_type: 'customer', actor_id: profile.id, actor_name: profile.name, ip_address: req.ip }); } catch (_) {}
+    return res.json({ success: true, message: 'Orden enviada. El módem se reinicia y vuelve en 1 o 2 minutos.' });
+  } catch (e) {
+    logger.error('[Portal] reinicio: ' + e.message);
+    return res.status(500).json({ success: false, message: 'No se pudo reiniciar el módem. Intente de nuevo o escríbanos.' });
+  }
+});
 
-  res.redirect('/customer/dashboard');
+// Actualizar datos del módem (equipos conectados): consulta real por TR-069
+router.post('/api/device/refresh', async (req, res, next) => {
+  const profile = _wifiProfile(req);
+  if (!profile) return res.status(401).json({ success: false, message: 'La sesión venció. Vuelva a ingresar.' });
+  try {
+    const oc = require('../services/onuClientsService');
+    if (oc.acsDevice(profile.id)) {
+      const r = await oc.refresh(profile.id, { waitMs: 12000 });
+      const sm = oc.summary(profile.id);
+      return res.json({ success: !!r.ok, message: r.ok ? `Datos actualizados: ${sm.total} equipo(s) conectado(s).` : 'El módem no respondió. Intente en unos minutos.' });
+    }
+  } catch (e) { logger.warn('[Portal] actualizar módem: ' + e.message); }
+  return next();
 });
 
 router.post('/api/device/refresh', async (req, res) => {
@@ -3618,10 +3694,11 @@ router.post('/customer/reconnect', async (req, res) => {
       return res.redirect('/customer/login');
     }
 
-    const customer = customerSvc.findCustomerByAny(sessionPhone);
+    if (req.session.portalPreview) return res.status(403).json({ success: false, message: 'Vista previa: no se ejecutan acciones.' });
+    const customer = _wifiProfile(req);
     if (!customer) throw new Error('Cliente no encontrado');
 
-    const username = customer.pppoe_username || customer.hotspot_username || customer.name;
+    const username = customer.pppoe_username || customer.hotspot_username || '';
     const radiusSvc = require('../services/radiusServerService');
     const mikrotikSvc = require('../services/mikrotikService');
 

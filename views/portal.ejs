@@ -1230,16 +1230,22 @@
           <div class="relative rounded-[24px] overflow-hidden noise" style="background:var(--surface);border:1px solid var(--lime-border);box-shadow:0 20px 50px -26px rgba(173,255,47,.5);">
             <div style="position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:240px;height:120px;background:radial-gradient(ellipse,rgba(173,255,47,0.08),transparent 70%);pointer-events:none;"></div>
             <div class="relative z-10 text-center p-8">
-              <p class="text-xs font-medium mb-2" style="color:var(--muted);"><%= portal.bill ? (t('pwa.total','Total') + ' ' + portal.bill.label + ' ' + t('pwa.billing.total_unique','(termasuk kode unik)')) : t('pwa.home.no_bill','Tidak ada tagihan') %></p>
+              <p class="text-xs font-medium mb-2" style="color:var(--muted);"><%= portal.bill ? portal.bill.label : t('pwa.home.no_bill','Tidak ada tagihan') %></p>
               <h1 class="text-5xl font-black mb-2" style="font-family:'Space Grotesk',sans-serif;color:var(--text);"><%= portal.bill ? portal.bill.amountUnique : (APP_CUR + ' 0') %></h1>
               <% if (portal.bill && portal.bill.uniqueCode) { %>
               <p class="text-[11px] mb-2" style="color:var(--muted);"><%= t('pwa.billing.nominal_note_pre','Harga paket') %> <%= portal.bill.amount %> <%= t('pwa.billing.nominal_note_mid','+ kode unik') %> <b style="color:var(--lime);"><%= portal.bill.uniqueCode %></b></p>
               <% } %>
-              <p class="text-xs mb-6" style="color:<%= portal.bill && portal.bill.overdue ? '#EF4444' : 'var(--muted)' %>;"><%= portal.bill ? portal.bill.dueFull : t('pwa.thanks','Terima kasih') %></p>
-              <button class="btn-lime press w-full py-4 text-base flex items-center justify-center gap-2" onclick="payWith('Pagar ahora')">
+              <p class="text-xs mb-4" style="color:<%= portal.bill && portal.bill.overdue ? '#EF4444' : 'var(--muted)' %>;"><%= portal.bill ? portal.bill.dueFull : t('pwa.thanks','Terima kasih') %></p>
+              <% if (portal.bill && portal.debtLines && (portal.debtLines.length > 1 || /pagó/.test(portal.debtLines[0] ? portal.debtLines[0].label : ''))) { %>
+              <div class="text-left mb-4" style="background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:10px 12px;">
+                <% portal.debtLines.forEach(function(l){ %><div class="flex justify-between text-xs py-1" style="color:var(--muted);"><span><%= l.label %></span><span style="color:var(--text);font-weight:700;"><%= l.amount %></span></div><% }) %>
+              </div>
+              <% } %>
+              <% if (portal.creditText) { %><p class="text-xs mb-4" style="color:var(--lime);"><i class="ph-fill ph-piggy-bank"></i> Saldo a favor: <b><%= portal.creditText %></b> (se descuenta de la próxima factura)</p><% } %>
+              <button class="btn-lime press w-full py-4 text-base flex items-center justify-center gap-2" onclick="openPayInfo()">
                 <i class="ph-fill ph-credit-card text-lg"></i><%= t('pwa.billing.pay_now','Pagar ahora') %>
               </button>
-              <p class="text-[11px] mt-3" style="color:var(--muted);"><%= t('pwa.billing.methods','Metode pembayaran: QRIS · Transfer Bank · E-Wallet') %></p>
+              <p class="text-[11px] mt-3" style="color:var(--muted);">Giros, billetera o transferencia · después enviá el comprobante por WhatsApp</p>
             </div>
           </div>
 
@@ -1712,11 +1718,24 @@
   </div>
 
   <!-- ═══════════════ MODAL: Riwayat Pembayaran ═══════════════ -->
+  <div class="modal-backdrop" id="payinfo-modal" onclick="if(event.target===this)closePayInfo()">
+    <div class="modal-sheet" role="dialog" aria-modal="true">
+      <div class="modal-grip"></div>
+      <h3 class="modal-title">Cómo pagar</h3>
+      <% if (portal.bill) { %><p class="modal-sub"><%= portal.bill.label %>: <b style="color:var(--text);"><%= portal.bill.amount %></b></p><% } %>
+      <div style="max-height:52vh;overflow-y:auto;white-space:pre-wrap;font-size:13px;line-height:1.55;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;"><%= portal.payInfo || 'Comuníquese con nosotros para coordinar el pago.' %></div>
+      <div class="modal-actions" style="flex-direction:column;gap:8px;">
+        <% if (portal.payWa) { %><a class="btn-save" style="width:100%;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;" target="_blank" rel="noopener" href="https://wa.me/<%= portal.payWa %>?text=<%= encodeURIComponent('Hola, envío el comprobante de pago de ' + portal.name + ' (ID ' + portal.code + ')' + (portal.bill ? ' por ' + portal.bill.amount : '') + '.') %>"><i class="ph-fill ph-whatsapp-logo"></i> Enviar comprobante por WhatsApp</a><% } %>
+        <button type="button" class="btn-cancel" style="width:100%" onclick="closePayInfo()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="riwayat-modal" onclick="if(event.target===this)closeRiwayat()">
     <div class="modal-sheet" role="dialog" aria-modal="true">
       <div class="modal-grip"></div>
       <h3 class="modal-title"><%= t('pwa.billing.history','Riwayat Pembayaran') %></h3>
-      <p class="modal-sub"><%= t('pwa.billing.paid_note','Tagihan yang sudah lunas.') %></p>
+      <p class="modal-sub">Pagos registrados, del más reciente al más antiguo.</p>
       <div id="riwayatList" style="max-height:50vh;overflow-y:auto;">
         <% if (!portal.history || !portal.history.length) { %>
           <p class="text-sm" style="color:var(--muted);text-align:center;padding:16px 0;"><%= t('pwa.billing.no_history','Belum ada riwayat pembayaran.') %></p>
@@ -2487,12 +2506,12 @@ window.__PORTAL__ = <%- portalJson %>;
   var hl = document.getElementById('historyList');
   if (hl) {
     if (!P.history || !P.history.length) { hl.innerHTML='<div class="list-row"><p class="text-sm" style="color:var(--muted)"><%= t('pwa.billing.no_history','Belum ada riwayat pembayaran.') %></p></div>'; }
-    else hl.innerHTML = P.history.map(function(h){
+    else hl.innerHTML = P.history.slice(0, 5).map(function(h){
       return '<div class="list-row press" style="border-bottom:1px solid var(--border);">'
         + '<div class="flex items-center gap-3"><div class="w-9 h-9 rounded-[11px] flex items-center justify-center" style="background:rgba(173,255,47,0.1);"><i class="ph-fill ph-check-circle" style="color:var(--lime);font-size:18px;"></i></div>'
         + '<div><p class="text-sm font-semibold" style="color:var(--text);">'+esc(h.month)+'</p><p class="text-[11px]" style="color:var(--muted);">'+esc(h.paidText)+'</p></div></div>'
         + '<div class="text-right"><p class="text-sm font-bold" style="color:var(--text);">'+esc(h.amount)+'</p><span class="text-[10px] font-semibold" style="color:var(--lime);">'+esc(h.statusText||'<%= t('pwa.status.paid','LUNAS') %>')+'</span></div></div>';
-    }).join('');
+    }).join('') + (P.history.length > 5 ? '<button type="button" onclick="openRiwayat()" class="press w-full py-4 text-sm font-semibold text-center" style="color:var(--lime);">Ver todos los pagos (' + P.history.length + ') <i class="ph ph-caret-right text-sm"></i></button>' : '');
   }
   // Perangkat terhubung
   var dl = document.getElementById('devicesList');
@@ -2520,10 +2539,10 @@ window.__PORTAL__ = <%- portalJson %>;
     }).catch(function(){});
   }
   // Override aksi -> endpoint nyata
-  window.payWith = function(m){
-    if (P.bill && P.bill.id) { window.location.href = '/customer/payment/create/' + P.bill.id + '?method=' + encodeURIComponent(m || 'BayarSekarang'); }
-    else showToast('No hay facturas pendientes', true);
-  };
+  // Sin pasarela de pago: se muestran las formas de pago y el envío del comprobante por WhatsApp
+  window.openPayInfo = function(){ document.getElementById('payinfo-modal').classList.add('open'); };
+  window.closePayInfo = function(){ document.getElementById('payinfo-modal').classList.remove('open'); };
+  window.payWith = function(){ window.openPayInfo(); };
   /* ═══ Speed Test: muat ulang & bersihkan cache ═══ */
   window.reloadSpeedtest = function () {
     var f = document.getElementById('speedtestFrame');

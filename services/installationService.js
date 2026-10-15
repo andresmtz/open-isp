@@ -229,6 +229,8 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     (pppoeUser ? `\nPPPoE: ${pppoeUser} / ${pppoePass || '-'}` : '') +
     (String(notes || '').trim() ? `\nNotas: ${String(notes).trim()}` : '') +
     `\n\nCobrar al cliente al instalar: ${fmtMoney(plan.installPayment)} (primer mes del plan ${pkg.name}).` +
+    `\nExplicale al cliente: su primera factura vence el ${fmtDate(plan.dueDate)} y es de ${fmtMoney(amount)}` + (amount < plan.monthly ? ' (compensa los días del mes de instalación)' : '') +
+    `; después paga ${fmtMoney(plan.monthly)} por mes, con vencimiento el día ${Number(plan.dueDate.slice(8, 10))} de cada mes.` +
     `\nAl terminar, cerrá esta orden como resuelta: el cliente recibe la bienvenida.`;
   // (la foto de la casa, si se cargó, se ve en esta orden en el portal del técnico)
   const tk = require('./ticketService').createTicket(id, `Instalación nueva — ${cust.name}`, body, { technicianId: who.type === 'tech' ? who.id : null, status: 'in_progress' });
@@ -239,6 +241,9 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
   const waMsg = `🛠️ *INSTALACIÓN ASIGNADA*\n\n🚨 *REGLA OBLIGATORIA* 🚨\n*${rule}*\n\n👤 *Cliente:* ${cust.name}\n📞 *Teléfono:* ${cust.phone || '-'}\n📍 *Dirección:* ${cust.address || '-'}` +
     (loc ? `\n🗺️ *Ubicación:* ${loc}` : '') + `\n📦 *Plan:* ${pkg.name}\n📅 *Fecha:* ${fmtDate(plan.installDate)}` +
     `\n\n💵 *Cobrar al instalar:* ${fmtMoney(plan.installPayment)} (primer mes del plan)` +
+    `\n🗓️ *Explicale al cliente:* su primera factura vence el ${fmtDate(plan.dueDate)} y es de *${fmtMoney(amount)}*` +
+    (amount < plan.monthly ? ` (compensa los días del mes de instalación)` : '') +
+    `. Después paga ${fmtMoney(plan.monthly)} por mes, con vencimiento el día ${Number(plan.dueDate.slice(8, 10))} de cada mes.` +
     (pppoeUser ? `\n\n📡 *PPPoE usuario:* ${pppoeUser}\n🔒 *PPPoE clave:* ${pppoePass || '-'}` : '') +
     (String(notes || '').trim() ? `\n\n📝 ${String(notes).trim()}` : '') +
     `\n\nAl terminar, cerrá la orden de trabajo N.º ${ticketId} como resuelta.`;
@@ -271,7 +276,7 @@ Su servicio de internet ya está instalado y funcionando.
 
 🆔 *ID de cliente:* {{id_pelanggan}}
 📦 *Plan:* {{paket}}
-📅 *Primer vencimiento:* {{vencimiento}}
+📅 *Primera factura:* {{primera_factura}}, vence el {{vencimiento}}
 
 🌐 *Portal de clientes:* {{link}}
 Ahí puede ver sus facturas, el nombre y la clave de su WiFi y los equipos conectados. Ingresa con su número de teléfono y recibe un código por WhatsApp.
@@ -290,6 +295,7 @@ function renderWelcome(cust) {
     .replace(/{{id_pelanggan}}/gi, cust.customer_code || String(cust.id))
     .replace(/{{paket}}/gi, (pkg && pkg.name) || cust.package_name || '-')
     .replace(/{{vencimiento}}/gi, cust.reg_due_date ? fmtDate(cust.reg_due_date) : '-')
+    .replace(/{{primera_factura}}/gi, cust.reg_total != null ? fmtMoney(cust.reg_total) : '-')
     .replace(/{{link}}/gi, base ? `${base}/customer` : '-')
     .replace(/{{pago}}/gi, String(getSetting('corte_payment_info', '') || '').trim())
     .replace(/{{company}}/gi, getSetting('company_header', '') || '')

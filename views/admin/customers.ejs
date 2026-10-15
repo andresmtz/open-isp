@@ -1225,7 +1225,8 @@
           <div id="rc_lines"></div>
           <div style="display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:800;padding:8px 0 2px;border-top:1px solid var(--border);margin-top:6px;gap:10px">
             <span>Total</span>
-            <input class="fc" type="number" min="0" step="1000" name="final_total" id="rc_total" style="max-width:170px;text-align:right;font-weight:800">
+            <input class="fc" type="text" inputmode="numeric" id="rc_total" style="max-width:170px;text-align:right;font-weight:800" oninput="rcTotalInput(this)">
+            <input type="hidden" name="final_total" id="rc_total_val">
           </div>
           <div class="hint" id="rc_hint" style="margin-top:6px"></div>
         </div>
@@ -1852,6 +1853,10 @@ async function openHistory(id){
   } catch (e) { document.getElementById('hist_list').innerHTML = '<div class="text-danger" style="padding:16px">' + e.message + '</div>'; }
 }
 function rcFmt(n){ return APP_CUR + ' ' + Math.round(Number(n)||0).toLocaleString(APP_LOCALE); }
+// Total con separador de miles (55.000); el valor numérico va en el campo oculto final_total
+function rcTotalNum(){ return Number(String(document.getElementById('rc_total').value || '').replace(/\D/g, '')) || 0; }
+function rcSetTotal(n){ document.getElementById('rc_total').value = Math.round(Number(n) || 0).toLocaleString(APP_LOCALE); document.getElementById('rc_total_val').value = Math.round(Number(n) || 0); }
+function rcTotalInput(el){ var n = rcTotalNum(); rcSetTotal(n); }
 var _rcId = null, _rcAuto = 0;
 async function rcLoad(first){
   var q = new URLSearchParams();
@@ -1865,7 +1870,7 @@ async function rcLoad(first){
   document.getElementById('rc_head').innerHTML = 'Al instalar, el cliente le paga al instalador el primer mes: <b>' + rcFmt(p.installPayment) + '</b> (no pasa por la caja). Primera factura:';
   document.getElementById('rc_lines').innerHTML = p.lines.map(function(l){ return '<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;gap:10px"><span>' + l.label + '</span><span' + (l.amount < 0 ? ' style="color:var(--success)"' : '') + '>' + (l.amount < 0 ? '− ' + rcFmt(-l.amount) : rcFmt(l.amount)) + '</span></div>'; }).join('');
   var tot = document.getElementById('rc_total');
-  if (first || Number(tot.value) === _rcAuto) tot.value = p.total;
+  if (first || rcTotalNum() === _rcAuto) rcSetTotal(p.total);
   _rcAuto = p.total;
   var d = p.dueDate.split('-');
   document.getElementById('rc_hint').textContent = 'Factura del período ' + d[1] + '/' + d[0] + ', vence el ' + d[2] + '/' + d[1] + '/' + d[0] + '. El ciclo mensual no vuelve a facturar ese mes.';
@@ -1895,7 +1900,8 @@ async function openRegCalc(id){
 function rcSubmit(f){
   if (!f.installer.value) { alert('Elegí quién va a hacer la instalación.'); return false; }
   var who = f.installer.options[f.installer.selectedIndex].textContent;
-  if (!confirm('¿Aprobar el alta y asignar la instalación a ' + who + '?\n\nSe crea el usuario PPPoE en el MikroTik, el cliente pasa a activo y se genera la primera factura de ' + rcFmt(f.final_total.value) + '.')) return false;
+  if (!confirm('¿Aprobar el alta y asignar la instalación a ' + who + '?\n\nSe crea el usuario PPPoE en el MikroTik, el cliente pasa a activo y se genera la primera factura de ' + rcFmt(rcTotalNum()) + '.')) return false;
+  document.getElementById('rc_total_val').value = rcTotalNum();
   document.getElementById('rc_submit').disabled = true;
   return true;
 }

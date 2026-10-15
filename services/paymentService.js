@@ -14,7 +14,7 @@ async function createMayarTransaction(invoice, customer, method, appUrl, opts = 
   const inv = invoice || {};
   const desc = o.itemName || inv.item_name || ('Factura' + (inv.period_month ? inv.period_month + '/' + inv.period_year : ''));
   return mayar.createInvoice({
-    name: (customer && customer.name) || 'Pelanggan',
+    name: (customer && customer.name) || 'Cliente',
     email: (customer && customer.email) || '',
     mobile: (customer && customer.phone) || '',
     description: desc,

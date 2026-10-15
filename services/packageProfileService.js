@@ -144,7 +144,7 @@ async function removePppProfileForPackage(pkg, opts) {
         await mikrotikService.deletePppoeProfile(ex.id || ex['.id'], routerId);
         out.push('profil PPP "' + name + '" eliminado');
       } else if (ex) {
-        out.push('profil PPP "' + name + '" dibiarkan (bukan dikelola aplikasi)');
+        out.push('profil PPP "' + name + '" se dejó como está (no lo administra la aplicación)');
       }
     } catch (e) { out.push('no se pudo eliminar el perfil:' + e.message); }
   }

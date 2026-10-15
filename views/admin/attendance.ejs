@@ -161,32 +161,32 @@
         <div class="sc-label"><i class="bi bi-person-workspace"></i> <%= t('admin.att.technician','Teknisi') %></div>
         <div class="sc-val"><%= techStats.total || 0 %></div>
         <div class="sc-sub">
-          <span style="color:#22c55e"><%= techStats.checked_in || 0 %> aktif</span> • 
-          <span style="color:#3b82f6"><%= techStats.checked_out || 0 %> selesai</span>
+          <span style="color:#22c55e"><%= techStats.checked_in || 0 %> en turno</span> • 
+          <span style="color:#3b82f6"><%= techStats.checked_out || 0 %> terminaron</span>
         </div>
       </div>
       <div class="sc" style="border-left:3px solid #a855f7">
         <div class="sc-label"><i class="bi bi-person-badge"></i> Admin</div>
         <div class="sc-val"><%= adminStats.total || 0 %></div>
         <div class="sc-sub">
-          <span style="color:#22c55e"><%= adminStats.checked_in || 0 %> aktif</span> • 
-          <span style="color:#3b82f6"><%= adminStats.checked_out || 0 %> selesai</span>
+          <span style="color:#22c55e"><%= adminStats.checked_in || 0 %> en turno</span> • 
+          <span style="color:#3b82f6"><%= adminStats.checked_out || 0 %> terminaron</span>
         </div>
       </div>
       <div class="sc" style="border-left:3px solid #22c55e">
         <div class="sc-label"><i class="bi bi-cash-coin"></i> <%= t('admin.att.cashier','Kasir') %></div>
         <div class="sc-val"><%= cashierStats.total || 0 %></div>
         <div class="sc-sub">
-          <span style="color:#22c55e"><%= cashierStats.checked_in || 0 %> aktif</span> • 
-          <span style="color:#3b82f6"><%= cashierStats.checked_out || 0 %> selesai</span>
+          <span style="color:#22c55e"><%= cashierStats.checked_in || 0 %> en turno</span> • 
+          <span style="color:#3b82f6"><%= cashierStats.checked_out || 0 %> terminaron</span>
         </div>
       </div>
       <div class="sc" style="border-left:3px solid #f97316">
         <div class="sc-label"><i class="bi bi-person-walking"></i> <%= t('collector.role','Kolektor') %></div>
         <div class="sc-val"><%= collectorStats.total || 0 %></div>
         <div class="sc-sub">
-          <span style="color:#22c55e"><%= collectorStats.checked_in || 0 %> aktif</span> • 
-          <span style="color:#3b82f6"><%= collectorStats.checked_out || 0 %> selesai</span>
+          <span style="color:#22c55e"><%= collectorStats.checked_in || 0 %> en turno</span> • 
+          <span style="color:#3b82f6"><%= collectorStats.checked_out || 0 %> terminaron</span>
         </div>
       </div>
     </div>
@@ -218,7 +218,7 @@
               <td class="fw6"><%= att.employee_name %></td>
               <td><span class="type-badge type-<%= att.employee_type %>"><%= att.employee_type %></span></td>
               <td><%= formatTimeLocal(att.check_in_time) %></td>
-              <td><span class="late-badge"><%= lateMinutes %> menit</span></td>
+              <td><span class="late-badge"><%= lateMinutes %> min</span></td>
             </tr>
             <% }) %>
           </tbody>
@@ -255,7 +255,7 @@
               <td class="fw6"><%= att.employee_name %></td>
               <td><span class="type-badge type-<%= att.employee_type %>"><%= att.employee_type %></span></td>
               <td><%= formatTimeLocal(att.check_in_time) %></td>
-              <td><%= hours %> jam <%= minutes %> menit</td>
+              <td><%= hours %> h <%= minutes %> min</td>
             </tr>
             <% }) %>
           </tbody>

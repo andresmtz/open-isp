@@ -405,11 +405,11 @@ router.post('/app/admin/customers/create', requireAdminApiAuth, async (req, res)
         const waNotify = require('../services/waNotifyService');
         if (true) {
           const pkg = customerSvc.getPackageById(custData.package_id);
-          const msg = `🎉 *SELAMAT BERGABUNG!*\n\n` +
+          const msg = `🎉 *¡BIENVENIDO/A!*\n\n` +
                       `Hola, *${custData.name}*,\n` +
                       `Su servicio de internet ya está registrado y activo.\n\n` +
                       `📦 *Plan:* ${pkg?.name || 'Internet'}\n` +
-                      `📅 *Tgl Jatuh Tempo:* Setiap tgl ${custData.isolate_day}\n\n` +
+                      `📅 *Vencimiento:* el día ${custData.isolate_day} de cada mes\n\n` +
                       `Gracias por confiarnos su conexión a internet.`;
           await waNotify.sendText(custData.phone, msg);
         }
@@ -480,7 +480,7 @@ function renderTemplateMessage(template, customer, invoice = null) {
   const rincian = `Factura del mes ${period}`;
 
   let txt = template
-    .replace(/\{\{nama\}\}/gi, customer.name || 'Pelanggan')
+    .replace(/\{\{nama\}\}/gi, customer.name || 'Cliente')
     .replace(/\{\{id_pelanggan\}\}/gi, customer.customer_code || '-')
     .replace(/\{\{username\}\}/gi, customer.pppoe_username || '-')
     .replace(/\{\{pppoe\}\}/gi, customer.pppoe_username || '-')
@@ -646,8 +646,8 @@ router.post('/app/admin/pay-invoice', requireAdminApiAuth, async (req, res) => {
       unisolated,
       receipt: {
         invoiceNumber: `#INV-${invId}`,
-        customerName: customer?.name || 'Pelanggan',
-        packageName: pkg?.name || customer?.package_name || 'Langganan Internet',
+        customerName: customer?.name || 'Cliente',
+        packageName: pkg?.name || customer?.package_name || 'Servicio de internet',
         period: `${inv.period_month}/${inv.period_year}`,
         amountFormatted: `${regional.currencySymbol()} ${Number(inv.amount || 0).toLocaleString(regional.locale())}`,
         amount: Number(inv.amount || 0),
@@ -825,7 +825,7 @@ router.post('/app/collector/pay-bill', requireCollectorApiAuth, async (req, res)
 
     const collectorId = Number(req.collector?.collectorId || req.collector?.id || 0);
     const collector = collectorId ? db.prepare('SELECT id, name, auto_approve FROM collectors WHERE id = ?').get(collectorId) : null;
-    const collectorName = collector?.name || req.collector?.name || 'Kolektor Lapangan';
+    const collectorName = collector?.name || req.collector?.name || 'Cobrador';
     const isAutoApprove = collector && collector.auto_approve === 1;
 
     const collectorLabel = `Kolektor ${collectorName} (APK Native)`;
@@ -897,7 +897,7 @@ router.post('/app/collector/pay-bill', requireCollectorApiAuth, async (req, res)
         message: `¡Factura #${invId} PAGADA!${unisolated ? ' (servicio del cliente rehabilitado automáticamente)' : ''}`,
         receipt: {
           invoiceId: invId,
-          customerName: customer?.name || 'Pelanggan',
+          customerName: customer?.name || 'Cliente',
           amountFormatted: `${regional.currencySymbol()} ${Number(inv.amount || 0).toLocaleString(regional.locale())}`,
           period: `${inv.period_month}/${inv.period_year}`,
           paidAt: new Date().toISOString()
@@ -1797,8 +1797,8 @@ router.post('/app/admin/vouchers/send-wa', requireAdminApiAuth, async (req, res)
     msg += `--------------------------------\n`;
     msg += `🏢 *${companyName}*\n`;
     msg += `📦 *Plan:* ${profile || 'Hotspot'}\n`;
-    if (validity && validity !== '-') msg += `⏱️ *Masa Aktif:* ${validity}\n`;
-    if (price) msg += `💰 *Tarif:* ${price}\n\n`;
+    if (validity && validity !== '-') msg += `⏱️ *Vigencia:* ${validity}\n`;
+    if (price) msg += `💰 *Precio:* ${price}\n\n`;
 
     if (isSame) {
       msg += `👤 *Código de acceso:* \`${code}\`\n\n`;
@@ -1811,7 +1811,7 @@ router.post('/app/admin/vouchers/send-wa', requireAdminApiAuth, async (req, res)
       msg += `🌐 *Login URL:* http://${hotspotDns}\n`;
     }
     if (companyPhone) {
-      msg += `📞 *Bantuan / CS:* ${companyPhone}\n`;
+      msg += `📞 *Ayuda / soporte:* ${companyPhone}\n`;
     }
     msg += `--------------------------------\n`;
     msg += `Conecte su dispositivo al WiFi e ingrese el código de arriba. ¡Gracias!`;
@@ -2109,7 +2109,7 @@ router.get('/app/admin/whatsapp/status', requireAdminApiAuth, async (req, res) =
       success: true,
       data: {
         connected: isConnected,
-        status: isConnected ? 'Terhubung' : 'Desconectado',
+        status: isConnected ? 'Conectado' : 'Desconectado',
         number: waNumber,
         name: waName
       }
@@ -2147,7 +2147,7 @@ router.get('/app/map', (req, res) => {
       token
     });
   } catch (e) {
-    res.status(500).send('<h3>Error memuat peta: ' + e.message + '</h3>');
+    res.status(500).send('<h3>Error al cargar el mapa: ' + e.message + '</h3>');
   }
 });
 
@@ -2275,7 +2275,7 @@ router.post('/app/admin/customers/topup', requireAdminApiAuth, async (req, res) 
     }
 
     const result = await customerSvc.topupCustomerBalance(cid, amt, note, actorName, action, sendWa);
-    const actionText = action === 'deduct' ? 'dipotong' : 'ditambahkan';
+    const actionText = action === 'deduct' ? 'se descontaron' : 'se agregaron';
 
     res.json({
       success: true,
@@ -2320,7 +2320,7 @@ router.post('/app/admin/collector-payments/approve', requireAdminApiAuth, async 
       WHERE cp.id = ?
     `).get(payId);
     if (!pay) return res.status(404).json({ success: false, message: 'Pago no encontrado' });
-    if (pay.status !== 'pending') return res.status(400).json({ success: false, message: 'Pembayaran sudah diproses' });
+    if (pay.status !== 'pending') return res.status(400).json({ success: false, message: 'El pago ya fue procesado' });
 
     const adminName = req.admin?.name || 'Admin';
     db.prepare(`UPDATE collector_payment_requests SET status = 'approved', decided_at = (NOW_LOCAL()), decided_by_role = 'admin', decided_by_name = ? WHERE id = ?`).run(adminName, payId);
@@ -2437,7 +2437,7 @@ router.get('/app/tech/dashboard', requireTechApiAuth, (req, res) => {
     res.json({
       success: true,
       data: {
-        tech: techInfo || { id: techId, name: req.tech?.name || 'Técnico de campo', username: req.tech?.username || 'teknisi', area: 'Semua Area' },
+        tech: techInfo || { id: techId, name: req.tech?.name || 'Técnico de campo', username: req.tech?.username || 'teknisi', area: 'Todas las zonas' },
         stats: stats || { total: 0, open: 0, inProgress: 0, resolved: 0 },
         assignedTickets: assignedTickets || [],
         openTickets: openTickets || [],
@@ -2944,7 +2944,7 @@ router.get('/app/customer/wallet', requireCustomerApiAuth, (req, res) => {
       success: true,
       data: {
         balance: Number(row?.balance || 0),
-        customerName: row?.name || 'Pelanggan',
+        customerName: row?.name || 'Cliente',
         history: history
       }
     });
@@ -3220,11 +3220,11 @@ router.get('/dashboard', requireCustomerApiAuth, async (req, res) => {
         customerDevice.getCustomerDeviceData(token),
         new Promise(resolve => setTimeout(() => resolve(null), 2500))
       ]);
-      if (liveDevice && liveDevice.status !== 'Tidak ditemukan') break;
+      if (liveDevice && liveDevice.status !== 'No encontrado') break;
     } catch (_) {}
   }
 
-  const tr069Connected = Boolean(liveDevice && liveDevice.status && liveDevice.status !== 'Tidak ditemukan');
+  const tr069Connected = Boolean(liveDevice && liveDevice.status && liveDevice.status !== 'No encontrado');
   const defaultWifiName = 'OPENISP_' + (customer.name || 'Fiber').replace(/\s+/g, '_');
 
   const ontInfo = tr069Connected ? {
@@ -3916,7 +3916,7 @@ router.post('/invoices/:id/pay', requireCustomerApiAuth, async (req, res) => {
     return res.status(404).json({ success: false, message: 'Factura no encontrada.' });
   }
   if (inv.status === 'paid') {
-    return res.json({ success: true, message: 'Tagihan ini sudah lunas.', status: 'paid' });
+    return res.json({ success: true, message: 'Esta factura ya está pagada.', status: 'paid' });
   }
 
   const appUrl = (settings.public_base_url || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');

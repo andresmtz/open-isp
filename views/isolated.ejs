@@ -75,7 +75,7 @@
       <% }); %>
 
       <% if (adminPhone) { %>
-        <a href="https://wa.me/<%= adminPhone.replace(/\D/g, '') %>?text=Halo%20Admin%20<%= encodeURIComponent(company) %>,%20layanan%20saya%20terisolir%20(Nama:%20<%= encodeURIComponent(customer.name) %>).%20Mohon%20bantuannya." class="iso-btn wa iso-space" target="_blank"><i class="bi bi-whatsapp"></i> <%= t('iso.contact_wa','Hubungi Admin via WhatsApp') %></a>
+        <a href="https://wa.me/<%= adminPhone.replace(/\D/g, '') %>?text=<%= encodeURIComponent('Hola, ' + company + '. Mi servicio está suspendido (cliente: ' + customer.name + '). ¿Me pueden ayudar?') %>" class="iso-btn wa iso-space" target="_blank"><i class="bi bi-whatsapp"></i> <%= t('iso.contact_wa','Hubungi Admin via WhatsApp') %></a>
       <% } %>
     </div>
 
@@ -100,7 +100,7 @@
 
       <a href="/customer/login" class="iso-btn ghost iso-space"><i class="bi bi-box-arrow-in-right"></i> <%= t('iso.login_portal','Masuk ke Portal Pelanggan') %></a>
       <% if (adminPhone) { %>
-        <a href="https://wa.me/<%= adminPhone.replace(/\D/g, '') %>?text=Halo%20Admin%20<%= encodeURIComponent(company) %>,%20internet%20saya%20terisolir%20tapi%20tagihan%20tidak%20muncul.%20Mohon%20bantuan." class="iso-btn wa iso-space" target="_blank"><i class="bi bi-whatsapp"></i> <%= t('iso.contact_cs','Hubungi Customer Service') %></a>
+        <a href="https://wa.me/<%= adminPhone.replace(/\D/g, '') %>?text=<%= encodeURIComponent('Hola, ' + company + '. Mi internet está suspendido pero no me aparece ninguna factura. ¿Me pueden ayudar?') %>" class="iso-btn wa iso-space" target="_blank"><i class="bi bi-whatsapp"></i> <%= t('iso.contact_cs','Hubungi Customer Service') %></a>
       <% } %>
     </div>
   <% } %>
@@ -243,7 +243,7 @@
     var img = document.getElementById('qrisImage');
     if (!img || !img.src) return;
     var link = document.createElement('a');
-    link.href = img.src; link.download = 'QRIS-Tagihan-' + currentInvoiceId + '.png';
+    link.href = img.src; link.download = 'QR-factura-' + currentInvoiceId + '.png';
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
   }
 

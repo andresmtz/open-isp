@@ -502,7 +502,7 @@
         <div class="form-row">
           <div class="fg"><label class="fl">Precio de compra</label><input class="fc" id="hp_cost" type="number" min="0" step="500" value="0" oninput="syncMikhmonOnLogin()"></div>
           <div class="fg"><label class="fl">Precio de venta</label><input class="fc" id="hp_price" type="number" min="0" step="500" value="0" oninput="syncMikhmonOnLogin()"></div>
-          <div class="fg"><label class="fl">Durasi Voucher (mis. 1h / 1d / 7d)</label><input class="fc" id="hp_validity" value="1d" oninput="syncMikhmonOnLogin()"></div>
+          <div class="fg"><label class="fl">Duración del voucher (ej.: 1h / 1d / 7d)</label><input class="fc" id="hp_validity" value="1d" oninput="syncMikhmonOnLogin()"></div>
         </div>
         <div class="form-row">
           <div class="fg"><label class="fl">Rate Limit (Rx/Tx)</label><input class="fc" id="hp_rate"></div>
@@ -861,7 +861,7 @@
           <td>${p.rateLimit || '-'}</td>
           <td style="white-space:nowrap">
             <div class="act">
-              <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+              <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
               <div class="act-menu">
                 <button type="button" class="act-item" onclick="editPppoeProfile(${i})"><i class="bi bi-pencil"></i> <%= t('admin.common.edit_profile','Edit Profil') %></button>
                 <div class="act-sep"></div>
@@ -903,7 +903,7 @@
           <td>${p.sessionTimeout || '-'}</td>
           <td style="white-space:nowrap">
             <div class="act">
-              <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+              <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
               <div class="act-menu">
                 <button type="button" class="act-item" onclick="editHotspotProfile(${i})"><i class="bi bi-pencil"></i> <%= t('admin.common.edit_profile','Edit Profil') %></button>
                 <div class="act-sep"></div>
@@ -992,7 +992,7 @@
             <td>${statusHtml}</td>
             <td style="white-space:nowrap">
               <div class="act">
-                <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                 <div class="act-menu">
                   <button type="button" class="act-item" onclick="editSecret(${i})"><i class="bi bi-pencil"></i> <%= t('admin.common.edit_user','Edit User') %></button>
                   <div class="act-sep"></div>
@@ -1089,7 +1089,7 @@
             <td>${statusHtml}</td>
             <td style="white-space:nowrap">
               <div class="act">
-                <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                 <div class="act-menu">
                   <button type="button" class="act-item" onclick="editHotspot(${i})"><i class="bi bi-pencil"></i> <%= t('admin.common.edit_user','Edit User') %></button>
                   <div class="act-sep"></div>

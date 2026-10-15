@@ -26,7 +26,7 @@
     <a class="brand" href="/" aria-label="Beranda"><img class="bmark" src="<%= brandLogo %>" alt="<%= company %>"><span class="bname"><%= brandName %></span></a>
     <div class="header-actions" style="margin-left:auto">
       <button class="icon-btn" onclick="toggleTheme()" aria-label="Cambiar tema"><i class="bi bi-moon-stars-fill"></i></button>
-      <a class="lbtn lbtn-ghost lbtn-sm" href="<%= isLoggedIn ? '/customer/dashboard' : '/customer/login' %>"><i class="bi bi-box-arrow-in-right"></i> <%= isLoggedIn ? 'Dashboard' : 'Masuk' %></a>
+      <a class="lbtn lbtn-ghost lbtn-sm" href="<%= isLoggedIn ? '/customer/dashboard' : '/customer/login' %>"><i class="bi bi-box-arrow-in-right"></i> <%= isLoggedIn ? 'Mi cuenta' : 'Ingresar' %></a>
     </div>
   </div>
 </header>
@@ -47,7 +47,7 @@
       <li><strong>Permiso de ubicación (GPS):</strong> Las coordenadas se usan para la asistencia del personal dentro del radio de la oficina (geovalla), el mapeo de NAP/postes de la red y la navegación de los cobradores en campo.</li>
       <li><strong>Permiso de cámara y fotos:</strong> Se usa para las selfies de asistencia con marca de ubicación, el escaneo de códigos QR de fichas/pagos y las fotos adjuntas en los reclamos de clientes.</li>
       <li><strong>Permiso de Bluetooth:</strong> Se usa para conectar la aplicación a impresoras térmicas Bluetooth portátiles al imprimir recibos de cobro.</li>
-      <li><strong>Data Transaksi:</strong> Detalle de las facturas mensuales y el estado de pago.</li>
+      <li><strong>Datos de transacciones:</strong> Detalle de las facturas mensuales y el estado de pago.</li>
     </ul>
 
     <h4><i class="bi bi-gear-wide-connected"></i> 2. <%= t('customer.pages.privacy.s2_title', 'Penggunaan Informasi') %></h4>

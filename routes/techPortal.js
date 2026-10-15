@@ -612,7 +612,7 @@ router.post('/customers', requireTechSession, express.urlencoded({ extended: tru
           .where('service', 'pppoe')
           .where('name', customerData.pppoe_username)
           .get();
-        if (!Array.isArray(results) || results.length === 0) throw new Error('PPPoE Username tidak ditemukan di MikroTik');
+        if (!Array.isArray(results) || results.length === 0) throw new Error('El usuario PPPoE no existe en el MikroTik');
       } finally {
         if (conn && conn.api) conn.api.close();
       }
@@ -784,7 +784,7 @@ router.get('/api/devices', requireTechSession, async (req, res) => {
 router.get('/api/device/:tag', requireTechSession, async (req, res) => {
   try {
     const data = await customerDevice.getCustomerDeviceData(req.params.tag);
-    if (!data || data.status === 'Tidak ditemukan') return res.status(404).json({ error: 'Device not found' });
+    if (!data || data.status === 'No encontrado') return res.status(404).json({ error: 'Device not found' });
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: 'Failed to get device details' });
@@ -1316,7 +1316,7 @@ router.post('/api/add-wan/:deviceId', requireTechSession, async (req, res) => {
         }
         
         const servers = getACSServers(acsId);
-        if (servers.length === 0) return res.json({ success: false, message: 'ACS Server tidak ditemukan' });
+        if (servers.length === 0) return res.json({ success: false, message: 'Servidor ACS no encontrado' });
         
         const server = servers[0];
         const baseUrl = normalizeUrl(server.url);

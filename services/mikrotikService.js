@@ -1379,7 +1379,7 @@ async function setHotspotUserDisabled(username, disabled, routerId = null) {
     conn = await getConnection(routerId);
     const userMenu = conn.client.menu('/ip/hotspot/user');
     const rows = await userMenu.where('name', normalizedUsername).get();
-    if (!Array.isArray(rows) || rows.length === 0) throw new Error(`Hotspot user "${normalizedUsername}" tidak ditemukan di MikroTik`);
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error(`El usuario hotspot "${normalizedUsername}" no existe en el MikroTik`);
     const row = rows[0] || null;
     const id = row ? (row['.id'] || row.id) : null;
     if (!id) throw new Error('No se encontró el ID del usuario hotspot');
@@ -1594,7 +1594,7 @@ async function generateIsolirPortalScript() {
     port = u.port ? parseInt(u.port, 10) : (u.protocol === 'https:' ? 443 : 80);
     isHttps = u.protocol === 'https:';
   } catch {
-    hostname = 'GANTI-host-portal-billing';
+    hostname = 'CAMBIAR-host-del-portal';
     port = 3001;
     isHttps = false;
   }
@@ -1604,7 +1604,7 @@ async function generateIsolirPortalScript() {
     try {
       billingIp = await resolveIpv4(hostname);
     } catch {
-      billingIp = 'GANTI_IP_SERVER_PORTAL';
+      billingIp = 'CAMBIAR_IP_DEL_SERVIDOR';
     }
   }
 
@@ -1615,7 +1615,7 @@ async function generateIsolirPortalScript() {
   const lines = [
     '# ============================================================',
     '# Script de página de corte / portal de cobro (generado por el sistema)',
-    `# Sumber URL: ${normalized || '(atur app_url di Pengaturan)'}`,
+    `# URL de origen: ${normalized || '(configurá app_url en Configuración)'}`,
     `# Host: ${hostname}  →  IP NAT: ${billingIp}`,
     '# Address-list: LIST_ISOLIR — al cortar, el sistema agrega un on-up al perfil PPPoE (nombre = perfil de corte del cliente).',
     '# Borrar las reglas anteriores con comment=BILLING_ISOLIR_* antes de volver a importar.',
@@ -1735,7 +1735,7 @@ async function ensurePppProfileIsolirAddressListHook(profileName, routerId = nul
 
     await menu.set({ 'on-up': onUp, 'on-down': onDown }, id);
     logger.info(`[MikroTik] Profil PPPoE "${name}": on-up/on-down diset untuk ${ISOLIR_ADDR_LIST} (isolir portal).`);
-    return { ok: true, profile: name, message: `Profil "${name}" memasukkan IP ke ${ISOLIR_ADDR_LIST} saat PPP login.` };
+    return { ok: true, profile: name, message: `El perfil "${name}" agrega la IP a ${ISOLIR_ADDR_LIST} al conectarse por PPP.` };
   } catch (e) {
     logger.error(`[MikroTik] ensurePppProfileIsolirAddressListHook(${name}):`, e);
     return { ok: false, profile: name, message: e.message || String(e) };
@@ -1859,7 +1859,7 @@ async function setupIsolirFirewall(routerId = null) {
     const okNames = hookResults.filter((h) => h.ok).map((h) => h.profile).join(', ');
     const bad = hookResults.filter((h) => !h.ok);
     const warn = bad.length
-      ? ` Perhatian: ${bad.map((h) => `${h.profile} (${h.message})`).join('; ')}`
+      ? ` Atención: ${bad.map((h) => `${h.profile} (${h.message})`).join('; ')}`
       : '';
 
     return {

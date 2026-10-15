@@ -108,7 +108,7 @@
       <div class="card">
         <div class="card-hd"><h6><i class="bi bi-upload"></i> <%= t('admin.bk.upload','Upload & Restore Backup') %></h6></div>
         <div class="card-bd">
-          <form action="/admin/backup/upload-restore" method="POST" enctype="multipart/form-data" onsubmit="return confirm('PERINGATAN: Memulihkan file backup akan menimpa data/pengaturan aplikasi saat ini. Sistem akan membuat backup otomatis sebelum restore. Lanjutkan?')">
+          <form action="/admin/backup/upload-restore" method="POST" enctype="multipart/form-data" onsubmit="return confirm('ATENCIÓN: restaurar este respaldo reemplaza los datos y la configuración actuales. Antes se hace un respaldo automático. ¿Continuar?')">
             <div class="fg">
               <label class="fl"><%= t('admin.bk.pick_file','Pilih File Backup (.db / .json)') %></label>
               <input type="file" class="fc" name="backupFile" accept=".db,.sqlite,.json" required style="padding: 6px 10px;">
@@ -157,7 +157,7 @@
                 <tr>
                   <th>Nombre del archivo</th>
                   <th><%= t('common.type','Tipe') %></th>
-                  <th class="num">Ukuran</th>
+                  <th class="num">Tamaño</th>
                   <th>Fecha de creación</th>
                   <th class="text-right"><%= t('common.actions','Aksi') %></th>
                 </tr>
@@ -192,7 +192,7 @@
                   </td>
                   <td style="white-space:nowrap">
                     <div class="act">
-                      <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                      <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                       <div class="act-menu">
                         <a class="act-item primary" href="/admin/backup/download/<%= encodeURIComponent(backup.fileName) %>" download><i class="bi bi-download"></i> Download</a>
                         <button type="button" class="act-item success" onclick="restoreBackup('<%= backup.fileName %>', '<%= backup.type %>')"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>

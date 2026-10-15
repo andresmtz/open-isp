@@ -69,7 +69,7 @@
         <% (typeof packages !== 'undefined' ? packages : []).forEach(p => { %><option value="<%= p.id %>" <%= String(filterPackage)===String(p.id)?'selected':'' %>><%= p.name %></option><% }) %>
       </select>
       <select class="fs" name="area" style="width:150px">
-        <option value=""><%= t('admin.bill.all_areas','Semua Area') %></option>
+        <option value=""><%= t('admin.bill.all_areas','Todas las zonas') %></option>
         <% (typeof areas !== 'undefined' ? areas : []).forEach(a => { %><option value="<%= a %>" <%= filterArea===a?'selected':'' %>><%= a %></option><% }) %>
       </select>
       <select class="fs" name="router_id" style="width:150px">
@@ -93,7 +93,7 @@
         </div>
         <div style="text-align:right;font-size:8.5pt;color:#475569">
           <div><%= t('admin.cust.printed_at','Dicetak:') %> <%= getNowLocal() %></div>
-          <div>Total de la factura: <strong><%= invoices.length %> Transaksi</strong></div>
+          <div>Total de la factura: <strong><%= invoices.length %> transacciones</strong></div>
         </div>
       </div>
     </div>
@@ -105,7 +105,7 @@
           <h6 style="margin:0"><i class="bi bi-list-ul"></i> <%= t('admin.billing.list', 'Daftar Tagihan') %> (<%= invoices.length %>)</h6>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <button type="button" class="btn btn-g btn-sm" onclick="window.print()" title="<%= t('admin.bill.tt_print_recap','Cetak Rekap Tagihan') %>"><i class="bi bi-printer"></i> <%= t('admin.bill.btn_print_recap','Cetak Rekap') %></button>
-            <span class="text-muted small" id="bulkCount">0 dipilih</span>
+            <span class="text-muted small" id="bulkCount">0 seleccionadas</span>
             <button type="button" class="btn btn-s btn-sm" id="bulkPayBtn" disabled><i class="bi bi-check-lg"></i> <%= t('admin.bill.btn_mass_pay','Bayar Massal') %></button>
             <button type="button" class="btn btn-d btn-sm" id="bulkDeleteBtn" disabled><i class="bi bi-trash"></i> <%= t('admin.bill.btn_mass_delete','Hapus Massal') %></button>
           </div>
@@ -158,7 +158,7 @@
                   ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
                   : ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']; %>
                 <span class="badge bm"><%= mns[inv.period_month-1] %> <%= inv.period_year %></span>
-                <% if (inv.status === 'unpaid' && inv.isolate_day) { %><div style="font-size:10px;color:var(--muted);margin-top:4px">Jatuh tempo tgl <%= inv.isolate_day %></div><% } %>
+                <% if (inv.status === 'unpaid' && inv.isolate_day) { %><div style="font-size:10px;color:var(--muted);margin-top:4px">Vence el día <%= inv.isolate_day %></div><% } %>
               </td>
               <td style="font-size:12px;color:var(--muted)"><%= inv.package_name||'-' %></td>
               <td class="num fw6" style="color:var(--success)">
@@ -209,7 +209,7 @@
                 <form id="iso-<%= inv.id %>" method="POST" action="/admin/customers/<%= inv.customer_id %>/isolate" style="display:none" class="needs-confirm" data-confirm-key="confirmIsolateManual"></form>
                 <form id="delb-<%= inv.id %>" method="POST" action="/admin/billing/<%= inv.id %>/delete" style="display:none" class="needs-confirm" data-confirm-key="confirmDelete"></form>
                 <div class="act">
-                  <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                  <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
                     <% if(inv.status==='unpaid'){%>
                       <button type="button" class="act-item disc-btn" data-id="<%= inv.id %>" data-name="<%= String(inv.customer_name||'').replace(/'/g,'&#39;') %>" data-amount="<%= Number(inv.amount||0) %>" data-period="<%= mns[inv.period_month-1] %> <%= inv.period_year %>"><i class="bi bi-percent"></i> <%= t('admin.bill.btn_discount','Beri Diskon') %></button>
@@ -300,7 +300,7 @@
             </select>
           </div>
           <div class="fg">
-            <label class="fl">Nilai</label>
+            <label class="fl">Valor</label>
             <input class="fc" type="number" name="discount_value" id="dmValue" min="1" step="1" required>
           </div>
         </div>
@@ -369,7 +369,7 @@ document.addEventListener('submit', function(e) {
   if (!(form instanceof HTMLFormElement)) return;
   if (!form.classList.contains('needs-confirm')) return;
   const key = String(form.dataset.confirmKey || '');
-  const msg = I18N[key] || 'Lanjutkan?';
+  const msg = I18N[key] || '¿Continuar?';
   if (!confirm(msg)) e.preventDefault();
 });
 
@@ -437,7 +437,7 @@ function updateBulkUi() {
   const countEl = document.getElementById('bulkCount');
   const payBtn = document.getElementById('bulkPayBtn');
   const delBtn = document.getElementById('bulkDeleteBtn');
-  if (countEl) countEl.textContent = `${list.length} dipilih`;
+  if (countEl) countEl.textContent = `${list.length} seleccionadas`;
   if (payBtn) payBtn.disabled = list.length === 0;
   if (delBtn) delBtn.disabled = list.length === 0;
 }

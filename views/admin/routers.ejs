@@ -471,7 +471,7 @@
               <td style="white-space:nowrap">
                 <form id="rdel-<%= r.id %>" method="POST" action="/admin/routers/<%= r.id %>/delete" style="display:none" onsubmit="return confirm('<%= t('admin.routers.confirm.delete', 'Hapus router ini?') %>')"></form>
                 <div class="act">
-                  <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                  <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
                     <button type="button" class="act-item primary" onclick="openLiveDetailModal(<%= r.id %>)"><i class="bi bi-cpu"></i> <%= t('admin.rt.live_detail','Detail Live Status') %></button>
                     <button type="button" class="act-item" onclick="testConn(<%= r.id %>)"><i class="bi bi-plug"></i> <%= t('admin.dash.test_conn','Test Koneksi') %></button>
@@ -746,7 +746,7 @@ async function openLiveDetailModal(id) {
   bodyEl.innerHTML = `
     <div class="text-center py-5 text-muted">
       <i class="bi bi-arrow-repeat spin fs-2 mb-2 d-block text-primary"></i>
-      <span>Mengambil metrik sistem & sesi live dari MikroTik...</span>
+      <span>Consultando métricas y sesiones en vivo del MikroTik...</span>
     </div>
   `;
   openModal('routerLiveModal');
@@ -800,7 +800,7 @@ async function openLiveDetailModal(id) {
       ${l.error ? `<div class="alert alert-d"><i class="bi bi-exclamation-triangle"></i> ${l.error}</div>` : ''}
 
       <div class="mt-tabs">
-        <button type="button" class="mt-tab active" id="mtab-btn-sys" onclick="switchModalTab('sys')"><i class="bi bi-cpu"></i> Sistem &amp; Metrik</button>
+        <button type="button" class="mt-tab active" id="mtab-btn-sys" onclick="switchModalTab('sys')"><i class="bi bi-cpu"></i> Sistema y métricas</button>
         <button type="button" class="mt-tab" id="mtab-btn-pppoe" onclick="switchModalTab('pppoe')"><i class="bi bi-plug"></i> PPPoE <span class="mt-tab-badge">${l.activePppoe}</span></button>
         <button type="button" class="mt-tab" id="mtab-btn-hs" onclick="switchModalTab('hs')"><i class="bi bi-wifi"></i> Hotspot <span class="mt-tab-badge">${l.activeHotspot}</span></button>
       </div>
@@ -813,7 +813,7 @@ async function openLiveDetailModal(id) {
             <div class="mt-bar"><span class="${cpuCls}" style="width:${Math.min(100, l.cpuLoad)}%"></span></div>
           </div>
           <div class="mt-metric">
-            <div class="lbl">RAM Terpakai</div>
+            <div class="lbl">RAM usada</div>
             <div class="val ${memCls}">${memPercent}<span class="u">%</span></div>
             <div class="sub">${formatBytes(usedMem)} / ${formatBytes(l.totalMemory)}</div>
             <div class="mt-bar"><span class="${memCls}" style="width:${memPercent}%"></span></div>
@@ -828,16 +828,16 @@ async function openLiveDetailModal(id) {
 
         <div class="mt-kv">
           <div class="row"><span>Identity RouterOS</span><b class="mono">${l.identity}</b></div>
-          <div class="row"><span>Board / Tipe</span><b>${l.boardName}</b></div>
+          <div class="row"><span>Placa / modelo</span><b>${l.boardName}</b></div>
           <div class="row"><span>RouterOS</span><b class="mt-ok">${l.version}</b></div>
           <div class="row"><span>CPU</span><b>${l.architecture} &middot; ${l.cpuCount} core @ ${l.cpuFrequency} MHz</b></div>
           <div class="row"><span><%= t('admin.common.uptime','Uptime') %></span><b class="mono">${l.uptime}</b></div>
         </div>
 
         <div class="mt-stats">
-          <div class="mt-stat"><span>Pelanggan DB</span><b>${l.customersCount}</b></div>
+          <div class="mt-stat"><span>Clientes en el sistema</span><b>${l.customersCount}</b></div>
           <div class="mt-stat"><span><%= t('admin.rt.pppoe_active','PPPoE Aktif') %></span><b class="mt-ok">${l.activePppoe}</b></div>
-          <div class="mt-stat"><span>Hotspot Aktif</span><b class="mt-warn">${l.activeHotspot}</b></div>
+          <div class="mt-stat"><span>Hotspot activos</span><b class="mt-warn">${l.activeHotspot}</b></div>
         </div>
       </div>
 

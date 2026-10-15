@@ -122,7 +122,7 @@ function formatUnpaidInvoicesSummary(unpaidInvoices) {
     count,
     totalAmount,
     totalAmountStr,
-    periodText: count > 1 ? `${periodText} (${count} Bulan)` : periodText,
+    periodText: count > 1 ? `${periodText} (${count} meses)` : periodText,
     breakdownText: breakdownLines.join('\n'),
     isMultiple: count > 1
   };
@@ -168,7 +168,7 @@ async function sendWhatsAppMessage(toPhone, messageText, options = {}) {
     const res = await gowaWAService.sendGowaMessage(toPhone, messageText, options);
     try {
       const phone = metaWAService.normalizePhone(toPhone);
-      let custName = 'Pelanggan'; let custId = null;
+      let custName = 'Cliente'; let custId = null;
       const cust = db.prepare('SELECT id, name FROM customers WHERE phone LIKE ? OR phone LIKE ?').get(`%${phone.slice(-8)}%`, `%${phone}%`);
       if (cust) { custName = cust.name; custId = cust.id; }
       db.prepare(`INSERT INTO wa_chat_messages (direction, gateway, sender_phone, recipient_phone, customer_id, customer_name, message_text, status) VALUES ('outbound','gowa','gowa_bot',?,?,?,?,'sent')`).run(phone, custId, custName, messageText);
@@ -179,19 +179,19 @@ async function sendWhatsAppMessage(toPhone, messageText, options = {}) {
     const { sendWA, whatsappStatus } = await import('./whatsappBot.mjs');
 
     if (!whatsappStatus || whatsappStatus.connection !== 'open') {
-      throw new Error('Bot WhatsApp (Baileys) belum terhubung / offline. Silakan scan QR Code di menu /admin/whatsapp.');
+      throw new Error('WhatsApp (Baileys) no está conectado. Escaneá el código QR en /admin/whatsapp.');
     }
 
     const ok = await sendWA(toPhone, messageText, options);
 
     if (!ok) {
-      throw new Error('Gagal mengirim pesan via Baileys. Pastikan nomor HP tujuan terdaftar di WhatsApp.');
+      throw new Error('No se pudo enviar el mensaje por Baileys. Verificá que el número tenga WhatsApp.');
     }
 
     // Logging ke wa_chat_messages untuk Inbox / Live Chat
     try {
       const phone = metaWAService.normalizePhone(toPhone);
-      let custName = 'Pelanggan';
+      let custName = 'Cliente';
       let custId = null;
       const cust = db.prepare('SELECT id, name FROM customers WHERE phone LIKE ? OR phone LIKE ?').get(`%${phone.slice(-8)}%`, `%${phone}%`);
       if (cust) {
@@ -328,7 +328,7 @@ function formatPaymentSuccessMessage({
   const pdfLink = (portalUrl && _invIdMatch) ? (String(portalUrl).replace(/\/$/, '') + '/invoice/' + _invIdMatch[0] + '/pdf') : (portalUrl || '-');
 
   let rendered = template
-    .replace(/{{nama}}/gi, customerName || 'Pelanggan')
+    .replace(/{{nama}}/gi, customerName || 'Cliente')
     .replace(/{{no_invoice}}/gi, String(invoiceId || '-'))
     .replace(/{{invoice_id}}/gi, String(invoiceId || '-'))
     .replace(/{{username}}/gi, customerUsername || '-')

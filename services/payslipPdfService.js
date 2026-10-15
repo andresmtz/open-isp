@@ -30,14 +30,14 @@ function generatePayslipPdfBuffer(slip, settings = {}) {
       doc.fillColor(ACCENT).fontSize(9).font('Helvetica-Bold').text(`Período ${MNS[(slip.period_month || 1) - 1]} ${slip.period_year || ''}`, LEFT, y + 23, { width: W, align: 'right' });
 
       y = 92;
-      doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Dicetak: ${new Date().toLocaleString(regional.locale())}`, LEFT, y);
+      doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Impreso: ${new Date().toLocaleString(regional.locale())}`, LEFT, y);
 
       // Info karyawan
       y += 16;
-      const role = slip.employee_type === 'technician' ? 'Teknisi' : slip.employee_type === 'cashier' ? 'Kasir' : 'Kolektor';
+      const role = slip.employee_type === 'technician' ? 'Técnico' : slip.employee_type === 'cashier' ? 'Cajero/a' : 'Cobrador';
       doc.roundedRect(LEFT, y, W, 58, 8).fillAndStroke(SOFT, LINE);
       doc.rect(LEFT, y, 4, 58).fill(ACCENT);
-      doc.fillColor(MUTED).fontSize(7.5).font('Helvetica-Bold').text('KARYAWAN', LEFT + 16, y + 10);
+      doc.fillColor(MUTED).fontSize(7.5).font('Helvetica-Bold').text('EMPLEADO', LEFT + 16, y + 10);
       doc.fillColor(INK).fontSize(13).font('Helvetica-Bold').text(slip.employee_name || '-', LEFT + 16, y + 22);
       doc.fillColor(MUTED).fontSize(8.5).font('Helvetica').text(`Cargo: ${role}   •   Días trabajados: ${slip.working_days || 0}   •   Ausencias: ${slip.absent_days || 0}   •   Llegadas tarde: ${slip.late_days || 0}`, LEFT + 16, y + 40);
       doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(`Status: ${String(slip.status || '-').toUpperCase()}`, LEFT, y + 22, { width: W - 16, align: 'right' });
@@ -57,24 +57,24 @@ function generatePayslipPdfBuffer(slip, settings = {}) {
       };
 
       // Pendapatan
-      row('PENDAPATAN', '', { section: true });
+      row('INGRESOS', '', { section: true });
       row('Sueldo base', fmtRp(slip.base_salary));
-      if (slip.transport_allowance) row('Tunjangan Transport', fmtRp(slip.transport_allowance));
-      if (slip.meal_allowance) row('Tunjangan Makan', fmtRp(slip.meal_allowance));
-      if (slip.phone_allowance) row('Tunjangan Pulsa', fmtRp(slip.phone_allowance));
-      if (slip.other_allowance) row(`Tunjangan Lain (${slip.other_allowance_note || '-'})`, fmtRp(slip.other_allowance));
+      if (slip.transport_allowance) row('Asignación de transporte', fmtRp(slip.transport_allowance));
+      if (slip.meal_allowance) row('Asignación de comida', fmtRp(slip.meal_allowance));
+      if (slip.phone_allowance) row('Asignación de teléfono', fmtRp(slip.phone_allowance));
+      if (slip.other_allowance) row(`Otras asignaciones (${slip.other_allowance_note || '-'})`, fmtRp(slip.other_allowance));
       if (slip.ticket_bonus) row(`Bono por tickets (${slip.total_tickets_resolved || 0} tickets)`, '+ ' + fmtRp(slip.ticket_bonus), { color: GREEN });
       if (slip.collection_commission) row('Comisión por cobranza', '+ ' + fmtRp(slip.collection_commission), { color: GREEN });
-      if (slip.overtime_bonus) row(`Lembur (${slip.overtime_hours || 0} jam)`, '+ ' + fmtRp(slip.overtime_bonus), { color: GREEN });
-      row('Total Pendapatan', fmtRp(slip.gross_salary), { bold: true });
+      if (slip.overtime_bonus) row(`Horas extra (${slip.overtime_hours || 0} h)`, '+ ' + fmtRp(slip.overtime_bonus), { color: GREEN });
+      row('Total ingresos', fmtRp(slip.gross_salary), { bold: true });
 
       // Potongan
       if (Number(slip.total_deductions || 0) > 0) {
-        y += 4; row('POTONGAN', '', { section: true });
+        y += 4; row('DESCUENTOS', '', { section: true });
         if (slip.absence_deduction) row(`Descuento por ausencias (${slip.absent_days || 0} días)`, '- ' + fmtRp(slip.absence_deduction), { color: RED });
         if (slip.late_deduction) row(`Descuento por llegadas tarde (${slip.late_days || 0} días)`, '- ' + fmtRp(slip.late_deduction), { color: RED });
-        if (slip.other_deduction) row(`Potongan Lain (${slip.other_deduction_note || '-'})`, '- ' + fmtRp(slip.other_deduction), { color: RED });
-        row('Total Potongan', '- ' + fmtRp(slip.total_deductions), { bold: true, color: RED });
+        if (slip.other_deduction) row(`Otros descuentos (${slip.other_deduction_note || '-'})`, '- ' + fmtRp(slip.other_deduction), { color: RED });
+        row('Total descuentos', '- ' + fmtRp(slip.total_deductions), { bold: true, color: RED });
       }
 
       // Gaji bersih
@@ -88,10 +88,10 @@ function generatePayslipPdfBuffer(slip, settings = {}) {
 
       // Tanda tangan
       const sy = 730;
-      doc.fillColor(MUTED).fontSize(8.5).font('Helvetica').text('Karyawan,', LEFT, sy, { width: 180, align: 'center' });
+      doc.fillColor(MUTED).fontSize(8.5).font('Helvetica').text('Empleado/a', LEFT, sy, { width: 180, align: 'center' });
       doc.moveTo(LEFT + 10, sy + 40).lineTo(LEFT + 170, sy + 40).strokeColor(INK).stroke();
       doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(slip.employee_name || '-', LEFT, sy + 44, { width: 180, align: 'center' });
-      doc.fillColor(MUTED).fontSize(8.5).font('Helvetica').text('Admin / Pimpinan,', RIGHT - 180, sy, { width: 180, align: 'center' });
+      doc.fillColor(MUTED).fontSize(8.5).font('Helvetica').text('Administración', RIGHT - 180, sy, { width: 180, align: 'center' });
       doc.moveTo(RIGHT - 170, sy + 40).lineTo(RIGHT - 10, sy + 40).strokeColor(INK).stroke();
       doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(ci.manager || 'Admin', RIGHT - 180, sy + 44, { width: 180, align: 'center' });
 

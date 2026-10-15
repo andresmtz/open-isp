@@ -311,12 +311,12 @@
     <tbody>
       <tr><td><%= t('admin.fin.gross','Pemasukan (Bruto)') %></td><td class="text-right"><%= APP_CUR %> <%= Math.round(LR.bruto).toLocaleString(APP_LOCALE) %></td></tr>
       <tr><td>Base imponible</td><td class="text-right"><%= APP_CUR %> <%= Math.round(LR.dpp).toLocaleString(APP_LOCALE) %></td></tr>
-      <tr><td>PPN Keluaran (<%= fin.ppn %>%) — se paga al fisco, no es ingreso</td><td class="text-right"><%= APP_CUR %> <%= Math.round(LR.ppn).toLocaleString(APP_LOCALE) %></td></tr>
+      <tr><td>IVA (<%= fin.ppn %>%) — se paga al fisco, no es ingreso</td><td class="text-right"><%= APP_CUR %> <%= Math.round(LR.ppn).toLocaleString(APP_LOCALE) %></td></tr>
       <tr><td>Gastos</td><td class="text-right">- <%= APP_CUR %> <%= Math.round(LR.keluar).toLocaleString(APP_LOCALE) %></td></tr>
       <tr><td>USO (<%= fin.uso %>%)</td><td class="text-right">- <%= APP_CUR %> <%= Math.round(LR.uso).toLocaleString(APP_LOCALE) %></td></tr>
       <tr><td>BHP (<%= fin.bhp %>%)</td><td class="text-right">- <%= APP_CUR %> <%= Math.round(LR.bhp).toLocaleString(APP_LOCALE) %></td></tr>
       <tr><td><b>Ganancia antes del impuesto a la renta</b></td><td class="text-right"><b><%= APP_CUR %> <%= Math.round(LR.sebelumPph).toLocaleString(APP_LOCALE) %></b></td></tr>
-      <tr><td>PPh Badan (<%= fin.pph %>%)</td><td class="text-right">- <%= APP_CUR %> <%= Math.round(LR.pph).toLocaleString(APP_LOCALE) %></td></tr>
+      <tr><td>Impuesto a la renta (<%= fin.pph %>%)</td><td class="text-right">- <%= APP_CUR %> <%= Math.round(LR.pph).toLocaleString(APP_LOCALE) %></td></tr>
       <tr style="background:#f0fdf4"><td><b><%= t('admin.fin.net','Laba Bersih') %></b></td><td class="text-right"><b><%= APP_CUR %> <%= Math.round(LR.bersih).toLocaleString(APP_LOCALE) %></b></td></tr>
     </tbody>
   </table>

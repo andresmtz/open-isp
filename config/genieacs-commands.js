@@ -199,7 +199,7 @@ async function handleWifiInfo(remoteJid, senderNumber) {
         const ssid5G = getSSIDValue(device, '5') || 'N/A';
         
         // Send WiFi information
-        const wifiInfo = `📱 *INFORMASI WI-FI*\n\n`;
+        const wifiInfo = `📱 *INFORMACIÓN WI-FI*\n\n`;
         wifiInfo += `• SSID 2.4G: ${ssid}\n`;
         wifiInfo += `• SSID 5G: ${ssid5G}\n`;
         
@@ -209,7 +209,7 @@ async function handleWifiInfo(remoteJid, senderNumber) {
     } catch (error) {
         logger.error(`Error handling WiFi info: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse('Terjadi kesalahan saat mengambil informasi WiFi.')
+            text: formatResponse('Ocurrió un error al obtener la información del WiFi.')
         });
     }
 }
@@ -257,7 +257,7 @@ async function handleChangeWifiSSID(remoteJid, senderNumber, newSSID) {
     } catch (error) {
         logger.error(`Error changing WiFi SSID: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse('Terjadi kesalahan saat mengubah SSID.')
+            text: formatResponse('Ocurrió un error al cambiar el SSID.')
         });
     }
 }
@@ -305,7 +305,7 @@ async function handleChangeWifiPassword(remoteJid, senderNumber, newPassword) {
     } catch (error) {
         logger.error(`Error changing WiFi password: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse('Terjadi kesalahan saat mengubah password WiFi.')
+            text: formatResponse('Ocurrió un error al cambiar la contraseña del WiFi.')
         });
     }
 }
@@ -458,7 +458,7 @@ async function handleRestartConfirmation(remoteJid, senderNumber, confirmed) {
     } catch (error) {
         logger.error(`Error handling restart confirmation: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse('Terjadi kesalahan saat mengkonfirmasi restart.')
+            text: formatResponse('Ocurrió un error al confirmar el reinicio.')
         });
         
         // Delete restart confirmation status even if error
@@ -548,7 +548,7 @@ async function handleFactoryReset(remoteJid, senderNumber) {
     } catch (error) {
         logger.error(`Error preparing factory reset: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse(`❌ Terjadi kesalahan: ${error.message}`)
+            text: formatResponse(`❌ Ocurrió un error: ${error.message}`)
         });
     }
 }
@@ -599,7 +599,7 @@ async function handleFactoryResetConfirmation(remoteJid, senderNumber) {
     } catch (error) {
         logger.error(`Error handling factory reset confirmation: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse(`❌ Terjadi kesalahan: ${error.message}`)
+            text: formatResponse(`❌ Ocurrió un error: ${error.message}`)
         });
 
         // Delete factory reset confirmation status even if error
@@ -676,7 +676,7 @@ async function handleConnectedDevices(remoteJid, senderNumber) {
     } catch (error) {
         logger.error(`Error handling connected devices: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse(`❌ Terjadi kesalahan: ${error.message}`)
+            text: formatResponse(`❌ Ocurrió un error: ${error.message}`)
         });
     }
 }
@@ -763,7 +763,7 @@ async function handleAdminDeviceDetail(remoteJid, phoneNumber) {
     } catch (error) {
         logger.error(`Error handling admin device detail: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse(`❌ Terjadi kesalahan: ${error.message}`)
+            text: formatResponse(`❌ Ocurrió un error: ${error.message}`)
         });
     }
 }
@@ -802,7 +802,7 @@ async function handleAdminRestartDevice(remoteJid, phoneNumber) {
     } catch (error) {
         logger.error(`Error handling admin restart device: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse(`❌ Terjadi kesalahan: ${error.message}`)
+            text: formatResponse(`❌ Ocurrió un error: ${error.message}`)
         });
     }
 }
@@ -840,7 +840,7 @@ async function handleAdminFactoryReset(remoteJid, phoneNumber) {
     } catch (error) {
         logger.error(`Error preparing admin factory reset: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse(`❌ Terjadi kesalahan: ${error.message}`)
+            text: formatResponse(`❌ Ocurrió un error: ${error.message}`)
         });
     }
 }
@@ -890,7 +890,7 @@ async function handleAdminFactoryResetConfirmation(remoteJid, phoneNumber) {
     } catch (error) {
         logger.error(`Error handling admin factory reset confirmation: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse(`❌ Terjadi kesalahan: ${error.message}`)
+            text: formatResponse(`❌ Ocurrió un error: ${error.message}`)
         });
 
         // Delete factory reset confirmation status even if error
@@ -943,10 +943,10 @@ async function handleSpeedTest(remoteJid, senderNumber) {
             'Device.IP.Interface.1.Stats.BytesSent'
         ]) || 'N/A';
 
-        let message = `📊 *INFORMASI BANDWIDTH*\n\n`;
+        let message = `📊 *INFORMACIÓN DE TRÁFICO*\n\n`;
         message += `📥 *Download Speed:* ${downloadSpeed}\n`;
         message += `📤 *Upload Speed:* ${uploadSpeed}\n\n`;
-        message += `📈 *Statistik Interface:*\n`;
+        message += `📈 *Estadísticas de la interfaz:*\n`;
         message += `• Bytes Received: ${formatBytes(bytesReceived)}\n`;
         message += `• Bytes Sent: ${formatBytes(bytesSent)}\n\n`;
         message += `💡 *Consejo:* para un test de velocidad preciso, use una app de test de velocidad en su dispositivo.`;
@@ -958,7 +958,7 @@ async function handleSpeedTest(remoteJid, senderNumber) {
     } catch (error) {
         logger.error(`Error handling speed test: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse(`❌ Terjadi kesalahan: ${error.message}`)
+            text: formatResponse(`❌ Ocurrió un error: ${error.message}`)
         });
     }
 }
@@ -1012,7 +1012,7 @@ async function handleNetworkDiagnostic(remoteJid, senderNumber) {
         message += `• Last Inform: ${new Date(lastInform).toLocaleString()}\n\n`;
 
         // Signal quality
-        message += `📶 *Kualitas Signal:*\n`;
+        message += `📶 *Calidad de señal:*\n`;
         message += `• RX Power: ${rxPower} dBm\n`;
         const rxPowerNum = parseFloat(rxPower);
         if (!isNaN(rxPowerNum)) {
@@ -1029,11 +1029,11 @@ async function handleNetworkDiagnostic(remoteJid, senderNumber) {
         message += `• Temperature: ${temperature}°C\n\n`;
 
         // Network settings
-        message += `⚙️ *Pengaturan Jaringan:*\n`;
+        message += `⚙️ *Configuración de red:*\n`;
         message += `• DNS Servers: ${dnsServers}\n\n`;
 
         // Recommendations
-        message += `💡 *Rekomendasi:*\n`;
+        message += `💡 *Recomendaciones:*\n`;
         if (!isOnline) {
             message += `• Equipo desconectado, intente reiniciarlo\n`;
         }
@@ -1041,7 +1041,7 @@ async function handleNetworkDiagnostic(remoteJid, senderNumber) {
             message += `• Señal baja, comuníquese con un técnico\n`;
         }
         if (!isNaN(parseFloat(temperature)) && parseFloat(temperature) > 70) {
-            message += `• Temperature tinggi, pastikan ventilasi baik\n`;
+            message += `• Temperatura alta: verificá que tenga buena ventilación\n`;
         }
 
         await sock.sendMessage(remoteJid, {
@@ -1051,7 +1051,7 @@ async function handleNetworkDiagnostic(remoteJid, senderNumber) {
     } catch (error) {
         logger.error(`Error handling network diagnostic: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse(`❌ Terjadi kesalahan: ${error.message}`)
+            text: formatResponse(`❌ Ocurrió un error: ${error.message}`)
         });
     }
 }
@@ -1091,7 +1091,7 @@ async function handleConnectionHistory(remoteJid, senderNumber) {
         message += `• Device Uptime: ${deviceUptime}\n`;
         message += `• PPPoE Uptime: ${pppUptime}\n\n`;
 
-        message += `📅 *Riwayat:*\n`;
+        message += `📅 *Historial:*\n`;
         message += `• First Registered: ${firstInform !== 'N/A' ? new Date(firstInform).toLocaleString() : 'N/A'}\n`;
         message += `• Last Inform: ${new Date(lastInform).toLocaleString()}\n\n`;
 
@@ -1102,11 +1102,11 @@ async function handleConnectionHistory(remoteJid, senderNumber) {
 
         message += `🔄 *Estado de la conexión:*\n`;
         if (timeDiff < 5 * 60 * 1000) { // 5 minutes
-            message += `• Status: 🟢 Stabil (Last inform ${Math.round(timeDiff / 1000)} detik lalu)\n`;
+            message += `• Status: 🟢 Estable (último reporte hace ${Math.round(timeDiff / 1000)} s)\n`;
         } else if (timeDiff < 30 * 60 * 1000) { // 30 minutes
-            message += `• Status: 🟡 Normal (Last inform ${Math.round(timeDiff / 60000)} menit lalu)\n`;
+            message += `• Status: 🟡 Normal (último reporte hace ${Math.round(timeDiff / 60000)} min)\n`;
         } else {
-            message += `• Status: 🔴 Bermasalah (Last inform ${Math.round(timeDiff / 60000)} menit lalu)\n`;
+            message += `• Status: 🔴 Con problemas (último reporte hace ${Math.round(timeDiff / 60000)} min)\n`;
         }
 
         await sock.sendMessage(remoteJid, {
@@ -1116,7 +1116,7 @@ async function handleConnectionHistory(remoteJid, senderNumber) {
     } catch (error) {
         logger.error(`Error handling connection history: ${error.message}`);
         await sock.sendMessage(remoteJid, {
-            text: formatResponse(`❌ Terjadi kesalahan: ${error.message}`)
+            text: formatResponse(`❌ Ocurrió un error: ${error.message}`)
         });
     }
 }

@@ -201,7 +201,7 @@
 
     function syncHint(){
       hint.textContent = (type.value === 'percent')
-        ? '<%= t('admin.disc.disc_hint','Persen dihitung dari harga dasar (sebelum PPN/USO).') %> Contoh: 10 = potong 10%.'
+        ? '<%= t('admin.disc.disc_hint','Persen dihitung dari harga dasar (sebelum PPN/USO).') %> Ejemplo: 10 = descuenta 10%.'
         : 'Descuento directo en la moneda. Ejemplo: 20000 = descuenta 20.000.';
     }
     type.addEventListener('change', syncHint); syncHint();

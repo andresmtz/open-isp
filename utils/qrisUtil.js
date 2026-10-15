@@ -32,20 +32,20 @@ function crc16CcittFalse(input) {
 
 function parseEmvTlvString(input) {
   const raw = String(input || '').replace(/[\r\n\t]+/g, '').trim();
-  if (!raw) throw new Error('QRIS payload kosong');
-  if (raw.length < 8) throw new Error('QRIS payload terlalu pendek');
+  if (!raw) throw new Error('Datos del QR vacíos');
+  if (raw.length < 8) throw new Error('Los datos del QR son demasiado cortos');
 
   const items = [];
   let i = 0;
   while (i < raw.length) {
-    if (i + 4 > raw.length) throw new Error('QRIS payload TLV tidak valid');
+    if (i + 4 > raw.length) throw new Error('Datos TLV del QR inválidos');
     const tag = raw.slice(i, i + 2);
     const lenStr = raw.slice(i + 2, i + 4);
-    if (!/^\d{2}$/.test(lenStr)) throw new Error('QRIS payload TLV length tidak valid');
+    if (!/^\d{2}$/.test(lenStr)) throw new Error('Longitud TLV del QR inválida');
     const len = Number(lenStr);
     const start = i + 4;
     const end = start + len;
-    if (end > raw.length) throw new Error('QRIS payload TLV length melebihi data');
+    if (end > raw.length) throw new Error('La longitud TLV del QR supera los datos');
     const value = raw.slice(start, end);
     items.push({ tag, value });
     i = end;
@@ -60,8 +60,8 @@ function buildEmvTlvString(items) {
     const tag = String(it?.tag || '');
     const value = String(it?.value ?? '');
     const len = value.length;
-    if (!/^\d{2}$/.test(tag)) throw new Error('Tag TLV tidak valid');
-    if (len > 99) throw new Error('TLV length > 99 tidak didukung');
+    if (!/^\d{2}$/.test(tag)) throw new Error('Etiqueta TLV del QR inválida');
+    if (len > 99) throw new Error('Longitud TLV mayor a 99 no soportada');
     out += tag + String(len).padStart(2, '0') + value;
   }
   return out;
@@ -69,7 +69,7 @@ function buildEmvTlvString(items) {
 
 function convertStaticQrisToDynamic(staticPayload, amount) {
   const amt = Math.max(0, Math.floor(Number(amount || 0) || 0));
-  if (!amt) throw new Error('Nominal QRIS dinamis tidak valid');
+  if (!amt) throw new Error('Monto del QR dinámico inválido');
 
   const source = parseEmvTlvString(staticPayload)
     .filter(x => x && x.tag)

@@ -430,7 +430,7 @@
   }
   async function runReminderNow(btn){
     if (!confirm('¿Ejecutar ahora el recordatorio de pago?')) return;
-    var old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Menjalankan...';
+    var old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Ejecutando...';
     try {
       var r = await fetch('/admin/whatsapp/run-reminder-now', { method: 'POST' });
       var j = await r.json().catch(function(){ return {}; });
@@ -452,7 +452,7 @@
     if (!sel || !ta) return;
     if (auTplPrev === null) auTplPrev = sel.value;
     if (sel.value === auTplPrev) return;
-    if (ta.dataset.dirty === '1' && !confirm('Muat template terpilih dan buang perubahan yang belum disimpan?')) {
+    if (ta.dataset.dirty === '1' && !confirm('¿Cargar la plantilla elegida y descartar los cambios sin guardar?')) {
       sel.value = auTplPrev;
       return;
     }
@@ -481,8 +481,8 @@
   async function asStart(btn){
     if (!confirm('¿Enviar ahora la factura a los clientes con deuda del día de corte elegido?')) return;
     var res = document.getElementById('as_result');
-    var old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Memulai...';
-    if (res) { res.textContent = 'Memulai pengiriman…'; res.style.color = 'var(--muted)'; }
+    var old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Iniciando...';
+    if (res) { res.textContent = 'Iniciando el envío…'; res.style.color = 'var(--muted)'; }
     try {
       var body = new URLSearchParams({
         isolate_day: document.getElementById('as_isolate').value,

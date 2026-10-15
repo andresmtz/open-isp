@@ -35,7 +35,7 @@
     <% } %>
 
     <div class="mtabs">
-      <a href="/admin/vouchers" class="mtab"><i class="bi bi-ticket-perforated"></i> Pembuatan Voucher (Batch)</a>
+      <a href="/admin/vouchers" class="mtab"><i class="bi bi-ticket-perforated"></i> Crear vouchers (por lote)</a>
       <a href="/admin/vouchers/packages" class="mtab active"><i class="bi bi-ticket-detailed"></i> <%= t('admin.vp.config','Konfigurasi Paket') %> (Real-Time)</a>
     </div>
 
@@ -183,7 +183,7 @@
 
       list.innerHTML = currentPackages.map((p, idx) => {
         const routerName = p.router_name || 'Default';
-        const charsetText = p.charset === 'numbers' ? 'Angka' : (p.charset === 'letters' ? 'Huruf Kecil' : 'Campuran');
+        const charsetText = p.charset === 'numbers' ? 'Números' : (p.charset === 'letters' ? 'Minúsculas' : 'Mixto');
         const statusBadge = p.is_active ? '<span class="badge bs"><%= t('common.active','Aktif') %></span>' : '<span class="badge bd"><%= t('common.inactive','Nonaktif') %></span>';
         
         return `
@@ -198,7 +198,7 @@
             <td>${statusBadge}</td>
             <td style="white-space:nowrap">
               <div class="act">
-                <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                 <div class="act-menu">
                   <button type="button" class="act-item" onclick="openEditModal(${idx})"><i class="bi bi-pencil"></i> <%= t('common.edit','Edit') %></button>
                   <div class="act-sep"></div>

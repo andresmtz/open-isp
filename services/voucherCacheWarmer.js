@@ -185,9 +185,9 @@ async function warmVoucherCache() {
           { code: 'PERMATAVA', name: 'Permata Virtual Account', group: 'Virtual Account', active: true },
           { code: 'MANDIRIVA', name: 'Mandiri Virtual Account', group: 'Virtual Account', active: true }
         ];
-        if (gateway === 'midtrans') channels = [{ code: 'SNAP', name: 'Semua Metode (Snap)', group: 'E-Wallet', active: true }, ...base];
-        else if (gateway === 'xendit') channels = [{ code: 'XENDIT', name: 'Semua Metode', group: 'E-Wallet', active: true }, ...base];
-        else if (gateway === 'duitku') channels = [{ code: 'DUITKU', name: 'Semua Metode', group: 'E-Wallet', active: true }, ...base];
+        if (gateway === 'midtrans') channels = [{ code: 'SNAP', name: 'Todos los métodos (Snap)', group: 'E-Wallet', active: true }, ...base];
+        else if (gateway === 'xendit') channels = [{ code: 'XENDIT', name: 'Todos los métodos', group: 'E-Wallet', active: true }, ...base];
+        else if (gateway === 'duitku') channels = [{ code: 'DUITKU', name: 'Todos los métodos', group: 'E-Wallet', active: true }, ...base];
         else channels = base;
       }
 

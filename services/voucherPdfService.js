@@ -63,7 +63,7 @@ function generateVoucherBatchPdfBuffer(batch, vouchers, settings = {}) {
       const range = doc.bufferedPageRange();
       for (let i = range.start; i < range.start + range.count; i++) {
         doc.switchToPage(i);
-        doc.fillColor(MUTED).fontSize(7).font('Helvetica').text(`${ci.name} • Voucher Batch #${batch.id} • Halaman ${i - range.start + 1}/${range.count}`, LEFT, 812, { width: W, align: 'center' });
+        doc.fillColor(MUTED).fontSize(7).font('Helvetica').text(`${ci.name} • Voucher Batch #${batch.id} • Página ${i - range.start + 1}/${range.count}`, LEFT, 812, { width: W, align: 'center' });
       }
 
       doc.end();

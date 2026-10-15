@@ -89,7 +89,7 @@ async function addCustomerTag(remoteJid, params) {
         logger.error('Error in addCustomerTag:', error);
         
         await sock.sendMessage(remoteJid, {
-            text: `❌ *Error*\n\nTerjadi kesalahan saat menambahkan tag: ${error.message}`
+            text: `❌ *Error*\n\nOcurrió un error al agregar la etiqueta: ${error.message}`
         });
     }
 }
@@ -229,7 +229,7 @@ async function addTagByPPPoE(remoteJid, params, sock) {
         logger.error('Error in addTagByPPPoE:', error);
         
         await sock.sendMessage(remoteJid, {
-            text: `❌ *Error*\n\nTerjadi kesalahan saat menambahkan tag: ${error.message}`
+            text: `❌ *Error*\n\nOcurrió un error al agregar la etiqueta: ${error.message}`
         });
     }
 }

@@ -290,17 +290,17 @@ function getHealthStatus() {
   // Check CPU usage
   const cpuUsage = parseFloat(metrics.system.cpu.usage);
   if (cpuUsage > 85) {
-    issues.push(`Penggunaan CPU tinggi: ${cpuUsage}%`);
+    issues.push(`Uso de CPU alto: ${cpuUsage}%`);
   } else if (cpuUsage > 65) {
-    warnings.push(`Penggunaan CPU agak tinggi: ${cpuUsage}%`);
+    warnings.push(`Uso de CPU algo alto: ${cpuUsage}%`);
   }
   
   // Check memory usage
   const memoryUsage = parseFloat(metrics.system.memory.percentage);
   if (memoryUsage > 85) {
-    issues.push(`Penggunaan RAM tinggi: ${memoryUsage}%`);
+    issues.push(`Uso de RAM alto: ${memoryUsage}%`);
   } else if (memoryUsage > 70) {
-    warnings.push(`Penggunaan RAM agak tinggi: ${memoryUsage}%`);
+    warnings.push(`Uso de RAM algo alto: ${memoryUsage}%`);
   }
   
   // Check load average
@@ -317,9 +317,9 @@ function getHealthStatus() {
   if (diskPercentage !== 'N/A') {
     const diskPercent = parseFloat(diskPercentage.replace('%', ''));
     if (diskPercent > 90) {
-      issues.push(`Kapasitas Penyimpanan (Disk) Hampir Penuh: ${diskPercentage}`);
+      issues.push(`Disco casi lleno: ${diskPercentage}`);
     } else if (diskPercent > 75) {
-      warnings.push(`Kapasitas Penyimpanan (Disk) Terpakai: ${diskPercentage}`);
+      warnings.push(`Uso del disco: ${diskPercentage}`);
     }
   }
   

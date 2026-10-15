@@ -289,7 +289,7 @@ async function runAutoBillingReminder() {
 
           // Format pesan dengan Spintax & variation untuk anti-spam
           let formattedMsg = template
-            .replace(/{{nama}}/gi, c.name || 'Pelanggan')
+            .replace(/{{nama}}/gi, c.name || 'Cliente')
             .replace(/{{id_pelanggan}}/gi, c.customer_code || '-')
             .replace(/{{username}}/gi, c.pppoe_username || '-')
             .replace(/{{pppoe}}/gi, c.pppoe_username || '-')
@@ -304,7 +304,7 @@ async function runAutoBillingReminder() {
             .replace(/{{link_portal}}/gi, loginLink)
             .replace(/{{qris_nominal}}/gi, finalTagihanStr)
             .replace(/{{qris_kode}}/gi, String(qrisCodeVal || 0).padStart(3, '0'))
-            .replace(/{{qris_qr}}/gi, 'QRIS terlampir');
+            .replace(/{{qris_qr}}/gi, 'QR adjunto');
 
           const { parseSpintax } = await import('./whatsappBot.mjs');
           formattedMsg = parseSpintax(formattedMsg);

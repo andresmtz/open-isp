@@ -17,7 +17,7 @@ async function getAvailablePaymentMethods() {
   if (_mode === 'gateway' && String(_s.mayar_api_key || '').trim()) {
     return [{ gateway: 'mayar', code: 'MAYAR', name: 'Mayar (QRIS/VA/E-Wallet)', group: 'Pembayaran Online' }];
   }
-  return [{ gateway: 'manual', code: 'MANUAL', name: 'QRIS Manual (transfer + unggah bukti)', group: 'Manual' }];
+  return [{ gateway: 'manual', code: 'MANUAL', name: 'QR manual (transferencia + subir comprobante)', group: 'Manual' }];
   /* eslint-disable no-unreachable */
   /* kode lama (gateway) tidak dijalankan */
   const settings = getSettingsWithCache();
@@ -96,14 +96,14 @@ async function getTripayPaymentMethods(settings) {
  */
 async function getMidtransPaymentMethods(settings) {
   const methods = [
-    { code: 'credit_card', name: 'Kartu Kredit', icon: '💳' },
+    { code: 'credit_card', name: 'Tarjeta de crédito', icon: '💳' },
     { code: 'bank_transfer', name: 'Transfer Bank', icon: '🏦' },
     { code: 'echannel', name: 'ATM Bersama/Prima', icon: '🏧' },
     { code: 'bca_va', name: 'BCA Virtual Account', icon: '🏦' },
     { code: 'bni_va', name: 'BNI Virtual Account', icon: '🏦' },
     { code: 'bri_va', name: 'BRI Virtual Account', icon: '🏦' },
     { code: 'permata_va', name: 'Permata Virtual Account', icon: '🏦' },
-    { code: 'other_va', name: 'Virtual Account Lainnya', icon: '🏦' },
+    { code: 'other_va', name: 'Otra cuenta virtual', icon: '🏦' },
     { code: 'gopay', name: 'GoPay', icon: '📱' },
     { code: 'qris', name: 'QRIS', icon: '📲' }
   ];
@@ -130,7 +130,7 @@ async function getXenditPaymentMethods(settings) {
       { code: 'BANK_TRANSFER', name: 'Transfer Bank', icon: '🏦' },
       { code: 'EWALLET', name: 'E-Wallet (OVO, Dana, LinkAja)', icon: '📱' },
       { code: 'RETAIL_OUTLET', name: 'Retail Outlet (Indomaret, Alfamart)', icon: '🏪' },
-      { code: 'CREDIT_CARD', name: 'Kartu Kredit', icon: '💳' },
+      { code: 'CREDIT_CARD', name: 'Tarjeta de crédito', icon: '💳' },
       { code: 'QR_CODE', name: 'QRIS', icon: '📲' }
     ];
 
@@ -159,7 +159,7 @@ async function getDuitkuPaymentMethods(settings) {
     const methods = [
       { code: 'OV', name: 'Outlet Retail', icon: '🏪' },
       { code: 'BT', name: 'Transfer Bank', icon: '🏦' },
-      { code: 'CC', name: 'Kartu Kredit', icon: '💳' },
+      { code: 'CC', name: 'Tarjeta de crédito', icon: '💳' },
       { code: 'QRIS', name: 'QRIS', icon: '📲' },
       { code: 'EWALLET', name: 'E-Wallet', icon: '📱' }
     ];
@@ -207,7 +207,7 @@ async function createVoucherPayment(voucherOrder, paymentMethod, appUrl = '') {
 
   // Prepare customer object
   const customer = {
-    name: 'Pembeli Voucher',
+    name: 'Comprador de voucher',
     phone: voucherOrder.buyer_phone,
     email: ''
   };

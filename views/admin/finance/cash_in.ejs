@@ -31,7 +31,7 @@
     <% } %>
 
     <div class="alert alert-w mb-3">
-      <i class="bi bi-info-circle-fill"></i> <strong>Informasi:</strong><%= t('admin.cashin.info',' Halaman ini digunakan untuk mencatat kas masuk / pemasukan ') %><strong>selain</strong> de los cobros de facturas (por ejemplo: capital inicial, venta de equipos usados, etc.). Los cobros de facturas ya se registran automáticamente en los reportes.
+      <i class="bi bi-info-circle-fill"></i> <strong>Información:</strong><%= t('admin.cashin.info',' Halaman ini digunakan untuk mencatat kas masuk / pemasukan ') %><strong>selain</strong> de los cobros de facturas (por ejemplo: capital inicial, venta de equipos usados, etc.). Los cobros de facturas ya se registran automáticamente en los reportes.
     </div>
 
     <% 
@@ -89,7 +89,7 @@
               <td class="num fw6" style="color:#10b981">+ <%= APP_CUR %> <%= Number(item.amount).toLocaleString(APP_LOCALE) %></td>
               <td style="font-size:12px"><%= item.recorded_by_name || 'Admin' %></td>
               <td>
-                <form method="POST" action="/admin/finance/cash-in/<%= item.id %>/delete" style="display:inline" onsubmit="return confirm('Hapus data kas masuk ini?')">
+                <form method="POST" action="/admin/finance/cash-in/<%= item.id %>/delete" style="display:inline" onsubmit="return confirm('¿Eliminar este ingreso de caja?')">
                   <button class="btn btn-d btn-icon btn-sm" title="Eliminar"><i class="bi bi-trash"></i></button>
                 </form>
               </td>

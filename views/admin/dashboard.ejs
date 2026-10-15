@@ -503,10 +503,10 @@ const I18N = {
   noConnectedDevices: "<%= t('admin.dashboard.no_connected_devices', 'Tidak ada perangkat terhubung') %>",
   detailLoadFailed: "<%= t('admin.dashboard.detail_load_failed', 'Gagal memuat detail') %>",
   offlineBadge: "<%= t('admin.dashboard.offline', 'Offline') %>",
-  lastInform: "Last Inform",
-  lastSync: "Last Sync",
+  lastInform: "Último reporte",
+  lastSync: "Última sincronización",
   syncNow: "Consultar TR-069 ahora",
-  syncRunning: "Sinkronisasi berjalan"
+  syncRunning: "Sincronizando"
 };
 
 // ── TABS ───────────────────────────────────────────────────────
@@ -738,7 +738,7 @@ async function loadDevices() {
           <td style="white-space:nowrap">
             ${d.source === 'olt' ? `<a class="btn btn-g btn-sm" href="/admin/olts" title="Datos leídos de la OLT (sin GenieACS)"><i class="bi bi-hdd-fill"></i> Ver en OLT</a>` : `
             <div class="act">
-              <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+              <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
               <div class="act-menu">
                 <button type="button" class="act-item btn-dev-detail" data-tag="${(d.tags && d.tags[0]) || d.id}"><i class="bi bi-eye"></i> ${I18N.titleDetail}</button>
                 <button type="button" class="act-item primary btn-dev-summon" data-id="${d.id}" data-acs="${d.acs_server_id || 'legacy'}"><i class="bi bi-arrow-repeat"></i> ${I18N.syncNow}</button>
@@ -1247,7 +1247,7 @@ async function deleteMonDevice(deviceId, acsId) {
   var grid = light ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.07)';
   new Chart(el, {
     type: 'bar',
-    data: { labels: labels, datasets: [{ label: 'Pendapatan', data: vals, backgroundColor: 'rgba(173,255,47,.5)', borderColor: '#ADFF2F', borderWidth: 1, borderRadius: 5, maxBarThickness: 34 }] },
+    data: { labels: labels, datasets: [{ label: 'Ingresos', data: vals, backgroundColor: 'rgba(173,255,47,.5)', borderColor: '#ADFF2F', borderWidth: 1, borderRadius: 5, maxBarThickness: 34 }] },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return APP_CUR + ' ' + Number(c.raw || 0).toLocaleString(APP_LOCALE); } } } },

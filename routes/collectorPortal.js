@@ -87,7 +87,7 @@ router.get('/attendance', requireCollectorSession, (req, res) => {
     );
     
     res.render('collector/attendance', {
-      title: 'Absensi',
+      title: 'Asistencia',
       company: company(),
       activePage: 'attendance',
       collectorName,
@@ -349,7 +349,7 @@ router.post('/payment-request', requireCollectorSession, express.urlencoded({ ex
 
     const inv = billingSvc.getInvoiceById(invoiceId);
     if (!inv) throw new Error('Factura no encontrada');
-    if (String(inv.status || '').toLowerCase() === 'paid') throw new Error('Tagihan sudah lunas');
+    if (String(inv.status || '').toLowerCase() === 'paid') throw new Error('La factura ya está pagada');
 
     const existingPending = db.prepare(`
       SELECT id FROM collector_payment_requests
@@ -423,7 +423,7 @@ router.post('/payment-request', requireCollectorSession, express.urlencoded({ ex
           periodMonth: inv.period_month,
           periodYear: inv.period_year,
           amount: inv.amount,
-          paymentMethod: collectorLabel || 'Kolektor / Lapangan',
+          paymentMethod: collectorLabel || 'Cobrador / campo',
           paidAt: new Date(),
           companyName: allSettings.company_header || 'OPEN-ISP',
           companyPhone: allSettings.company_phone || '',

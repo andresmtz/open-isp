@@ -530,7 +530,7 @@ async function notifyAdminUnmatchedPayment(amount, rawText, service) {
       '⚠️ *Pago sin coincidencia*',
       '',
       '💰 Monto: *' + regional.currencySymbol() + ' ' + Number(amount || 0).toLocaleString(regional.locale()) + '*',
-      '🏦 Sumber: ' + (service || '-'),
+      '🏦 Origen: ' + (service || '-'),
       '🕒 ' + waktu,
       '',
       '📩 "' + String(rawText || '').slice(0, 160) + '"',
@@ -591,18 +591,18 @@ function crc16CcittFalse(input) {
 function parseEmvTlvString(input) {
   const raw = String(input || '').replace(/[\r\n\t]+/g, '').trim();
   if (!raw) throw new Error('El payload QRIS está vacío');
-  if (raw.length < 8) throw new Error('QRIS payload terlalu pendek');
+  if (raw.length < 8) throw new Error('Los datos del QR son demasiado cortos');
   const items = [];
   let i = 0;
   while (i < raw.length) {
     if (i + 4 > raw.length) throw new Error('El payload QRIS (TLV) no es válido');
     const tag = raw.slice(i, i + 2);
     const lenStr = raw.slice(i + 2, i + 4);
-    if (!/^\d{2}$/.test(lenStr)) throw new Error('QRIS payload TLV length tidak valid');
+    if (!/^\d{2}$/.test(lenStr)) throw new Error('Longitud TLV del QR inválida');
     const len = Number(lenStr);
     const start = i + 4;
     const end = start + len;
-    if (end > raw.length) throw new Error('QRIS payload TLV length melebihi data');
+    if (end > raw.length) throw new Error('La longitud TLV del QR supera los datos');
     const value = raw.slice(start, end);
     items.push({ tag, value });
     i = end;
@@ -617,7 +617,7 @@ function buildEmvTlvString(items) {
     const tag = String(it?.tag || '');
     const value = String(it?.value ?? '');
     const len = value.length;
-    if (!/^\d{2}$/.test(tag)) throw new Error('Tag TLV tidak valid');
+    if (!/^\d{2}$/.test(tag)) throw new Error('Etiqueta TLV del QR inválida');
     if (len > 99) throw new Error('No se admite una longitud TLV > 99');
     out += tag + String(len).padStart(2, '0') + value;
   }
@@ -667,7 +667,7 @@ async function trySendWaToBuyer(settings, phone, message, orderId) {
   if (!p) return;
   try {
     const { sendWA, whatsappStatus } = await import('./services/whatsappBot.mjs');
-    if (whatsappStatus.connection !== 'open') throw new Error('Bot WhatsApp belum terhubung');
+    if (whatsappStatus.connection !== 'open') throw new Error('WhatsApp no está conectado');
     await sendWA(p, message);
     markVoucherWaSentOk.run(orderId);
   } catch (e) {
@@ -683,7 +683,7 @@ async function trySendWaPaymentSuccess(settings, invoiceId, methodLabel) {
     const phone = String(inv.customer_phone || '').trim();
     if (!phone) return;
     const { sendWA, whatsappStatus } = await import('./services/whatsappBot.mjs');
-    if (whatsappStatus.connection !== 'open') throw new Error('Bot WhatsApp belum terhubung');
+    if (whatsappStatus.connection !== 'open') throw new Error('WhatsApp no está conectado');
 
     const appUrl = (settings.public_base_url || '').replace(/\/$/, '');
     const portalUrl = appUrl ? `${appUrl}/customer` : '';
@@ -691,7 +691,7 @@ async function trySendWaPaymentSuccess(settings, invoiceId, methodLabel) {
     const metode = String(methodLabel || '').trim() || 'Online Gateway';
 
     const msg = whatsappService.formatPaymentSuccessMessage({
-      customerName: inv.customer_name || 'Pelanggan',
+      customerName: inv.customer_name || 'Cliente',
       invoiceId: inv.id,
       customerUsername: inv.customer_pppoe || inv.customer_code || (inv.customer_id ? ('ID:' + inv.customer_id) : '-'),
       customerCode: inv.customer_code || (inv.customer_id ? ('ID:' + inv.customer_id) : '-'),
@@ -770,7 +770,7 @@ async function fulfillVoucherOrder(settings, orderId) {
     `🎫 *VOUCHER HOTSPOT*\n\n` +
     `✅ Pago recibido vía *QR estático*\n` +
     `📦 Plan: *${ord.profile_name}* (${ord.validity || '-'})\n` +
-    `💰 Harga: ${regional.currencySymbol()} ${Number(ord.price || 0).toLocaleString(regional.locale())}\n\n` +
+    `💰 Precio: ${regional.currencySymbol()} ${Number(ord.price || 0).toLocaleString(regional.locale())}\n\n` +
     `👤 User: *${created.code}*\n` +
     `🔑 Pass: *${created.pass}*\n\n` +
     `Gracias.`;
@@ -869,7 +869,7 @@ app.post('/api/webhook/mayar', express.json({ limit: '2mb' }), async (req, res) 
     }
     if (inv.status === 'paid') return res.json({ ok: true, already: true, invoiceId: inv.id });
 
-    billingSvc.markAsPaid(inv.id, 'Mayar', 'Otomatis via Webhook Mayar');
+    billingSvc.markAsPaid(inv.id, 'Mayar', 'Automático vía webhook de Mayar');
 
     try {
       const customer = customerSvc.getCustomerById(inv.customer_id);
@@ -883,7 +883,7 @@ app.post('/api/webhook/mayar', express.json({ limit: '2mb' }), async (req, res) 
       const customer = customerSvc.getCustomerById(inv.customer_id);
       if (settings.whatsapp_enabled && customer && customer.phone && (await waNotify.isConnected())) {
         const full = billingSvc.getInvoiceById(inv.id);
-        const msg = '✅ *PAGO RECIBIDO*\n\nLa factura del período *' + full.period_month + '/' + full.period_year + '* sebesar ' + regional.currencySymbol() + ' ' + Number(full.amount || 0).toLocaleString(regional.locale()) + ' quedó *PAGADA* vía Mayar.\n\nGracias. 🙏';
+        const msg = '✅ *PAGO RECIBIDO*\n\nLa factura del período *' + full.period_month + '/' + full.period_year + '* por ' + regional.currencySymbol() + ' ' + Number(full.amount || 0).toLocaleString(regional.locale()) + ' quedó *PAGADA* vía Mayar.\n\nGracias. 🙏';
         await waNotify.sendText(customer.phone, msg);
       }
     } catch (e) { logger.warn('[WEBHOOK][mayar] WA gagal: ' + e.message); }
@@ -1247,7 +1247,7 @@ app.get('/', (req, res) => {
 
     const testimonials = [
       { name: 'Andi Pratama', role: 'Cliente residencial', text: 'La conexión es estable; trabajo desde casa y veo series sin cortes. ¡Recomendado!' },
-      { name: 'Siti Rahayu', role: 'Usaha Kecil', text: 'Precio accesible y buena subida. Mi tienda en línea atiende los pedidos mucho mejor.' },
+      { name: 'Siti Rahayu', role: 'Pequeño comercio', text: 'Precio accesible y buena subida. Mi tienda en línea atiende los pedidos mucho mejor.' },
       { name: 'Budi Santoso', role: 'Cliente gamer', text: 'Ping bajo, se juega muy cómodo en línea. Si hay algún problema, el soporte responde rápido.' }
     ];
 
@@ -1360,7 +1360,7 @@ app.post('/isolated/quick-qris/:invoiceId', async (req, res) => {
     
     const inv = billingSvc.getInvoiceById(req.params.invoiceId);
     if (!inv) return res.status(404).json({ success: false, message: 'Factura no encontrada' });
-    if (inv.status === 'paid') return res.json({ success: false, paid: true, message: 'Tagihan ini sudah lunas!' });
+    if (inv.status === 'paid') return res.json({ success: false, paid: true, message: 'Esta factura ya está pagada.' });
     
     const cust = customerSvc.getCustomerById(inv.customer_id);
     if (!cust) return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
@@ -1557,7 +1557,7 @@ function getActivePaymentChannelsForIsolated(settings) {
   if (settings.qris_static_enabled && settings.qris_static_payload) {
     channels.push({
       code: 'QRIS_STATIC',
-      name: '🟦 QRIS Statis (Instant)',
+      name: '🟦 QR estático (inmediato)',
       enabled: true
     });
   }
@@ -1590,7 +1590,7 @@ function getActivePaymentChannelsForIsolated(settings) {
   }
   
   return channels.length > 0 ? channels : [
-    { code: 'QRIS_STATIC', name: '🟦 QRIS Statis', enabled: false }
+    { code: 'QRIS_STATIC', name: '🟦 QR estático', enabled: false }
   ];
 }
 
@@ -1795,7 +1795,7 @@ app.get('/uploads/qris/:filename', async (req, res) => {
   try {
     const filename = String(req.params.filename || '');
     const safeName = path.basename(filename);
-    if (!safeName || safeName !== filename) return sendPretty(404, 'QRIS tidak ditemukan', 'Link QRIS tidak valid.');
+    if (!safeName || safeName !== filename) return sendPretty(404, 'QR no encontrado', 'El enlace del QR no es válido.');
 
     const filePath = path.join(__dirname, 'public', 'uploads', 'qris', safeName);
     try {
@@ -1816,9 +1816,9 @@ app.get('/uploads/qris/:filename', async (req, res) => {
 
     const url = String(settings?.qris_static_qr_url || '').trim();
     if (url && !url.endsWith(`/uploads/qris/${safeName}`)) return res.redirect(url);
-    return sendPretty(404, 'QRIS tidak ditemukan', 'La imagen del QR no está disponible. Use el enlace de QR más reciente del portal del cliente.');
+    return sendPretty(404, 'QR no encontrado', 'La imagen del QR no está disponible. Use el enlace de QR más reciente del portal del cliente.');
   } catch {
-    return sendPretty(404, 'QRIS tidak ditemukan', 'No se pudo cargar el QR.');
+    return sendPretty(404, 'QR no encontrado', 'No se pudo cargar el QR.');
   }
 });
 
@@ -1882,10 +1882,10 @@ app.get('/qris/static.jpg', async (req, res) => {
       return res.redirect(url);
     }
 
-    return sendPretty(404, 'QRIS tidak ditemukan', 'El administrador todavía no configuró el QR o el payload no es válido.');
+    return sendPretty(404, 'QR no encontrado', 'El administrador todavía no configuró el QR o el payload no es válido.');
   } catch (e) {
     logger.error(`[QRIS /qris/static.jpg] Error: ${e.message}`);
-    return sendPretty(404, 'QRIS tidak ditemukan', 'No se pudo procesar el QR:' + e.message);
+    return sendPretty(404, 'QR no encontrado', 'No se pudo procesar el QR:' + e.message);
   }
 });
 
@@ -2077,7 +2077,7 @@ app.use('/admin', (req, res, next) => {
         body.indexOf('/css/admin-theme.css') === -1 &&
         body.indexOf('no-admin-theme') === -1
       ) {
-        body = body.replace('</head>', '  <link rel="stylesheet" href="/css/admin-theme.css?v=8">\n  <script src="/js/admin-theme-sync.js?v=7"></script>\n  <script src="/js/admin-sw-cleanup.js" defer></script>\n  <script src="/js/admin-toast.js?v=4"></script>\n  <script src="/js/admin-search.js?v=1"></script>\n</head>');
+        body = body.replace('</head>', '  <link rel="stylesheet" href="/css/admin-theme.css?v=8">\n  <script src="/js/admin-theme-sync.js?v=7"></script>\n  <script src="/js/admin-sw-cleanup.js" defer></script>\n  <script src="/js/admin-toast.js?v=5"></script>\n  <script src="/js/admin-search.js?v=2"></script>\n</head>');
       }
     } catch (e) {}
     return originalSend(body);
@@ -2097,7 +2097,7 @@ app.use('/admin', (req, res, next) => {
         body.indexOf('/js/service-notice-badge.js') === -1
       ) {
         const noticeJson = JSON.stringify(noticeSvc.getServiceNotice()).split('<').join('\\u003c');
-        body = body.replace('</head>', '  <link rel="stylesheet" href="/css/service-notice-badge.css?v=4">\n  <script>window.__serviceNotice=' + noticeJson + ';</script>\n  <script src="/js/service-notice-badge.js?v=2" defer></script>\n</head>');
+        body = body.replace('</head>', '  <link rel="stylesheet" href="/css/service-notice-badge.css?v=4">\n  <script>window.__serviceNotice=' + noticeJson + ';</script>\n  <script src="/js/service-notice-badge.js?v=9" defer></script>\n</head>');
         // Versión de WhatsApp (GoWA) junto al estado del servicio: solo para el administrador
         if (req.session && req.session.isAdmin) body = body.replace('</head>', '  <script src="/js/gowa-badge.js?v=2" defer></script>\n</head>');
       }

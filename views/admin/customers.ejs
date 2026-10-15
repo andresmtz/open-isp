@@ -152,7 +152,7 @@
         </div>
         <div style="display:flex;gap:8px">
           <button type="button" class="btn btn-g btn-sm" onclick="window.print()" title="<%= t('admin.cust.tt_print_data','Cetak Data Pelanggan') %>"><i class="bi bi-printer"></i> <%= t('admin.cust.btn_print','Cetak') %></button>
-          <a href="/admin/onu-stickers" class="btn btn-g btn-sm" title="<%= t('admin.cust.tt_print_sticker','Cetak Stiker Modem / ONU') %>"><i class="bi bi-qr-code-scan"></i> Stiker ONU</a>
+          <a href="/admin/onu-stickers" class="btn btn-g btn-sm" title="<%= t('admin.cust.tt_print_sticker','Cetak Stiker Modem / ONU') %>"><i class="bi bi-qr-code-scan"></i> Etiquetas ONU</a>
           <% if (_can('exportar')) { %><a href="/admin/customers/export" class="btn btn-g btn-sm"><i class="bi bi-file-earmark-excel"></i> <%= t('admin.customers.export_excel', 'Export Excel') %></a><% } %>
           <% if (_adm) { %><button class="btn btn-g btn-sm" onclick="openModal('importModal')"><i class="bi bi-file-earmark-arrow-up"></i> <%= t('admin.customers.import_excel', 'Import Excel') %></button><% } %>
 <% if (_adm) { %><button type="button" class="btn btn-g btn-sm" onclick="syncAllCust()"><i class="bi bi-arrow-repeat"></i> <%= t('admin.cust.apply_network','Terapkan ke Jaringan') %></button><% } %>
@@ -175,7 +175,7 @@
             <option value="cancelled" <%= filterStatus==='cancelled' ? 'selected':'' %>>Cancelados</option>
           </select>
           <select class="fs" name="area" style="width:160px" onchange="this.form.submit()">
-            <option value=""><%= t('admin.cust.all_area','Semua Area') %></option>
+            <option value=""><%= t('admin.cust.all_area','Todas las zonas') %></option>
             <% if (typeof areas !== 'undefined' && areas && areas.length > 0) { %>
               <% areas.forEach(a => { %>
                 <option value="<%= a %>" <%= (typeof filterArea !== 'undefined' && filterArea === a) ? 'selected' : '' %>><%= a %></option>
@@ -251,7 +251,7 @@
               <td class="text-muted"><%= i+1 %></td>
               <td class="fw6">
                 <a href="javascript:void(0)" onclick="viewCustDetail(<%= i %>)" style="color:var(--primary);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="<%= t('admin.cust.tt_detail','Klik untuk lihat detail pelanggan & MikroTik') %>">
-                  <%= c.name %><% var _miss=[]; if(!c.phone)_miss.push('HP'); if(!c.lat||!c.lng)_miss.push('koordinat'); if(!c.genieacs_tag)_miss.push('ACS'); %><% if(_miss.length===0){ %><i class="bi bi-check-circle-fill" style="font-size:12px;color:#22c55e;vertical-align:middle;" title="<%= t('admin.customers.data_ok','Data lengkap') %>"></i><% } else { %><i class="bi bi-x-circle-fill" style="font-size:12px;color:#ef4444;vertical-align:middle;" title="<%= t('admin.customers.data_incomplete','Belum lengkap') %>: <%- _miss.join(', ') %>"></i><% } %>
+                  <%= c.name %><% var _miss=[]; if(!c.phone)_miss.push('teléfono'); if(!c.lat||!c.lng)_miss.push('ubicación'); if(!c.genieacs_tag)_miss.push('ACS'); %><% if(_miss.length===0){ %><i class="bi bi-check-circle-fill" style="font-size:12px;color:#22c55e;vertical-align:middle;" title="<%= t('admin.customers.data_ok','Data lengkap') %>"></i><% } else { %><i class="bi bi-x-circle-fill" style="font-size:12px;color:#ef4444;vertical-align:middle;" title="<%= t('admin.customers.data_incomplete','Belum lengkap') %>: <%- _miss.join(', ') %>"></i><% } %>
                   <i class="bi bi-info-circle-fill" style="font-size:12px;opacity:0.75;"></i>
                 </a>
                 <% if (c.customer_code) { %><div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px;" title="ID de cliente"><i class="bi bi-person-badge"></i> <%= c.customer_code %></div><% } %>
@@ -362,7 +362,7 @@
               </td>
               <td>
                 <% if (c.status==='active') { %><span class="badge bs"><i class="bi bi-circle-fill" style="font-size:7px"></i><%= t('admin.customers.filter.active', 'Aktif') %></span>
-                <% } else if (c.status==='suspended') { %><% if (c.deactivate_cause==='auto_unpaid') { %><span class="badge bd" title="<%= t('admin.cust.inactive','Nonaktif') %><%= t('admin.cust.reg_auto',' otomatis: menunggak ') %><%= c.unpaid_streak %> bulan"><i class="bi bi-person-x"></i> <%= t('admin.cust.inactive','Nonaktif') %> (auto)</span><% } else { %><span class="badge bw"><%= t('admin.customers.filter.suspended', 'Suspend') %></span><% } %>
+                <% } else if (c.status==='suspended') { %><% if (c.deactivate_cause==='auto_unpaid') { %><span class="badge bd" title="<%= t('admin.cust.inactive','Nonaktif') %><%= t('admin.cust.reg_auto',' otomatis: menunggak ') %><%= c.unpaid_streak %> meses"><i class="bi bi-person-x"></i> <%= t('admin.cust.inactive','Nonaktif') %> (auto)</span><% } else { %><span class="badge bw"><%= t('admin.customers.filter.suspended', 'Suspend') %></span><% } %>
                 <% } else if (c.status==='ditangguhkan') { %><span class="badge bw" title="Habilitado con deuda<%= c.promise_until ? (' — promesa de pago hasta ' + c.promise_until) : '' %>"><i class="bi bi-hand-thumbs-up"></i> <%= c.promise_until ? 'Promesa' : 'Habilitado c/deuda' %></span><% if (c.promise_until) { %><div style="font-size:10px;margin-top:3px;color:var(--muted)">hasta <%= String(c.promise_until).slice(8,10) + '/' + String(c.promise_until).slice(5,7) + ' ' + String(c.promise_until).slice(11,16) %></div><% } %>
                 <% } else if (c.status==='cancelled') { %><span class="badge bd" title="<%= (c.cancelled_at ? ('Cancelado el ' + String(c.cancelled_at).slice(0,10)) : '') + (c.cancel_reason ? (' — ' + c.cancel_reason) : '') %>"><i class="bi bi-x-octagon"></i> Cancelado</span>
                 <% } else { %><span class="badge bm"><%= t('admin.customers.filter.inactive', 'Nonaktif') %></span><% } %>
@@ -397,7 +397,7 @@
               </td><% } %>
               <td style="white-space:nowrap">
                 <% if (c.status === 'inactive') { %>
-                <form id="rej-<%= c.id %>" method="POST" action="/admin/registrations/<%= c.id %>/reject" style="display:none" onsubmit="return confirm('Tolak pendaftar ini?')"></form>
+                <form id="rej-<%= c.id %>" method="POST" action="/admin/registrations/<%= c.id %>/reject" style="display:none" onsubmit="return confirm('¿Cancelar esta solicitud?')"></form>
                 <% } %>
                 <% if (typeof session !== 'undefined' && session && !session.isCashier) { %>
                 <% if (c.package_id && (c.package_promo_cycles || 0) > 0) { %>
@@ -412,7 +412,7 @@
                 <% } %>
                 <form id="del-<%= c.id %>" method="POST" action="/admin/customers/<%= c.id %>/delete" style="display:none" data-confirm-msg=<%- JSON.stringify(t('admin.customers.confirm_delete', 'Hapus pelanggan ini?')).split('<').join('\\u003c') %> onsubmit="return confirm(this.dataset.confirmMsg)"></form>
                 <div class="act">
-                  <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                  <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
                     <% if (c.status === 'inactive' && c.reg_status === 'approved' && _can('clientes_alta')) { %>
                       <button type="button" class="act-item success" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="markInstalled(+this.dataset.id, this.dataset.name)"><i class="bi bi-check2-circle"></i> Instalación realizada</button>
@@ -1210,7 +1210,7 @@
         <div class="vd-panel">
           <div class="vd-row"><span class="k">Username PPPoE / Hotspot</span><span class="v"><code id="v_username" class="vd-code" style="color:#38bdf8">-</code><button class="btn btn-g btn-sm vd-copy" onclick="copyToClipboard('v_username','Username')"><i class="bi bi-copy"></i></button></span></div>
           <div class="vd-row"><span class="k">Password PPPoE / Hotspot</span><span class="v"><code id="v_password" class="vd-code" style="color:#f472b6">-</code><button class="btn btn-g btn-sm vd-copy" onclick="copyToClipboard('v_password','Password')"><i class="bi bi-copy"></i></button></span></div>
-          <div class="vd-row"><span class="k">IP Address (Sesi / Static)</span><span class="v"><code id="v_ip" class="vd-code" style="color:#4ade80">-</code><button class="btn btn-g btn-sm vd-copy" onclick="copyToClipboard('v_ip','IP Address')"><i class="bi bi-copy"></i></button></span></div>
+          <div class="vd-row"><span class="k">Dirección IP (sesión / fija)</span><span class="v"><code id="v_ip" class="vd-code" style="color:#4ade80">-</code><button class="btn btn-g btn-sm vd-copy" onclick="copyToClipboard('v_ip','IP Address')"><i class="bi bi-copy"></i></button></span></div>
           <div class="vd-row"><span class="k">MAC Address / Caller-ID</span><span class="v"><code id="v_mac" class="vd-code" style="color:#fbbf24">-</code><button class="btn btn-g btn-sm vd-copy" onclick="copyToClipboard('v_mac','MAC Address')"><i class="bi bi-copy"></i></button></span></div>
           <div class="vd-row"><span class="k"><%= t('admin.cust.router_target','Router Target') %></span><span class="v" id="v_router_name">-</span></div>
           <div class="vd-row"><span class="k"><%= t('admin.cust.conn_type','Tipe Koneksi') %></span><span class="v" id="v_conn_type">-</span></div>

@@ -263,7 +263,7 @@ function copyGowaWebhook() {
   if (!el) return;
   el.select();
   try { document.execCommand('copy'); } catch (e) {}
-  alert('Webhook URL disalin:\n' + el.value);
+  alert('URL del webhook copiada:\n' + el.value);
 }
 async function sendTestGowa() {
         const phone = (document.getElementById('test_gowa_phone') || {}).value || '';
@@ -387,7 +387,7 @@ async function sendTestGowa() {
       if (qrSection) qrSection.style.display = 'none';
       if (infoSection) infoSection.style.display = 'none';
 
-      const connectedLabel = document.body.dataset.connectedLabel || 'Terhubung';
+      const connectedLabel = document.body.dataset.connectedLabel || 'Conectado';
       const needScanLabel = document.body.dataset.needScanLabel || 'Requiere escanear';
 
       if (status.connection === 'open') {
@@ -428,7 +428,7 @@ async function sendTestGowa() {
         }
       } else if (status.connection === 'connecting') {
         icon.classList.add('status-qr');
-        text.innerText = 'Menghubungkan...';
+        text.innerText = 'Conectando...';
         desc.innerText = status.loadingProgress || 'Autenticación correcta; sincronizando el chat de WhatsApp Web... Esperá unos segundos.';
       } else {
         icon.classList.add('status-close');

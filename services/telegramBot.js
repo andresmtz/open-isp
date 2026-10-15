@@ -210,7 +210,7 @@ function initTelegram() {
     lines.push(`Fecha : ${now}`);
     lines.push('============================');
     lines.push('');
-    lines.push('RINGKASAN');
+    lines.push('RESUMEN');
     lines.push(`Total Secret : ${snapshot.secrets.length}`);
     lines.push(`Total activos : ${snapshot.active.length}`);
     lines.push(`Total Offline: ${offline.length}`);
@@ -234,7 +234,7 @@ function initTelegram() {
 
     lines.push('');
     lines.push('Detalle de un usuario: /cekpppoe usuario');
-    lines.push('Contoh: /cekpppoe budi001');
+    lines.push('Ejemplo: /cekpppoe juan001');
     return lines.join('\n');
   };
 
@@ -281,7 +281,7 @@ function initTelegram() {
 
     if (!online && offline.length) {
       lines.push('');
-      lines.push('User Offline Lain');
+      lines.push('Otros usuarios desconectados');
       offline.slice(0, 10).forEach((row) => {
         lines.push(`- ${row.username} (${row.failCount}x)`);
       });
@@ -295,12 +295,12 @@ function initTelegram() {
   const mainMenu = {
     reply_markup: {
       inline_keyboard: [
-        [{ text: '📊 Statistik', callback_data: 'menu_stats' }, { text: '👥 Clientes', callback_data: 'menu_cust' }],
+        [{ text: '📊 Estadísticas', callback_data: 'menu_stats' }, { text: '👥 Clientes', callback_data: 'menu_cust' }],
         [{ text: '🎫 Voucher', callback_data: 'menu_vouch' }, { text: '💰 Facturas', callback_data: 'menu_bill' }],
         [{ text: '⚙️ MikroTik Status', callback_data: 'menu_mt' }],
         [{ text: '🖥️ Sistema', callback_data: 'menu_sys' }, { text: '💰 Deudas', callback_data: 'menu_arrears' }],
-        [{ text: '💰 Pendapatan', callback_data: 'menu_pendapatan' }],
-        [{ text: '🎫 Tickets', callback_data: 'menu_tiket' }, { text: '📡 OLT', callback_data: 'menu_olt' }, { text: '📶 Trafik', callback_data: 'menu_trafik' }],
+        [{ text: '💰 Ingresos', callback_data: 'menu_pendapatan' }],
+        [{ text: '🎫 Tickets', callback_data: 'menu_tiket' }, { text: '📡 OLT', callback_data: 'menu_olt' }, { text: '📶 Tráfico', callback_data: 'menu_trafik' }],
         [{ text: '🔄 Refresh', callback_data: 'menu_main' }]
       ]
     }
@@ -340,7 +340,7 @@ function initTelegram() {
       let res = `*📊 ESTADÍSTICAS DEL SISTEMA*\n\n`;
       res += `👥 Clientes: ${stats.total}\n`;
       res += `✅ Activos: ${stats.active}\n`;
-      res += `🚫 Terisolir: ${stats.suspended}\n\n`;
+      res += `🚫 Suspendidos: ${stats.suspended}\n\n`;
       res += `💰 Ingresos del mes: ${regional.currencySymbol()} ${billing.thisMonth.toLocaleString(regional.locale())}\n`;
       res += `⏳ Sin pagar: ${billing.unpaidCount} facturas`;
       
@@ -378,7 +378,7 @@ function initTelegram() {
     }
 
     else if (data === 'menu_vouch') {
-      bot.sendMessage(chatId, '🎫 *MANAJEMEN VOUCHER*\nPilih aksi:', {
+      bot.sendMessage(chatId, '🎫 *VOUCHERS*\nElegí una opción:', {
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
@@ -522,7 +522,7 @@ function initTelegram() {
 
     else if (data === 'cust_suspended') {
       const customers = customerSvc.getAllCustomers().filter(c => c.status === 'suspended');
-      if (customers.length === 0) return bot.sendMessage(chatId, '✅ Tidak ada pelanggan yang terisolir.');
+      if (customers.length === 0) return bot.sendMessage(chatId, '✅ No hay clientes suspendidos.');
       let txt = `*🚫 CLIENTES SUSPENDIDOS (${customers.length})*\n\n`;
       customers.slice(0, 15).forEach(c => {
         txt += `• *${c.name}* (${c.phone})\n`;
@@ -533,7 +533,7 @@ function initTelegram() {
 
     else if (data === 'bill_unpaid') {
       const invoices = billingSvc.getAllInvoices().filter(i => i.status === 'unpaid');
-      if (invoices.length === 0) return bot.sendMessage(chatId, '✅ Semua tagihan sudah lunas!');
+      if (invoices.length === 0) return bot.sendMessage(chatId, '✅ ¡Todas las facturas están pagadas!');
       let txt = `*⏳ FACTURAS PENDIENTES (${invoices.length})*\n\n`;
       invoices.slice(0, 15).forEach(i => {
         const c = customerSvc.getCustomerById(i.customer_id);
@@ -610,8 +610,8 @@ function initTelegram() {
         
         let res = `*🎫 FICHA CREADA (INMEDIATA)*\n\n`;
         res += `🎫 CÓDIGO: \`${pin}\`\n`;
-        res += `💰 Harga: ${regional.currencySymbol()} ${meta.price}\n`;
-        res += `⏳ Durasi: ${meta.validity}\n`;
+        res += `💰 Precio: ${regional.currencySymbol()} ${meta.price}\n`;
+        res += `⏳ Duración: ${meta.validity}\n`;
         res += `📦 Plan: ${profileName}\n`;
         res += `\n_Ingrese el código de arriba en la página de acceso del hotspot._`;
         
@@ -703,9 +703,9 @@ function initTelegram() {
       c.name.toLowerCase().includes(query) || c.phone.includes(query)
     );
     
-    if (customers.length === 0) return bot.sendMessage(msg.chat.id, `❌ Pelanggan dengan keyword "${query}" tidak ditemukan.`);
+    if (customers.length === 0) return bot.sendMessage(msg.chat.id, `❌ No se encontró ningún cliente con "${query}".`);
     
-    let res = `*🔍 HASIL PENCARIAN (${customers.length})*\n\n`;
+    let res = `*🔍 RESULTADOS (${customers.length})*\n\n`;
     customers.slice(0, 10).forEach(c => {
       res += `👤 *${c.name}*\n📞 ${c.phone}\n🚦 Status: ${c.status === 'active' ? '✅ Aktif' : '🚫 Terisolir'}\n\n`;
     });
@@ -732,8 +732,8 @@ function initTelegram() {
     t += `📀 Disk: *${disk}*\n`;
     t += `⏳ Load: ${la['1min'] != null ? la['1min'] : '-'} / ${la['5min'] != null ? la['5min'] : '-'} / ${la['15min'] != null ? la['15min'] : '-'}\n`;
     t += `🕒 Uptime: ${sys.uptime || '-'}\n`;
-    if (h && h.issues && h.issues.length) t += `\n🔴 *Masalah:*\n- ${h.issues.join('\n- ')}`;
-    if (h && h.warnings && h.warnings.length) t += `\n🟡 *Peringatan:*\n- ${h.warnings.join('\n- ')}`;
+    if (h && h.issues && h.issues.length) t += `\n🔴 *Problemas:*\n- ${h.issues.join('\n- ')}`;
+    if (h && h.warnings && h.warnings.length) t += `\n🟡 *Advertencias:*\n- ${h.warnings.join('\n- ')}`;
     return t;
   }
 
@@ -749,13 +749,13 @@ function initTelegram() {
     const s = ticketSvc.getTicketStats();
     const open = ticketSvc.getAllTickets('open') || [];
     let t = `🎫 *TICKETS*\n\nAbiertos: *${s.open}* · En curso: *${s.inProgress}* · Resueltos: *${s.resolved}*\n`;
-    if (open.length) { t += `\n*Open terbaru:*\n`; open.slice(0, 8).forEach(x => { t += `#${x.id} ${x.subject} — ${x.customer_name || '-'}\n`; }); }
+    if (open.length) { t += `\n*Abiertos más recientes:*\n`; open.slice(0, 8).forEach(x => { t += `#${x.id} ${x.subject} — ${x.customer_name || '-'}\n`; }); }
     return t;
   }
 
   async function tgOltText() {
     const o = await oltSvc.getAllOltsStats();
-    let t = `📡 *OLT STATUS*\n\nONU total: *${o.onus_total}*\n🟢 Online: *${o.onus_online}*\n🔴 Offline: *${o.onus_offline}*\n🟡 Lemah: *${o.onus_weak}*\n`;
+    let t = `📡 *OLT STATUS*\n\nONU total: *${o.onus_total}*\n🟢 Online: *${o.onus_online}*\n🔴 Offline: *${o.onus_offline}*\n🟡 Señal débil: *${o.onus_weak}*\n`;
     if (o.error) t += `\n_Catatan: ${o.error}_`;
     return t;
   }
@@ -850,10 +850,10 @@ function initTelegram() {
     try {
       const stats = billingSvc.getDashboardStats();
       const formatter = new Intl.NumberFormat(regional.locale(), { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
-      let res = `💰 *RINGKASAN BILLING*\n\n` +
-        `📈 *Total Pendapatan:* ${formatter.format(stats.totalRevenue)}\n` +
+      let res = `💰 *RESUMEN DE FACTURACIÓN*\n\n` +
+        `📈 *Total ingresos:* ${formatter.format(stats.totalRevenue)}\n` +
         `📅 *Este mes:* ${formatter.format(stats.thisMonth)}\n` +
-        `⏳ *Piutang (Pending):* ${formatter.format(stats.pendingAmount)}\n` +
+        `⏳ *Por cobrar (pendiente):* ${formatter.format(stats.pendingAmount)}\n` +
         `🧾 *Facturas pendientes:* ${stats.unpaidCount}\n\n` +
         `💡 _Usá los otros comandos para ver el detalle._`;
       bot.sendMessage(chatId, res, { parse_mode: 'Markdown' });
@@ -954,20 +954,20 @@ function initTelegram() {
           await customerSvc.activateCustomer(targetInv.customer_id);
           if (waBot && waBot.currentSock) {
             const ok = await waBot.notifyCustomer(waBot.currentSock, null, notifyTag, waMessage + `\n\n🟢 Su servicio de internet ya está activo nuevamente.`);
-            waNotifStatus = ok ? 'terkirim' : 'gagal';
+            waNotifStatus = ok ? 'enviado' : 'falló';
           }
           await bot.sendMessage(chatId, `✅ Factura *#${targetInvId}* PAGADA. El cliente *${customerName}* fue rehabilitado automáticamente.\n📩 WhatsApp al cliente: ${waNotifStatus}`);
         } else {
           if (waBot && waBot.currentSock) {
             const ok = await waBot.notifyCustomer(waBot.currentSock, null, notifyTag, waMessage + `\n\n⚠️ Todavía tiene ${unpaidCount} facturas pendientes.`);
-            waNotifStatus = ok ? 'terkirim' : 'gagal';
+            waNotifStatus = ok ? 'enviado' : 'falló';
           }
           await bot.sendMessage(chatId, `✅ Factura *#${targetInvId}* PAGADA. Quedan ${unpaidCount} facturas pendientes.\n📩 WhatsApp al cliente: ${waNotifStatus}`);
         }
       } else {
         if (waBot && waBot.currentSock) {
           const ok = await waBot.notifyCustomer(waBot.currentSock, null, notifyTag, waMessage);
-          waNotifStatus = ok ? 'terkirim' : 'gagal';
+          waNotifStatus = ok ? 'enviado' : 'falló';
         }
         await bot.sendMessage(chatId, `✅ Factura *#${targetInvId}* (de ${customerName}) marcada como PAGADA.\n📩 WhatsApp al cliente: ${waNotifStatus}`);
       }
@@ -1088,7 +1088,7 @@ function initTelegram() {
         return bot.sendMessage(chatId, `❌ No se encontró *${inputTag}* en GenieACS.`);
       }
 
-      await bot.sendMessage(chatId, `⏳ Mencoba me-reboot ONU *${targetTag}*...`, { parse_mode: 'Markdown' });
+      await bot.sendMessage(chatId, `⏳ Reiniciando la ONU *${targetTag}*...`, { parse_mode: 'Markdown' });
       const ok = await customerDevice.rebootDevice(targetTag);
       if (ok) {
         bot.sendMessage(chatId, `✅ Se envió la orden de reinicio a la ONU *${targetTag}*.`, { parse_mode: 'Markdown' });

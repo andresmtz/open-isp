@@ -49,7 +49,7 @@
     <a class="brand" href="/" aria-label="Beranda">
       <img class="bmark" src="<%= brandLogo %>" alt="" onerror="this.style.display='none'"><span class="bname"><%= brandName %></span>
     </a>
-    <% if (!minimal) { %><nav class="nav" aria-label="Navigasi">
+    <% if (!minimal) { %><nav class="nav" aria-label="Navegación">
       <a href="#packages">Plan</a>
       <a href="#features"><%= t('landing.nav.features','Keunggulan') %></a>
       <% if ((typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %><a href="/customer/check-billing"><%= t('landing.hero.check','Consultar deuda') %></a><% } %>
@@ -162,7 +162,7 @@
       <div class="pricing-grid">
         <% list.forEach(function(p, index){ %>
           <div class="price-card reveal <%= index === Math.floor(list.length/2) ? 'featured' : '' %>">
-            <% if (index === Math.floor(list.length/2)) { %><span class="tag">Terpopuler</span><% } %>
+            <% if (index === Math.floor(list.length/2)) { %><span class="tag">Más elegido</span><% } %>
             <h3><%= p.name %></h3>
             <div class="speed">
               <% if (Number(p.speed_down||0) > 0) { %>
@@ -238,7 +238,7 @@
     </div>
     <div class="foot-bottom">
       <span>&copy; <span id="year"></span> <%= settings.company_header || 'OPEN-ISP' %>. Todos los derechos reservados. <span style="opacity:.6">· v<%= appVersion %> (<%= appVersionName %>)</span></span>
-      <span class="mono">Fiber Optic Internet Service &middot; <a href="/blackhole" style="opacity:.32;color:inherit;text-decoration:none" title="Staff access">blackhole</a> &middot; <a href="#" onclick="hardResetApp();return false" style="opacity:.32;color:inherit;text-decoration:none" title="Bersihkan cache aplikasi">recargar la aplicación</a></span>
+      <span class="mono">Fiber Optic Internet Service &middot; <a href="/blackhole" style="opacity:.32;color:inherit;text-decoration:none" title="Staff access">blackhole</a> &middot; <a href="#" onclick="hardResetApp();return false" style="opacity:.32;color:inherit;text-decoration:none" title="Borrar la caché de la aplicación">recargar la aplicación</a></span>
     </div>
   </div>
 </footer>

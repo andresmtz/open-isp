@@ -50,7 +50,7 @@
     if (fab) { bind(fab); return; }
     var b = document.createElement('button');
     b.type = 'button'; b.className = 'theme-fab';
-    b.setAttribute('aria-label', 'Ganti tema'); b.setAttribute('title', 'Mode Gelap / Terang');
+    b.setAttribute('aria-label', 'Cambiar tema'); b.setAttribute('title', 'Modo oscuro / claro');
     b.innerHTML = '<i class="bi bi-circle-half"></i>';
     b.addEventListener('click', window.toggleTheme);
     document.body.appendChild(b);

@@ -89,7 +89,7 @@
             </div>
             <div class="fg" style="flex:2;min-width:200px">
               <label class="fl"><%= t('admin.vd.note','Catatan') %></label>
-              <input class="fc" name="note" value="<%= editVoucher ? (editVoucher.note||'') : '' %>" placeholder="opsional">
+              <input class="fc" name="note" value="<%= editVoucher ? (editVoucher.note||'') : '' %>" placeholder="opcional">
             </div>
           </div>
           <div style="text-align:right;margin-top:6px">
@@ -125,18 +125,18 @@
             <% vouchers.forEach(function(v){ %>
               <tr>
                 <td class="mono fw6"><%= v.code %></td>
-                <td><%= v.type === 'percent' ? 'Persen' : 'Nominal' %></td>
+                <td><%= v.type === 'percent' ? 'Porcentaje' : 'Monto fijo' %></td>
                 <td class="num"><%= v.type === 'percent' ? (v.value + ' %') : (APP_CUR + ' ' + Number(v.value).toLocaleString(APP_LOCALE)) %></td>
                 <td class="num"><%= Number(v.max_discount) > 0 ? (APP_CUR + ' ' + Number(v.max_discount).toLocaleString(APP_LOCALE)) : '-' %></td>
                 <td class="num"><%= Number(v.min_purchase) > 0 ? (APP_CUR + ' ' + Number(v.min_purchase).toLocaleString(APP_LOCALE)) : '-' %></td>
                 <td class="num"><%= v.used_count %><%= Number(v.max_uses) > 0 ? (' / ' + v.max_uses) : '' %></td>
-                <td><span class="badge <%= v.active ? 'bs' : 'bd' %>"><%= v.active ? 'Aktif' : 'Nonaktif' %></span></td>
+                <td><span class="badge <%= v.active ? 'bs' : 'bd' %>"><%= v.active ? 'Activo' : 'Inactivo' %></span></td>
                 <td style="font-size:12px;color:var(--muted)"><%= v.note || '' %></td>
                 <td style="white-space:nowrap">
                   <form id="vtg-<%= v.id %>" method="POST" action="/admin/vouchers-discounts/<%= v.id %>/toggle" style="display:none"></form>
-                  <form id="vdl-<%= v.id %>" method="POST" action="/admin/vouchers-discounts/<%= v.id %>/delete" style="display:none" onsubmit="return confirm('Hapus voucher <%= v.code %>?')"></form>
+                  <form id="vdl-<%= v.id %>" method="POST" action="/admin/vouchers-discounts/<%= v.id %>/delete" style="display:none" onsubmit="return confirm('¿Eliminar el vale <%= v.code %>?')"></form>
                   <div class="act">
-                    <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                    <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                     <div class="act-menu">
                       <a class="act-item" href="/admin/vouchers-discounts?edit=<%= v.id %>"><i class="bi bi-pencil"></i> Edit Voucher</a>
                       <button type="submit" form="vtg-<%= v.id %>" class="act-item warn"><i class="bi bi-power"></i> Activo/inactivo</button>

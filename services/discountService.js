@@ -37,13 +37,13 @@ function applyDiscountToInvoice(invoiceId, opts = {}, actor = null) {
 
   const inv = db.prepare('SELECT * FROM invoices WHERE id=?').get(invId);
   if (!inv) throw new Error('Factura no encontrada');
-  if (inv.status === 'paid') throw new Error('Tagihan sudah lunas, tidak bisa didiskon');
-  if (inv.status === 'void') throw new Error('Tagihan sudah dihanguskan');
+  if (inv.status === 'paid') throw new Error('La factura ya está pagada; no se le puede aplicar descuento');
+  if (inv.status === 'void') throw new Error('La factura ya fue anulada');
 
   const type = opts.type === 'percent' ? 'percent' : 'amount';
   const value = Math.round(Number(opts.value) || 0);
   if (value <= 0) throw new Error('El descuento debe ser mayor a 0');
-  if (type === 'percent' && value > 100) throw new Error('Diskon persen maksimal 100%');
+  if (type === 'percent' && value > 100) throw new Error('El descuento porcentual no puede superar 100%');
 
   const original = Number(inv.amount_before_discount || 0) > 0
     ? Number(inv.amount_before_discount)

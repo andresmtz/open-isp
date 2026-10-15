@@ -8,7 +8,7 @@
   function labelOf() {
     if (n.badgeLabel) return n.badgeLabel;
     if (n.mode === 'GANGGUAN_MASAL') return 'Gamas';
-    if (n.mode === 'PERBAIKAN') return 'Perbaikan Sistem';
+    if (n.mode === 'PERBAIKAN') return 'Mantenimiento del sistema';
     return 'Normal';
   }
   function iconOf() {
@@ -32,7 +32,7 @@
     a.href = '/admin/service-notice';
     a.setAttribute('data-notice-badge', '1');
     a.className = 'sn-badge ' + clsOf();
-    a.title = titleOf() + ' \u2014 klik untuk ubah';
+    a.title = titleOf() + ' \u2014 clic para cambiar';
     a.innerHTML = '<i class="bi ' + iconOf() + '"></i><span>' + labelOf() + '</span>';
     return a;
   }

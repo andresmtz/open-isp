@@ -132,7 +132,7 @@
       if (!res.ok) throw new Error(data.error || 'No se pudieron cargar los usuarios PPPoE');
       var users = Array.isArray(data) ? data : [];
       if (list) list.innerHTML = users.filter(function(u){return u && u.name;}).map(function(u){ return '<option value="' + String(u.name).replace(/"/g,'&quot;') + '"></option>'; }).join('');
-      if (hint) hint.innerText = users.length ? ('Tersedia ' + users.length + ' user PPPoE.') : 'No hay usuarios PPPoE.';
+      if (hint) hint.innerText = users.length ? ('Hay ' + users.length + ' usuarios PPPoE disponibles.') : 'No hay usuarios PPPoE.';
     } catch (e) { if (hint) hint.innerText = e.message; }
   }
   async function loadPppoeProfiles() {

@@ -90,7 +90,7 @@ function addStock(data, actor = 'Admin') {
     const result = db.prepare(`
       INSERT INTO inventory_stock (item_id, serial_number, quantity, condition, location, note)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(item_id, serial_number || null, quantity, condition || 'new', location || 'Gudang Utama', note || '');
+    `).run(item_id, serial_number || null, quantity, condition || 'new', location || 'Depósito principal', note || '');
 
     db.prepare(`
       INSERT INTO inventory_logs (item_id, stock_id, type, quantity, actor, note)
@@ -106,7 +106,7 @@ function addStock(data, actor = 'Admin') {
 function assignStockToCustomer(stockId, customerId, actor = 'Admin', note = '') {
   const stock = db.prepare('SELECT * FROM inventory_stock WHERE id = ?').get(stockId);
   if (!stock) throw new Error('Stock no encontrado');
-  if (stock.status === 'assigned') throw new Error('Stock sudah terpasang di pelanggan lain');
+  if (stock.status === 'assigned') throw new Error('Ese equipo ya está instalado en otro cliente');
 
   const run = db.transaction(() => {
     db.prepare(`
@@ -118,7 +118,7 @@ function assignStockToCustomer(stockId, customerId, actor = 'Admin', note = '') 
     db.prepare(`
       INSERT INTO inventory_logs (item_id, stock_id, type, quantity, actor, note)
       VALUES (?, ?, 'out', ?, ?, ?)
-    `).run(stock.item_id, stockId, stock.quantity, actor, note || `Terpasang ke pelanggan ID: ${customerId}`);
+    `).run(stock.item_id, stockId, stock.quantity, actor, note || `Instalado en el cliente ID: ${customerId}`);
   });
 
   return run();
@@ -135,7 +135,7 @@ function adjustStock(stockId, newQuantity, note, actor = 'Admin') {
     db.prepare(`
       INSERT INTO inventory_logs (item_id, stock_id, type, quantity, actor, note)
       VALUES (?, ?, 'adjust', ?, ?, ?)
-    `).run(stock.item_id, stockId, diff, actor, note || 'Penyesuaian Stock');
+    `).run(stock.item_id, stockId, diff, actor, note || 'Ajuste de stock');
   });
 
   return run();

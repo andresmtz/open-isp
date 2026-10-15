@@ -65,7 +65,7 @@ function computeInvoiceAmountAndMeta(customer, pkg, periodMonth, periodYear) {
   const metaParts = [];
   
   if (usePromo) {
-    metaParts.push(`Promo siklus ${promoUsed + 1}/${promoCycles} @ ${regional.currencySymbol()} ${Number(promoPrice).toLocaleString(regional.locale())}`);
+    metaParts.push(`Promo ciclo ${promoUsed + 1}/${promoCycles} @ ${regional.currencySymbol()} ${Number(promoPrice).toLocaleString(regional.locale())}`);
   }
   if (prorated && billableDays != null && dim != null) {
     metaParts.push(`Prorrateo ${billableDays}/${dim} días`);
@@ -206,7 +206,7 @@ function payInvoicesForCustomerMonths(customerId, year, months, paidByName, note
 
   const rawMonths = Array.isArray(months) ? months : (months == null ? [] : [months]);
   const selectedMonths = [...new Set(rawMonths.map(m => parseInt(m)).filter(m => Number.isFinite(m) && m >= 1 && m <= 12))].sort((a, b) => a - b);
-  if (selectedMonths.length === 0) throw new Error('Pilih minimal 1 bulan');
+  if (selectedMonths.length === 0) throw new Error('Elegí al menos 1 mes');
 
   const customer = db.prepare('SELECT * FROM customers WHERE id=?').get(cid);
   if (!customer) throw new Error('Cliente no encontrado');
@@ -802,7 +802,7 @@ function notifyAutoPaidPolite(customer, items) {
     const _defAl = '✅ *Factura saldada*\n\nEstimado/a *{{nama}}* (ID: {{id_pelanggan}}),\n\nSu factura del período {{rincian}} quedó registrada como *PAGADA*.\n\n💰 Monto: *{{moneda}} {{tagihan}}*\n\n¡Gracias! 🙏\n— {{company}}';
     const _tplAl = String(db.getAppSetting('whatsapp_autolunas_message', _defAl) || _defAl);
     const msg = _tplAl
-      .replace(/{{nama}}/gi, customer.name || 'Pelanggan')
+      .replace(/{{nama}}/gi, customer.name || 'Cliente')
       .replace(/{{id_pelanggan}}/gi, customer.customer_code || ('ID:' + customer.id))
       .replace(/{{tagihan}}/gi, total.toLocaleString(regional.locale()))
       .replace(/{{total}}/gi, total.toLocaleString(regional.locale()))

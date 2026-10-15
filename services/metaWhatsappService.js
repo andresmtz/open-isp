@@ -78,7 +78,7 @@ async function processWebhookEvent(req, res) {
             logger.info(`[Meta WA Webhook] Pesan masuk dari ${senderPhone}: "${msgText}"`);
 
             // Cari nama pelanggan dari DB jika ada
-            let customerName = 'Pelanggan';
+            let customerName = 'Cliente';
             let customerId = null;
             try {
               const cust = db.prepare('SELECT id, name FROM customers WHERE phone LIKE ? OR phone LIKE ?').get(`%${senderPhone.slice(-8)}%`, `%${senderPhone}%`);
@@ -170,7 +170,7 @@ async function sendMetaTextMessage(toPhone, messageText) {
 
   // Simpan ke DB Chat Log
   try {
-    let custName = 'Pelanggan';
+    let custName = 'Cliente';
     let custId = null;
     const cust = db.prepare('SELECT id, name FROM customers WHERE phone LIKE ? OR phone LIKE ?').get(`%${phone.slice(-8)}%`, `%${phone}%`);
     if (cust) {
@@ -253,7 +253,7 @@ async function sendMetaTemplateMessage(toPhone, templateName, languageCode = 'id
 
   // Simpan ke DB Chat Log
   try {
-    let custName = 'Pelanggan';
+    let custName = 'Cliente';
     let custId = null;
     const cust = db.prepare('SELECT id, name FROM customers WHERE phone LIKE ? OR phone LIKE ?').get(`%${phone.slice(-8)}%`, `%${phone}%`);
     if (cust) {

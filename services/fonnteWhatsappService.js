@@ -80,7 +80,7 @@ async function sendFonnteMessage(toPhone, messageText, options = {}) {
 
     // Log ke tabel wa_chat_messages
     try {
-      let custName = 'Pelanggan';
+      let custName = 'Cliente';
       let custId = null;
       const cust = db.prepare('SELECT id, name FROM customers WHERE phone LIKE ? OR phone LIKE ?').get(`%${phone.slice(-8)}%`, `%${phone}%`);
       if (cust) {
@@ -120,7 +120,7 @@ async function testFonnteConnection(targetPhone, customMessage) {
 async function processFonnteWebhook(data = {}) {
   const rawSender = data.sender || data.from || '';
   const messageText = String(data.message || data.text || '').trim();
-  const senderName = data.name || 'Pelanggan';
+  const senderName = data.name || 'Cliente';
   const inboxid = data.inboxid || null;
 
   if (!rawSender || !messageText) {

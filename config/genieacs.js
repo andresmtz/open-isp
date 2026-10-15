@@ -925,7 +925,7 @@ async function monitorRXPower(threshold = -27) {
         // Jika ada perangkat dengan RXPower di bawah threshold
         if (criticalDevices.length > 0) {
             // Buat pesan peringatan
-            let message = `*PERINGATAN: REDAMAN TINGGI*\n\n`;
+            let message = `*ALERTA: SEÑAL ÓPTICA DÉBIL*\n\n`;
             message += `${criticalDevices.length} equipos tienen una potencia RX peor que ${threshold} dBm (más negativo = peor):\n\n`;
             
             criticalDevices.forEach((device, index) => {
@@ -968,7 +968,7 @@ async function monitorRXPower(threshold = -27) {
         logger.error(`[RXPower] Error memantau RXPower: ${error.message || String(error)}`);
         return {
             success: false,
-            message: `Error memantau RXPower: ${error.message}`,
+            message: `Error al monitorear la potencia RX: ${error.message}`,
             error
         };
     }
@@ -1088,7 +1088,7 @@ async function monitorOfflineDevices(thresholdHours = 24) {
             offlineDevices.forEach((device, index) => {
                 message += `${index + 1}. *Device ID:* ${device.id.split('-')[2] || device.id}\n`;
                 message += `   📱 *S/N:* ${device.serialNumber}\n`;
-                message += `   ⏱️ *Offline:* ${device.offlineHours} jam\n`;
+                message += `   ⏱️ *Offline:* ${device.offlineHours} h\n`;
                 message += `   🕒 *Last Inform:* ${new Date(device.lastInform).toLocaleString(regional.locale())}\n\n`;
             });
             

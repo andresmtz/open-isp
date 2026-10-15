@@ -54,7 +54,7 @@
               <label class="fl"><%= t('admin.wt.lbl_reminder','Template Pengingat Tagihan (Bulanan / Manual)') %></label>
               <textarea class="fc" id="tmpl_auto_billing" name="whatsapp_auto_billing_message" rows="8" required style="width: 100%;"><%= templates.whatsapp_auto_billing_message %></textarea>
               <div style="font-size: 11px; color: var(--muted); margin-top: 6px; display:flex; justify-between; align-items:center;">
-                <span><i class="bi bi-info-circle"></i> Variabel: <b style="color:var(--primary)">{{id_pelanggan}}</b> <span style="color:var(--primary)"><%= t('common.required','(wajib)') %></span>, <b style="color:var(--primary)">{{pppoe}}</b> <span style="color:var(--muted)"><%= t('admin.wt.ph_user','(Username PPPoE, opsional)') %></span>, <b>{{nama}}</b>, <b>{{tagihan}}</b>, <b>{{rincian}}</b>, <b>{{paket}}</b>, <b>{{link}}</b>.</span>
+                <span><i class="bi bi-info-circle"></i> Variables: <b style="color:var(--primary)">{{id_pelanggan}}</b> <span style="color:var(--primary)"><%= t('common.required','(wajib)') %></span>, <b style="color:var(--primary)">{{pppoe}}</b> <span style="color:var(--muted)"><%= t('admin.wt.ph_user','(Username PPPoE, opsional)') %></span>, <b>{{nama}}</b>, <b>{{tagihan}}</b>, <b>{{rincian}}</b>, <b>{{paket}}</b>, <b>{{link}}</b>.</span>
               </div>
             </div>
             
@@ -62,7 +62,7 @@
               <label class="fl"><%= t('admin.wt.lbl_qris','Template Tagihan QRIS (Manual)') %></label>
               <textarea class="fc" id="tmpl_billing_qris" name="whatsapp_billing_qris_message" rows="8" required style="width: 100%;"><%= templates.whatsapp_billing_qris_message %></textarea>
               <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">
-                <i class="bi bi-info-circle"></i> Variabel: <b style="color:var(--primary)">{{id_pelanggan}}</b> <span style="color:var(--primary)"><%= t('common.required','(wajib)') %></span>, <b style="color:var(--primary)">{{pppoe}}</b> <span style="color:var(--muted)"><%= t('admin.wt.ph_user','(Username PPPoE, opsional)') %></span>, <b>{{nama}}</b>, <b>{{periode}}</b>, <b>{{paket}}</b>, <b>{{qris_nominal}}</b>, <b>{{qris_kode}}</b>, <b>{{qris_qr}}</b>.
+                <i class="bi bi-info-circle"></i> Variables: <b style="color:var(--primary)">{{id_pelanggan}}</b> <span style="color:var(--primary)"><%= t('common.required','(wajib)') %></span>, <b style="color:var(--primary)">{{pppoe}}</b> <span style="color:var(--muted)"><%= t('admin.wt.ph_user','(Username PPPoE, opsional)') %></span>, <b>{{nama}}</b>, <b>{{periode}}</b>, <b>{{paket}}</b>, <b>{{qris_nominal}}</b>, <b>{{qris_kode}}</b>, <b>{{qris_qr}}</b>.
               </div>
             </div>
           </div>
@@ -84,7 +84,7 @@
               <label class="fl"><%= t('admin.wt.lbl_isolir','Template Pemberitahuan Isolir (Otomatis / Manual)') %></label>
               <textarea class="fc" id="tmpl_isolir" name="whatsapp_isolir_message" rows="8" required style="width: 100%;"><%= templates.whatsapp_isolir_message %></textarea>
               <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">
-                <i class="bi bi-info-circle"></i> Variabel: <b style="color:var(--primary)">{{id_pelanggan}}</b> <span style="color:var(--primary)"><%= t('common.required','(wajib)') %></span>, <b style="color:var(--primary)">{{pppoe}}</b> <span style="color:var(--muted)"><%= t('admin.wt.ph_user','(Username PPPoE, opsional)') %></span>, <b>{{nama}}</b>, <b>{{paket}}</b>, <b>{{tagihan}}</b>, <b>{{link}}</b>.
+                <i class="bi bi-info-circle"></i> Variables: <b style="color:var(--primary)">{{id_pelanggan}}</b> <span style="color:var(--primary)"><%= t('common.required','(wajib)') %></span>, <b style="color:var(--primary)">{{pppoe}}</b> <span style="color:var(--muted)"><%= t('admin.wt.ph_user','(Username PPPoE, opsional)') %></span>, <b>{{nama}}</b>, <b>{{paket}}</b>, <b>{{tagihan}}</b>, <b>{{link}}</b>.
               </div>
             </div>
 
@@ -93,17 +93,17 @@
             <div class="fg" style="margin-top: 20px;">
               <label class="fl"><%= t('admin.wt.lbl_autopaid','Template Auto-Lunas (Rp 0 / auto_isolate=0)') %></label>
               <textarea class="fc" id="tmpl_autolunas" name="whatsapp_autolunas_message" rows="7" required style="width: 100%;"><%= templates.whatsapp_autolunas_message %></textarea>
-              <div style="font-size: 11px; color: var(--muted); margin-top: 6px;"><i class="bi bi-info-circle"></i> Variabel: <b style="color:var(--primary)">{{id_pelanggan}}</b>, <b>{{nama}}</b>, <b>{{tagihan}}</b>, <b>{{rincian}}</b>, <b>{{company}}</b>.</div>
+              <div style="font-size: 11px; color: var(--muted); margin-top: 6px;"><i class="bi bi-info-circle"></i> Variables: <b style="color:var(--primary)">{{id_pelanggan}}</b>, <b>{{nama}}</b>, <b>{{tagihan}}</b>, <b>{{rincian}}</b>, <b>{{company}}</b>.</div>
             </div>
             <div class="fg" style="margin-top: 20px;">
               <label class="fl"><%= t('admin.wt.lbl_autoinactive','Template Auto-Nonaktif (menunggak)') %></label>
               <textarea class="fc" id="tmpl_deactivated" name="whatsapp_deactivated_message" rows="7" required style="width: 100%;"><%= templates.whatsapp_deactivated_message %></textarea>
-              <div style="font-size: 11px; color: var(--muted); margin-top: 6px;"><i class="bi bi-info-circle"></i> Variabel: <b style="color:var(--primary)">{{id_pelanggan}}</b>, <b>{{nama}}</b>, <b>{{bulan_nunggak}}</b>, <b>{{batas}}</b>, <b>{{link}}</b>, <b>{{company}}</b>.</div>
+              <div style="font-size: 11px; color: var(--muted); margin-top: 6px;"><i class="bi bi-info-circle"></i> Variables: <b style="color:var(--primary)">{{id_pelanggan}}</b>, <b>{{nama}}</b>, <b>{{bulan_nunggak}}</b>, <b>{{batas}}</b>, <b>{{link}}</b>, <b>{{company}}</b>.</div>
             </div>
             <div class="fg" style="margin-top: 20px;">
               <label class="fl"><%= t('admin.wt.lbl_autodelete','Template Auto-Hapus (bulan ke-4)') %></label>
               <textarea class="fc" id="tmpl_deleted" name="whatsapp_deleted_message" rows="7" required style="width: 100%;"><%= templates.whatsapp_deleted_message %></textarea>
-              <div style="font-size: 11px; color: var(--muted); margin-top: 6px;"><i class="bi bi-info-circle"></i> Variabel: <b style="color:var(--primary)">{{id_pelanggan}}</b>, <b>{{nama}}</b>, <b>{{bulan_nunggak}}</b>, <b>{{company}}</b>.</div>
+              <div style="font-size: 11px; color: var(--muted); margin-top: 6px;"><i class="bi bi-info-circle"></i> Variables: <b style="color:var(--primary)">{{id_pelanggan}}</b>, <b>{{nama}}</b>, <b>{{bulan_nunggak}}</b>, <b>{{company}}</b>.</div>
             </div>
             <div class="fg" style="margin-top: 20px;">
               <label class="fl">Bienvenida (al cerrar la orden de instalación)</label>
@@ -117,7 +117,7 @@
             </div>
               <textarea class="fc" id="tmpl_arrears" name="whatsapp_arrears_warning_message" rows="8" required style="width: 100%;"><%= templates.whatsapp_arrears_warning_message %></textarea>
               <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">
-                <i class="bi bi-info-circle"></i> Variabel: <b style="color:var(--primary)">{{id_pelanggan}}</b> <span style="color:var(--primary)"><%= t('common.required','(wajib)') %></span>, <b>{{nama}}</b>, <b>{{paket}}</b>, <b>{{tagihan}}</b>, <b>{{rincian}}</b>, <b>{{bulan_nunggak}}</b>, <b>{{batas}}</b>, <b>{{link}}</b>, <b>{{company}}</b>.
+                <i class="bi bi-info-circle"></i> Variables: <b style="color:var(--primary)">{{id_pelanggan}}</b> <span style="color:var(--primary)"><%= t('common.required','(wajib)') %></span>, <b>{{nama}}</b>, <b>{{paket}}</b>, <b>{{tagihan}}</b>, <b>{{rincian}}</b>, <b>{{bulan_nunggak}}</b>, <b>{{batas}}</b>, <b>{{link}}</b>, <b>{{company}}</b>.
               </div>
             </div>
           </div>
@@ -218,28 +218,28 @@ function applyPreset(set, msg) {
   });
   highlightField(document.querySelector('[name="whatsapp_auto_billing_message"]'));
   var names = set.map(function (p) { return p[2]; }).join(' / ');
-  setPresetStatus('Dimuat ' + ok + ' plantilla (' + names + '). Klik "<%= t('admin.wt.save','Simpan Template') %>" untuk menyimpan.\n' + (msg || ''));
+  setPresetStatus('Se cargaron ' + ok + ' plantillas (' + names + '). Hacé clic en "<%= t('admin.wt.save','Simpan Template') %>" para guardarlas.\n' + (msg || ''));
 }
 function fillOfficialReceiptPreset() {
   applyPreset([
-    ['whatsapp_auto_billing_message', TMPL_AB_LENGKAP, 'Pengingat'],
+    ['whatsapp_auto_billing_message', TMPL_AB_LENGKAP, 'Recordatorio'],
     ['whatsapp_billing_qris_message', TMPL_QR_LENGKAP, 'QRIS'],
     ['whatsapp_payment_success_message', TMPL_PS_LENGKAP, 'Comprobante de pago'],
-    ['whatsapp_isolir_message', TMPL_IS_LENGKAP, 'Isolir'],
-    ['whatsapp_autolunas_message', TMPL_AL_LENGKAP, 'Auto-Lunas'],
-    ['whatsapp_deactivated_message', TMPL_DE_LENGKAP, 'Auto-Nonaktif'],
-    ['whatsapp_deleted_message', TMPL_DL_LENGKAP, 'Auto-Hapus']
+    ['whatsapp_isolir_message', TMPL_IS_LENGKAP, 'Aviso de corte'],
+    ['whatsapp_autolunas_message', TMPL_AL_LENGKAP, 'Factura saldada'],
+    ['whatsapp_deactivated_message', TMPL_DE_LENGKAP, 'Baja automática'],
+    ['whatsapp_deleted_message', TMPL_DL_LENGKAP, 'Eliminación automática']
   ], 'Versión: COMPLETA (profesional).');
 }
 function fillSpintaxPreset() {
   applyPreset([
-    ['whatsapp_auto_billing_message', TMPL_AB_SPINTAX, 'Pengingat'],
+    ['whatsapp_auto_billing_message', TMPL_AB_SPINTAX, 'Recordatorio'],
     ['whatsapp_billing_qris_message', TMPL_QR_SPINTAX, 'QRIS'],
     ['whatsapp_payment_success_message', TMPL_PS_SPINTAX, 'Comprobante de pago'],
-    ['whatsapp_isolir_message', TMPL_IS_SPINTAX, 'Isolir'],
-    ['whatsapp_autolunas_message', TMPL_AL_SPINTAX, 'Auto-Lunas'],
-    ['whatsapp_deactivated_message', TMPL_DE_SPINTAX, 'Auto-Nonaktif'],
-    ['whatsapp_deleted_message', TMPL_DL_SPINTAX, 'Auto-Hapus']
+    ['whatsapp_isolir_message', TMPL_IS_SPINTAX, 'Aviso de corte'],
+    ['whatsapp_autolunas_message', TMPL_AL_SPINTAX, 'Factura saldada'],
+    ['whatsapp_deactivated_message', TMPL_DE_SPINTAX, 'Baja automática'],
+    ['whatsapp_deleted_message', TMPL_DL_SPINTAX, 'Eliminación automática']
   ], 'Versión: SPINTAX ANTI-BLOQUEO.');
 }
 function showMetaConverter() { openModal('metaConverterModal'); convertCurrentTemplate(); }

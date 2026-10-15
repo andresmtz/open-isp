@@ -48,7 +48,7 @@ function info(customer) {
 function applyVars(tpl, customer, d) {
   return String(tpl || '')
     .replace(/{{id_pelanggan}}/gi, customer.customer_code || ('ID:' + customer.id))
-    .replace(/{{nama}}/gi, customer.name || 'Pelanggan')
+    .replace(/{{nama}}/gi, customer.name || 'Cliente')
     .replace(/{{paket}}/gi, d.pkgName)
     .replace(/{{tagihan}}/gi, d.amount.toLocaleString(regional.locale()))
     .replace(/{{rincian}}/gi, d.period)

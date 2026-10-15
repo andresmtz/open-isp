@@ -350,8 +350,8 @@
     googleHybrid.addTo(map);
 
     L.control.layers({
-      " Satelit (Google)": googleHybrid,
-      " Standar (OSM)": osm
+      " Satélite (Google)": googleHybrid,
+      " Estándar (OSM)": osm
     }, null, { position: 'topright' }).addTo(map);
 
     const odpLayers = L.layerGroup().addTo(map);
@@ -382,13 +382,13 @@
 
         marker.bindPopup(`
           <div class="pop-title"><i class="bi bi-box-seam-fill" style="color:#F59E0B"></i> ${escapeHtml(odp.name)}</div>
-          <span class="pop-badge" style="background:#B45309;color:#FEF3C7">ODP DISTRIBUSI</span>
+          <span class="pop-badge" style="background:#B45309;color:#FEF3C7">CAJA NAP</span>
           <div class="pop-row"><span class="lbl">OLT:</span><span class="val">${escapeHtml(odp.olt_name || '-')}</span></div>
           <div class="pop-row"><span class="lbl">PON Port:</span><span class="val">${escapeHtml(odp.pon_port || '-')}</span></div>
-          <div class="pop-row"><span class="lbl">Kapasitas:</span><span class="val">${odp.port_capacity || 16} Port</span></div>
-          <div class="pop-row"><span class="lbl">Deskripsi:</span><span class="val">${escapeHtml(odp.description || '-')}</span></div>
+          <div class="pop-row"><span class="lbl">Capacidad:</span><span class="val">${odp.port_capacity || 16} Port</span></div>
+          <div class="pop-row"><span class="lbl">Descripción:</span><span class="val">${escapeHtml(odp.description || '-')}</span></div>
           <div class="pop-actions">
-            <a href="${dirUrl}" target="_blank" class="pop-btn btn-dir"><i class="bi bi-signpost-2-fill"></i> Petunjuk Arah</a>
+            <a href="${dirUrl}" target="_blank" class="pop-btn btn-dir"><i class="bi bi-signpost-2-fill"></i> Cómo llegar</a>
           </div>
         `);
 
@@ -444,15 +444,15 @@
 
         marker.bindPopup(`
           <div class="pop-title"><i class="bi bi-person-circle"></i> ${escapeHtml(cust.name)}</div>
-          <span class="pop-badge ${isActive ? 'active' : 'iso'}">${isActive ? '<i class="bi bi-circle-fill" style="color:#22c55e"></i> ACTIVO' : '<i class="bi bi-circle-fill" style="color:#ef4444"></i> TERISOLIR'}</span>
+          <span class="pop-badge ${isActive ? 'active' : 'iso'}">${isActive ? '<i class="bi bi-circle-fill" style="color:#22c55e"></i> ACTIVO' : '<i class="bi bi-circle-fill" style="color:#ef4444"></i> SUSPENDIDO'}</span>
           <div class="pop-row"><span class="lbl">PPPoE User:</span><span class="val">${escapeHtml(cust.pppoe_username || '-')}</span></div>
           <div class="pop-row"><span class="lbl">No. WA / HP:</span><span class="val">${escapeHtml(cust.phone || '-')}</span></div>
           <div class="pop-row"><span class="lbl">Paket:</span><span class="val">${escapeHtml(cust.package_name || '-')}</span></div>
-          <div class="pop-row"><span class="lbl">ODP Terhubung:</span><span class="val">${escapeHtml(cust.odp_name || (cust.odp_id && odpMap[cust.odp_id] ? odpMap[cust.odp_id].name : '-'))}</span></div>
-          <div class="pop-row"><span class="lbl">Alamat:</span><span class="val">${escapeHtml(cust.address || '-')}</span></div>
+          <div class="pop-row"><span class="lbl">NAP:</span><span class="val">${escapeHtml(cust.odp_name || (cust.odp_id && odpMap[cust.odp_id] ? odpMap[cust.odp_id].name : '-'))}</span></div>
+          <div class="pop-row"><span class="lbl">Dirección:</span><span class="val">${escapeHtml(cust.address || '-')}</span></div>
           <div class="pop-actions">
             ${cleanPhone ? `<a href="${waUrl}" target="_blank" class="pop-btn btn-wa"><i class="bi bi-whatsapp"></i> Chat WA</a>` : ''}
-            <a href="${dirUrl}" target="_blank" class="pop-btn btn-dir"><i class="bi bi-signpost-2-fill"></i> Navigasi</a>
+            <a href="${dirUrl}" target="_blank" class="pop-btn btn-dir"><i class="bi bi-signpost-2-fill"></i> Navegar</a>
           </div>
         `);
 

@@ -39,11 +39,11 @@
       <div style="padding:12px 16px 0 16px;display:flex;gap:10px;flex-wrap:wrap">
         <select id="processFilter" class="fs" style="max-width:220px">
           <option value="all"><%= t('admin.cpay.opt_all','Semua Proses') %></option>
-          <option value="pending"><%= t('admin.cpay.opt_pending','Butuh Approval') %></option>
-          <option value="auto"><%= t('admin.cpay.opt_auto','Auto Kolektor') %></option>
-          <option value="admin"><%= t('admin.cpay.opt_admin','Disetujui Admin') %></option>
-          <option value="cashier"><%= t('admin.cpay.opt_cashier','Disetujui Kasir') %></option>
-          <option value="rejected"><%= t('admin.cpay.opt_rejected','Ditolak Manual') %></option>
+          <option value="pending"><%= t('admin.cpay.opt_pending','Requiere aprobación') %></option>
+          <option value="auto"><%= t('admin.cpay.opt_auto','Automático (cobrador)') %></option>
+          <option value="admin"><%= t('admin.cpay.opt_admin','Aprobado por admin') %></option>
+          <option value="cashier"><%= t('admin.cpay.opt_cashier','Aprobado por caja') %></option>
+          <option value="rejected"><%= t('admin.cpay.opt_rejected','Rechazado a mano') %></option>
           <option value="manual"><%= t('admin.cpay.opt_manual','Procesado a mano') %></option>
         </select>
       </div>
@@ -69,11 +69,11 @@
                 <% 
                   const decidedRole = String(r.decided_by_role || '').toLowerCase();
                   const processLabel =
-                    r.status === 'pending' ? 'Butuh Approval' :
-                    decidedRole === 'system' ? 'Auto Kolektor' :
-                    decidedRole === 'cashier' ? 'Disetujui Kasir' :
-                    decidedRole === 'admin' ? 'Disetujui Admin' :
-                    r.status === 'rejected' ? 'Ditolak Manual' :
+                    r.status === 'pending' ? 'Requiere aprobación' :
+                    decidedRole === 'system' ? 'Automático (cobrador)' :
+                    decidedRole === 'cashier' ? 'Aprobado por caja' :
+                    decidedRole === 'admin' ? 'Aprobado por admin' :
+                    r.status === 'rejected' ? 'Rechazado a mano' :
                     'Procesado a mano';
                   const processBadge =
                     r.status === 'pending' ? 'bm' :
@@ -103,19 +103,19 @@
                     <% } else if (r.status === 'pending') { %>
                       <div style="font-size:10px;color:var(--muted)"><%= t('admin.cpay.wait_approval','Menunggu admin atau kasir') %></div>
                     <% } else if (r.decided_by_name) { %>
-                      <div style="font-size:10px;color:var(--muted)">Oleh: <%= r.decided_by_name %></div>
+                      <div style="font-size:10px;color:var(--muted)">Por: <%= r.decided_by_name %></div>
                     <% } %>
                   </td>
                   <td>
                     <span class="badge <%= r.status==='approved'?'bs':(r.status==='rejected'?'bd':'bm') %>"><%= String(r.status||'').toUpperCase() %></span>
                     <% if (r.note) { %><div style="font-size:10px;color:var(--muted)"><%= r.note %></div><% } %>
-                    <% if (r.decided_by_name) { %><div style="font-size:10px;color:var(--muted)">Diproses: <%= r.decided_by_name %></div><% } %>
+                    <% if (r.decided_by_name) { %><div style="font-size:10px;color:var(--muted)">Procesado por: <%= r.decided_by_name %></div><% } %>
                     <% if (r.decided_note) { %><div style="font-size:10px;color:var(--muted)"><%= r.decided_note %></div><% } %>
                   </td>
                   <td style="white-space:nowrap">
                     <% if (status === 'pending') { %>
                       <div class="act">
-                        <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                        <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                         <div class="act-menu" style="min-width:270px">
                           <form method="POST" action="/admin/collector-payments/<%= r.id %>/approve" style="display:flex;gap:6px;padding:4px 4px 6px">
                             <input class="fc" name="decided_note" placeholder="Nota (opcional)" style="font-size:12px">

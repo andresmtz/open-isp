@@ -46,7 +46,7 @@
         <div style="display: flex; justify-content: space-between; padding: 8px 0;">
           <span style="color: var(--muted); font-size: 13px;"><%= t('collector.work_duration','Durasi Kerja') %></span>
           <span style="color: white; font-weight: 600; font-size: 13px;">
-            <%= Math.floor(todayAttendance.work_duration_minutes / 60) %> jam <%= todayAttendance.work_duration_minutes % 60 %> menit
+            <%= Math.floor(todayAttendance.work_duration_minutes / 60) %> h <%= todayAttendance.work_duration_minutes % 60 %> min
           </span>
         </div>
       <% } %>

@@ -1565,10 +1565,10 @@ function translateOfflineReason(brand, rawValue) {
   if (valNum == null) {
     const valStr = String(rawValue).trim().toLowerCase();
     if (valStr.includes('dying_gasp') || valStr.includes('power_off') || valStr.includes('poweroff')) {
-      return 'Mati Listrik / Adaptor Dicabut';
+      return 'Sin energía / fuente desenchufada';
     }
     if (valStr.includes('los') || valStr.includes('wire_down') || valStr.includes('link_down')) {
-      return 'Kabel Fiber Optik Putus (LOS)';
+      return 'Fibra cortada (LOS)';
     }
     if (valStr.includes('mpcp') || valStr.includes('timeout') || valStr.includes('unregister')) {
       return 'Conexión caída / atenuación';
@@ -1585,7 +1585,7 @@ function translateOfflineReason(brand, rawValue) {
     switch (valNum) {
       case 2:
       case 3:
-        return 'Kabel Fiber Optik Putus (LOS)';
+        return 'Fibra cortada (LOS)';
       case 4:
         return 'Pérdida de trama (falla de señal)';
       case 5:
@@ -1593,15 +1593,15 @@ function translateOfflineReason(brand, rawValue) {
       case 8:
         return 'Falla de autorización / registro';
       case 9:
-        return 'Mati Listrik / Adaptor Dicabut';
+        return 'Sin energía / fuente desenchufada';
       case 10:
         return 'Desactivada desde la OLT';
       case 12:
         return 'ONU Reboot';
       case 13:
-        return 'ONU Dimatikan';
+        return 'ONU apagada';
       default:
-        return `Penyebab Lain (${valNum})`;
+        return `Otra causa (${valNum})`;
     }
   }
 
@@ -1609,7 +1609,7 @@ function translateOfflineReason(brand, rawValue) {
     switch (valNum) {
       case 1:
       case 2:
-        return 'Kabel Fiber Optik Putus (LOS)';
+        return 'Fibra cortada (LOS)';
       case 3:
         return 'Pérdida de trama (falla de señal)';
       case 4:
@@ -1623,15 +1623,15 @@ function translateOfflineReason(brand, rawValue) {
       case 10:
         return 'ONU Re-registrasi';
       case 13:
-        return 'Mati Listrik / Adaptor Dicabut';
+        return 'Sin energía / fuente desenchufada';
       case 31:
       case 32:
       case 33:
         return 'Reinicio por el cliente (botón/sistema)';
       case 30:
-        return 'Modul Optik Dimatikan';
+        return 'Módulo óptico apagado';
       default:
-        return `Penyebab Lain (${valNum})`;
+        return `Otra causa (${valNum})`;
     }
   }
 
@@ -1646,13 +1646,13 @@ function translateOfflineReason(brand, rawValue) {
       case 7:
         return 'Desactivada desde la OLT (admin down)';
       case 8:
-        return 'Kabel Fiber Optik Putus (Wire Down)';
+        return 'Fibra cortada (Wire Down)';
       case 9:
-        return 'Mati Listrik / Adaptor Dicabut (Power Off)';
+        return 'Sin energía / fuente desenchufada (Power Off)';
       case 255:
         return 'Causa desconocida';
       default:
-        return `Penyebab Lain (${valNum})`;
+        return `Otra causa (${valNum})`;
     }
   }
 
@@ -2512,7 +2512,7 @@ async function configureZteWanViaGoApi(oltId, data) {
 
   const base = String(olt.api_base_url || '').trim().replace(/\/+$/, '');
   if (!base) {
-    throw new Error('Isi "API Base URL" pada data OLT (contoh http://10.0.0.5:8081) agar metode Go API dapat memanggil go-api-c320.');
+    throw new Error('Completá "API Base URL" en los datos de la OLT (ej.: http://10.0.0.5:8081) para que el método Go API pueda llamar a go-api-c320.');
   }
 
   const mode = String(data.mode || 'Bridge');
@@ -2546,7 +2546,7 @@ async function configureZteWanViaGoApi(oltId, data) {
   }
 
   if (vlan_mode === 'translation' && (!Number.isFinite(cvlan) || cvlan < 1)) {
-    throw new Error('Mode translation membutuhkan CVLAN.');
+    throw new Error('El modo translation necesita una CVLAN.');
   }
 
   const priority = Number.isFinite(parseInt(data.priority, 10)) ? parseInt(data.priority, 10) : 0;
@@ -2830,15 +2830,15 @@ async function configureWanViaAcs(sn, data) {
    } else if (olts_summary.length > 1) {
      if (tempValues.length > 0) {
        const avgT = Math.round(tempValues.reduce((a, b) => a + b, 0) / tempValues.length);
-       temp = `${avgT}°C (rata-rata)`;
+       temp = `${avgT}°C (promedio)`;
      }
      if (cpuValues.length > 0) {
        const avgC = Math.round(cpuValues.reduce((a, b) => a + b, 0) / cpuValues.length);
-       cpu = `${avgC}% (rata-rata)`;
+       cpu = `${avgC}% (promedio)`;
      }
      if (ramValues.length > 0) {
        const avgR = Math.round(ramValues.reduce((a, b) => a + b, 0) / ramValues.length);
-       ram = `${avgR}% (rata-rata)`;
+       ram = `${avgR}% (promedio)`;
      }
      const onlineCount = olts_summary.filter(o => o.status === 'Online').length;
      uptime = `${onlineCount}/${olts_summary.length} OLT Online`;

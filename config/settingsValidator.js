@@ -23,7 +23,7 @@ const VALIDATION_RULES = {
     type: 'string',
     minLength: 32,
     required: true,
-    description: 'Session secret (min 32 karakter)'
+    description: 'Clave de sesión (mínimo 32 caracteres)'
   },
 
   // Company Information
@@ -51,7 +51,7 @@ const VALIDATION_RULES = {
   company_email: {
     type: 'string',
     pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    description: 'Email perusahaan'
+    description: 'Email de la empresa'
   },
   company_address: {
     type: 'string',
@@ -66,7 +66,7 @@ const VALIDATION_RULES = {
   operational_hours: {
     type: 'string',
     maxLength: 200,
-    description: 'Jam operasional'
+    description: 'Horario de atención'
   },
 
   // Admin Credentials
@@ -167,12 +167,12 @@ const VALIDATION_RULES = {
   office_lat: {
     type: 'string',
     pattern: /^-?\d+(\.\d+)?$|^$/,
-    description: 'Latitude kantor'
+    description: 'Latitud de la oficina'
   },
   office_lng: {
     type: 'string',
     pattern: /^-?\d+(\.\d+)?$|^$/,
-    description: 'Longitude kantor'
+    description: 'Longitud de la oficina'
   },
 
   // Other
@@ -199,21 +199,21 @@ function validateValue(field, value, rule) {
 
   // Check type
   if (rule.type === 'number') {
-    if (typeof trimmedValue !== 'number') return `${field} harus berupa angka`;
+    if (typeof trimmedValue !== 'number') return `${field} debe ser un número`;
     if (rule.min !== undefined && trimmedValue < rule.min) return `${field} minimal ${rule.min}`;
-    if (rule.max !== undefined && trimmedValue > rule.max) return `${field} maksimal ${rule.max}`;
+    if (rule.max !== undefined && trimmedValue > rule.max) return `${field}: máximo ${rule.max}`;
   }
 
   if (rule.type === 'string') {
-    if (typeof trimmedValue !== 'string') return `${field} harus berupa string`;
+    if (typeof trimmedValue !== 'string') return `${field} debe ser texto`;
     if (rule.minLength && trimmedValue.length < rule.minLength) return `${field} debe tener al menos ${rule.minLength} caracteres`;
     if (rule.maxLength && trimmedValue.length > rule.maxLength) return `${field} debe tener como máximo ${rule.maxLength} caracteres`;
-    if (rule.pattern && !rule.pattern.test(trimmedValue)) return `${field} format tidak valid`;
-    if (rule.enum && !rule.enum.includes(trimmedValue)) return `${field} harus salah satu dari: ${rule.enum.join(', ')}`;
+    if (rule.pattern && !rule.pattern.test(trimmedValue)) return `${field}: formato inválido`;
+    if (rule.enum && !rule.enum.includes(trimmedValue)) return `${field} debe ser uno de: ${rule.enum.join(', ')}`;
   }
 
   if (rule.type === 'boolean') {
-    if (typeof trimmedValue !== 'boolean') return `${field} harus berupa boolean`;
+    if (typeof trimmedValue !== 'boolean') return `${field} debe ser verdadero o falso`;
   }
 
   return null; // Valid

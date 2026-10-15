@@ -42,7 +42,7 @@ function validate(code, amount) {
     return { ok: false, message: 'Factura mínima de' + regional.currencySymbol() + ' ' + Number(v.min_purchase).toLocaleString(regional.locale()) + ' para usar este cupón.' };
   }
   const discount = computeDiscount(v, amt);
-  return { ok: true, voucher: v, discount: discount, message: 'Voucher diterapkan: -' + regional.currencySymbol() + ' ' + discount.toLocaleString(regional.locale()) };
+  return { ok: true, voucher: v, discount: discount, message: 'Vale aplicado: -' + regional.currencySymbol() + ' ' + discount.toLocaleString(regional.locale()) };
 }
 function create(data) {
   const code = String(data.code || '').trim().toUpperCase();
@@ -65,7 +65,7 @@ function update(id, data) {
   const code = data.code != null ? String(data.code).trim().toUpperCase() : v.code;
   if (!code) throw new Error('El código del cupón es obligatorio');
   const dup = getByCode(code);
-  if (dup && Number(dup.id) !== Number(id)) throw new Error('Kode voucher sudah dipakai voucher lain');
+  if (dup && Number(dup.id) !== Number(id)) throw new Error('Ese código ya lo usa otro voucher');
   const type = (data.type === 'percent') ? 'percent' : (data.type === 'nominal' ? 'nominal' : v.type);
   const value = data.value != null ? Math.max(0, parseInt(data.value, 10) || 0) : v.value;
   const maxDiscount = data.max_discount != null ? Math.max(0, parseInt(data.max_discount, 10) || 0) : v.max_discount;

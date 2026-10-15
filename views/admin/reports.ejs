@@ -45,7 +45,7 @@
         <div class="sc-sub">Este mes: <%= APP_CUR %> <%= (expensesMonth||0).toLocaleString(APP_LOCALE) %></div>
       </div>
       <div class="sc w"><i class="bi bi-receipt sc-icon"></i>
-        <div class="sc-label">PPh Badan (<%= finance.pph %>%)</div>
+        <div class="sc-label">Impuesto a la renta (<%= finance.pph %>%)</div>
         <div class="sc-val" style="font-size:20px">- <%= APP_CUR %> <%= Math.round(ply.pph).toLocaleString(APP_LOCALE) %></div>
         <div class="sc-sub">Ganancia antes de impuestos: <%= APP_CUR %> <%= Math.round(ply.sebelumPph).toLocaleString(APP_LOCALE) %></div>
       </div>
@@ -72,12 +72,12 @@
           <tbody>
             <tr><td><%= t('admin.fin.gross','Pemasukan (Bruto)') %></td><td class="num fw6"><%= APP_CUR %> <%= Math.round(ply.bruto).toLocaleString(APP_LOCALE) %></td></tr>
             <tr><td>Base imponible</td><td class="num"><%= APP_CUR %> <%= Math.round(ply.dpp).toLocaleString(APP_LOCALE) %></td></tr>
-            <tr><td>PPN Keluaran (<%= finance.ppn %>%) <span class="badge bm">se paga al fisco, no es ingreso</span></td><td class="num" style="color:var(--info)"><%= APP_CUR %> <%= Math.round(ply.ppn).toLocaleString(APP_LOCALE) %></td></tr>
+            <tr><td>IVA (<%= finance.ppn %>%) <span class="badge bm">se paga al fisco, no es ingreso</span></td><td class="num" style="color:var(--info)"><%= APP_CUR %> <%= Math.round(ply.ppn).toLocaleString(APP_LOCALE) %></td></tr>
             <tr><td>Gastos</td><td class="num" style="color:var(--danger)">- <%= APP_CUR %> <%= Math.round(ply.keluar).toLocaleString(APP_LOCALE) %></td></tr>
             <tr><td>USO (<%= finance.uso %>%)</td><td class="num" style="color:var(--warning)">- <%= APP_CUR %> <%= Math.round(ply.uso).toLocaleString(APP_LOCALE) %></td></tr>
             <tr><td>BHP (<%= finance.bhp %>%)</td><td class="num" style="color:var(--warning)">- <%= APP_CUR %> <%= Math.round(ply.bhp).toLocaleString(APP_LOCALE) %></td></tr>
             <tr><td class="fw6">Ganancia neta antes de impuestos</td><td class="num fw6"><%= APP_CUR %> <%= Math.round(ply.sebelumPph).toLocaleString(APP_LOCALE) %></td></tr>
-            <tr><td>PPh Badan (<%= finance.pph %>%)</td><td class="num" style="color:var(--danger)">- <%= APP_CUR %> <%= Math.round(ply.pph).toLocaleString(APP_LOCALE) %></td></tr>
+            <tr><td>Impuesto a la renta (<%= finance.pph %>%)</td><td class="num" style="color:var(--danger)">- <%= APP_CUR %> <%= Math.round(ply.pph).toLocaleString(APP_LOCALE) %></td></tr>
             <tr style="background:rgba(16,185,129,.08)"><td class="fw6" style="color:#10b981">Ganancia neta después de impuestos</td><td class="num fw6" style="color:#10b981;font-size:16px"><%= APP_CUR %> <%= Math.round(ply.bersih).toLocaleString(APP_LOCALE) %></td></tr>
           </tbody>
         </table>
@@ -125,7 +125,7 @@
               <td class="num fw6" style="color:#10b981"><%= APP_CUR %> <%= Math.round(r.bersih).toLocaleString(APP_LOCALE) %></td>
               <td style="white-space:nowrap">
                 <div class="act">
-                  <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                  <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
                     <a class="act-item" href="/admin/reports/export-csv?year=<%= filterYear %>&amp;month=<%= r.month %>"><i class="bi bi-file-earmark-excel"></i> Export Excel (CSV)</a>
                     <a class="act-item" target="_blank" href="/admin/reports/pdf?year=<%= filterYear %>&amp;month=<%= r.month %>&amp;mode=after"><i class="bi bi-file-earmark-pdf"></i> PDF de este mes</a>
@@ -220,7 +220,7 @@
         <form method="POST" action="/admin/reports/finance">
           <div class="form-row" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
             <div class="fg"><label class="fl">PPN (%)</label><input class="fc" type="number" step="0.01" min="0" name="finance_ppn_pct" value="<%= finance.ppn %>"></div>
-            <div class="fg"><label class="fl">PPh Badan (%)</label><input class="fc" type="number" step="0.01" min="0" name="finance_pph_pct" value="<%= finance.pph %>"></div>
+            <div class="fg"><label class="fl">Impuesto a la renta (%)</label><input class="fc" type="number" step="0.01" min="0" name="finance_pph_pct" value="<%= finance.pph %>"></div>
             <div class="fg"><label class="fl">USO (%)</label><input class="fc" type="number" step="0.01" min="0" name="finance_uso_pct" value="<%= finance.uso %>"></div>
             <div class="fg"><label class="fl">BHP (%)</label><input class="fc" type="number" step="0.01" min="0" name="finance_bhp_pct" value="<%= finance.bhp %>"></div>
             <div class="fg"><label class="fl">¿El IVA está incluido en el precio?</label>

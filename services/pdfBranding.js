@@ -49,7 +49,7 @@ function companyInfo(settings) {
     address: s.company_address || 'Proveedor de servicios de internet',
     phone,
     email: s.company_email || '',
-    manager: s.company_manager || 'Bagian Keuangan',
+    manager: s.company_manager || 'Administración',
   };
 }
 

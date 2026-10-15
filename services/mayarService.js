@@ -36,7 +36,7 @@ async function createInvoice(opts) {
   if (amount <= 0) throw new Error('Monto de factura inválido para Mayar.');
   const desc = String(o.description || 'Tagihan').slice(0, 200);
   const body = {
-    name: String(o.name || 'Pelanggan').slice(0, 100),
+    name: String(o.name || 'Cliente').slice(0, 100),
     email: String(o.email || ('no-reply+' + Date.now() + '@openisp.local')).slice(0, 120),
     mobile: toWaMobile(o.mobile),
     description: desc,

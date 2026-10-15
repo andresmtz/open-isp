@@ -178,7 +178,7 @@ function describeAddWanTask(task) {
             return 'Creando conexión WAN';
         }
         if (objectName.includes('WANConnectionDevice')) {
-            return 'Membuat slot WAN';
+            return 'Creando conexión WAN';
         }
     }
 
@@ -186,15 +186,15 @@ function describeAddWanTask(task) {
         const firstParam = Array.isArray(payload.parameterValues) && payload.parameterValues[0]
             ? String(payload.parameterValues[0][0] || '')
             : '';
-        if (firstParam.includes('DHCPServerEnable')) return 'Mengatur DHCP LAN';
-        if (firstParam.includes('WLANConfiguration')) return 'Mengatur Wi-Fi';
-        if (/(VLAN|LANBind|SSIDBind)/.test(firstParam)) return 'Mengatur VLAN dan binding';
-        if (/(ConnectionType|NATEnabled|Username|Password|Enable)/.test(firstParam)) return 'Mengatur koneksi WAN';
-        return 'Menerapkan parameter WAN';
+        if (firstParam.includes('DHCPServerEnable')) return 'Configurando DHCP de la LAN';
+        if (firstParam.includes('WLANConfiguration')) return 'Configurando Wi-Fi';
+        if (/(VLAN|LANBind|SSIDBind)/.test(firstParam)) return 'Configurando VLAN y vínculos';
+        if (/(ConnectionType|NATEnabled|Username|Password|Enable)/.test(firstParam)) return 'Configurando conexión WAN';
+        return 'Aplicando parámetros WAN';
     }
 
-    if (name === 'getParameterValues') return 'Verifikasi hasil provisioning';
-    if (name === 'refreshObject') return 'Menyegarkan data perangkat';
+    if (name === 'getParameterValues') return 'Verificando el resultado';
+    if (name === 'refreshObject') return 'Actualizando datos del equipo';
     return name || 'Task ACS';
 }
 
@@ -1302,7 +1302,7 @@ router.put('/api/servers/legacy', requireAdmin, express.json(), async (req, res)
     try {
         const url = String(req.body?.url || '').trim();
         if (!url) return res.status(400).json({ success: false, message: 'La URL es obligatoria' });
-        if (!/^https?:\/\//i.test(url)) return res.status(400).json({ success: false, message: 'URL harus diawali http:// atau https://' });
+        if (!/^https?:\/\//i.test(url)) return res.status(400).json({ success: false, message: 'La URL debe empezar con http:// o https://' });
 
         const clearUsername = Boolean(req.body?.clear_username);
         const clearPassword = Boolean(req.body?.clear_password);
@@ -1497,7 +1497,7 @@ router.post('/api/bulk/delete', requireAdmin, async (req, res) => {
             const deviceId = String(d.id || '');
             const acsId = String(d.acsId || '');
             const servers = getACSServers(acsId);
-            if (servers.length === 0) return { id: deviceId, success: false, message: 'ACS tidak ditemukan' };
+            if (servers.length === 0) return { id: deviceId, success: false, message: 'ACS no encontrado' };
             const server = servers[0];
             const baseUrl = normalizeUrl(server.url);
             
@@ -1719,7 +1719,7 @@ router.post('/api/add-wan/:deviceId', requireAdmin, async (req, res) => {
         }
         
         const servers = getACSServers(acsId);
-        if (servers.length === 0) return res.json({ success: false, message: 'ACS Server tidak ditemukan' });
+        if (servers.length === 0) return res.json({ success: false, message: 'Servidor ACS no encontrado' });
         
         const server = servers[0];
         const baseUrl = normalizeUrl(server.url);

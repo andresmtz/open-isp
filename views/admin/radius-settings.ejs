@@ -405,24 +405,24 @@
                 <label class="fl"><%= t('admin.rds.mt_title','2. Script Integrasi RADIUS & Isolir di MikroTik (RouterOS Terminal)') %></label>
                 <small class="text-muted" style="font-size:11px;display:block;margin-bottom:6px;"><%- t('admin.rds.mt_desc','Copy dan pastekan seluruh script di bawah ini ke <strong>Terminal MikroTik</strong> (IP server otomatis terisi dari IP di atas):') %></small>
                 <textarea id="mikrotik-script-area" class="fc" rows="14" style="font-family:monospace;font-size:11px;background:var(--bg3);color:#10b981;line-height:1.4;white-space:pre;" readonly># =========================================================
-# SCRIPT SETUP OTOMATIS RADIUS BILLING & ISOLIR MIKROTIK
+# SCRIPT DE CONFIGURACIÓN AUTOMÁTICA: RADIUS Y CORTE EN MIKROTIK
 # =========================================================
 
-# 1. Aktifkan Fitur RADIUS pada PPP MikroTik
+# 1. Activar RADIUS para PPP en el MikroTik
 /ppp aaa set use-radius=yes accounting=yes interim-update=1m
 
-# 2. Buka Akses Disconnect / CoA RADIUS MikroTik (Port UDP 3799)
+# 2. Habilitar Disconnect / CoA de RADIUS (puerto UDP 3799)
 /radius incoming set accept=yes port=3799
 
-# 3. Tambahkan Server RADIUS Billing ke MikroTik
+# 3. Agregar el servidor RADIUS de facturación al MikroTik
 /radius remove [find comment="OPEN-ISP-Billing-RADIUS"]
 /radius add service=ppp address=<%= typeof serverIp !== 'undefined' ? serverIp : '192.168.8.88' %> secret="<%= radiusStatus.secret %>" authentication-port=<%= radiusStatus.authPort %> accounting-port=<%= radiusStatus.acctPort %> timeout=3000ms comment="OPEN-ISP-Billing-RADIUS"
 
-# 4. Tambahkan IP Address Gateway Subnet Isolir RADIUS
+# 4. Agregar la IP de gateway de la subred de corte (RADIUS)
 /ip address remove [find comment="Gateway-Isolir-RADIUS"]
 :do { /ip address add address=<%= (typeof radiusStatus.isolirIpPoolStart !== 'undefined' ? radiusStatus.isolirIpPoolStart.replace(/\.\d+$/, '.1') : '10.10.99.1') %>/24 interface=([/interface find type=bridge]->0) comment="Gateway-Isolir-RADIUS" } on-error={ /ip address add address=<%= (typeof radiusStatus.isolirIpPoolStart !== 'undefined' ? radiusStatus.isolirIpPoolStart.replace(/\.\d+$/, '.1') : '10.10.99.1') %>/24 interface=([/interface find]->0) comment="Gateway-Isolir-RADIUS" }
 
-# 5. Filter Drop Akses Internet Pelanggan Terisolir RADIUS (Universal)
+# 5. Bloquear internet a los clientes suspendidos por RADIUS
 /ip firewall filter remove [find comment="Isolir-RADIUS-Block-Internet"]
 /ip firewall filter add chain=forward src-address=<%= (typeof radiusStatus.isolirIpPoolStart !== 'undefined' ? radiusStatus.isolirIpPoolStart.replace(/\.\d+$/, '.0') : '10.10.99.0') %>/24 action=drop comment="Isolir-RADIUS-Block-Internet"</textarea>
               </div>
@@ -476,7 +476,7 @@
                         <form id="ntg-<%= nas.id %>" action="/admin/radius/nas/toggle" method="POST" style="display:none;"><input type="hidden" name="id" value="<%= nas.id %>"></form>
                         <form id="ndl-<%= nas.id %>" action="/admin/radius/nas/delete" method="POST" style="display:none;" onsubmit="return confirm('<%= t('admin.rds.del_nas','Hapus NAS') %> <%= nas.nasname %>?')"><input type="hidden" name="id" value="<%= nas.id %>"></form>
                         <div class="act">
-                          <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                          <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                           <div class="act-menu">
                             <button type="submit" form="ntg-<%= nas.id %>" class="act-item <%= nas.is_active ? 'warn' : 'success' %>"><i class="bi bi-<%= nas.is_active ? 'pause-circle' : 'play-circle' %>"></i> <%= nas.is_active ? t('admin.rds.deactivate','Non-aktifkan') : t('admin.rds.activate','Aktifkan') %></button>
                             <button type="button" class="act-item primary" onclick='openEditNasModal(<%- JSON.stringify(nas).split('<').join('\\u003c') %>)'><i class="bi bi-pencil"></i> <%= t('admin.rds.edit_nas','Edit NAS') %></button>

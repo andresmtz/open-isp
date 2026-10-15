@@ -102,13 +102,13 @@
           <% if (profile) { %>
             <span class="status-pill <%= profile.status === 'active' ? 'online' : 'suspended' %>">
               <span class="pulse-dot <%= profile.status === 'active' ? 'green' : 'red' %>"></span>
-              Layanan: <%= profile.status === 'active' ? 'AKTIF' : 'ISOLIR' %>
+              Servicio: <%= profile.status === 'active' ? 'ACTIVO' : 'SUSPENDIDO' %>
             </span>
           <% } %>
         </div>
         <h3><%= t('customer.dashboard.hello', 'Halo') %>, <%= profile ? profile.name : customer.phone %></h3>
         <p class="muted" style="font-size:13px;margin-top:6px;display:flex;gap:14px;flex-wrap:wrap">
-          <span><i class="bi bi-reception-4" style="color:var(--success)"></i> Sinyal Optik: <strong style="color:var(--text)"><%= customer.rxPower || '-20 dBm' %></strong></span>
+          <span><i class="bi bi-reception-4" style="color:var(--success)"></i> Señal óptica: <strong style="color:var(--text)"><%= customer.rxPower || '-20 dBm' %></strong></span>
           <span><i class="bi bi-hdd-network" style="color:var(--info)"></i> <span class="mono"><%= (profile && profile.pppoe_username) || customer.pppoeUsername || 'Todavía no hay cuenta PPPoE' %></span></span>
         </p>
         <% if (!((profile && profile.pppoe_username) || customer.pppoeUsername)) { %>
@@ -155,10 +155,10 @@
           <div class="muted" style="font-size:12.5px;margin-top:2px">Período <%= unpaidPeriods %></div>
           <div style="font-size:13px;margin-top:6px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">
             <i class="bi bi-calendar-event" style="color:var(--warning)"></i>
-            <span>Jatuh tempo: <strong style="color:var(--text)"><%= dueText %></strong></span>
+            <span>Vencimiento: <strong style="color:var(--text)"><%= dueText %></strong></span>
             <% if (dueDiffDays !== null) { %>
               <span class="badge <%= dueDiffDays < 0 ? 'bd' : (dueDiffDays <= 2 ? 'bw' : 'bm') %>" style="font-size:10px">
-                <%= dueDiffDays > 0 ? ('Sisa ' + dueDiffDays + ' hari') : (dueDiffDays === 0 ? 'Hari ini!' : ('Lewat ' + Math.abs(dueDiffDays) + ' hari')) %>
+                <%= dueDiffDays > 0 ? ('Faltan ' + dueDiffDays + ' días') : (dueDiffDays === 0 ? '¡Hoy!' : ('Vencida hace ' + Math.abs(dueDiffDays) + ' días')) %>
               </span>
             <% } %>
           </div>
@@ -168,7 +168,7 @@
           <div class="muted" style="font-size:12.5px;margin-top:2px">¡Gracias por pagar a tiempo!</div>
           <div style="font-size:13px;margin-top:6px;display:flex;align-items:center;gap:7px">
             <i class="bi bi-calendar-event" style="color:var(--success)"></i>
-            <span>Jatuh tempo berikutnya: <strong style="color:var(--text)"><%= nextDueText %></strong></span>
+            <span>Próximo vencimiento: <strong style="color:var(--text)"><%= nextDueText %></strong></span>
           </div>
         <% } %>
       </div>
@@ -285,13 +285,13 @@
     <!-- Traffic card -->
     <div class="glass-card">
       <div class="glass-header">
-        <h5><i class="bi bi-speedometer2" style="color:var(--info)"></i> Pemantauan Trafik Real-Time</h5>
+        <h5><i class="bi bi-speedometer2" style="color:var(--info)"></i> Tráfico en tiempo real</h5>
         <span class="badge-soft">Live Mbps</span>
       </div>
       <div class="glass-body">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;text-align:center">
           <div>
-            <div class="stat-label" style="margin-bottom:6px">Trafik Download</div>
+            <div class="stat-label" style="margin-bottom:6px">Bajada</div>
             <div class="traffic-gauge">
               <canvas id="pppoe_rx_gauge" width="220" height="140" data-max="<%= typeof trafficMaxDownMbps !== 'undefined' ? trafficMaxDownMbps : 10 %>"></canvas>
               <div class="traffic-gauge-center"><div class="traffic-gauge-value" id="pppoe_rx_value">-</div><div class="traffic-gauge-unit" id="pppoe_rx_unit">&nbsp;</div></div>
@@ -299,7 +299,7 @@
             </div>
           </div>
           <div>
-            <div class="stat-label" style="margin-bottom:6px">Trafik Upload</div>
+            <div class="stat-label" style="margin-bottom:6px">Subida</div>
             <div class="traffic-gauge">
               <canvas id="pppoe_tx_gauge" width="220" height="140" data-max="<%= typeof trafficMaxUpMbps !== 'undefined' ? trafficMaxUpMbps : 10 %>"></canvas>
               <div class="traffic-gauge-center"><div class="traffic-gauge-value" id="pppoe_tx_value">-</div><div class="traffic-gauge-unit" id="pppoe_tx_unit">&nbsp;</div></div>
@@ -333,8 +333,8 @@
                 <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/invoice/<%= inv.id %>/pdf" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf-fill"></i> Factura PDF</a>
                 <button class="lbtn lbtn-ghost lbtn-sm" onclick="sendInvoiceWa(<%= inv.id %>, this)"><i class="bi bi-whatsapp"></i> Enviar por WhatsApp</button>
               <% } else { %>
-                <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/invoice/<%= inv.id %>/print-thermal" target="_blank" rel="noopener"><i class="bi bi-receipt"></i> Struk Thermal</a>
-                <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/invoice/<%= inv.id %>/print" target="_blank" rel="noopener"><i class="bi bi-printer-fill"></i> Faktur A4</a>
+                <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/invoice/<%= inv.id %>/print-thermal" target="_blank" rel="noopener"><i class="bi bi-receipt"></i> Ticket térmico</a>
+                <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/invoice/<%= inv.id %>/print" target="_blank" rel="noopener"><i class="bi bi-printer-fill"></i> Factura A4</a>
                 <a class="lbtn lbtn-ghost lbtn-sm" href="/customer/invoice/<%= inv.id %>/pdf" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf-fill"></i> PDF</a>
                 <button class="lbtn lbtn-ghost lbtn-sm" onclick="sendInvoiceWa(<%= inv.id %>, this)"><i class="bi bi-whatsapp"></i> Enviar por WhatsApp</button>
               <% } %>
@@ -468,7 +468,7 @@
     <form action="/customer/reboot" method="POST">
       <div class="mbody" style="text-align:center">
         <div style="width:64px;height:64px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;background:var(--wdim);color:var(--warning);font-size:28px"><i class="bi bi-exclamation-triangle-fill"></i></div>
-        <h4 style="font-size:15px">Yakin ingin menyalakan ulang modem?</h4>
+        <h4 style="font-size:15px">¿Seguro que querés reiniciar el módem?</h4>
         <p class="muted" style="font-size:13px;margin-top:8px">El reinicio tarda ±1–2 minutos. La conexión a internet se cortará momentáneamente.</p>
       </div>
       <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('rebootModal')">Cancelar</button><button type="submit" class="lbtn lbtn-primary">Sí, reiniciar ahora</button></div>
@@ -490,7 +490,7 @@
             <option value="" disabled selected>-- Elegir tipo de problema --</option>
             <option>Sin conexión / no puedo conectarme</option>
             <option>Conexión lenta</option>
-            <option>Lampu PON Merah / Los Sinyal</option>
+            <option>Luz PON/LOS roja (sin señal)</option>
             <option>Olvidé la contraseña del WiFi</option>
             <option>Consultas de facturación y pagos</option>
             <option>Otros</option>
@@ -680,7 +680,7 @@
   function editSsid(deviceId, currentSsid){
     var shown = document.querySelector('.wifi-val');
     var val = (shown && shown.textContent) ? shown.textContent.trim() : (currentSsid || '');
-    if (val === '-' || val === 'N/A' || val === 'Tidak ditemukan') val = '';
+    if (val === '-' || val === 'N/A' || val === 'No encontrado') val = '';
     document.getElementById('modalSsidInput').value = val;
     showModal('editSsidModal');
   }
@@ -730,7 +730,7 @@
     if (btnRefresh) {
       btnRefresh.addEventListener('click', async function(){
         btnRefresh.disabled = true;
-        btnRefresh.innerHTML = '<i class="bi bi-arrow-repeat"></i> Memeriksa ONU…';
+        btnRefresh.innerHTML = '<i class="bi bi-arrow-repeat"></i> Consultando la ONU…';
         try { await fetch('/customer/poll-onu', { method: 'POST' }); location.reload(); }
         catch (e) { location.reload(); }
       });
@@ -744,7 +744,7 @@
       notifs.push({ type:'payment', title:'Pago recibido', message:'Factura del mes <%= inv.period_month %>/<%= inv.period_year %> por <%= APP_CUR %> <%= parseInt(pAmt || 0).toLocaleString(APP_LOCALE) %> está PAGADA.', time:'Confirmado por el sistema' });
     <% }); } %>
     <% if (hasUnpaid) { var uAmt = latestUnpaid.amount != null ? latestUnpaid.amount : (latestUnpaid.package_price != null ? latestUnpaid.package_price : 0); %>
-      notifs.push({ type:'warning', title:'Recordatorio de factura mensual', message:'Factura del mes <%= latestUnpaid.period_month %>/<%= latestUnpaid.period_year %> por <%= APP_CUR %> <%= parseInt(uAmt || 0).toLocaleString(APP_LOCALE) %> está pendiente de pago.', time:'Jatuh Tempo Tgl 20' });
+      notifs.push({ type:'warning', title:'Recordatorio de factura mensual', message:'Factura del mes <%= latestUnpaid.period_month %>/<%= latestUnpaid.period_year %> por <%= APP_CUR %> <%= parseInt(uAmt || 0).toLocaleString(APP_LOCALE) %> está pendiente de pago.', time:'Vence el día 20' });
     <% } %>
     var badge = document.getElementById('notifCountBadge');
     if (badge && notifs.length > 0) { badge.innerText = notifs.length; badge.style.display = 'flex'; }

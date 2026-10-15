@@ -47,7 +47,7 @@ function updateOdp(id, data) {
   const capacity = parseCapacity(data.port_capacity);
   const usage = getOdpPortUsage(id);
   if (usage && capacity < usage.usedCount) {
-    throw new Error('Kapasitas port (' + capacity + ') es menor que la cantidad de puertos ya usados (' + usage.usedCount + ').');
+    throw new Error('La capacidad de puertos (' + capacity + ') es menor que la cantidad de puertos ya usados (' + usage.usedCount + ').');
   }
   const stmt = db.prepare(`
     UPDATE odps 
@@ -104,7 +104,7 @@ function validateOdpPort(odpId, ponPort, excludeCustomerId) {
   const capacity = parseCapacity(odp.port_capacity);
   const portNo = parseInt(portStr, 10);
   if (portNo < 1 || portNo > capacity) {
-    throw new Error('Port ODP ' + portNo + ' melebihi kapasitas ODP "' + odp.name + '" (máximo' + capacity + ' puertos). Cambiá la capacidad de la NAP si hace falta.');
+    throw new Error('El puerto ' + portNo + ' supera la capacidad de la NAP "' + odp.name + '" (máximo ' + capacity + ' puertos). Cambiá la capacidad de la NAP si hace falta.');
   }
 
   const ex = (excludeCustomerId === undefined || excludeCustomerId === null || excludeCustomerId === '') ? null : Number(excludeCustomerId);

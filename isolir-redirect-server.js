@@ -31,9 +31,9 @@ const server = http.createServer((req, res) => {
     'Content-Type': 'text/html; charset=utf-8',
   });
   res.end(
-    '<!doctype html><meta charset="utf-8"><title>Mengalihkan…</title>' +
+    '<!doctype html><meta charset="utf-8"><title>Redirigiendo…</title>' +
     '<meta http-equiv="refresh" content="0;url=' + TARGET + '">' +
-    '<p>Redirigiendo al portal de pagos… <a href="' + TARGET + '">Lanjut</a></p>'
+    '<p>Redirigiendo al portal de pagos… <a href="' + TARGET + '">Continuar</a></p>'
   );
 });
 

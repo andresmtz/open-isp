@@ -481,7 +481,7 @@ router.get('/qris/static.jpg', async (req, res) => {
   };
   try {
     const amount = Math.max(0, Math.floor(Number(req.query.amount || 0) || 0));
-    if (!amount) return sendPretty(400, 'Todavía no hay monto', 'Tambahkan parameter amount, contoh: ?amount=3948');
+    if (!amount) return sendPretty(400, 'Todavía no hay monto', 'Agregá el parámetro amount, por ejemplo: ?amount=3948');
     const settings = getSettingsWithCache();
 
     let payload = getStaticQrisPayload(settings);
@@ -514,16 +514,16 @@ router.get('/qris/static.jpg', async (req, res) => {
       return res.redirect(url);
     }
 
-    return sendPretty(404, 'QRIS tidak ditemukan', 'El administrador todavía no configuró el QR o el payload no es válido.');
+    return sendPretty(404, 'QR no encontrado', 'El administrador todavía no configuró el QR o el payload no es válido.');
   } catch {
-    return sendPretty(404, 'QRIS tidak ditemukan', 'No se pudo cargar el QR.');
+    return sendPretty(404, 'QR no encontrado', 'No se pudo cargar el QR.');
   }
 });
 
 function ensureInvoiceQrisUnique(inv, force = false) {
   const invId = Number(inv?.id || 0);
   if (!Number.isFinite(invId) || invId <= 0) throw new Error('ID de factura inválido');
-  if (String(inv?.status) !== 'unpaid') throw new Error('Hanya tagihan BELUM BAYAR yang bisa dibuat kode QRIS.');
+  if (String(inv?.status) !== 'unpaid') throw new Error('Solo se puede generar QR para facturas pendientes.');
 
   const custId = Number(inv?.customer_id || 0);
   let baseAmount = Number(inv?.amount || 0);
@@ -596,7 +596,7 @@ function ensureInvoiceQrisUnique(inv, force = false) {
 function ensureVoucherOrderQrisUnique(order, force = false) {
   const orderId = Number(order?.id || 0);
   if (!Number.isFinite(orderId) || orderId <= 0) throw new Error('ID de pedido inválido');
-  if (String(order?.status) !== 'pending') throw new Error('Hanya pesanan PENDING yang bisa dibuat kode QRIS.');
+  if (String(order?.status) !== 'pending') throw new Error('Solo se puede generar QR para pedidos pendientes.');
 
   const baseAmount = Number(order?.price || 0);
   if (!Number.isFinite(baseAmount) || baseAmount <= 0) throw new Error('Precio de la ficha inválido');
@@ -754,7 +754,7 @@ router.get('/tos', (req, res) => {
   const settings = getSettingsWithCache();
   res.render('tos', { 
     settings, 
-    company: settings.company_header || 'ISP Kami',
+    company: settings.company_header || 'Nuestro ISP',
     isLoggedIn: !!req.session.phone 
   });
 });
@@ -764,7 +764,7 @@ router.get('/privacy', (req, res) => {
   const settings = getSettingsWithCache();
   res.render('privacy', { 
     settings, 
-    company: settings.company_header || 'ISP Kami',
+    company: settings.company_header || 'Nuestro ISP',
     isLoggedIn: !!req.session.phone 
   });
 });
@@ -774,7 +774,7 @@ router.get('/about', (req, res) => {
   const settings = getSettingsWithCache();
   res.render('about', { 
     settings, 
-    company: settings.company_header || 'ISP Kami',
+    company: settings.company_header || 'Nuestro ISP',
     isLoggedIn: !!req.session.phone 
   });
 });
@@ -784,7 +784,7 @@ router.get('/contact', (req, res) => {
   const settings = getSettingsWithCache();
   res.render('contact', { 
     settings, 
-    company: settings.company_header || 'ISP Kami',
+    company: settings.company_header || 'Nuestro ISP',
     isLoggedIn: !!req.session.phone 
   });
 });
@@ -871,9 +871,9 @@ router.get('/check-billing', async (req, res) => {
       { code: 'PERMATAVA', name: 'Permata Virtual Account', group: 'Virtual Account', active: true },
       { code: 'MANDIRIVA', name: 'Mandiri Virtual Account', group: 'Virtual Account', active: true }
     ];
-    if (gateway === 'midtrans') paymentChannels = [{ code: 'SNAP', name: 'Semua Metode (Snap)', group: 'E-Wallet', active: true }, ...base];
-    else if (gateway === 'xendit') paymentChannels = [{ code: 'XENDIT', name: 'Semua Metode', group: 'E-Wallet', active: true }, ...base];
-    else if (gateway === 'duitku') paymentChannels = [{ code: 'DUITKU', name: 'Semua Metode', group: 'E-Wallet', active: true }, ...base];
+    if (gateway === 'midtrans') paymentChannels = [{ code: 'SNAP', name: 'Todos los métodos (Snap)', group: 'E-Wallet', active: true }, ...base];
+    else if (gateway === 'xendit') paymentChannels = [{ code: 'XENDIT', name: 'Todos los métodos', group: 'E-Wallet', active: true }, ...base];
+    else if (gateway === 'duitku') paymentChannels = [{ code: 'DUITKU', name: 'Todos los métodos', group: 'E-Wallet', active: true }, ...base];
   }
 
   if (query) {
@@ -1126,9 +1126,9 @@ router.get('/voucher', async (req, res) => {
         { code: 'PERMATAVA', name: 'Permata Virtual Account', group: 'Virtual Account', active: true },
         { code: 'MANDIRIVA', name: 'Mandiri Virtual Account', group: 'Virtual Account', active: true }
       ];
-      if (gateway === 'midtrans') channels = [{ code: 'SNAP', name: 'Semua Metode (Snap)', group: 'E-Wallet', active: true }, ...base];
-      else if (gateway === 'xendit') channels = [{ code: 'XENDIT', name: 'Semua Metode', group: 'E-Wallet', active: true }, ...base];
-      else if (gateway === 'duitku') channels = [{ code: 'DUITKU', name: 'Semua Metode', group: 'E-Wallet', active: true }, ...base];
+      if (gateway === 'midtrans') channels = [{ code: 'SNAP', name: 'Todos los métodos (Snap)', group: 'E-Wallet', active: true }, ...base];
+      else if (gateway === 'xendit') channels = [{ code: 'XENDIT', name: 'Todos los métodos', group: 'E-Wallet', active: true }, ...base];
+      else if (gateway === 'duitku') channels = [{ code: 'DUITKU', name: 'Todos los métodos', group: 'E-Wallet', active: true }, ...base];
       else channels = base;
     }
     
@@ -1213,7 +1213,7 @@ router.get('/voucher/qris/:orderId', async (req, res) => {
       kind: 'voucher',
       invoiceId: Number(orderId),
       periodText: `${order.profile_name || ''}${order.validity ? ' • ' + String(order.validity) : ''}`,
-      customerName: order.buyer_phone ? `WA: ${order.buyer_phone}` : 'Pembeli Voucher',
+      customerName: order.buyer_phone ? `WA: ${order.buyer_phone}` : 'Comprador de voucher',
       amountUnique,
       uniqueCode,
       qrisQrUrl,
@@ -1224,7 +1224,7 @@ router.get('/voucher/qris/:orderId', async (req, res) => {
       proofActionUrl: '/customer/voucher/proof/' + encodeURIComponent(String(orderId))
     });
   } catch (e) {
-    return res.redirect('/customer/voucher?order=' + encodeURIComponent(String(orderId)) + '&t=' + encodeURIComponent(String(req.query.t || '')) + '&err=' + encodeURIComponent(String(e?.message || e || 'Gagal')));
+    return res.redirect('/customer/voucher?order=' + encodeURIComponent(String(orderId)) + '&t=' + encodeURIComponent(String(req.query.t || '')) + '&err=' + encodeURIComponent(String(e?.message || e || 'Error')));
   }
 });
 // API endpoint untuk cek status voucher order (untuk auto-polling di halaman QRIS)
@@ -1475,7 +1475,7 @@ router.post('/public/voucher/create-payment', async (req, res) => {
       item_name: `Voucher Hotspot ${selected.name} (${selected.validity})`,
       sku: `VOUCHER-${orderId}`
     };
-    const buyer = { name: 'Pembeli Voucher', phone: buyerPhone, email: '' };
+    const buyer = { name: 'Comprador de voucher', phone: buyerPhone, email: '' };
 
     const secret = settings.session_secret || 'rahasia-portal-pelanggan-default-ganti-ini';
     const token = signPublicToken({ voucherOrderId: orderId, exp: Date.now() + 24 * 60 * 60 * 1000 }, secret);
@@ -1773,9 +1773,9 @@ router.get('/dashboard', async (req, res) => {
       { code: 'PERMATAVA', name: 'Permata Virtual Account', group: 'Virtual Account', active: true },
       { code: 'MANDIRIVA', name: 'Mandiri Virtual Account', group: 'Virtual Account', active: true }
     ];
-    if (gateway === 'midtrans') paymentChannels = [{ code: 'SNAP', name: 'Semua Metode (Snap)', group: 'E-Wallet', active: true }, ...base];
-    else if (gateway === 'xendit') paymentChannels = [{ code: 'XENDIT', name: 'Semua Metode', group: 'E-Wallet', active: true }, ...base];
-    else if (gateway === 'duitku') paymentChannels = [{ code: 'DUITKU', name: 'Semua Metode', group: 'E-Wallet', active: true }, ...base];
+    if (gateway === 'midtrans') paymentChannels = [{ code: 'SNAP', name: 'Todos los métodos (Snap)', group: 'E-Wallet', active: true }, ...base];
+    else if (gateway === 'xendit') paymentChannels = [{ code: 'XENDIT', name: 'Todos los métodos', group: 'E-Wallet', active: true }, ...base];
+    else if (gateway === 'duitku') paymentChannels = [{ code: 'DUITKU', name: 'Todos los métodos', group: 'E-Wallet', active: true }, ...base];
   }
 
   let trafficMaxDownMbps = 10;
@@ -1938,12 +1938,12 @@ router.get('/dashboard', async (req, res) => {
     pppoeIp: String(_dev.pppoeIP || '-'),
     pppoeUptime: String(_dev.pppoeUptime || '-'),
     onuModel: String(_dev.model || '-'),
-    onuOnline: !!_dev.status && _dev.status !== 'Tidak ditemukan',
+    onuOnline: !!_dev.status && _dev.status !== 'No encontrado',
     onuUptime: String(_dev.uptime || '-'),
     onuLocalIp: String(_dev.pppoeIP || '-'),
     onuTemp: String(_dev.temperature || '-'),
     serialNumber: String(_dev.serialNumber || '-'),
-    onuDetected: (!!_dev.status && _dev.status !== 'Tidak ditemukan'),
+    onuDetected: (!!_dev.status && _dev.status !== 'No encontrado'),
     onuOnline: (String(_dev.status || '').toLowerCase() === 'online'),
     waPhone: regional.normalizePhone((settings && settings.company_phone) || ''),
     rxPower: (function(v){ v = String(v || '-').trim(); if (v === '-' || !v) return '-'; return /dbm/i.test(v) ? v : (v + ' dBm'); })(_dev.rxPower),
@@ -2030,7 +2030,7 @@ router.get('/api/device-summary', async (req, res) => {
     const rxRaw = String(d.rxPower || '-').trim();
     res.json({
       ok: true,
-      onuDetected: !!(d.status && d.status !== 'Tidak ditemukan'),
+      onuDetected: !!(d.status && d.status !== 'No encontrado'),
       onuOnline: (String(d.status || '').toLowerCase() === 'online'),
       model: String(d.model || '-'),
       ip: String(d.pppoeIP || '-'),
@@ -2485,7 +2485,7 @@ router.get('/api/device/sync-status', async (req, res) => {
     lastSyncAgo: deviceData.lastSyncAgo,
     syncInProgress: !!deviceData.syncInProgress,
     syncPendingCount: Number(deviceData.syncPendingCount || 0),
-    syncStatusLabel: String(deviceData.syncStatusLabel || 'Idle')
+    syncStatusLabel: String(deviceData.syncStatusLabel || 'Sin pendientes')
   });
 });
 
@@ -2581,7 +2581,7 @@ router.get('/invoice/:id/pdf', async (req, res) => {
     const settings = getSettingsWithCache();
     const pdfBuffer = await pdfSvc.generateInvoicePdfBuffer(inv, customer, settings);
 
-    const safeName = (customer.name || 'Pelanggan').replace(/[^a-zA-Z0-9]/g, '_');
+    const safeName = (customer.name || 'Cliente').replace(/[^a-zA-Z0-9]/g, '_');
     const filename = `Invoice_INV-${String(inv.id).padStart(4, '0')}_${safeName}.pdf`;
     const _wantDl = String(req.query.dl || '') !== '';
     res.set({
@@ -2726,9 +2726,9 @@ router.post('/public/payment/create/:invoiceId', async (req, res) => {
   try {
     const inv = billingSvc.getInvoiceById(req.params.invoiceId);
     if (!inv) throw new Error('Factura no encontrada');
-    if (Number(inv.customer_id) !== Number(payload.customerId)) throw new Error('Tagihan tidak valid');
+    if (Number(inv.customer_id) !== Number(payload.customerId)) throw new Error('Factura inválida');
     if (inv.status === 'paid') {
-      return redirectBack(payload.lookup, '', 'Tagihan ini sudah lunas.');
+      return redirectBack(payload.lookup, '', 'Esta factura ya está pagada.');
     }
 
     const selectedMethod = String(req.body.method || 'QRIS').toUpperCase();
@@ -2921,7 +2921,7 @@ router.post('/tickets/create', uploadCustomer.array('photos', 5), async (req, re
         const _waDigits = normalizeWaDigits(customer ? customer.phone : '');
         const _mapQ = (customer && customer.lat && customer.lng) ? (customer.lat + ',' + customer.lng) : String(customer ? customer.address : '');
         const _base = (String(settings.public_base_url || '') || String(settings.app_url || '') || ('http://' + (req.get('host') || ''))).replace(/\/+$/, '');
-        const _links = `\n🔗 *Tautan Cepat:*\n` +
+        const _links = `\n🔗 *Accesos rápidos:*\n` +
           (_waDigits ? `• 💬 Chat con el cliente: https://wa.me/${_waDigits}\n` : '') +
           (_mapQ ? `• 📍 Ubicación: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(_mapQ)}` : '');
         const waMsg = `🎫 *NUEVO RECLAMO*\n\n` +
@@ -3025,18 +3025,18 @@ router.get('/payment/create/:invoiceId', async (req, res) => {
     const inv = billingSvc.getInvoiceById(req.params.invoiceId);
     
     if (!inv) throw new Error('Factura no encontrada');
-    if (inv.status === 'paid') throw new Error('Tagihan ini sudah lunas.');
+    if (inv.status === 'paid') throw new Error('Esta factura ya está pagada.');
     
     // Verify loginId atau publicToken
     let profile = null;
     if (loginId) {
       profile = findCustomerProfileByLoginId(loginId);
-      if (!profile || Number(inv.customer_id) !== Number(profile.id)) throw new Error('Tagihan tidak valid');
+      if (!profile || Number(inv.customer_id) !== Number(profile.id)) throw new Error('Factura inválida');
     } else if (publicToken) {
       // Verify public token
       const tokenUtil = require('../utils/tokenUtil');
       const payload = tokenUtil.verifyPublicToken(publicToken, settings.session_secret);
-      if (!payload || String(payload.invoiceId) !== String(inv.id)) throw new Error('Token tidak valid atau expired');
+      if (!payload || String(payload.invoiceId) !== String(inv.id)) throw new Error('Enlace inválido o vencido');
       // Get customer from invoice
       profile = customerSvc.getCustomerById(inv.customer_id);
       if (!profile) throw new Error('Cliente no encontrado');
@@ -3103,7 +3103,7 @@ router.get('/payment/create/:invoiceId', async (req, res) => {
       if (!mayar.isConfigured()) throw new Error('La pasarela de pago (Mayar) no está configurada. Cargá la API key de Mayar en la configuración.');
       const desc = 'Factura' + inv.period_month + '/' + inv.period_year + ((profile && profile.customer_code) ? ' • ' + profile.customer_code : '');
       const r = await mayar.createInvoice({
-        name: (profile && profile.name) || inv.customer_name || 'Pelanggan',
+        name: (profile && profile.name) || inv.customer_name || 'Cliente',
         email: (profile && profile.email) || '',
         mobile: (profile && profile.phone) || '',
         description: desc,
@@ -3220,7 +3220,7 @@ router.get('/payment/create/:invoiceId', async (req, res) => {
     }
   } catch (error) {
     logger.error(`[Payment] Create Error: ${error.message}`);
-    res.status(500).send(`Terjadi kesalahan: ${error.message}`);
+    res.status(500).send(`Ocurrió un error: ${error.message}`);
   }
 });
 
@@ -3241,13 +3241,13 @@ router.post('/payment/proof/:invoiceId', uploadProof.single('proof'), async (req
   try {
     const inv = billingSvc.getInvoiceById(invoiceId);
     if (!inv) throw new Error('Factura no encontrada');
-    if (String(inv.status) !== 'unpaid') throw new Error('Tagihan sudah tidak bisa dikonfirmasi (status bukan unpaid).');
+    if (String(inv.status) !== 'unpaid') throw new Error('La factura ya no se puede confirmar (no está pendiente).');
 
     if (payload) {
-      if (Number(inv.customer_id) !== Number(payload.customerId)) throw new Error('Tagihan tidak valid');
+      if (Number(inv.customer_id) !== Number(payload.customerId)) throw new Error('Factura inválida');
     } else {
       if (!profile) throw new Error('Sesión inválida, vuelva a ingresar.');
-      if (Number(inv.customer_id) !== Number(profile.id)) throw new Error('Tagihan tidak valid');
+      if (Number(inv.customer_id) !== Number(profile.id)) throw new Error('Factura inválida');
     }
 
     const { uniqueCode, amountUnique } = ensureInvoiceQrisUnique(inv, false);
@@ -3256,10 +3256,10 @@ router.post('/payment/proof/:invoiceId', uploadProof.single('proof'), async (req
 
     if (!req.file) throw new Error('No eligió el comprobante de transferencia');
     const relPath = '/admin/media/payment-proof/' + String(req.file.filename || '');
-    if (!relPath || relPath.endsWith('/')) throw new Error('Gagal menyimpan bukti');
+    if (!relPath || relPath.endsWith('/')) throw new Error('No se pudo guardar el comprobante');
 
     try {
-      const noteLine = `Bukti bayar: ${relPath}`;
+      const noteLine = `Comprobante: ${relPath}`;
       db.prepare(`
         UPDATE invoices
         SET notes=CASE
@@ -3277,14 +3277,14 @@ router.post('/payment/proof/:invoiceId', uploadProof.single('proof'), async (req
       if (settings.whatsapp_enabled && adminWaDigits) {
         const waNotify = require('../services/waNotifyService');
         if (await waNotify.isConnected()) {
-          const who = payload ? (inv.customer_name || 'Pelanggan') : (profile?.name || inv.customer_name || 'Pelanggan');
+          const who = payload ? (inv.customer_name || 'Cliente') : (profile?.name || inv.customer_name || 'Cliente');
           const msg =
             `🧾 *CONFIRMACIÓN DE PAGO (QR ESTÁTICO)*\n\n` +
             `👤 *Nombre:* ${who}\n` +
             `🧾 *Invoice:* INV-${inv.id}\n` +
             `📅 *Período:* ${inv.period_month}/${inv.period_year}\n` +
             `💰 *Monto:* ${regional.currencySymbol()} ${Number(amountUnique).toLocaleString(regional.locale())} (código ${String(uniqueCode).padStart(3, '0')})\n` +
-            `📎 *Bukti:* ${proofUrl}\n`;
+            `📎 *Comprobante:* ${proofUrl}\n`;
           await waNotify.sendText(adminWaDigits, msg);
         }
       }
@@ -3322,7 +3322,7 @@ router.post('/payment/proof/:invoiceId', uploadProof.single('proof'), async (req
     return res.render('qris_static', {
       settings,
       backUrl,
-      error: String(e?.message || e || 'Gagal'),
+      error: String(e?.message || e || 'Error'),
       info: null,
       kind: 'invoice',
       invoiceId,
@@ -3353,7 +3353,7 @@ router.post('/voucher/proof/:orderId', uploadProof.single('proof'), async (req, 
   try {
     const order = db.prepare('SELECT * FROM public_voucher_orders WHERE id=?').get(orderId);
     if (!order) throw new Error('Pedido no encontrado');
-    if (String(order.status) !== 'pending') throw new Error('Order sudah tidak bisa dikonfirmasi (status bukan pending).');
+    if (String(order.status) !== 'pending') throw new Error('El pedido ya no se puede confirmar (no está pendiente).');
 
     const { uniqueCode, amountUnique } = ensureVoucherOrderQrisUnique(order, false);
     const qrisQrUrl = await getStaticQrisQrUrlForAmount(settings, amountUnique);
@@ -3361,7 +3361,7 @@ router.post('/voucher/proof/:orderId', uploadProof.single('proof'), async (req, 
 
     if (!req.file) throw new Error('No eligió el comprobante de transferencia');
     const relPath = '/admin/media/payment-proof/' + String(req.file.filename || '');
-    if (!relPath || relPath.endsWith('/')) throw new Error('Gagal menyimpan bukti');
+    if (!relPath || relPath.endsWith('/')) throw new Error('No se pudo guardar el comprobante');
 
     db.prepare(`
       UPDATE public_voucher_orders
@@ -3380,8 +3380,8 @@ router.post('/voucher/proof/:orderId', uploadProof.single('proof'), async (req, 
             `🧾 *Order:* VOUCHER-${orderId}\n` +
             `📦 *Plan:* ${order.profile_name || '-'}${order.validity ? ' (' + order.validity + ')' : ''}\n` +
             `💰 *Monto:* ${regional.currencySymbol()} ${Number(amountUnique).toLocaleString(regional.locale())} (código ${String(uniqueCode).padStart(3, '0')})\n` +
-            `📞 *WA Pembeli:* ${order.buyer_phone || '-'}\n` +
-            `📎 *Bukti:* ${proofUrl}\n`;
+            `📞 *WhatsApp del comprador:* ${order.buyer_phone || '-'}\n` +
+            `📎 *Comprobante:* ${proofUrl}\n`;
           await waNotify.sendText(adminWaDigits, msg);
         }
       }
@@ -3398,7 +3398,7 @@ router.post('/voucher/proof/:orderId', uploadProof.single('proof'), async (req, 
       kind: 'voucher',
       invoiceId: Number(orderId),
       periodText: `${order.profile_name || ''}${order.validity ? ' • ' + String(order.validity) : ''}`,
-      customerName: order.buyer_phone ? `WA: ${order.buyer_phone}` : 'Pembeli Voucher',
+      customerName: order.buyer_phone ? `WA: ${order.buyer_phone}` : 'Comprador de voucher',
       amountUnique,
       uniqueCode,
       qrisQrUrl,
@@ -3409,7 +3409,7 @@ router.post('/voucher/proof/:orderId', uploadProof.single('proof'), async (req, 
       proofActionUrl: '/customer/voucher/proof/' + encodeURIComponent(String(orderId))
     });
   } catch (e) {
-    return res.redirect('/customer/voucher?order=' + encodeURIComponent(String(orderId)) + '&t=' + encodeURIComponent(token) + '&err=' + encodeURIComponent(String(e?.message || e || 'Gagal')));
+    return res.redirect('/customer/voucher?order=' + encodeURIComponent(String(orderId)) + '&t=' + encodeURIComponent(token) + '&err=' + encodeURIComponent(String(e?.message || e || 'Error')));
   }
 });
 
@@ -3597,13 +3597,13 @@ router.post('/payment/callback', express.json({
           if (settings.whatsapp_enabled) {
             try {
               const waNotify = require('../services/waNotifyService');
-              if (!(await waNotify.isConnected())) throw new Error('Bot WhatsApp belum terhubung');
+              if (!(await waNotify.isConnected())) throw new Error('WhatsApp no está conectado');
               if (!fresh.buyer_phone) throw new Error('El número de WhatsApp del comprador está vacío');
               const msg =
                 `🎫 *VOUCHER HOTSPOT*\n\n` +
                 `✅ Pago recibido vía *${gateway}*\n` +
                 `📦 Plan: *${fresh.profile_name}* (${fresh.validity || '-'})\n` +
-                `💰 Harga: ${regional.currencySymbol()} ${Number(fresh.price || 0).toLocaleString(regional.locale())}\n\n` +
+                `💰 Precio: ${regional.currencySymbol()} ${Number(fresh.price || 0).toLocaleString(regional.locale())}\n\n` +
                 `👤 User: *${created.code}*\n` +
                 `🔑 Pass: *${created.pass}*\n\n` +
                 `Gracias.`;
@@ -3635,14 +3635,14 @@ router.post('/payment/callback', express.json({
 
       const checkInv = billingSvc.getInvoiceById(idNum);
       if (checkInv && checkInv.status !== 'paid') {
-        billingSvc.markAsPaid(idNum, gateway, `Otomatis via Webhook ${gateway}`);
+        billingSvc.markAsPaid(idNum, gateway, `Automático vía webhook ${gateway}`);
 
         const customer = customerSvc.getCustomerById(checkInv.customer_id);
         
         try {
           const waNotify = require('../services/waNotifyService');
           if (!(await waNotify.isConnected())) {
-            throw new Error('Bot WhatsApp belum terhubung');
+            throw new Error('WhatsApp no está conectado');
           }
           if (!customer.phone) {
             throw new Error('El número de WhatsApp del cliente está vacío');
@@ -3652,7 +3652,7 @@ router.post('/payment/callback', express.json({
           const template = db.getAppSetting('whatsapp_payment_success_message', '');
 
           const formattedMsg = whatsappService.formatPaymentSuccessMessage({
-            customerName: customer.name || checkInv.customer_name || 'Pelanggan',
+            customerName: customer.name || checkInv.customer_name || 'Cliente',
             invoiceId: checkInv.id,
             customerUsername: customer.pppoe_username || customer.id || '-',
             customerCode: customer.customer_code || '',

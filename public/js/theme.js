@@ -30,7 +30,7 @@ function updateThemeToggleIcons(theme) {
     }
   });
   btns.forEach(btn => {
-    btn.setAttribute('title', theme === 'light' ? 'Ganti ke Mode Gelap (Dark)' : 'Ganti ke Mode Terang (Light)');
+    btn.setAttribute('title', theme === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro');
   });
 }
 

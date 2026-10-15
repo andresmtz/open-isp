@@ -92,7 +92,7 @@
               <td class="num fw6" style="color:#ef4444">- <%= APP_CUR %> <%= Number(item.amount).toLocaleString(APP_LOCALE) %></td>
               <td style="font-size:12px"><%= item.recorded_by_name || 'Admin' %></td>
               <td>
-                <form method="POST" action="/admin/finance/expenses/<%= item.id %>/delete" style="display:inline" onsubmit="return confirm('Hapus data pengeluaran ini?')">
+                <form method="POST" action="/admin/finance/expenses/<%= item.id %>/delete" style="display:inline" onsubmit="return confirm('¿Eliminar este gasto?')">
                   <button class="btn btn-d btn-icon btn-sm" title="Eliminar"><i class="bi bi-trash"></i></button>
                 </form>
               </td>

@@ -194,7 +194,7 @@
         <i class="bi bi-exclamation-triangle"></i> ONU sin configurar
       </button>
       <button class="tab-btn" onclick="switchTab('configured')">
-        <i class="bi bi-check-circle"></i> ONU Terkonfigurasi
+        <i class="bi bi-check-circle"></i> ONU configuradas
       </button>
       <button class="tab-btn" onclick="switchTab('provision')">
         <i class="bi bi-plus-circle"></i> Alta manual
@@ -207,7 +207,7 @@
         <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center">
           <h6 style="margin:0"><i class="bi bi-search"></i> Buscar ONU sin configurar</h6>
           <button onclick="scanUnconfiguredONUs()" class="btn btn-p btn-sm">
-            <i class="bi bi-arrow-clockwise"></i> Scan Ulang
+            <i class="bi bi-arrow-clockwise"></i> Volver a escanear
           </button>
         </div>
         <div class="card-bd">
@@ -419,7 +419,7 @@
                   <div style="display:flex;align-items:center;gap:10px">
                     <i class="bi bi-router" style="font-size:20px;color:#f59e0b"></i>
                     <div>
-                      <div style="font-weight:700;color:#e2e8f0">Integrasi MikroTik</div>
+                      <div style="font-weight:700;color:#e2e8f0">Integración con MikroTik</div>
                       <div class="hint" style="font-size:12px;margin-top:2px">Auto-create PPPoE secret di MikroTik</div>
                     </div>
                   </div>
@@ -556,7 +556,7 @@ async function scanUnconfiguredONUs() {
             <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">
               <div>
                 <span class="vendor-badge vendor-${onu.vendor.toLowerCase()}">${onu.vendor}</span>
-                <span class="onu-status unconfigured">Belum Terkonfigurasi</span>
+                <span class="onu-status unconfigured">Sin configurar</span>
               </div>
               <button onclick="provisionONU('${JSON.stringify(onu).replace(/"/g, '"')}')" class="btn btn-p btn-sm">
                 <i class="bi bi-plus-circle"></i> Provision
@@ -751,12 +751,12 @@ async function scanConfiguredONUs() {
                 <span style="margin-left: 8px; font-weight: 700; color: #e2e8f0;">${onu.name}</span>
               </div>
               <div class="act">
-                <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                 <div class="act-menu">
                   <button type="button" class="act-item" onclick="renameConfiguredOnu('${data.oltId}', '${onu.index}', '${onu.name}')"><i class="bi bi-pencil"></i> Rename ONU</button>
                   <button type="button" class="act-item warn" onclick="rebootConfiguredOnu('${data.oltId}', '${onu.index}')"><i class="bi bi-arrow-clockwise"></i> Reboot ONU</button>
                   <div class="act-sep"></div>
-                  <button type="button" class="act-item danger" onclick="deleteConfiguredOnu('${onu.index}', '${onu.sn}')"><i class="bi bi-trash"></i> Hapus ONU</button>
+                  <button type="button" class="act-item danger" onclick="deleteConfiguredOnu('${onu.index}', '${onu.sn}')"><i class="bi bi-trash"></i> Eliminar ONU</button>
                 </div>
               </div>
             </div>
@@ -770,11 +770,11 @@ async function scanConfiguredONUs() {
                 <div style="font-weight:600">${onu.id || onu.index}</div>
               </div>
               <div>
-                <div class="hint" style="font-size:11px">Sinyal RX / TX</div>
+                <div class="hint" style="font-size:11px">Señal RX / TX</div>
                 <div style="font-weight:600; color:${parseFloat(onu.rx) < -27 ? '#fca5a5' : '#e2e8f0'}">${onu.rx} / ${onu.tx}</div>
               </div>
               <div>
-                <div class="hint" style="font-size:11px">Uptime / Jarak</div>
+                <div class="hint" style="font-size:11px">Tiempo encendida / distancia</div>
                 <div style="font-weight:600">${onu.uptime || '-'} / ${onu.distance || '-'}</div>
               </div>
               ${onu.customer_name ? `
@@ -791,7 +791,7 @@ async function scanConfiguredONUs() {
               ` : ''}
               ${onu.client_count !== undefined && onu.client_count > 0 ? `
               <div>
-                <div class="hint" style="font-size:11px">Klien Connected (ACS)</div>
+                <div class="hint" style="font-size:11px">Equipos conectados (ACS)</div>
                 <div style="font-weight:600; color:#10b981"><i class="bi bi-people"></i> ${onu.client_count} device</div>
               </div>
               ` : ''}

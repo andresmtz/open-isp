@@ -128,7 +128,7 @@
               <input type="number" name="year" value="<%= selectedYear %>" class="fc" style="width:80px;padding:6px 10px">
               <button type="submit" class="btn btn-p btn-sm"><i class="bi bi-funnel"></i> Filter</button>
             </form>
-            <form method="POST" action="/admin/payroll/generate" onsubmit="return confirm('Generate slip gaji untuk semua karyawan?')">
+            <form method="POST" action="/admin/payroll/generate" onsubmit="return confirm('¿Generar los recibos de sueldo de todos los empleados?')">
               <input type="hidden" name="month" value="<%= selectedMonth %>">
               <input type="hidden" name="year" value="<%= selectedYear %>">
               <button type="submit" class="btn btn-s btn-sm"><i class="bi bi-magic"></i> Generar todos</button>
@@ -142,11 +142,11 @@
 
           <!-- Bulk Actions -->
           <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-            <form method="POST" action="/admin/payroll/bulk-approve" style="display:inline" onsubmit="return confirm('Approve semua slip draft?')">
+            <form method="POST" action="/admin/payroll/bulk-approve" style="display:inline" onsubmit="return confirm('¿Aprobar todos los recibos en borrador?')">
               <input type="hidden" name="month" value="<%= selectedMonth %>"><input type="hidden" name="year" value="<%= selectedYear %>">
               <button type="submit" class="btn btn-p btn-sm"><i class="bi bi-check-all"></i> Aprobar todos los borradores</button>
             </form>
-            <form method="POST" action="/admin/payroll/bulk-paid" style="display:inline" onsubmit="return confirm('Tandai semua slip approved sebagai paid?')">
+            <form method="POST" action="/admin/payroll/bulk-paid" style="display:inline" onsubmit="return confirm('¿Marcar todos los recibos aprobados como pagados?')">
               <input type="hidden" name="month" value="<%= selectedMonth %>"><input type="hidden" name="year" value="<%= selectedYear %>">
               <button type="submit" class="btn btn-s btn-sm"><i class="bi bi-cash-coin"></i> Marcar todos como pagados</button>
             </form>
@@ -168,8 +168,8 @@
             <div class="slip-breakdown">
               <span class="label">Sueldo base</span><span class="value"><%= APP_CUR %> <%= slip.base_salary.toLocaleString(APP_LOCALE) %></span>
               <% if(slip.transport_allowance){%><span class="label">Tunj. Transport</span><span class="value"><%= APP_CUR %> <%= slip.transport_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
-              <% if(slip.meal_allowance){%><span class="label">Tunj. Makan</span><span class="value"><%= APP_CUR %> <%= slip.meal_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
-              <% if(slip.phone_allowance){%><span class="label">Tunj. Pulsa</span><span class="value"><%= APP_CUR %> <%= slip.phone_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
+              <% if(slip.meal_allowance){%><span class="label">Asig. comida</span><span class="value"><%= APP_CUR %> <%= slip.meal_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
+              <% if(slip.phone_allowance){%><span class="label">Asig. teléfono</span><span class="value"><%= APP_CUR %> <%= slip.phone_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
               <% if(slip.other_allowance){%><span class="label">Otras bonif. (<%= slip.other_allowance_note || '-' %>)</span><span class="value"><%= APP_CUR %> <%= slip.other_allowance.toLocaleString(APP_LOCALE) %></span><%}%>
               <% if(slip.ticket_bonus){%><span class="label">Bono por tickets (<%= slip.total_tickets_resolved %> tickets)</span><span class="value" style="color:#22c55e">+<%= APP_CUR %> <%= slip.ticket_bonus.toLocaleString(APP_LOCALE) %></span><%}%>
               <% if(slip.collection_commission){%><span class="label">Comisión por cobranza</span><span class="value" style="color:#22c55e">+<%= APP_CUR %> <%= slip.collection_commission.toLocaleString(APP_LOCALE) %></span><%}%>
@@ -180,15 +180,15 @@
               <% if(slip.late_deduction){%><span class="label">Descuento por llegadas tarde (<%= slip.late_days %> días)</span><span class="value" style="color:#f85149">-<%= APP_CUR %> <%= slip.late_deduction.toLocaleString(APP_LOCALE) %></span><%}%>
               <% if(slip.other_deduction){%><span class="label">Otros descuentos (<%= slip.other_deduction_note || '-' %>)</span><span class="value" style="color:#f85149">-<%= APP_CUR %> <%= slip.other_deduction.toLocaleString(APP_LOCALE) %></span><%}%>
               <div class="sep"></div>
-              <span class="label">Hadir: <%= slip.working_days %> días · Ausencias: <%= slip.absent_days %> hari</span><span class="value"></span>
+              <span class="label">Presente: <%= slip.working_days %> días · Ausencias: <%= slip.absent_days %> días</span><span class="value"></span>
               <span class="label total"><strong>SUELDO NETO</strong></span><span class="value total" style="color:var(--primary);font-size:18px"><strong><%= APP_CUR %> <%= slip.net_salary.toLocaleString(APP_LOCALE) %></strong></span>
             </div>
             <div class="action-row">
               <form id="papp-<%= slip.id %>" method="POST" action="/admin/payroll/slip/<%= slip.id %>/approve" style="display:none" onsubmit="return confirm('Approve slip ini?')"></form>
-              <form id="pdel-<%= slip.id %>" method="POST" action="/admin/payroll/slip/<%= slip.id %>/delete" style="display:none" onsubmit="return confirm('Hapus slip ini?')"></form>
-              <form id="ppaid-<%= slip.id %>" method="POST" action="/admin/payroll/slip/<%= slip.id %>/paid" style="display:none" onsubmit="return confirm('Tandai sebagai paid?')"></form>
+              <form id="pdel-<%= slip.id %>" method="POST" action="/admin/payroll/slip/<%= slip.id %>/delete" style="display:none" onsubmit="return confirm('¿Eliminar este recibo?')"></form>
+              <form id="ppaid-<%= slip.id %>" method="POST" action="/admin/payroll/slip/<%= slip.id %>/paid" style="display:none" onsubmit="return confirm('¿Marcar como pagado?')"></form>
               <div class="act">
-                <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                 <div class="act-menu">
                   <% if(slip.status==='draft'){%>
                   <button type="button" class="act-item" data-id="<%= slip.id %>" onclick="editDeduction(this.dataset.id)"><i class="bi bi-pencil"></i> Otros descuentos</button>
@@ -228,8 +228,8 @@
           <div><label class="fl">Sueldo base</label><input type="number" name="base_salary" id="f_base" class="fc" required></div>
           <div><label class="fl">Días de trabajo/mes</label><input type="number" name="working_days_per_month" id="f_days" class="fc" value="26"></div>
           <div><label class="fl">Tunj. Transport</label><input type="number" name="transport_allowance" id="f_transport" class="fc" value="0"></div>
-          <div><label class="fl">Tunj. Makan</label><input type="number" name="meal_allowance" id="f_meal" class="fc" value="0"></div>
-          <div><label class="fl">Tunj. Pulsa</label><input type="number" name="phone_allowance" id="f_phone" class="fc" value="0"></div>
+          <div><label class="fl">Asig. comida</label><input type="number" name="meal_allowance" id="f_meal" class="fc" value="0"></div>
+          <div><label class="fl">Asig. teléfono</label><input type="number" name="phone_allowance" id="f_phone" class="fc" value="0"></div>
           <div><label class="fl">Otras bonif.</label><input type="number" name="other_allowance" id="f_other" class="fc" value="0"></div>
           <div style="grid-column:1/-1"><label class="fl">Detalle de otras bonif.</label><input type="text" name="other_allowance_note" id="f_other_note" class="fc" placeholder="BPJS, dll"></div>
           <div><label class="fl">Descuento por día de ausencia</label><input type="number" name="absence_deduction_per_day" id="f_absence" class="fc" value="0"></div>
@@ -282,7 +282,7 @@ function editDeduction(id){
 function sendSlipWA(id){
   if(!confirm('¿Enviar el recibo de sueldo por WhatsApp?')) return;
   fetch('/admin/payroll/slip/'+id+'/send-wa',{method:'POST'})
-    .then(r=>r.json()).then(d=>{alert(d.success?' Terkirim':' '+(d.message||'Gagal'))}).catch(e=>alert('Error: '+e.message));
+    .then(r=>r.json()).then(d=>{alert(d.success?' Enviado':' '+(d.message||'Error'))}).catch(e=>alert('Error: '+e.message));
 }
 
 document.getElementById('payrollModal').addEventListener('click',function(e){if(e.target===this)closeModal()});

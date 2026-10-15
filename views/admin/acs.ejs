@@ -135,7 +135,7 @@
                         <span id="selectedCount">0</span> equipos seleccionados
                     </div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-p btn-sm" onclick="bulkSummon()" style="background: var(--primary);"><i class="bi bi-arrow-repeat"></i> Summon Terpilih</button>
+                        <button class="btn btn-p btn-sm" onclick="bulkSummon()" style="background: var(--primary);"><i class="bi bi-arrow-repeat"></i> Consultar seleccionados</button>
                         <button class="btn btn-d btn-sm" onclick="bulkDelete()" style="background: var(--danger);"><i class="bi bi-trash"></i> Eliminar seleccionados</button>
                     </div>
                 </div>
@@ -185,7 +185,7 @@
                                 </td>
                                 <td style="white-space:nowrap">
                                     <div class="act">
-                                        <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                                        <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                                         <div class="act-menu">
                                             <button type="button" class="act-item primary" onclick="refreshDevice('<%= d.id %>')"><i class="bi bi-arrow-repeat"></i> Refresh Device</button>
                                             <button type="button" class="act-item" onclick="openAddWanModal('<%= d.id %>', '<%= d.acs_server_id || selectedAcsId %>', '<%= d.sn %>', '<%= d.manufacturer || "" %>', '<%= d.model || "" %>')"><i class="bi bi-diagram-3"></i> Add WAN (All-in-One)</button>
@@ -227,7 +227,7 @@
                                 <td>
                                     <% if (String(s.id) !== 'legacy') { %>
                                         <div class="act" style="display:inline-block">
-                                            <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                                            <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                                             <div class="act-menu">
                                                 <button type="button" class="act-item primary" onclick="openEditServerModal(this)" data-id="<%= s.id %>" data-name="<%= s.name %>" data-url="<%= s.url %>" data-username="<%= s.username || '' %>" data-location="<%= s.location || '' %>"><i class="bi bi-pencil-square"></i> Edit Server</button>
                                                 <div class="act-sep"></div>
@@ -236,7 +236,7 @@
                                         </div>
                                     <% } else { %>
                                         <div class="act" style="display:inline-block">
-                                            <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                                            <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                                             <div class="act-menu">
                                                 <button type="button" class="act-item primary" onclick="openEditLegacyAcsModal()"><i class="bi bi-pencil-square"></i> <%= t('admin.acs.edit_default','Edit Default ACS') %></button>
                                                 <button type="button" class="act-item danger" disabled style="opacity:.5;cursor:not-allowed"><i class="bi bi-trash"></i> Eliminar (no permitido)</button>
@@ -253,7 +253,7 @@
 
             <div id="tab-logs" class="tab-pane">
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
-                    <h3 style="margin:0;">Log Aktivitas ACS</h3>
+                    <h3 style="margin:0;">Actividad del ACS</h3>
                     <select class="fs" id="logServerFilter" style="width:220px;" onchange="loadAcsLogs()">
                         <option value="all"><%= t('admin.acs.all_server','Semua Server') %></option>
                         <% acsServers.forEach(s => { %>
@@ -352,7 +352,7 @@
             <div style="background: var(--sub-bg); padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
                 <label style="display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 13px; cursor: pointer; margin: 0; width: 100%;">
                     <input type="checkbox" id="wanConfigureWifi" onchange="toggleWifiFields()" style="width: 18px; height: 18px;">
-                    <i class="bi bi-wifi text-primary"></i> Konfigurasikan Wi-Fi Sekaligus
+                    <i class="bi bi-wifi text-primary"></i> Configurar también el Wi-Fi
                 </label>
             </div>
             <div id="wifiFields" style="display: none; padding: 20px; background: rgba(16,185,129,0.01);">
@@ -444,7 +444,7 @@
       <button type="button" class="btn btn-g" onclick="closeModal('addWanModal')"><%= t('admin.acs.cancel','Batal') %></button>
       <button type="submit" form="addWanForm" class="btn btn-p" id="btn-save-add-wan">
         <span class="btn-text"><i class="bi bi-save"></i> <%= t('admin.acs.run_prov','Ejecutar aprovisionamiento') %></span>
-        <span class="btn-loader" style="display:none"><i class="bi bi-arrow-clockwise spin"></i> Memproses...</span>
+        <span class="btn-loader" style="display:none"><i class="bi bi-arrow-clockwise spin"></i> Procesando...</span>
       </button>
     </div>
   </div>
@@ -461,7 +461,7 @@
         <input type="hidden" id="sId" value="">
         <div class="fg">
           <label class="fl"><%= t('admin.acs.server_name','Server Name') %></label>
-          <input type="text" id="sName" class="fc" required placeholder="e.g. Server Pusat">
+          <input type="text" id="sName" class="fc" required placeholder="ej.: Servidor principal">
         </div>
         <div class="fg">
           <label class="fl">API URL</label>
@@ -473,7 +473,7 @@
             <input type="text" id="sUser" class="fc" placeholder='<%= t("admin.acs.optional","Opsional") %>'>
             <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--muted);font-weight:600">
               <input type="checkbox" id="sClearUser" style="width:16px;height:16px">
-              Kosongkan username
+              Borrar el usuario guardado
             </label>
           </div>
           <div class="fg" style="margin:0">
@@ -481,7 +481,7 @@
             <input type="password" id="sPass" class="fc" placeholder='<%= t("admin.acs.optional","Opsional") %>'>
             <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--muted);font-weight:600">
               <input type="checkbox" id="sClearPass" style="width:16px;height:16px">
-              Kosongkan password
+              Borrar la contraseña guardada
             </label>
           </div>
         </div>
@@ -495,7 +495,7 @@
       <button type="button" class="btn btn-g" onclick="closeModal('serverModal')"><%= t('admin.acs.cancel','Batal') %></button>
       <button type="submit" form="acsServerForm" class="btn btn-p" id="btn-save-acs-server">
         <span class="btn-text"><i class="bi bi-save"></i> <%= t('common.save','Simpan') %></span>
-        <span class="btn-loader" style="display:none"><i class="bi bi-arrow-clockwise spin"></i> Menyimpan...</span>
+        <span class="btn-loader" style="display:none"><i class="bi bi-arrow-clockwise spin"></i> Guardando...</span>
       </button>
     </div>
   </div>
@@ -535,7 +535,7 @@ function loadAcsLogs() {
                 }).join('') : '<tr><td colspan="5" class="text-muted" style="text-align:center;padding:16px;">No hay registros.</td></tr>';
                 return '<div style="margin-bottom:22px;">' +
                     '<div style="font-weight:700;margin-bottom:8px;"><i class="bi bi-hdd-rack"></i> ' + escAcs(s.name) + ' <code style="font-size:11px;color:var(--muted);">' + escAcs(s.url) + '</code> <span class="badge" style="font-size:10px;">' + (s.entries ? s.entries.length : 0) + '</span></div>' +
-                    '<div class="table-container"><table><thead><tr><th><%= t('collector.col_time','Waktu') %></th><th>Perangkat</th><th><%= t('common.actions','Aksi') %></th><th><%= t('common.status','Status') %></th><th>Pesan</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+                    '<div class="table-container"><table><thead><tr><th><%= t('collector.col_time','Waktu') %></th><th>Equipo</th><th><%= t('common.actions','Aksi') %></th><th><%= t('common.status','Status') %></th><th>Pesan</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
                 '</div>';
             }).join('');
         })
@@ -781,14 +781,14 @@ function renderAddWanProgress(data) {
         badge.textContent = 'Listo';
     } else {
         badge.className = 'text-warning';
-        badge.textContent = 'Berjalan';
+        badge.textContent = 'En curso';
     }
 
     const tasks = Array.isArray(data.tasks) ? data.tasks : [];
     list.innerHTML = tasks.map(task => {
         const status = String(task.status || 'pending');
         let statusClass = 'text-muted';
-        let statusLabel = 'Pending';
+        let statusLabel = 'Pendiente';
         if (status === 'completed') {
             statusClass = 'text-success';
             statusLabel = 'Listo';
@@ -797,7 +797,7 @@ function renderAddWanProgress(data) {
             statusLabel = 'Error';
         } else if (status === 'in_progress') {
             statusClass = 'text-warning';
-            statusLabel = 'Diproses';
+            statusLabel = 'Procesando';
         }
         return `
             <div style="display:flex; justify-content:space-between; gap:12px; border:1px dashed var(--border); border-radius:12px; padding:10px 12px; background:rgba(15,23,42,0.08);">
@@ -961,7 +961,7 @@ async function submitAddWanForm(e) {
                     rootTaskId: data.rootTaskId || ''
                 };
                 renderAddWanProgress({
-                    summary: data.message || 'Workflow Add WAN dimulai.',
+                    summary: data.message || 'Se inició la creación de la WAN.',
                     done: false,
                     hasFailure: false,
                     tasks: []

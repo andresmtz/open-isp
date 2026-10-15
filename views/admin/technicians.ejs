@@ -66,7 +66,7 @@
                   <td style="white-space:nowrap">
                     <form id="tdel-<%= tech.id %>" action="/admin/technicians/<%= tech.id %>/delete" method="POST" style="display:none" onsubmit="return confirm(I18N.confirmDeleteTechnician)"></form>
                     <div class="act">
-                      <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                      <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                       <div class="act-menu">
                         <button type="button" class="act-item primary" onclick='openPerms(<%- JSON.stringify({ id: tech.id, name: tech.name, perms: tech.perms }).split("<").join("\\u003c").split("'").join("\\u0027") %>)'><i class="bi bi-shield-check"></i> Permisos</button>
                         <button type="button" class="act-item" onclick='editTech(<%- JSON.stringify(tech).split('<').join('\\u003c') %>)'><i class="bi bi-pencil"></i> Editar técnico</button>

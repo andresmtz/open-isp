@@ -78,9 +78,9 @@
                     </span>
                   </td>
                   <td style="white-space:nowrap">
-                    <form id="cdel-<%= c.id %>" action="/admin/collectors/<%= c.id %>/delete" method="POST" style="display:none" onsubmit="return confirm('Hapus kolektor ini?')"></form>
+                    <form id="cdel-<%= c.id %>" action="/admin/collectors/<%= c.id %>/delete" method="POST" style="display:none" onsubmit="return confirm('¿Eliminar este cobrador?')"></form>
                     <div class="act">
-                      <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                      <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                       <div class="act-menu">
                         <button type="button" class="act-item" onclick='editCollector(<%- JSON.stringify(c).split('<').join('\\u003c') %>)'><i class="bi bi-pencil"></i> Editar cobrador</button>
                         <div class="act-sep"></div>

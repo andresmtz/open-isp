@@ -422,7 +422,7 @@ db.exec(`
     serial_number TEXT UNIQUE, -- Optional, for items like ONT/Router
     quantity INTEGER NOT NULL DEFAULT 0,
     condition TEXT DEFAULT 'new', -- new, used, broken
-    location TEXT DEFAULT 'Gudang Utama',
+    location TEXT DEFAULT 'Depósito principal',
     status TEXT DEFAULT 'available', -- available, assigned, broken, lost
     assigned_to_customer_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,
     note TEXT DEFAULT '',

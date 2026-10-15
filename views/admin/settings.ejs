@@ -97,10 +97,10 @@
             <thead>
               <tr>
                 <th style="width:150px"><%= t('common.time', 'Waktu') %></th>
-                <th style="width:120px">Sumber</th>
+                <th style="width:120px">Origen</th>
                 <th style="width:130px"><%= t('admin.settings.ewallet_logs.amount', 'Nominal') %></th>
                 <th style="width:120px"><%= t('common.status','Status') %></th>
-                <th style="width:100px">Cocok ke</th>
+                <th style="width:100px">Coincide con</th>
                 <th><%= t('admin.settings.ewallet_logs.content', 'Isi Notifikasi') %></th>
                 <th style="width:60px"></th>
               </tr>
@@ -127,7 +127,7 @@
       </div>
       <div class="card-bd">
         <div style="display:flex;gap:24px;margin-bottom:10px;flex-wrap:wrap">
-          <div><div class="muted" style="font-size:11px">JUMLAH</div><div style="font-weight:800;font-size:20px;color:var(--primary)"><%= (typeof alRows!=='undefined'?alRows.length:0) %></div></div>
+          <div><div class="muted" style="font-size:11px">CANTIDAD</div><div style="font-weight:800;font-size:20px;color:var(--primary)"><%= (typeof alRows!=='undefined'?alRows.length:0) %></div></div>
           <div><div class="muted" style="font-size:11px">TOTAL</div><div style="font-weight:800;font-size:20px"><%= APP_CUR %> <%= Number((typeof alTotal!=='undefined'?alTotal:0)).toLocaleString(APP_LOCALE) %></div></div>
         </div>
         <div class="tbl-wrap" style="max-height:360px;overflow:auto">
@@ -246,7 +246,7 @@
           <div class="fg">
             <label class="fl"><%= t('admin.set.id_prefix','Prefix ID Pelanggan') %></label>
             <input class="fc" name="customer_id_prefix" value="<%= settings.customer_id_prefix || 'ISP' %>" placeholder="ISP" style="text-transform:uppercase" maxlength="12">
-            <div style="font-size:10px; color:var(--muted); margin-top:4px">Formato del ID de cliente: <span class="mono">PREFIX-angka</span> (ejemplo: <span class="mono"><%= (settings.customer_id_prefix || 'ISP') %>-48213</span>). Solo los números después del guion. ID <b>permanen</b> y automático para clientes nuevos.</div>
+            <div style="font-size:10px; color:var(--muted); margin-top:4px">Formato del ID de cliente: <span class="mono">PREFIJO-número</span> (ejemplo: <span class="mono"><%= (settings.customer_id_prefix || 'ISP') %>-48213</span>). Solo los números después del guion. ID <b>permanen</b> y automático para clientes nuevos.</div>
           </div>
           <div class="fg">
             <label class="fl"><%= t('admin.set.id_digits','Jumlah Digit Angka ID Pelanggan') %></label>
@@ -260,7 +260,7 @@
           <div class="form-row">
             <div class="fg">
               <label class="fl"><%= t('admin.settings.owner_name', 'Nama Manajer / Owner') %></label>
-              <input class="fc" name="company_manager" value="<%= settings.company_manager || '' %>" placeholder="Admin Pusat">
+              <input class="fc" name="company_manager" value="<%= settings.company_manager || '' %>" placeholder="Administración">
             </div>
             <div class="fg">
               <label class="fl"><%= t('admin.settings.primary_phone', 'Telepon Utama (CS)') %></label>
@@ -462,7 +462,7 @@
 
         <!-- WhatsApp -->
         <div data-setcat="notif">
-          <h6 style="font-size:13px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px"><i class="bi bi-whatsapp"></i> Integrasi WhatsApp</h6>
+          <h6 style="font-size:13px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px"><i class="bi bi-whatsapp"></i> Integración con WhatsApp</h6>
           <div class="fg">
             <label class="fl"><%= t('admin.set.wa_enable','Enable WhatsApp Bot') %></label>
             <select class="fs" name="whatsapp_enabled">
@@ -591,7 +591,7 @@
                   var urls = {
                     librespeed: 'https://speed.su-dominio.com/',
                     openspeedtest: 'https://speed.su-dominio.com/',
-                    ookla: 'https://nama-anda.speedtestcustom.com/',
+                    ookla: 'https://tu-empresa.speedtestcustom.com/',
                     cloudflare: 'https://speed.cloudflare.com/',
                     googlefiber: 'https://fiber.google.com/speedtest/',
                     speedtestnet: 'https://www.speedtest.net/'
@@ -917,7 +917,7 @@ function toggleSecret(id) {
 async function testWebhook() {
   const out = document.getElementById('webhookTestResult');
   const secEl = document.getElementById('macro_webhook_secret');
-  if (out) { out.textContent = 'Menguji…'; out.style.color = 'var(--muted)'; }
+  if (out) { out.textContent = 'Probando…'; out.style.color = 'var(--muted)'; }
   try {
     const secret = secEl ? secEl.value : '';
     const res = await fetch('/api/webhook/v1/payment-notif', {
@@ -1023,8 +1023,8 @@ function updateNotifHint() {
   const enabled = notifEnabled();
   let msg = '';
   if (perm === 'unsupported') msg = 'Este dispositivo no admite notificaciones del navegador.';
-  else if (perm === 'denied') msg = 'Notifikasi diblokir. Izinkan di pengaturan browser.';
-  else if (perm === 'granted') msg = enabled ? 'Notif aktif. Notifikasi muncul saat ada log baru (mode Live).' : 'Notif siap, tapi masih nonaktif.';
+  else if (perm === 'denied') msg = 'Notificaciones bloqueadas. Permitilas en la configuración del navegador.';
+  else if (perm === 'granted') msg = enabled ? 'Notificaciones activas: aparecen cuando hay un registro nuevo (modo en vivo).' : 'Notificaciones listas, pero todavía desactivadas.';
   else msg = 'Hacé clic en "Activar avisos" para pedir permiso de notificaciones.';
   el.textContent = msg;
 }
@@ -1155,10 +1155,10 @@ async function loadEwalletLogs() {
         const rawEnc = btn.getAttribute('data-raw') || '';
         const rawShortEnc = btn.getAttribute('data-short') || '';
         const decoded = decodeURIComponent(rawEnc);
-        const shortText = rawShortEnc ? decodeURIComponent(rawShortEnc) : 'Tersalin.';
+        const shortText = rawShortEnc ? decodeURIComponent(rawShortEnc) : 'Copiado.';
         const ok = await copyText(decoded);
         if (ok) {
-          alert(`Tersalin:\n${shortText}`);
+          alert(`Copiado:\n${shortText}`);
         } else {
           alert('No se pudo copiar.');
         }

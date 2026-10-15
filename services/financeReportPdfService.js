@@ -25,8 +25,8 @@ function generateFinanceReportPdfBuffer(o) {
       const GREEN = '#16a34a', RED = '#e11d48', AMBER = '#d97706', BLUE = '#0284c7';
       const LIME = '#ADFF2F';
       const LEFT = 40, RIGHT = 555, W = RIGHT - LEFT;
-      const modeLabel = (mode === 'before') ? 'SEBELUM PAJAK' : 'SESUDAH PAJAK';
-      const periodStr = filterMonth ? `${MNS[filterMonth - 1]} ${filterYear}` : `Tahun ${filterYear}`;
+      const modeLabel = (mode === 'before') ? 'ANTES DE IMPUESTOS' : 'DESPUÉS DE IMPUESTOS';
+      const periodStr = filterMonth ? `${MNS[filterMonth - 1]} ${filterYear}` : `Año ${filterYear}`;
       const companyPhone = require('../config/regional').publicContactPhone(settings) || '-';
       const companyAddress = settings.company_address || 'Proveedor de servicios de internet';
 
@@ -44,8 +44,8 @@ function generateFinanceReportPdfBuffer(o) {
 
       // ── Meta ──
       y = 90;
-      doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Dicetak: ${new Date().toLocaleString(regional.locale())}`, LEFT, y);
-      doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Telp/WA: ${companyPhone}`, LEFT, y, { width: W, align: 'right' });
+      doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Impreso: ${new Date().toLocaleString(regional.locale())}`, LEFT, y);
+      doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(`Tel./WhatsApp: ${companyPhone}`, LEFT, y, { width: W, align: 'right' });
 
       const statRow = (yy, label, value, opt = {}) => {
         const { bold = false, color = null, hi = false } = opt;
@@ -62,19 +62,19 @@ function generateFinanceReportPdfBuffer(o) {
       doc.moveTo(LEFT, y + 15).lineTo(RIGHT, y + 15).strokeColor(LINE).stroke();
       y += 22;
       y = statRow(y, 'Ingresos (brutos)', fmtRp(ply.bruto));
-      y = statRow(y, `DPP — Dasar Pengenaan Pajak`, fmtRp(ply.dpp));
-      y = statRow(y, `PPN Keluaran (${finance.ppn}%)  — disetor, bukan pendapatan`, fmtRp(ply.ppn), { color: BLUE });
-      y = statRow(y, 'Pengeluaran', '- ' + fmtRp(ply.keluar), { color: RED });
-      y = statRow(y, `USO (${finance.uso}%)`, '- ' + fmtRp(ply.uso), { color: AMBER });
-      y = statRow(y, `BHP (${finance.bhp}%)`, '- ' + fmtRp(ply.bhp), { color: AMBER });
-      y = statRow(y, 'Laba Bersih Sebelum Pajak', fmtRp(ply.sebelumPph), { bold: true });
-      y = statRow(y, `PPh Badan (${finance.pph}%)`, '- ' + fmtRp(ply.pph), { color: RED });
-      y = statRow(y, 'Laba Bersih Sesudah Pajak', fmtRp(ply.bersih), { hi: true });
+      y = statRow(y, 'Base imponible', fmtRp(ply.dpp));
+      y = statRow(y, `IVA (${finance.ppn}%) — se paga al fisco, no es ingreso`, fmtRp(ply.ppn), { color: BLUE });
+      y = statRow(y, 'Gastos', '- ' + fmtRp(ply.keluar), { color: RED });
+      y = statRow(y, `Otro impuesto 1 (${finance.uso}%)`, '- ' + fmtRp(ply.uso), { color: AMBER });
+      y = statRow(y, `Otro impuesto 2 (${finance.bhp}%)`, '- ' + fmtRp(ply.bhp), { color: AMBER });
+      y = statRow(y, 'Ganancia antes de impuesto a la renta', fmtRp(ply.sebelumPph), { bold: true });
+      y = statRow(y, `Impuesto a la renta (${finance.pph}%)`, '- ' + fmtRp(ply.pph), { color: RED });
+      y = statRow(y, 'Ganancia neta', fmtRp(ply.bersih), { hi: true });
 
       // headline box sesuai mode
       y += 8;
       const headline = (mode === 'before') ? ply.sebelumPph : ply.bersih;
-      const headlineLabel = (mode === 'before') ? 'LABA BERSIH SEBELUM PAJAK' : 'LABA BERSIH SESUDAH PAJAK';
+      const headlineLabel = (mode === 'before') ? 'GANANCIA ANTES DE IMPUESTO A LA RENTA' : 'GANANCIA NETA';
       doc.roundedRect(LEFT, y, W, 30, 8).fill(INK);
       doc.fillColor('#ffffff').fontSize(10).font('Helvetica-Bold').text(headlineLabel, LEFT + 12, y + 10);
       doc.fillColor(LIME).fontSize(13).font('Helvetica-Bold').text(fmtRp(headline), LEFT, y + 8, { width: W - 14, align: 'right' });
@@ -86,12 +86,12 @@ function generateFinanceReportPdfBuffer(o) {
       y += 22;
 
       const cols = [
-        { k: 'month', t: 'Bulan', w: 78, a: 'left' },
-        { k: 'bruto', t: 'Pemasukan', w: 92, a: 'right' },
-        { k: 'keluar', t: 'Pengeluaran', w: 92, a: 'right' },
-        { k: 'sebelumPph', t: 'Laba Sblm Pajak', w: 100, a: 'right' },
-        { k: 'pph', t: 'PPh Badan', w: 78, a: 'right' },
-        { k: 'bersih', t: 'Laba Sstlh Pajak', w: 105, a: 'right' },
+        { k: 'month', t: 'Mes', w: 78, a: 'left' },
+        { k: 'bruto', t: 'Ingresos', w: 92, a: 'right' },
+        { k: 'keluar', t: 'Gastos', w: 92, a: 'right' },
+        { k: 'sebelumPph', t: 'Ganancia antes imp.', w: 100, a: 'right' },
+        { k: 'pph', t: 'Imp. a la renta', w: 78, a: 'right' },
+        { k: 'bersih', t: 'Ganancia neta', w: 105, a: 'right' },
       ];
       let cx = LEFT;
       doc.rect(LEFT, y, W, 20).fill('#eef2f6');
@@ -117,7 +117,7 @@ function generateFinanceReportPdfBuffer(o) {
       y += 2;
       doc.roundedRect(LEFT, y, W, 34, 6).fillAndStroke('#fefce8', '#fde68a');
       doc.fillColor('#92400e').fontSize(7.5).font('Helvetica').text(
-        `Nilai PPh Badan dihitung ${finance.pph}% x Laba Sebelum Pajak (estimasi otomatis). PPN ${finance.ppn}% bersifat pass-through (disetor, bukan pendapatan). Nilai USO ${finance.uso}% & BHP ${finance.bhp}% mengikuti setelan.`,
+        `El impuesto a la renta se calcula como ${finance.pph}% de la ganancia antes de impuestos (estimación automática). El IVA (${finance.ppn}%) se cobra y se paga al fisco: no es ingreso. Los otros impuestos (${finance.uso}% y ${finance.bhp}%) siguen lo configurado.`,
         LEFT + 10, y + 7, { width: W - 20 });
 
       // ── Footer ──
@@ -128,7 +128,7 @@ function generateFinanceReportPdfBuffer(o) {
       doc.fillColor(MUTED).fontSize(7.5).text(`Documento generado automáticamente • ${new Date().toLocaleString(regional.locale())}`, LEFT, fy + 32);
       doc.fillColor(MUTED).fontSize(8).font('Helvetica').text('Elaborado por,', 440, fy, { width: 115, align: 'center' });
       doc.moveTo(420, fy + 30).lineTo(555, fy + 30).strokeColor(INK).stroke();
-      doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(settings.company_manager || 'Bagian Keuangan', 420, fy + 34, { width: 135, align: 'center' });
+      doc.fillColor(INK).fontSize(9).font('Helvetica-Bold').text(settings.company_manager || 'Administración', 420, fy + 34, { width: 135, align: 'center' });
 
       doc.end();
     } catch (err) { reject(err); }

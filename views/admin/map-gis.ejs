@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title><%= typeof title !== 'undefined' ? title : 'Peta Geografis (GIS Real Map)' %> | <%= company %></title>
+  <title><%= typeof title !== 'undefined' ? title : 'Mapa geográfico (GIS)' %> | <%= company %></title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -432,7 +432,7 @@
           class="gis-mode-pill-btn"
           title="<%= t('admin.gis.tip_sat','Mode Satelit Citra Udara Resolusi Tinggi') %>"
         >
-          Full Satelit
+          Satélite
         </button>
       </div>
 
@@ -699,7 +699,7 @@
       m.bindPopup(buildNodePopupHtml({
         type: isCascade ? 'ODC Cascade Feeder' : '<%= t('admin.gis.el_odc','ODC Feeder Hub') %>',
         title: odc.name,
-        subtitle: `Kapasitas: ${odc.port_capacity || 4} Tray Out • PON ${odc.pon_port || 1}`,
+        subtitle: `Capacidad: ${odc.port_capacity || 4} salidas • PON ${odc.pon_port || 1}`,
         status: 'online',
         lat: lat,
         lng: lng,
@@ -856,7 +856,7 @@
           if (markerRegistry[odcKey]) {
             drawGisCable(markerRegistry[odcKey].latlng, [lat, lng], {
               type: 'odc-odp',
-              label: `Distribusi: ${odp.name}`,
+              label: `Distribución: ${odp.name}`,
               color: '#10B981',
               status: odpStatus
             });
@@ -1011,16 +1011,16 @@
 
         <div class="space-y-1 text-[11px] text-slate-300">
           <div><span class="text-slate-400">PPPoE User:</span> <span class="font-mono text-white">${c.pppoe_username || '-'}</span></div>
-          <div><span class="text-slate-400">Paket:</span> ${c.package_id || 'Standar'}</div>
-          <div><span class="text-slate-400">Alamat:</span> ${c.address || '-'}</div>
+          <div><span class="text-slate-400">Plan:</span> ${c.package_id || 'Estándar'}</div>
+          <div><span class="text-slate-400">Dirección:</span> ${c.address || '-'}</div>
         </div>
 
         <div class="pt-1 flex items-center justify-between border-t border-slate-800 text-[10px]">
           <a href="/admin/customers?search=${encodeURIComponent(c.name)}" class="text-sky-400 hover:text-sky-300 font-semibold">
-            Detail Pelanggan
+            Detalle del cliente
           </a>
           <a href="https://www.google.com/maps?q=${c.lat},${c.lng}" target="_blank" class="text-emerald-400 hover:text-emerald-300 font-semibold">
-            Navigasi GPS
+            Navegar con GPS
           </a>
         </div>
       </div>

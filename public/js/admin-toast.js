@@ -161,7 +161,7 @@
     try {
       var t = String(msg == null ? '' : msg);
       var low = t.toLowerCase();
-      var isErr = /gagal|error|tidak |invalid|tidak valid|kosong|forbidden|ditolak|harus|wajib|salah|exception|kedaluwarsa|tidak ditemukan|not found|401|403|500|no se pudo|no tenés permiso|no tiene permiso|inválid|incorrect|obligatori|falló|fallo|no encontrad|vencid/.test(low);
+      var isErr = /gagal|error|tidak |invalid|tidak valid|kosong|forbidden|ditolak|harus|wajib|salah|exception|kedaluwarsa|tidak ditemukan|not found|401|403|500|no se pudo|no tenés permiso|no tiene permiso|inválid|incorrect|obligatori|falló|fallo|no encontrad|vencid|no está conectado|ya está pagada|ya fue procesad|no se seleccion|no existe|demasiado|supera los/.test(low);
       var type = isErr ? 'error' : 'success';
       window.notify(type, isErr ? 'Error' : 'Listo', t.replace(/\n/g, '<br>'));
     } catch (e) { try { _nativeAlert(msg); } catch (_) { } }

@@ -149,7 +149,7 @@
     btn.href = 'javascript:void(0)';
     btn.className = 'btn btn-g btn-sm';
     btn.setAttribute('data-admin-reset', '1');
-    btn.setAttribute('title', 'Reset semua filter');
+    btn.setAttribute('title', 'Quitar todos los filtros');
     btn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Reset';
     btn.addEventListener('click', function (ev) { ev.preventDefault(); onClick(); });
     return btn;
@@ -234,7 +234,7 @@
     // hint tooltip
     var inputs = searchInputs();
     for (var k = 0; k < inputs.length; k++) {
-      if (!inputs[k].getAttribute('title')) inputs[k].setAttribute('title', 'Tekan "/" untuk fokus, "Enter" untuk mencari');
+      if (!inputs[k].getAttribute('title')) inputs[k].setAttribute('title', 'Presioná "/" para ir al buscador y "Enter" para buscar');
     }
   }
 

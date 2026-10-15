@@ -1957,7 +1957,7 @@
       btn.classList.add('copied');
       const icon = btn.querySelector('i');
       if (icon) icon.className = 'ph-bold ph-check';
-      showToast(`ID ${id} disalin`);
+      showToast(`ID ${id} copiado`);
       setTimeout(() => {
         btn.classList.remove('copied');
         if (icon) icon.className = 'ph-bold ph-copy';
@@ -1987,8 +1987,8 @@
   /* ═══════ Status jaringan (situasional) ═══════ */
   const NET = {
     normal: { label: 'Normal' },
-    maintenance: { label: 'Perbaikan', icon: 'ph-fill ph-warning-circle', title: <%- JSON.stringify((portal.notice && portal.notice.label) || 'Mantenimiento del sistema').split('<').join('\\u003c') %>, msg: <%- JSON.stringify((portal.notice && portal.notice.text) || 'Estamos realizando un mantenimiento del sistema.').split('<').join('\\u003c') %><% if (portal.notice && portal.notice.estimateText) { %> + ' <strong><%= t('pwa.estimate_prefix','Estimasi:') %> <%= portal.notice.estimateText %></strong>'<% } %> },
-    outage: { label: 'Gangguan', icon: 'ph-fill ph-x-circle', title: <%- JSON.stringify((portal.notice && portal.notice.label) || 'Caída general').split('<').join('\\u003c') %>, msg: <%- JSON.stringify((portal.notice && portal.notice.text) || 'Hay una falla en la red.').split('<').join('\\u003c') %><% if (portal.notice && portal.notice.estimateText) { %> + ' <strong><%= t('pwa.estimate_prefix','Estimasi:') %> <%= portal.notice.estimateText %></strong>'<% } %> }
+    maintenance: { label: 'Mantenimiento', icon: 'ph-fill ph-warning-circle', title: <%- JSON.stringify((portal.notice && portal.notice.label) || 'Mantenimiento del sistema').split('<').join('\\u003c') %>, msg: <%- JSON.stringify((portal.notice && portal.notice.text) || 'Estamos realizando un mantenimiento del sistema.').split('<').join('\\u003c') %><% if (portal.notice && portal.notice.estimateText) { %> + ' <strong><%= t('pwa.estimate_prefix','Estimasi:') %> <%= portal.notice.estimateText %></strong>'<% } %> },
+    outage: { label: 'Caída', icon: 'ph-fill ph-x-circle', title: <%- JSON.stringify((portal.notice && portal.notice.label) || 'Caída general').split('<').join('\\u003c') %>, msg: <%- JSON.stringify((portal.notice && portal.notice.text) || 'Hay una falla en la red.').split('<').join('\\u003c') %><% if (portal.notice && portal.notice.estimateText) { %> + ' <strong><%= t('pwa.estimate_prefix','Estimasi:') %> <%= portal.notice.estimateText %></strong>'<% } %> }
   };
   let netState = '<%= portal.netState %>';
   function setNetworkStatus(s) {
@@ -2067,7 +2067,7 @@
   function openConfirm(opts) {
     document.getElementById('confirm-title').textContent = opts.title || 'Confirmar';
     document.getElementById('confirm-message').textContent = opts.message || '';
-    document.getElementById('confirm-action-btn').textContent = opts.actionText || 'Ya, Lanjutkan';
+    document.getElementById('confirm-action-btn').textContent = opts.actionText || 'Sí, continuar';
     confirmCallback = opts.onConfirm || null;
     document.getElementById('confirm-modal').classList.add('open');
   }
@@ -2242,7 +2242,7 @@
       const d = new Date(r.t || Date.now());
       const when = d.toLocaleDateString(APP_LOCALE, { day: '2-digit', month: 'short', year: 'numeric' }) + ' · ' + d.toLocaleTimeString(APP_LOCALE, { hour: '2-digit', minute: '2-digit' });
       const val = Number(r.d) || 0;
-      const label = val >= 40 ? 'MUY BUENA' : val >= 15 ? 'BAIK' : 'CUKUP';
+      const label = val >= 40 ? 'MUY BUENA' : val >= 15 ? 'BUENA' : 'REGULAR';
       return '<div class="list-row"' + (i < h.length - 1 ? ' style="border-bottom:1px solid var(--border);"' : '') + '>'
         + '<div class="flex items-center gap-3"><div class="w-9 h-9 rounded-[11px] flex items-center justify-center" style="background:var(--surface-2);"><i class="ph-fill ph-gauge" style="color:var(--lime);font-size:16px;"></i></div>'
         + '<div><p class="text-sm font-semibold" style="color:var(--text);">' + val.toFixed(1) + ' Mbps</p><p class="text-[11px]" style="color:var(--muted);">' + when + ' · ↓' + val.toFixed(1) + ' ↑' + (Number(r.u) || 0).toFixed(1) + ' · ' + (r.p || '-') + 'ms</p></div></div>'
@@ -2257,11 +2257,11 @@
     const t0El = document.getElementById('st-download');
     const origHTML = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;"></i> Mengukur...';
+    btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;"></i> Midiendo...';
     valueEl.textContent = '0'; _stGauge(0);
     try {
       // 1) PING
-      statusEl.textContent = 'Mengukur latensi...';
+      statusEl.textContent = 'Midiendo la latencia...';
       const pings = [];
       for (let i = 0; i < 5; i++) {
         const s0 = performance.now();
@@ -2326,7 +2326,7 @@
       window.showToast('<%= t('pwa.js.speed_failed','Tes kecepatan gagal:') %>' + (e && e.message ? e.message : 'error'), true);
     }
     btn.disabled = false;
-    btn.innerHTML = '<i class="ph-bold ph-arrows-clockwise text-lg"></i> Tes Ulang';
+    btn.innerHTML = '<i class="ph-bold ph-arrows-clockwise text-lg"></i> Repetir prueba';
     stTesting = false;
   };
   var ST_RAND = (function () { var b = new Uint8Array(65536); if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(b); return b; })();
@@ -2340,8 +2340,8 @@
     const fill = document.getElementById('st-gauge-fill');
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;"></i> Mengukur...';
-    statusEl.textContent = 'Mengukur ping...';
+    btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;"></i> Midiendo...';
+    statusEl.textContent = 'Midiendo el ping...';
     valueEl.textContent = '0';
     fill.style.strokeDashoffset = 424.1;
 
@@ -2366,7 +2366,7 @@
           document.getElementById('st-upload').innerHTML = (targetMbps - 1.5).toFixed(1) + '<small>Mbps</small>';
           document.getElementById('st-ping').innerHTML = (7 + Math.floor(Math.random()*3)) + '<small>ms</small>';
           btn.disabled = false;
-          btn.innerHTML = '<i class="ph-fill ph-arrow-clockwise text-lg"></i> Tes Ulang';
+          btn.innerHTML = '<i class="ph-fill ph-arrow-clockwise text-lg"></i> Repetir prueba';
           stTesting = false;
           showToast('Test de velocidad terminado');
         }
@@ -2652,7 +2652,7 @@ window.__PORTAL__ = <%- portalJson %>;
     ov.classList.remove('done', 'error');
     var _om = document.getElementById('onu-modal'); if (_om) _om.classList.remove('open');
     ico.innerHTML = '<i class="ph ph-circle-notch busy-spin"></i>';
-    txt.textContent = 'Menyiapkan PDF...';
+    txt.textContent = 'Preparando el PDF...';
     ov.classList.add('show');
     fetch('/customer/invoice/' + id + '/pdf?dl=1', { credentials: 'same-origin', cache: 'no-store' })
       .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
@@ -2679,7 +2679,7 @@ window.__PORTAL__ = <%- portalJson %>;
   window.copyText = function(txt, btn){
     var done = function(){
       if (btn) { var i = btn.querySelector('i'); if (i) { var old = i.className; i.className = 'bi bi-check-lg'; setTimeout(function(){ i.className = old; }, 1400); } }
-      window.showToast('Disalin: ' + txt);
+      window.showToast('Copiado: ' + txt);
     };
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(done).catch(function(){ fallbackCopy(txt, done); });
     else fallbackCopy(txt, done);
@@ -2708,7 +2708,7 @@ window.__PORTAL__ = <%- portalJson %>;
     if (e && e.preventDefault) e.preventDefault();
     try { localStorage.setItem('sf-promo-show', _promoOn() ? 'off' : 'on'); } catch(_) {}
     _applyPromo();
-    window.showToast(_promoOn() ? 'Promo ditampilkan' : 'Promo disembunyikan');
+    window.showToast(_promoOn() ? 'Promoción visible' : 'Promoción oculta');
   };
   _applyPromo();
 

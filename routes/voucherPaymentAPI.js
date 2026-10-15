@@ -60,7 +60,7 @@ router.post('/create-payment', async (req, res) => {
     if (!voucherOrderId) {
       return res.status(400).json({
         success: false,
-        error: 'Voucher order ID diperlukan'
+        error: 'Falta el ID del pedido de voucher'
       });
     }
 

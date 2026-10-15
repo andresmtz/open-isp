@@ -40,7 +40,7 @@
           <div style="font-size:10pt;color:#334155"><%= t('admin.nav.customer_tickets', 'Daftar Tiket Gangguan & Tugas Teknisi') %> &bull; Estado: <%= filterStatus ? filterStatus.toUpperCase() : 'TODOS' %></div>
         </div>
         <div style="text-align:right;font-size:8.5pt;color:#475569">
-          <div>Dicetak: <%= typeof getNowLocal === 'function' ? getNowLocal() : (typeof formatDateLocal === 'function' ? formatDateLocal(new Date()) : new Date().toLocaleString(APP_LOCALE)) %></div>
+          <div>Impreso: <%= typeof getNowLocal === 'function' ? getNowLocal() : (typeof formatDateLocal === 'function' ? formatDateLocal(new Date()) : new Date().toLocaleString(APP_LOCALE)) %></div>
           <div>Total de tickets: <strong><%= tickets.length %> Kasus</strong></div>
         </div>
       </div>
@@ -120,7 +120,7 @@
               <td style="white-space:nowrap">
                 <form id="tdel-<%= ticket.id %>" method="POST" action="/admin/tickets/<%= ticket.id %>/delete" style="display:none" onsubmit="return confirm('<%= t('admin.tickets.confirm.delete', 'Hapus keluhan ini?') %>')"></form>
                 <div class="act">
-                  <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                  <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
                     <button class="btn act-item update-btn" title="<%= t('admin.tickets.actions.update_status', 'Actualizar estado') %>"
                       data-id="<%= ticket.id %>" data-status="<%= ticket.status %>" data-message="<%= ticket.message %>"

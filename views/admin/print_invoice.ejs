@@ -589,7 +589,7 @@
 
       <!-- Transaction Info -->
       <div class="info-card">
-        <div class="card-heading">Informasi Transaksi</div>
+        <div class="card-heading">Datos de la transacción</div>
         <div class="summary-list">
           <div class="summary-item">
             <span class="label"><%= t('common.date','Tanggal') %> <%= isPaid ? 'Pago' : 'Factura' %></span>
@@ -601,7 +601,7 @@
           </div>
           <div class="summary-item" style="margin-top:6px;">
             <span class="label">Cajero / recibido por</span>
-            <span class="value"><%= invoice.paid_by_name || 'Sistem' %></span>
+            <span class="value"><%= invoice.paid_by_name || 'Sistema' %></span>
           </div>
           <div class="summary-item" style="margin-top:6px;">
             <span class="label">Forma de pago</span>
@@ -633,7 +633,7 @@
             <td>01</td>
             <td>
               <div class="item-title">Servicio de internet — <%= customer.package_name || 'Plan de internet de banda ancha' %></div>
-              <div class="item-sub">Langganan bulanan internet high-speed</div>
+              <div class="item-sub">Servicio mensual de internet</div>
             </td>
             <td><%= periodStr %></td>
             <td class="text-right" style="font-weight:700;"><%= APP_CUR %> <%= Number(invoice.amount || 0).toLocaleString(APP_LOCALE) %></td>
@@ -648,7 +648,7 @@
         <div><i class="bi bi-clipboard-check"></i> <strong>Nota del pago:</strong></div>
         <div><%= invoice.notes || 'Gracias por contratar nuestro servicio de internet. Conserve este recibo como comprobante de pago.' %></div>
         <% if (invoice.payment_order_id) { %>
-        <div style="font-size:10px; margin-top:2px; color:var(--primary);">Referensi Transaksi: <strong><%= invoice.payment_order_id %></strong></div>
+        <div style="font-size:10px; margin-top:2px; color:var(--primary);">Referencia de la transacción: <strong><%= invoice.payment_order_id %></strong></div>
         <% } %>
       </div>
 
@@ -693,7 +693,7 @@
     <span><i class="bi bi-printer-fill"></i></span> Imprimir A4
   </button>
   <a href="/admin/billing/<%= invoice.id %>/print-thermal" target="_blank" class="btn-action btn-print" style="text-decoration:none; background: linear-gradient(135deg, #0284c7, #06b6d4);" title="Imprimir ticket térmico Bluetooth 58mm/80mm">
-    <span><i class="bi bi-receipt"></i></span> Struk Thermal
+    <span><i class="bi bi-receipt"></i></span> Ticket térmico
   </a>
   <a href="/admin/billing/<%= invoice.id %>/pdf" target="_blank" class="btn-action btn-print" style="text-decoration:none; background: linear-gradient(135deg, #059669, #10b981);">
     <span><i class="bi bi-download"></i></span> Descargar PDF

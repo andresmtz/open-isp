@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title><%= brand %> — Internet por fibra óptica rápido y estable</title>
-  <meta name="description" content="<%= brand %> menyediakan internet fiber optic cepat, stabil, dan tanpa batas untuk rumah & bisnis. Cek paket, area layanan, dan daftar online.">
+  <meta name="description" content="<%= brand %> ofrece internet por fibra óptica rápido, estable y sin límites para hogares y empresas. Consultá planes, zonas de cobertura y pedí tu instalación.">
   <meta name="theme-color" content="#0A0D14">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,7 +46,7 @@
       <a href="/lang/es" style="<%= (typeof lang !== 'undefined' && lang === 'es') ? 'color:var(--primary);font-weight:700' : '' %>">ES</a>
       <a href="/lang/en" style="<%= (typeof lang !== 'undefined' && lang === 'en') ? 'color:var(--primary);font-weight:700' : '' %>">EN</a>
       <% if (_upt) { %><a href="<%= _upt %>" target="_blank" rel="noopener"><i class="bi bi-activity"></i> <%= t('landing.nav.status','Status') %></a><% } %>
-      <% if (projectUrl) { %><a href="<%= projectUrl %>" target="_blank" rel="noopener" title="Repositori Open Source"><i class="bi bi-github"></i> <%= t('landing.footer.github','GitHub') %></a><% } %>
+      <% if (projectUrl) { %><a href="<%= projectUrl %>" target="_blank" rel="noopener" title="Repositorio de código abierto"><i class="bi bi-github"></i> <%= t('landing.footer.github','GitHub') %></a><% } %>
     </nav>
     <div class="header-actions">
       <button class="icon-btn" onclick="toggleTheme()" aria-label="Cambiar tema"><i class="bi bi-moon-stars-fill" id="themeIcon"></i></button>
@@ -97,7 +97,7 @@
       <picture>
         <% var _hq = (typeof heroVer !== 'undefined' && heroVer) ? ('?v=' + heroVer) : ''; %>
         <source srcset="/img/landing/server-1600.webp<%= _hq %>" type="image/webp">
-        <img src="/img/landing/server-1600.jpg<%= _hq %>" alt="Infrastruktur jaringan <%= brand %>" loading="eager" fetchpriority="high" width="1600" height="900">
+        <img src="/img/landing/server-1600.jpg<%= _hq %>" alt="Infraestructura de red de <%= brand %>" loading="eager" fetchpriority="high" width="1600" height="900">
       </picture>
       <div class="float-card">
         <i class="bi bi-activity"></i>
@@ -269,7 +269,7 @@
   <div class="container">
     <div class="section-head reveal">
       <span class="eyebrow"><i class="bi bi-megaphone"></i> <%= t('landing.ads.eyebrow','Iklan & Sponsor') %></span>
-      <h2><%= (promos && promos.length) ? 'Promo & penawaran' : 'Espacio para publicidad de aliados' %></h2>
+      <h2><%= (promos && promos.length) ? 'Promociones y ofertas' : 'Espacio para publicidad de aliados' %></h2>
     </div>
     <% if (promos && promos.length) { %>
       <div class="promo-grid">
@@ -427,7 +427,7 @@
         var map = L.map('coverage-map', {scrollWheelZoom:false, attributionControl:true}).setView([lat,lng], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(map);
         L.circleMarker([lat,lng], {radius:9, color:'#ADFF2F', fillColor:'#ADFF2F', fillOpacity:.9, weight:2}).addTo(map)
-          .bindPopup('<b><%= (settings.company_header || "OPEN-ISP") %> HQ</b><br>Kantor Layanan').openPopup();
+          .bindPopup('<b><%= (settings.company_header || "OPEN-ISP") %> </b><br>Oficina de atención').openPopup();
         setTimeout(function(){ map.invalidateSize(); }, 200);
       };
       document.body.appendChild(js);

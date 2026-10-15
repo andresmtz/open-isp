@@ -276,7 +276,7 @@ function generateAllSlips(month, year) {
       generateSlip(emp.employee_type, emp.id, month, year);
       generated++;
     } catch (e) {
-      if (e.message.includes('Slip gaji sudah ada')) {
+      if (e.message.includes('Ya existe un recibo de sueldo')) {
         skipped++;
       } else {
         errors.push(`${emp.name}: ${e.message}`);
@@ -312,7 +312,7 @@ function getSlipsByEmployee(employeeType, employeeId) {
 function updateSlipDeductions(id, otherDeduction, otherDeductionNote) {
   const slip = getSlipById(id);
   if (!slip) throw new Error('Recibo no encontrado');
-  if (slip.status !== 'draft') throw new Error('Hanya slip draft yang bisa diedit');
+  if (slip.status !== 'draft') throw new Error('Solo se pueden editar recibos en borrador');
 
   const od = parseInt(otherDeduction) || 0;
   const newTotalDeductions = slip.absence_deduction + slip.late_deduction + od;
@@ -329,7 +329,7 @@ function updateSlipDeductions(id, otherDeduction, otherDeductionNote) {
 function approveSlip(id) {
   const slip = getSlipById(id);
   if (!slip) throw new Error('Recibo no encontrado');
-  if (slip.status !== 'draft') throw new Error('Hanya slip draft yang bisa di-approve');
+  if (slip.status !== 'draft') throw new Error('Solo se pueden aprobar recibos en borrador');
 
   return db.prepare(`
     UPDATE payroll_slips SET status = 'approved', approved_at = (NOW_LOCAL()) WHERE id = ?
@@ -339,7 +339,7 @@ function approveSlip(id) {
 function markSlipPaid(id) {
   const slip = getSlipById(id);
   if (!slip) throw new Error('Recibo no encontrado');
-  if (slip.status !== 'approved') throw new Error('Hanya slip yang sudah approved yang bisa ditandai paid');
+  if (slip.status !== 'approved') throw new Error('Solo los recibos aprobados se pueden marcar como pagados');
 
   const result = db.prepare(`
     UPDATE payroll_slips SET status = 'paid', paid_at = (NOW_LOCAL()) WHERE id = ?
@@ -350,7 +350,7 @@ function markSlipPaid(id) {
     db.prepare(`
       INSERT INTO expenses (date, category, amount, description, payment_method, recorded_by_name)
       VALUES (date('now', 'localtime'), 'Sueldos y beneficios', ?, ?, 'transfer', 'Sistema (sueldos)')
-    `).run(slip.net_salary, `Gaji ${slip.employee_name} (Periode ${slip.period_month}/${slip.period_year})`);
+    `).run(slip.net_salary, `Sueldo ${slip.employee_name} (período ${slip.period_month}/${slip.period_year})`);
   } catch (e) {
     logger.error('Gagal mencatat expense dari slip gaji: ' + e.message);
   }
@@ -393,7 +393,7 @@ function bulkMarkPaid(month, year) {
 function deleteSlip(id) {
   const slip = getSlipById(id);
   if (!slip) throw new Error('Recibo no encontrado');
-  if (slip.status === 'paid') throw new Error('Slip yang sudah paid tidak bisa dihapus');
+  if (slip.status === 'paid') throw new Error('Un recibo ya pagado no se puede eliminar');
   return db.prepare('DELETE FROM payroll_slips WHERE id = ?').run(id);
 }
 

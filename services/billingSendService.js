@@ -41,7 +41,7 @@ function buildMessage(tplRaw, c, inv) {
   const period = inv.period_month + '/' + inv.period_year;
   return spintax(String(tplRaw || '')
     .replace(/{{id_pelanggan}}/gi, c.customer_code || ('ID:' + c.id))
-    .replace(/{{nama}}/gi, c.name || 'Pelanggan')
+    .replace(/{{nama}}/gi, c.name || 'Cliente')
     .replace(/{{paket}}/gi, inv.package_name || '-')
     .replace(/{{tagihan}}/gi, amount.toLocaleString(regional.locale()))
     .replace(/{{qris_nominal}}/gi, amount.toLocaleString(regional.locale()))
@@ -53,7 +53,7 @@ function buildMessage(tplRaw, c, inv) {
     .replace(/{{link_portal}}/gi, portalLink())
     .replace(/{{company}}/gi, getSetting('company_header', '') || '-')
     .replace(/{{company_phone}}/gi, getSetting('company_phone', '') || '-')
-    .replace(/{{qris_qr}}/gi, 'QRIS terlampir'));
+    .replace(/{{qris_qr}}/gi, 'QR adjunto'));
 }
 
 function buildTargets(isolateDay) {
@@ -90,14 +90,14 @@ async function start(opts = {}) {
 
   const targets = buildTargets(isolateDay);
   if (!targets.length) {
-    try { db.prepare("INSERT INTO automation_runs (type, template_key, isolate_day, mode, interval_label, target, sent, failed, status, note) VALUES ('manual',?,?,?,'-',0,0,0,'empty','Tidak ada target')").run(templateKey, isolateDay, intervalMode); } catch (e) {}
+    try { db.prepare("INSERT INTO automation_runs (type, template_key, isolate_day, mode, interval_label, target, sent, failed, status, note) VALUES ('manual',?,?,?,'-',0,0,0,'empty','Sin destinatarios')").run(templateKey, isolateDay, intervalMode); } catch (e) {}
     return { started: false, total: 0, message: 'No hay destinatarios (clientes con deuda) para ese día de corte.' };
   }
 
   STATUS = {
     running: true, total: targets.length, sent: 0, failed: 0, skipped: 0,
     startedAt: new Date().toISOString(), finishedAt: null, last: '',
-    label: (isolateDay ? ('Isolir tgl ' + isolateDay) : 'Semua') + ' • ' + (TEMPLATE_LABELS[templateKey] || templateKey) + ' • ' + (intervalMode === 'random' ? ('acak ' + intervalMin + '-' + intervalMax + 's') : ('statis ' + intervalValue + 's')),
+    label: (isolateDay ? ('Corte día ' + isolateDay) : 'Todos') + ' • ' + (TEMPLATE_LABELS[templateKey] || templateKey) + ' • ' + (intervalMode === 'random' ? ('aleatorio ' + intervalMin + '-' + intervalMax + 's') : ('fijo ' + intervalValue + 's')),
     stopped: false,
   };
 

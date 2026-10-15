@@ -389,11 +389,11 @@ function formatRelativeTime(value) {
   const diffMs = Date.now() - ts;
   if (diffMs < 0) return 'recién';
   const sec = Math.floor(diffMs / 1000);
-  if (sec < 60) return `${sec} detik lalu`;
+  if (sec < 60) return `hace ${sec} s`;
   const min = Math.floor(sec / 60);
-  if (min < 60) return `${min} menit lalu`;
+  if (min < 60) return `hace ${min} min`;
   const hour = Math.floor(min / 60);
-  if (hour < 24) return `${hour} jam lalu`;
+  if (hour < 24) return `hace ${hour} h`;
   const day = Math.floor(hour / 24);
   return `hace ${day} días`;
 }
@@ -437,7 +437,7 @@ function getBuiltinSyncState(deviceId) {
     syncPendingCount: 0,
     syncLastQueueAt: '',
     syncLastQueueLabel: '-',
-    syncStatusLabel: 'Idle'
+    syncStatusLabel: 'Sin pendientes'
   };
   if (!deviceId) return empty;
 
@@ -457,7 +457,7 @@ function getBuiltinSyncState(deviceId) {
       syncPendingCount: count,
       syncLastQueueAt: lastQueueAt,
       syncLastQueueLabel: formatDeviceTimestamp(lastQueueAt),
-      syncStatusLabel: count > 0 ? `Sinkronisasi berjalan (${count})` : 'Idle'
+      syncStatusLabel: count > 0 ? `Sincronizando (${count})` : 'Sin pendientes'
     };
   } catch (e) {
     logger.debug(`[CustomerDevice] Failed reading ACS sync state for ${deviceId}: ${e.message}`);
@@ -782,7 +782,7 @@ function mapDeviceData(device, tag, isPppoeActive = false) {
     syncPendingCount: Number(syncState.syncPendingCount || 0),
     syncLastQueueAt: syncState.syncLastQueueAt || '',
     syncLastQueueLabel: syncState.syncLastQueueLabel || '-',
-    syncStatusLabel: syncState.syncStatusLabel || 'Idle',
+    syncStatusLabel: syncState.syncStatusLabel || 'Sin pendientes',
     connectedUsers,
     rxPower: rxPower === 'N/A' ? '-' : rxPower,
     pppoeIP: pppoeIP === 'N/A' ? '-' : pppoeIP,
@@ -821,7 +821,7 @@ function fallbackCustomer(tag) {
   return {
     phone: tag,
     ssid: '-',
-    status: 'Tidak ditemukan',
+    status: 'No encontrado',
     lastInform: '-',
     lastInformAgo: '-',
     lastSync: '-',
@@ -829,7 +829,7 @@ function fallbackCustomer(tag) {
     syncInProgress: false,
     syncPendingCount: 0,
     syncLastQueueLabel: '-',
-    syncStatusLabel: 'Idle',
+    syncStatusLabel: 'Sin pendientes',
     connectedUsers: [],
     rxPower: '-',
     pppoeIP: '-',
@@ -1115,7 +1115,7 @@ async function requestRefresh(tag, actor = null) {
 
     return {
       ok: true,
-      message: `Sinkronisasi ONU dimulai. ${refreshObjects.length} jalur TR-069 dipoll.`,
+      message: `Sincronización de ONU iniciada: se consultan ${refreshObjects.length} rutas TR-069.`,
       deviceId: device._id,
       acsServerId: server.id
     };

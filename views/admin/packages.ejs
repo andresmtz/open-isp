@@ -44,7 +44,7 @@
       <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
         <h6 style="margin:0"><i class="bi bi-shield-slash" style="color:#ef4444"></i> <%= t('admin.packages.isolir_title', 'Profil Isolir') %> <span class="text-muted" style="font-weight:400;font-size:11.5px">— read-only</span></h6>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <span class="badge <%= isolirSource === 'radius' ? 'bp' : 'bm' %>"><%= isolirSource === 'radius' ? 'Sumber: RADIUS' : 'Sumber: MikroTik' %></span>
+          <span class="badge <%= isolirSource === 'radius' ? 'bp' : 'bm' %>"><%= isolirSource === 'radius' ? 'Origen: RADIUS' : 'Origen: MikroTik' %></span>
           <% if (isolirSource !== 'radius') { %><span class="badge <%= isolirExists ? 'bs' : 'bd' %>"><%= isolirExists ? 'Existe en el MikroTik' : 'No existe' %></span><% } %>
           <% if (isolirSource !== 'radius') { %><a class="btn btn-g btn-sm" href="/admin/mikrotik"><i class="bi bi-pencil"></i> Gestionar en Perfiles PPPoE</a><% } %>
           <a class="btn btn-g btn-sm" href="/admin/radius-settings"><i class="bi bi-broadcast"></i> RADIUS Settings</a>
@@ -158,7 +158,7 @@
               <td style="white-space:nowrap">
                 <form id="pkdel-<%= p.id %>" method="POST" action="/admin/packages/<%= p.id %>/delete" style="display:none" onsubmit="return confirm('<%= t('admin.packages.confirm.delete', 'Hapus paket ini? Pelanggan yang menggunakan paket ini akan kehilangan referensi paket.') %>')"></form>
                 <div class="act">
-                  <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
+                  <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
                     <button type="button" class="act-item" data-idx="<%= i %>" onclick="editPkg(+this.dataset.idx)"><i class="bi bi-pencil"></i> Editar plan</button>
                     <div class="act-sep"></div>
@@ -226,11 +226,11 @@
         <!-- Kecepatan Berdampingan (Download & Upload) -->
         <div class="form-row" style="background:rgba(59,130,246,0.04);padding:12px 14px;border-radius:10px;margin-top:10px;border:1px solid rgba(59,130,246,0.12);">
           <div class="fg">
-            <label class="fl" style="color:var(--primary);font-weight:700;"><i class="bi bi-download"></i> Kecepatan Download (Mbps) *</label>
+            <label class="fl" style="color:var(--primary);font-weight:700;"><i class="bi bi-download"></i> Velocidad de bajada (Mbps) *</label>
             <input class="fc" name="speed_down" id="add_down" type="number" step="any" min="0" placeholder="<%= t('admin.pkg.ph_down','Contoh: 10') %>" required>
           </div>
           <div class="fg">
-            <label class="fl" style="color:var(--info);font-weight:700;"><i class="bi bi-upload"></i> Kecepatan Upload (Mbps) *</label>
+            <label class="fl" style="color:var(--info);font-weight:700;"><i class="bi bi-upload"></i> Velocidad de subida (Mbps) *</label>
             <input class="fc" name="speed_up" id="add_up" type="number" step="any" min="0" placeholder="<%= t('admin.pkg.ph_up','Contoh: 5') %>" required>
           </div>
         </div>
@@ -264,7 +264,7 @@
           </div>
           <div class="flex ai-c" style="gap:8px;margin-top:4px">
             <input type="checkbox" name="prorate_first_invoice" id="add_prorate" value="1">
-            <label for="add_prorate" style="margin:0;font-size:12px"><%= t('admin.pkg.prorata_a','Prorata tagihan ') %><strong>pertama</strong><%= t('admin.pkg.prorata_b',' jika pasang di tengah bulan (proporsi sisa hari, perlu tanggal pasang di data pelanggan)') %></label>
+            <label for="add_prorate" style="margin:0;font-size:12px"><%= t('admin.pkg.prorata_a','Prorata tagihan ') %><strong>primera</strong><%= t('admin.pkg.prorata_b',' jika pasang di tengah bulan (proporsi sisa hari, perlu tanggal pasang di data pelanggan)') %></label>
           </div>
         </div>
         
@@ -430,11 +430,11 @@
         <!-- Kecepatan Berdampingan (Download & Upload - Edit) -->
         <div class="form-row" style="background:rgba(59,130,246,0.04);padding:12px 14px;border-radius:10px;margin-top:10px;border:1px solid rgba(59,130,246,0.12);">
           <div class="fg">
-            <label class="fl" style="color:var(--primary);font-weight:700;"><i class="bi bi-download"></i> Kecepatan Download (Mbps) *</label>
+            <label class="fl" style="color:var(--primary);font-weight:700;"><i class="bi bi-download"></i> Velocidad de bajada (Mbps) *</label>
             <input class="fc" name="speed_down" id="e_down" type="number" step="any" min="0" required>
           </div>
           <div class="fg">
-            <label class="fl" style="color:var(--info);font-weight:700;"><i class="bi bi-upload"></i> Kecepatan Upload (Mbps) *</label>
+            <label class="fl" style="color:var(--info);font-weight:700;"><i class="bi bi-upload"></i> Velocidad de subida (Mbps) *</label>
             <input class="fc" name="speed_up" id="e_up" type="number" step="any" min="0" required>
           </div>
         </div>

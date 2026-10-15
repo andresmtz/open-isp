@@ -173,13 +173,13 @@ const I18N = {
   startBtn: "<%= t('admin.broadcast.start', 'Mulai Broadcast') %>"
 };
 const templates = {
-  all: `Yth. Pelanggan {{nama}},\n\nBersama ini kami informasikan bahwa akan ada pemeliharaan jaringan rutin pada:\nHari/Tanggal: ...\nPukul: ...\n\nSelama proses tersebut, layanan internet (Paket {{paket}}) akan terganggu sementara waktu. Kami memohon maaf atas ketidaknyamanan ini.\n\nCek status layanan di: {{link}}\n\nTerima kasih.\nSalam,\nAdmin <%= company %>`,
+  all: `Estimado/a {{nama}},\n\nLe informamos que realizaremos un mantenimiento programado de la red:\nDía/fecha: ...\nHorario: ...\n\nDurante ese tiempo el servicio de internet (plan {{paket}}) puede tener cortes momentáneos. Disculpe las molestias.\n\nEstado del servicio: {{link}}\n\nGracias.\nSaludos,\n<%= company %>`,
   
-  active: `Yth. Pelanggan Setia {{nama}},\n\nTerima kasih telah mempercayakan kebutuhan internet Anda kepada kami. Nikmati terus layanan terbaik Paket {{paket}} tanpa hambatan.\n\nKelola akun Anda di: {{link}}\n\nSalam,\nAdmin <%= company %>`,
+  active: `Estimado/a {{nama}},\n\nGracias por confiar en nosotros para su conexión a internet. Siga disfrutando de su plan {{paket}}.\n\nPuede ver su cuenta en: {{link}}\n\nSaludos,\n<%= company %>`,
   
-  suspended: `Yth. Pelanggan {{nama}},\n\nMohon maaf, layanan internet Anda saat ini sedang dinonaktifkan (Terisolir). \n\nTotal tunggakan Anda: *{{moneda}} {{tagihan}}* (Periode: {{rincian}}).\n\nSilakan bayar melalui portal kami: {{link}}\n\nSalam,\nAdmin <%= company %>`,
+  suspended: `Estimado/a {{nama}},\n\nLe informamos que su servicio de internet está suspendido.\n\nTotal adeudado: *{{moneda}} {{tagihan}}* (período: {{rincian}}).\n\nPuede ver el detalle y pagar en: {{link}}\n\nSaludos,\n<%= company %>`,
   
-  unpaid: `Yth. Pelanggan {{nama}},\n\nBerdasarkan data sistem kami, Anda memiliki tagihan internet yang *BELUM LUNAS*.\n\n📦 *Paket:* {{paket}}\n💰 *Total Tagihan:* {{moneda}} {{tagihan}}\n📅 *Periode:* {{rincian}}\n\nMohon segera melakukan pembayaran melalui portal pelanggan: {{link}}\n\nTerima kasih atas kerja samanya.\nSalam,\nAdmin <%= company %>`
+  unpaid: `Estimado/a {{nama}},\n\nSegún nuestros registros, tiene una factura de internet *PENDIENTE DE PAGO*.\n\n📦 *Plan:* {{paket}}\n💰 *Total:* {{moneda}} {{tagihan}}\n📅 *Período:* {{rincian}}\n\nLe pedimos regularizar el pago a la brevedad: {{link}}\n\nGracias.\nSaludos,\n<%= company %>`
 };
 
 const targetSelect = document.getElementById('targetSelect');
@@ -250,8 +250,8 @@ async function checkBroadcastStatus() {
 async function runReminderNow(btn) {
   const out = document.getElementById('runReminderResult');
   const old = btn ? btn.innerHTML : '';
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Menjalankan...'; }
-  if (out) { out.textContent = 'Menjalankan pengingat…'; out.style.color = 'var(--muted)'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Ejecutando...'; }
+  if (out) { out.textContent = 'Ejecutando el recordatorio…'; out.style.color = 'var(--muted)'; }
   try {
     const r = await fetch('/admin/whatsapp/run-reminder-now', { method: 'POST' });
     const j = await r.json().catch(function () { return {}; });
@@ -269,7 +269,7 @@ checkBroadcastStatus();
 
 function bsToggle(){ var m=(document.getElementById('bsMode')||{}).value; document.getElementById('bsStatic').style.display = m==='static'?'':'none'; document.getElementById('bsRandom').style.display = m==='random'?'':'none'; }
 async function bsStop(){ try{ await fetch('/admin/api/whatsapp/billing-send-stop',{method:'POST'}); }catch(e){} }
-async function bsPoll(){ try{ const r=await fetch('/admin/api/whatsapp/billing-send-status'); const s=await r.json(); const box=document.getElementById('bsProgress'); if(!s||(!s.running&&!s.total)) return; box.style.display='block'; const pct = s.total? Math.round(((s.sent+s.failed)/s.total)*100):0; document.getElementById('bsBar').style.width=pct+'%'; document.getElementById('bsProgressText').textContent=(s.running?'Enviando…':'Listo')+' '+s.sent+'/'+s.total+' enviados, '+s.failed+' gagal'+(s.last?(' • último: '+s.last):'')+(s.label?(' • '+s.label):''); }catch(e){} }
+async function bsPoll(){ try{ const r=await fetch('/admin/api/whatsapp/billing-send-status'); const s=await r.json(); const box=document.getElementById('bsProgress'); if(!s||(!s.running&&!s.total)) return; box.style.display='block'; const pct = s.total? Math.round(((s.sent+s.failed)/s.total)*100):0; document.getElementById('bsBar').style.width=pct+'%'; document.getElementById('bsProgressText').textContent=(s.running?'Enviando…':'Listo')+' '+s.sent+'/'+s.total+' enviados, '+s.failed+' fallidos'+(s.last?(' • último: '+s.last):'')+(s.label?(' • '+s.label):''); }catch(e){} }
 setInterval(bsPoll, 3000); bsPoll();
 
 </script>

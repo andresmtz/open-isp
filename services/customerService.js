@@ -824,7 +824,7 @@ async function suspendCustomer(id) {
           const loginLink = `${baseUrl}/customer/login`;
 
           let formattedMsg = template
-            .replace(/{{nama}}/gi, customer.name || 'Pelanggan')
+            .replace(/{{nama}}/gi, customer.name || 'Cliente')
             .replace(/{{id_pelanggan}}/gi, customer.customer_code || '-')
             .replace(/{{username}}/gi, customer.pppoe_username || '-')
             .replace(/{{pppoe}}/gi, customer.pppoe_username || '-')
@@ -1103,7 +1103,7 @@ async function autoDeactivateOverdueCustomers(months = 3, actor = null) {
           {
             const _def = '⚠️ *Servicio dado de baja*\n\nEstimado/a *{{nama}}* (ID: {{id_pelanggan}}),\n\nSu servicio de internet fue *dado de baja* por registrar *{{bulan_nunggak}} meses* sin pagar.\n\nSi el mes próximo la deuda sigue pendiente, su cuenta será *ELIMINADA* y para volver a contratar deberá solicitar una nueva instalación.\n\nDetalle de su deuda: {{link}}\n— {{company}}';
             const _tpl = String(db.getAppSetting('whatsapp_deactivated_message', _def) || _def);
-            const _msg = _tpl.replace(/{{nama}}/gi, c.name || 'Pelanggan').replace(/{{id_pelanggan}}/gi, c.customer_code || ('ID:' + c.id)).replace(/{{bulan_nunggak}}/gi, String(c.unpaid_streak || 0)).replace(/{{batas}}/gi, String(getSetting('auto_deactivate_months', 3) || 3)).replace(/{{link}}/gi, String(getSetting('public_base_url', '') || '').replace(/\/+$/, '') + '/customer').replace(/{{company}}/gi, getSetting('company_header', '') || '-');
+            const _msg = _tpl.replace(/{{nama}}/gi, c.name || 'Cliente').replace(/{{id_pelanggan}}/gi, c.customer_code || ('ID:' + c.id)).replace(/{{bulan_nunggak}}/gi, String(c.unpaid_streak || 0)).replace(/{{batas}}/gi, String(getSetting('auto_deactivate_months', 3) || 3)).replace(/{{link}}/gi, String(getSetting('public_base_url', '') || '').replace(/\/+$/, '') + '/customer').replace(/{{company}}/gi, getSetting('company_header', '') || '-');
             await waNotify.sendText(c.phone, _msg);
           }
         } catch (e) {}
@@ -1126,7 +1126,7 @@ async function autoDeactivateOverdueCustomers(months = 3, actor = null) {
         logger.warn(`[AutoDelete] Menghapus pelanggan "${c.name}" (ID ${c.id}) — menunggak ${c.unpaid_streak} bulan berturut-turut (> ${m}).`);
         // Void dulu tagihan unpaid agar tidak menjadi 'piutang yatim'
         try { db.prepare("UPDATE invoices SET status='void', voided_at=NOW_LOCAL(), void_reason='Auto-hapus: menunggak > ? bulan' WHERE customer_id=? AND status='unpaid'").run(m, c.id); } catch (e) {}
-        if (waOn && c.phone) { try { const _def = 'Estimado/a *{{nama}}*,\n\nSu cuenta de internet fue *eliminada* por registrar *{{bulan_nunggak}} meses* sin pagar.\n\nSi desea volver a contratar el servicio, deberá solicitar una nueva instalación.\n— {{company}}'; const _tpl = String(db.getAppSetting('whatsapp_deleted_message', _def) || _def); const _msg = _tpl.replace(/{{nama}}/gi, c.name || 'Pelanggan').replace(/{{id_pelanggan}}/gi, c.customer_code || ('ID:' + c.id)).replace(/{{bulan_nunggak}}/gi, String(c.unpaid_streak || 0)).replace(/{{company}}/gi, getSetting('company_header','') || '-'); await waNotify.sendText(c.phone, _msg); } catch (e) {} }
+        if (waOn && c.phone) { try { const _def = 'Estimado/a *{{nama}}*,\n\nSu cuenta de internet fue *eliminada* por registrar *{{bulan_nunggak}} meses* sin pagar.\n\nSi desea volver a contratar el servicio, deberá solicitar una nueva instalación.\n— {{company}}'; const _tpl = String(db.getAppSetting('whatsapp_deleted_message', _def) || _def); const _msg = _tpl.replace(/{{nama}}/gi, c.name || 'Cliente').replace(/{{id_pelanggan}}/gi, c.customer_code || ('ID:' + c.id)).replace(/{{bulan_nunggak}}/gi, String(c.unpaid_streak || 0)).replace(/{{company}}/gi, getSetting('company_header','') || '-'); await waNotify.sendText(c.phone, _msg); } catch (e) {} }
         await deleteCustomer(c.id);
         removed.push(c.name);
       } catch (e) {

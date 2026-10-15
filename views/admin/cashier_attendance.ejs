@@ -126,8 +126,8 @@
             <div class="info-row">
               <span class="info-label"><%= t('admin.ca.work_duration','Durasi Kerja') %></span>
               <span class="info-value">
-                <%= Math.floor(todayAttendance.work_duration_minutes / 60) %> jam 
-                <%= todayAttendance.work_duration_minutes % 60 %> menit
+                <%= Math.floor(todayAttendance.work_duration_minutes / 60) %> h 
+                <%= todayAttendance.work_duration_minutes % 60 %> min
               </span>
             </div>
           <% } %>

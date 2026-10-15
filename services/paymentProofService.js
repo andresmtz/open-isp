@@ -59,7 +59,7 @@ function holderName() {
 }
 
 // ── Lectura de los datos del comprobante ─────────────────────────────────────────────────────────
-const MESES = { ene: 1, feb: 2, mar: 3, abr: 4, may: 5, jun: 6, jul: 7, ago: 8, sep: 9, set: 9, oct: 10, nov: 11, dic: 12 };
+const MESES = { ene: 1, jan: 1, feb: 2, mar: 3, abr: 4, apr: 4, may: 5, jun: 6, jul: 7, ago: 8, aug: 8, sep: 9, set: 9, oct: 10, nov: 11, dic: 12, dec: 12 };
 const toInt = (s) => { const n = parseInt(String(s).replace(/\D/g, ''), 10); return Number.isFinite(n) ? n : 0; };
 const NUM = /(?:gs\.?|₲|pyg)?\s*(\d{1,3}(?:[.,]\d{3})+|\d{4,9})(?:[.,]00\b)?\s*(?:gs\.?|₲|pyg)?/i;
 
@@ -79,19 +79,23 @@ function parse(text) {
   // Fecha y hora
   let m = /(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/.exec(t);
   if (m) { const y = Number(m[3].length === 2 ? '20' + m[3] : m[3]); r.date = `${y}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`; }
-  else if ((m = /(\d{1,2})\s*(?:de\s*)?(ene|feb|mar|abr|may|jun|jul|ago|sep|set|oct|nov|dic)[a-z]*\.?\s*(?:de\s*)?(\d{4})/i.exec(t))) r.date = `${m[3]}-${String(MESES[m[2].toLowerCase()]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
+  else if ((m = /(\d{1,2})[\s\-\/]*(?:de\s*)?(ene|jan|feb|mar|abr|apr|may|jun|jul|ago|aug|sep|set|oct|nov|dic|dec)[a-z]*\.?[\s\-\/]*(?:de\s*)?(\d{4})/i.exec(t))) r.date = `${m[3]}-${String(MESES[m[2].toLowerCase()]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
   if ((m = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/.exec(t))) r.time = `${m[1].padStart(2, '0')}:${m[2]}`;
   // N.º de comprobante / operación
   // (el primero que sea un número de 5+ dígitos y no una fecha: "Comprobante de transferencia" es solo el título)
   for (const x of t.matchAll(/(comprobante|transacci[oó]n|operaci[oó]n|referencia|ref\.?|nro\.?|n[°º]|ticket|c[oó]digo)(?:\s*(?:de|del|n[°º.]?)\s*(?:operaci[oó]n|transacci[oó]n|comprobante))?\s*[:#nº°.]*\s*([A-Z0-9][A-Z0-9-]{4,})/gi)) {
-    if (/\d{5,}/.test(x[2]) && !/^\d{1,2}[\/\-.]\d/.test(x[2])) { r.ref = x[2].toUpperCase(); break; }
+    const dg = x[2].replace(/\D/g, '');
+    const isAccount = destinations().some(d => d.type === 'number' && dg.endsWith(d.value)) || /cuenta/i.test(t.slice(Math.max(0, x.index - 25), x.index));
+    if (/\d{5,}/.test(x[2]) && !/^\d{1,2}[\/\-.]\d/.test(x[2]) && !isAccount) { r.ref = x[2].toUpperCase(); break; }
   }
   // Tipo
   if (/dep[oó]sito/i.test(t)) r.kind = 'Depósito';
   else if (/giro|tigo\s*money|billetera|mango|wally|zimple|eko|personal\s*pay/i.test(t)) r.kind = 'Giro';
   // Quién pagó (informativo): bloque "Origen" → "Nombre …", o Remitente / Ordenante / De
   const oi = lines.findIndex(l => /\b(origen|remitente|ordenante|depositante|enviado por|de:)/i.test(l));
-  if (oi >= 0) for (const l of lines.slice(oi, oi + 4)) { const n = /(?:[Nn]ombre|[Rr]emitente|[Oo]rdenante|[Dd]epositante|[Tt]itular)\s*:?\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{5,})/.exec(l); if (n) { r.origin = n[1].trim(); break; } }
+  const ep = lines.findIndex(l => /^(enviado por|remitente|ordenante|depositante|de parte de)\s*:?\s*$/i.test(l));
+  if (ep >= 0 && /^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{6,}$/.test(lines[ep + 1] || '')) r.origin = lines[ep + 1].trim();
+  if (!r.origin && oi >= 0) for (const l of lines.slice(oi, oi + 4)) { const n = /(?:[Nn]ombre|[Rr]emitente|[Oo]rdenante|[Dd]epositante|[Tt]itular)\s*:?\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{5,})/.exec(l); if (n) { r.origin = n[1].trim(); break; } }
   // Destino: una cuenta o billetera de la empresa
   const tokens = [...t.matchAll(/\d[\d .\-]{4,}\d/g)].map(x => x[0].replace(/\D/g, '')).filter(d => d.length >= 6);
   const low = t.toLowerCase();

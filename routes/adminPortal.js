@@ -4622,6 +4622,17 @@ router.post('/registrations/:id/reassign', requireAdminSession, express.urlencod
   res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
 });
 
+router.post('/registrations/:id/resend', requireAdminSession, async (req, res) => {
+  try {
+    const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    const r = await require('../services/installationService').resendToInstaller(Number(req.params.id), { actor });
+    req.session._msg = r.ok
+      ? { type: 'success', text: `Datos de la instalación reenviados por WhatsApp a ${r.installer.name}${r.phone ? ' (' + r.phone + ')' : ''}.` }
+      : { type: 'error', text: `No se pudo enviar el WhatsApp a ${r.installer.name}${r.phone ? ' (' + r.phone + ')' : ''}. Revisá que el número sea correcto en Usuarios y que el WhatsApp del sistema esté conectado.` };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo reenviar: ' + e.message }; }
+  res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
+});
+
 router.post('/registrations/:id/reactivate', requireAdminSession, (req, res) => {
   try {
     const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');

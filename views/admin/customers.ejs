@@ -262,6 +262,7 @@
                     <button type="button" class="btn btn-sm btn-p" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="markInstalled(+this.dataset.id, this.dataset.name)"><i class="bi bi-check2-circle"></i> Instalación realizada</button>
                     <button type="button" class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="openEquip(+this.dataset.id, this.dataset.name)"><i class="bi bi-router"></i> Equipo<%= c.reg_wifi_status === 'aplicado' ? ' ✓' : '' %></button>
                     <button type="button" class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="openReassign(+this.dataset.id, this.dataset.name)"><i class="bi bi-arrow-left-right"></i> Reasignar</button>
+                    <form method="POST" action="/admin/registrations/<%= c.id %>/resend" style="display:inline" onsubmit="return confirm('¿Reenviar por WhatsApp los datos de la instalación al instalador?')"><button class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap"><i class="bi bi-whatsapp"></i> Reenviar datos</button></form>
                     <button type="button" class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="cancelInstall(+this.dataset.id, this.dataset.name)"><i class="bi bi-x-circle"></i> Cancelar instalación</button>
                   </div>
                   <% } %>
@@ -391,6 +392,8 @@
                     <% if (c.status === 'inactive' && c.reg_status === 'approved' && _can('clientes_alta')) { %>
                       <button type="button" class="act-item success" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="markInstalled(+this.dataset.id, this.dataset.name)"><i class="bi bi-check2-circle"></i> Instalación realizada</button>
                       <button type="button" class="act-item" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="openReassign(+this.dataset.id, this.dataset.name)"><i class="bi bi-arrow-left-right"></i> Reasignar instalador</button>
+                      <button type="button" class="act-item" onclick="if(confirm('¿Reenviar por WhatsApp los datos de la instalación al instalador?'))document.getElementById('resend-<%= c.id %>').submit()"><i class="bi bi-whatsapp"></i> Reenviar datos al instalador</button>
+                      <form id="resend-<%= c.id %>" method="POST" action="/admin/registrations/<%= c.id %>/resend" style="display:none"></form>
                       <button type="button" class="act-item danger" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="cancelInstall(+this.dataset.id, this.dataset.name)"><i class="bi bi-x-circle"></i> Cancelar instalación</button>
                       <div class="act-sep"></div>
                     <% } else if (c.status === 'inactive' && _can('clientes_alta')) { %>

@@ -8,9 +8,18 @@ function getAllTechnicians() {
   return db.prepare('SELECT * FROM technicians ORDER BY created_at DESC').all().map(({ password, ...r }) => r);
 }
 
+/** WhatsApp del técnico: obligatorio y válido (local o de otro país con +), guardado en formato local. */
+function techPhone(raw) {
+  const regional = require('../config/regional');
+  const p = String(raw || '').trim();
+  if (!p) throw new Error('Cargá el WhatsApp del técnico: por ahí recibe las órdenes.');
+  if (!regional.isValidPhone(p)) throw new Error(regional.phoneHelp());
+  return regional.toLocalPhone(p);
+}
+
 function createTechnician(data) {
   const stmt = db.prepare('INSERT INTO technicians (username, password, name, phone, area) VALUES (?, ?, ?, ?, ?)');
-  return stmt.run(String(data.username || '').trim(), staffPass.hash(data.password), data.name, data.phone || '', data.area || '');
+  return stmt.run(String(data.username || '').trim(), staffPass.hash(data.password), data.name, techPhone(data.phone), data.area || '');
 }
 
 function parseBoolInt(val, defaultVal = 0) {
@@ -22,7 +31,7 @@ function parseBoolInt(val, defaultVal = 0) {
 
 function updateTechnician(id, data) {
   const stmt = db.prepare('UPDATE technicians SET username = ?, password = ?, name = ?, phone = ?, area = ?, is_active = ? WHERE id = ?');
-  return stmt.run(String(data.username || '').trim(), staffPass.forUpdate('technicians', id, data.password), data.name, data.phone || '', data.area || '', parseBoolInt(data.is_active, 1), id);
+  return stmt.run(String(data.username || '').trim(), staffPass.forUpdate('technicians', id, data.password), data.name, techPhone(data.phone), data.area || '', parseBoolInt(data.is_active, 1), id);
 }
 
 function deleteTechnician(id) {

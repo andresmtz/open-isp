@@ -418,6 +418,28 @@ async function reassignInstallation(customerId, installerKey, { actor = 'Admin' 
   return { ok: true, installer: who, notified };
 }
 
+/** Reenvía a quien instala los datos de la instalación (y la foto de la casa), con su número actual de la ficha. */
+async function resendToInstaller(customerId, { actor = 'Admin' } = {}) {
+  ensureSchema();
+  const id = Number(customerId);
+  const c = db.prepare('SELECT * FROM customers WHERE id=?').get(id);
+  if (!c || c.status !== 'inactive' || c.reg_status !== 'approved') throw new Error('No tiene una instalación asignada.');
+  const who = installerOf(c.reg_installer);
+  if (!who) throw new Error('No se encontró al instalador asignado (¿fue dado de baja?). Reasigná la instalación.');
+  if (who.type !== 'admin' && !regional.isValidPhone(who.phone || '')) throw new Error(`${who.name} no tiene un WhatsApp válido cargado (${who.phone || 'vacío'}). Corregilo en Usuarios y volvé a reenviar.`);
+  const notified = await tellInstaller(who, installerMessage(id));
+  if (notified && who.type !== 'admin') {
+    try {
+      const docs = require('./customerDocumentService');
+      const casa = docs.list(id, { kinds: ['casa'] })[0];
+      const fp = casa && docs.filePath(casa);
+      if (fp) await waNotify().sendImage(regional.normalizePhone(String(who.phone).replace(/\D/g, '')), require('fs').readFileSync(fp), `🏠 Casa de ${c.name} — ${c.address || ''}`.trim());
+    } catch (_) {}
+  }
+  logEvent(id, `Datos de la instalación reenviados a ${who.name}${notified ? '' : ' (no se pudo enviar)'} (por ${actor})`);
+  return { ok: notified, installer: who, phone: who.type === 'admin' ? '' : regional.toLocalPhone(who.phone) };
+}
+
 /**
  * Cancela una instalación asignada (o una solicitud pendiente).
  *  outcome 'postpone': queda en espera para reprogramar (conserva usuario PPPoE e IP).
@@ -606,7 +628,7 @@ function onTicketStatus(ticketId, status) {
 
 module.exports = {
   installerRule, DEFAULT_INSTALLER_RULE,
-  ensureNetworkAccount, completeInstallation, cancelInstallation, reassignInstallation, reactivateRequest, CANCEL_REASONS, setEquipment, onuCandidates, linkOnu, tryApplyWifi,
+  ensureNetworkAccount, completeInstallation, cancelInstallation, reassignInstallation, resendToInstaller, reactivateRequest, CANCEL_REASONS, setEquipment, onuCandidates, linkOnu, tryApplyWifi,
   ensureSchema, firstInvoicePlan, defaultDueDate, installers, findInstaller, parseLocation,
   createRequest, approve, sendWelcome, renderWelcome, onTicketStatus, DEFAULT_WELCOME,
 };

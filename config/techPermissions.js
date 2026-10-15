@@ -20,6 +20,11 @@ const BASE = [
   ['POST', `^/orders/${ID}/equipment$`],         // etiqueta de la ONU, MAC y WiFi del cliente (solo sus órdenes de instalación)
   ['POST', `^/orders/${ID}/replace$`],           // cambio de ONU en una orden de asistencia suya
   ['GET', `^/orders/${ID}/power$`],              // potencia de la ONU de una orden suya
+  ['GET', `^/orders/${ID}/status$`],             // avance de la configuración automática de su orden de instalación
+  ['POST', `^/orders/${ID}/no-install$`],        // "No se pudo instalar" con motivo (orden de instalación suya)
+  ['POST', `^/orders/${ID}/(retiro|retiro-fallido)$`], // retiro de equipo: retirado / no se pudo retirar
+  ['GET', `^/customers/${ID}/label/${ID}$`],     // foto de la etiqueta del equipo a retirar (orden suya)
+  ['GET', '^/state$'],                           // cambios en su lista de órdenes (el panel se recarga solo)
 ];
 
 const CATALOG = [

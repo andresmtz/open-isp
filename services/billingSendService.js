@@ -76,7 +76,9 @@ function buildTargets(isolateDay) {
 async function start(opts = {}) {
   if (STATUS.running) throw new Error('Hay un envío en curso. Esperá a que termine o detenelo primero.');
   const isolateDay = parseInt(opts.isolateDay, 10) || 0;
-  const templateKey = String(opts.templateKey || 'whatsapp_auto_billing_message');
+  let templateKey = String(opts.templateKey || 'whatsapp_auto_billing_message');
+  // Sin pasarelas (config/payments.js) no hay facturas con QR: se usa la plantilla normal
+  if (/qris/i.test(templateKey) && !require('../config/payments').gatewaysEnabled()) templateKey = 'whatsapp_auto_billing_message';
   const intervalMode = String(opts.intervalMode || 'static').toLowerCase();
   const intervalValue = Math.max(3, parseInt(opts.intervalValue, 10) || 15);
   const intervalMin = Math.max(3, parseInt(opts.intervalMin, 10) || 15);

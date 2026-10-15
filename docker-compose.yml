@@ -2,7 +2,7 @@
 # OPEN-ISP — docker compose (produksi / test)
 #
 # Persiapan pertama (sekali):
-#   mkdir -p docker-data/database docker-data/logs docker-data/uploads docker-data/baileys
+#   mkdir -p docker-data/database docker-data/backups docker-data/logs docker-data/uploads docker-data/baileys
 #   echo '{"server_port":3001,"cookie_secure":false}' > docker-data/settings.json
 #
 # Jalankan:
@@ -29,6 +29,7 @@ services:
     volumes:
       - ./docker-data/settings.json:/app/settings.json
       - ./docker-data/database:/app/database
+      - ./docker-data/backups:/app/backups          # respaldos: fuera del contenedor (antes se perdían en cada actualización)
       - ./docker-data/logs:/app/logs
       - ./docker-data/uploads:/app/public/uploads
       - ./docker-data/baileys:/app/auth_info_baileys

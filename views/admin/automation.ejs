@@ -156,7 +156,7 @@
                 </select>
                 <div class="hint"><%= t('admin.automation.lunas_recap_hint', 'Rekap (jumlah + daftar mitra Rp 0) dikirim ke admin tiap tanggal 1.') %></div>
               </div>
-              <div class="fg">
+              <div class="fg"<% if (!(typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %> style="display:none"<% } %>>
                 <label class="fl"><%= t('admin.automation.view_recap', 'Lihat Rekap') %></label>
                 <a class="btn btn-g btn-sm" href="/admin/ewallet-logs"><i class="bi bi-list-check"></i> <%= t('admin.automation.open_recap', 'Buka Log &amp; Rekap') %></a>
               </div>
@@ -407,7 +407,7 @@
                   <td class="mono" style="font-size:11.5px">whatsapp_autolunas_message</td>
                   <td><a class="btn btn-g btn-sm" href="/admin/whatsapp/templates"><i class="bi bi-pencil"></i> <%= t('common.edit','Edit') %></a></td>
                 </tr>
-                <tr>
+                <tr<% if (!(typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %> style="display:none"<% } %>>
                   <td><i class="bi bi-qr-code"></i> <%= t('admin.automation.map_qris', 'Tagihan QRIS (lampiran QR)') %></td>
                   <td class="mono" style="font-size:11.5px">whatsapp_billing_qris_message</td>
                   <td><a class="btn btn-g btn-sm" href="/admin/whatsapp/templates"><i class="bi bi-pencil"></i> <%= t('common.edit','Edit') %></a></td>

@@ -76,11 +76,11 @@ const MENU_DEFINITIONS = [
   ] },
 
   { key: 'grp_system', section: 'system', href: '/admin/settings', icon: 'bi bi-gear', labelKey: 'admin.nav.grp_system', labelDefault: 'Sistema', roles: ['admin'], activePages: ['update', 'service_notice', 'settings', 'ewallet_logs', 'backup', 'audit_logs'], children: [
-    { key: 'wisphub', section: 'system', href: '/admin/wisphub', icon: 'bi bi-arrow-left-right', labelKey: 'admin.nav.wisphub', labelDefault: 'Migración WispHub', roles: ['admin'] },
-    { key: 'update', section: 'system', href: '/admin/update', icon: 'bi bi-cloud-arrow-down', labelKey: 'admin.nav.update', labelDefault: 'Actualizar desde GitHub', roles: ['admin'], activePages: ['update'] },
+    { key: 'wisphub', section: 'system', feature: 'wisphub_migration', href: '/admin/wisphub', icon: 'bi bi-arrow-left-right', labelKey: 'admin.nav.wisphub', labelDefault: 'Migración WispHub', roles: ['admin'] },
+    { key: 'update', section: 'system', feature: 'github_update', href: '/admin/update', icon: 'bi bi-cloud-arrow-down', labelKey: 'admin.nav.update', labelDefault: 'Actualizar desde GitHub', roles: ['admin'], activePages: ['update'] },
     { key: 'service_notice', section: 'system', href: '/admin/service-notice', icon: 'bi bi-megaphone-fill', labelKey: 'admin.nav.service_notice', labelDefault: 'Estado del servicio', roles: ['admin'], activePages: ['service_notice'] },
     { key: 'settings', section: 'system', href: '/admin/settings', icon: 'bi bi-gear', labelKey: 'admin.nav.settings', labelDefault: 'Configuración', roles: ['admin'], activePages: ['settings'] },
-    { key: 'ewallet_logs', section: 'system', href: '/admin/ewallet-logs', icon: 'bi bi-journal-text', labelKey: 'admin.nav.log_rekap', labelDefault: 'Registros y resúmenes', roles: ['admin'], activePages: ['ewallet_logs'] },
+    { key: 'ewallet_logs', section: 'system', feature: 'gateways', href: '/admin/ewallet-logs', icon: 'bi bi-journal-text', labelKey: 'admin.nav.log_rekap', labelDefault: 'Registros y resúmenes', roles: ['admin'], activePages: ['ewallet_logs'] },
     { key: 'backup', section: 'system', href: '/admin/backup', icon: 'bi bi-hdd-stack', labelKey: 'admin.nav.backup', labelDefault: 'Respaldo y recuperación', roles: ['admin'], activePages: ['backup'] },
     { key: 'audit_logs', section: 'system', href: '/admin/audit-logs', icon: 'bi bi-shield-lock', labelKey: 'admin.nav.audit_logs', labelDefault: 'Registro de actividad', roles: ['admin'], activePages: ['audit_logs'] }
   ] }
@@ -251,6 +251,8 @@ function staffFirstHref(menu, session) {
 }
 
 function isMenuAllowedForSession(menu, session) {
+  // Funciones opcionales desactivadas (config/payments.js): el menú no se muestra
+  if (menu.feature && !require('../config/payments').featureEnabled(menu.feature)) return false;
   const roles = Array.isArray(menu.roles) ? menu.roles : ['admin'];
   if (roles.includes('admin') && session && session.isAdmin) return true;
   if (roles.includes('cashier') && session && session.isCashier) return !!staffFirstHref(menu, session);

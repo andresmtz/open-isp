@@ -58,7 +58,7 @@
               </div>
             </div>
             
-            <div class="fg" style="margin-top: 20px;">
+            <div class="fg"<% if (!(typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %> style="display:none"<% } %> style="margin-top: 20px;">
               <label class="fl"><%= t('admin.wt.lbl_qris','Template Tagihan QRIS (Manual)') %></label>
               <textarea class="fc" id="tmpl_billing_qris" name="whatsapp_billing_qris_message" rows="8" required style="width: 100%;"><%= templates.whatsapp_billing_qris_message %></textarea>
               <div style="font-size: 11px; color: var(--muted); margin-top: 6px;">

@@ -395,18 +395,22 @@ function scheduleAutoBackup() {
     return;
   }
 
+  // Hora local de la empresa (setting timezone), no la del contenedor (UTC)
+  const tz = getSetting('timezone', 'America/Asuncion') || 'America/Asuncion';
   nodeCron.schedule(schedule, () => {
     logger.info('[Backup] Starting scheduled backup...');
     const result = backupAll();
     
     if (result.database.success && result.settings.success) {
       logger.info('[Backup] Scheduled backup completed successfully');
+      // Se conservan los respaldos de los últimos N días (backup_retention_days, por defecto 30)
+      try { cleanupOldBackups(Math.max(3, parseInt(getSetting('backup_retention_days', 30), 10) || 30)); } catch (e) { logger.warn('[Backup] limpieza: ' + e.message); }
     } else {
       logger.error('[Backup] Scheduled backup failed');
     }
-  });
+  }, { timezone: tz });
 
-  logger.info(`[Backup] Auto backup scheduled: ${schedule}`);
+  logger.info(`[Backup] Auto backup scheduled: ${schedule} (${tz})`);
 }
 
 module.exports = {

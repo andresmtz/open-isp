@@ -170,7 +170,7 @@
                 <% if (Number(inv.discount_amount||0) > 0) { %>
                   <div style="font-size:10px;color:var(--danger);font-weight:700">Descuento <%= inv.discount_type==='percent' ? (inv.discount_value+'%') : '' %> -<%= APP_CUR %> <%= Number(inv.discount_amount).toLocaleString(APP_LOCALE) %></div>
                 <% } %>
-                <% if (inv.status === 'unpaid' && inv.qris_amount_unique) { %>
+                <% if ((typeof gatewaysOn !== 'undefined' && gatewaysOn) && inv.status === 'unpaid' && inv.qris_amount_unique) { %>
                   <div style="font-size:11px;color:var(--muted);margin-top:4px">
                     Monto único: <span class="mono" style="font-weight:600;color:var(--primary)"><%= APP_CUR %> <%= Number(inv.qris_amount_unique || inv.amount || 0).toLocaleString(APP_LOCALE) %></span>
                     <% if (inv.qris_unique_code) { %>
@@ -214,8 +214,8 @@
                     <% if(inv.status==='unpaid'){%>
                       <button type="button" class="act-item disc-btn" data-id="<%= inv.id %>" data-name="<%= String(inv.customer_name||'').replace(/'/g,'&#39;') %>" data-amount="<%= Number(inv.amount||0) %>" data-period="<%= mns[inv.period_month-1] %> <%= inv.period_year %>"><i class="bi bi-percent"></i> <%= t('admin.bill.btn_discount','Beri Diskon') %></button>
                       <button type="button" class="act-item success pay-btn" data-id="<%= inv.id %>" data-customer-id="<%= inv.customer_id %>" data-name="<%= inv.customer_name.replace(/'/g, '&#39;') %>" data-period="<%= mns[inv.period_month-1] %> <%= inv.period_year %>"><i class="bi bi-check-lg"></i> Registrar pago</button>
-                      <button type="submit" form="qa-<%= inv.id %>" class="act-item"><i class="bi bi-qr-code"></i> <%= t('admin.bill.btn_gen_unique','Buat Kode Unik QRIS') %></button>
-                      <% if (inv.qris_amount_unique) { %>
+                      <% if ((typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %><button type="submit" form="qa-<%= inv.id %>" class="act-item"><i class="bi bi-qr-code"></i> <%= t('admin.bill.btn_gen_unique','Buat Kode Unik QRIS') %></button><% } %>
+                      <% if ((typeof gatewaysOn !== 'undefined' && gatewaysOn) && inv.qris_amount_unique) { %>
                       <button type="submit" form="qr-<%= inv.id %>" class="act-item warn"><i class="bi bi-arrow-repeat"></i> Regenerar código único</button>
                       <button type="submit" form="qc-<%= inv.id %>" class="act-item danger"><i class="bi bi-x-lg"></i> <%= t('admin.bill.btn_del_unique','Hapus Kode Unik') %></button>
                       <% } %>

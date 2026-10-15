@@ -52,8 +52,8 @@
     <% if (!minimal) { %><nav class="nav" aria-label="Navigasi">
       <a href="#packages">Plan</a>
       <a href="#features"><%= t('landing.nav.features','Keunggulan') %></a>
-      <a href="/customer/check-billing"><%= t('landing.hero.check','Consultar deuda') %></a>
-      <% if (voucherOn) { %><a href="/customer/voucher"><%= t('login.voucher_nav','Voucher') %></a><% } %>
+      <% if ((typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %><a href="/customer/check-billing"><%= t('landing.hero.check','Consultar deuda') %></a><% } %>
+      <% if (voucherOn && (typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %><a href="/customer/voucher"><%= t('login.voucher_nav','Voucher') %></a><% } %>
       <% if (typeof settings !== 'undefined' && settings && settings.status_url) { %><a href="<%= settings.status_url %>" target="_blank" rel="noopener">Status</a><% } %>
     </nav><% } %>
     <div class="header-actions">
@@ -67,8 +67,8 @@
     <div class="container inner">
       <a href="#packages" onclick="toggleMenu()"><%= t('landing.nav.packages_full','Paket & Harga') %></a>
       <a href="#features" onclick="toggleMenu()"><%= t('landing.nav.features','Keunggulan') %></a>
-      <a href="/customer/check-billing" onclick="toggleMenu()"><i class="bi bi-receipt"></i> <%= t('landing.hero.check','Consultar deuda') %></a>
-      <% if (voucherOn) { %><a href="/customer/voucher" onclick="toggleMenu()"><i class="bi bi-ticket-perforated"></i> <%= t('login.voucher_short','Beli Voucher') %></a><% } %>
+      <% if ((typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %><a href="/customer/check-billing" onclick="toggleMenu()"><i class="bi bi-receipt"></i> <%= t('landing.hero.check','Consultar deuda') %></a><% } %>
+      <% if (voucherOn && (typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %><a href="/customer/voucher" onclick="toggleMenu()"><i class="bi bi-ticket-perforated"></i> <%= t('login.voucher_short','Beli Voucher') %></a><% } %>
       <a href="/customer/register" onclick="toggleMenu()"><i class="bi bi-person-plus"></i> <%= t('login.register_new','Daftar Baru') %></a>
       <% if (typeof settings !== 'undefined' && settings && settings.status_url) { %><a href="<%= settings.status_url %>" target="_blank" rel="noopener" onclick="toggleMenu()"><i class="bi bi-activity"></i> Estado del servidor</a><% } %>
     </div>
@@ -129,8 +129,8 @@
       <% } %>
 
       <% if (!minimal) { %><div class="quick-tools">
-        <a href="/customer/check-billing" class="qtool"><i class="bi bi-receipt"></i> <%= t('landing.hero.check','Consultar deuda') %></a>
-        <% if (voucherOn) { %><a href="/customer/voucher" class="qtool"><i class="bi bi-ticket-perforated"></i> <%= t('login.voucher_short','Beli Voucher') %></a><% } %>
+        <% if ((typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %><a href="/customer/check-billing" class="qtool"><i class="bi bi-receipt"></i> <%= t('landing.hero.check','Consultar deuda') %></a><% } %>
+        <% if (voucherOn && (typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %><a href="/customer/voucher" class="qtool"><i class="bi bi-ticket-perforated"></i> <%= t('login.voucher_short','Beli Voucher') %></a><% } %>
       </div><% } %>
 
       <div class="auth-foot">
@@ -218,8 +218,8 @@
       <div>
         <h4>Portal</h4>
         <div class="foot-links">
-          <a href="/customer/check-billing"><%= t('login.check_full','Cek & Bayar Tagihan') %></a>
-          <% if (voucherOn) { %><a href="/customer/voucher"><%= t('login.voucher','Beli Voucher Wi-Fi') %></a><% } %>
+          <% if ((typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %><a href="/customer/check-billing"><%= t('login.check_full','Cek & Bayar Tagihan') %></a><% } %>
+          <% if (voucherOn && (typeof gatewaysOn !== 'undefined' && gatewaysOn)) { %><a href="/customer/voucher"><%= t('login.voucher','Beli Voucher Wi-Fi') %></a><% } %>
           <a href="/customer/register"><%= t('login.new_install','Pasang Baru') %></a>
           <a href="/customer/dashboard"><%= t('login.dashboard','Dashboard Pelanggan') %></a>
         </div>

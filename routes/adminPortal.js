@@ -538,6 +538,7 @@ async function createVoucherBatchAsync(batchId) {
 router.use((req, res, next) => {
   res.locals.session = req.session;
   res.locals.can = (key) => staffPerms.has(req.session, key);
+  res.locals.gatewaysOn = require('../config/payments').gatewaysEnabled();
   // Contraseña de fábrica / débil: obligar a cambiarla antes de usar el panel
   if (req.session && req.session.isAdmin && req.session.mustChangePassword && !/^\/(account\/password|logout)(\/|$)/.test(req.path)) {
     return res.redirect('/admin/account/password');
@@ -5029,6 +5030,7 @@ router.post('/settings', requireAdminSession, express.urlencoded({ extended: tru
     if (newSettings.voucher_enabled === 'true') newSettings.voucher_enabled = true;
     else if (newSettings.voucher_enabled === 'false') newSettings.voucher_enabled = false;
 
+    if (newSettings.payment_gateways_enabled !== undefined) newSettings.payment_gateways_enabled = newSettings.payment_gateways_enabled === 'true';
     if (newSettings.qris_static_enabled === 'true') newSettings.qris_static_enabled = true;
     else if (newSettings.qris_static_enabled === 'false') newSettings.qris_static_enabled = false;
 

@@ -70,6 +70,8 @@ if (typeof ensureDefaultSettings === 'function') {
 
 // Inisialisasi aplikasi Express
 const app = express();
+// Pasarelas de pago de Indonesia (QRIS y otras): desactivadas salvo que se habiliten (config/payments.js)
+app.use(require('./config/payments').guard);
 
 // Kompresi gzip (performa: respons HTML/CSS/JS lebih kecil)
 app.use(compression());

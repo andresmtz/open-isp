@@ -645,6 +645,12 @@
             <div class="fg"><label class="fl">Mensaje si el servicio ya está habilitado</label><textarea class="fc" name="corte_active_message" rows="2" maxlength="400"><%= _ct.corte_active_message %></textarea></div>
           </div>
 
+          <div class="fg" style="background: rgba(0,0,0,0.02); padding: 12px 15px; border-radius: 12px; margin-bottom: 15px;">
+            <label class="fl">Pasarelas de pago automáticas de Indonesia (QRIS, Tripay, Midtrans, Xendit, webhook de billeteras)</label>
+            <select class="fs" name="payment_gateways_enabled" style="max-width:320px"><option value="false" <%= !(typeof gatewaysOn !== 'undefined' && gatewaysOn) ? 'selected' : '' %>>Desactivadas (recomendado en Paraguay)</option><option value="true" <%= (typeof gatewaysOn !== 'undefined' && gatewaysOn) ? 'selected' : '' %>>Activadas</option></select>
+            <div style="font-size:10px; color:var(--muted); margin-top:4px">Desactivadas: no se muestran sus opciones, sus direcciones no responden y los recordatorios no agregan códigos únicos al monto.</div>
+          </div>
+          <% if (typeof gatewaysOn !== 'undefined' && gatewaysOn) { %>
           <details style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
             <summary style="cursor:pointer;font-size:12px;font-weight:700">Pasarelas automáticas (QRIS de Indonesia y otras) — no aplican en Paraguay</summary>
           <div style="margin-top:12px">
@@ -873,6 +879,7 @@
           </div>
         </div>
           </details>
+          <% } %>
 
       </div>
       

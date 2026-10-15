@@ -220,7 +220,8 @@ async function runAutoBillingReminder() {
           let qrisCodeVal = 0;
           let finalTagihanStr = totalTagihan.toLocaleString(regional.locale());
 
-          if (unpaidInvoices.length > 0) {
+          // Código único de monto y QR: solo con pasarelas habilitadas (config/payments.js); si no, el total real
+          if (unpaidInvoices.length > 0 && require('../config/payments').gatewaysEnabled()) {
             try {
               const inv = unpaidInvoices[0];
               let code = Number(inv.qris_unique_code || 0) || 0;

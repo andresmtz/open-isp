@@ -82,14 +82,16 @@ function parse(text) {
   else if ((m = /(\d{1,2})\s*(?:de\s*)?(ene|feb|mar|abr|may|jun|jul|ago|sep|set|oct|nov|dic)[a-z]*\.?\s*(?:de\s*)?(\d{4})/i.exec(t))) r.date = `${m[3]}-${String(MESES[m[2].toLowerCase()]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
   if ((m = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/.exec(t))) r.time = `${m[1].padStart(2, '0')}:${m[2]}`;
   // N.º de comprobante / operación
-  m = /(comprobante|transacci[oó]n|operaci[oó]n|referencia|ref\.?|nro\.?|n[°º]|ticket|c[oó]digo)\s*(?:de\s*\w+\s*)?[:#nº°.\s]*\s*([A-Z0-9][A-Z0-9-]{4,})/i.exec(t);
-  if (m && /\d{4,}/.test(m[2])) r.ref = m[2].toUpperCase();
+  // (el primero que sea un número de 5+ dígitos y no una fecha: "Comprobante de transferencia" es solo el título)
+  for (const x of t.matchAll(/(comprobante|transacci[oó]n|operaci[oó]n|referencia|ref\.?|nro\.?|n[°º]|ticket|c[oó]digo)(?:\s*(?:de|del|n[°º.]?)\s*(?:operaci[oó]n|transacci[oó]n|comprobante))?\s*[:#nº°.]*\s*([A-Z0-9][A-Z0-9-]{4,})/gi)) {
+    if (/\d{5,}/.test(x[2]) && !/^\d{1,2}[\/\-.]\d/.test(x[2])) { r.ref = x[2].toUpperCase(); break; }
+  }
   // Tipo
   if (/dep[oó]sito/i.test(t)) r.kind = 'Depósito';
   else if (/giro|tigo\s*money|billetera|mango|wally|zimple|eko|personal\s*pay/i.test(t)) r.kind = 'Giro';
   // Quién pagó (informativo): bloque "Origen" → "Nombre …", o Remitente / Ordenante / De
-  const oi = lines.findIndex(l => /\b(origen|remitente|ordenante|enviado por|de:)\b/i.test(l));
-  if (oi >= 0) for (const l of lines.slice(oi, oi + 4)) { const n = /(?:nombre|remitente|ordenante|de)\s*:?\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{5,})/.exec(l); if (n) { r.origin = n[1].trim(); break; } }
+  const oi = lines.findIndex(l => /\b(origen|remitente|ordenante|depositante|enviado por|de:)/i.test(l));
+  if (oi >= 0) for (const l of lines.slice(oi, oi + 4)) { const n = /(?:[Nn]ombre|[Rr]emitente|[Oo]rdenante|[Dd]epositante|[Tt]itular)\s*:?\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{5,})/.exec(l); if (n) { r.origin = n[1].trim(); break; } }
   // Destino: una cuenta o billetera de la empresa
   const tokens = [...t.matchAll(/\d[\d .\-]{4,}\d/g)].map(x => x[0].replace(/\D/g, '')).filter(d => d.length >= 6);
   const low = t.toLowerCase();
@@ -99,7 +101,7 @@ function parse(text) {
   }
   const hn = holderName().toUpperCase().split(/\s+/).filter(w => w.length > 3);
   r.holder = hn.length >= 2 && hn.filter(w => t.toUpperCase().includes(w)).length >= 2;
-  r.looksLike = r.amount >= 1000 && /comprobante|transferencia|dep[oó]sito|giro|monto|importe|operaci[oó]n|enviado|debitado|acreditado/i.test(t);
+  r.looksLike = r.amount >= 1000 && /comprobante|transferencia|dep[oó]sito|giro|monto|importe|operaci[oó]n|enviad[oa]|enviaste|pagaste|transferiste|debitado|acreditado|billetera/i.test(t);
   return r;
 }
 
@@ -283,4 +285,13 @@ function reject(id, reason, by) {
   return p;
 }
 
-module.exports = { ensureSchema, scan, processMessage, parse, destinations, checks, pending, get, filePath, assign, markApplied, reject, debtOf };
+/** Vuelve a leer los datos de un comprobante pendiente a partir del texto ya guardado. */
+function reparse(id) {
+  const p = get(id); if (!p || p.status !== 'pendiente' || !p.ocr_text) return null;
+  const r = parse(p.ocr_text);
+  db.prepare('UPDATE payment_proofs SET amount=COALESCE(?,amount), op_date=COALESCE(?,op_date), op_time=COALESCE(?,op_time), ref=COALESCE(?,ref), kind=?, dest_label=COALESCE(?,dest_label), origin_name=COALESCE(?,origin_name) WHERE id=?')
+    .run(r.amount || null, r.date || null, r.time || null, r.ref || null, r.kind, r.dest ? r.dest.label : null, r.origin || null, p.id);
+  return get(id);
+}
+
+module.exports = { reparse, ensureSchema, scan, processMessage, parse, destinations, checks, pending, get, filePath, assign, markApplied, reject, debtOf };

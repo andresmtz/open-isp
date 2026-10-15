@@ -72,6 +72,19 @@
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px;">
       <!-- Create Backup -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hd"><h6><i class="bi bi-clock-history"></i> Respaldo automático diario</h6></div>
+        <div class="card-bd">
+          <% const _abOn = String(getSetting('auto_backup_enabled', true)) !== 'false'; const _abHour = (String(getSetting('auto_backup_schedule', '0 2 * * *')).split(' ')[1]) || '2'; %>
+          <form action="/admin/backup/settings" method="POST" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <div class="fg" style="margin:0"><label class="fl">Estado</label><select class="fs" name="auto_backup_enabled"><option value="true" <%= _abOn ? 'selected' : '' %>>Activado</option><option value="false" <%= !_abOn ? 'selected' : '' %>>Desactivado</option></select></div>
+            <div class="fg" style="margin:0"><label class="fl">Hora (Paraguay)</label><input class="fc" type="number" min="0" max="23" name="auto_backup_hour" value="<%= _abHour %>" style="max-width:100px"></div>
+            <div class="fg" style="margin:0"><label class="fl">Conservar (días)</label><input class="fc" type="number" min="3" max="365" name="backup_retention_days" value="<%= getSetting('backup_retention_days', 30) %>" style="max-width:110px"></div>
+            <button class="btn btn-p btn-sm"><i class="bi bi-check-lg"></i> Guardar</button>
+          </form>
+          <div class="hint" style="margin-top:8px">Respalda la base de datos y la configuración. Los archivos quedan en la VM (carpeta <code>docker-data/backups</code>); el respaldo de Proxmox de la VM los incluye.</div>
+        </div>
+      </div>
       <div class="card">
         <div class="card-hd"><h6><i class="bi bi-plus-circle"></i> <%= t('admin.bk.create','Buat Backup Baru') %></h6></div>
         <div class="card-bd">

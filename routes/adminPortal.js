@@ -5073,12 +5073,14 @@ router.post('/settings', requireAdminSession, express.urlencoded({ extended: tru
     if (newSettings.mikrotik_port) newSettings.mikrotik_port = parseInt(newSettings.mikrotik_port);
     if (newSettings.whatsapp_broadcast_delay) newSettings.whatsapp_broadcast_delay = parseInt(newSettings.whatsapp_broadcast_delay);
     
-    newSettings.login_otp_enabled = (newSettings.login_otp_enabled === 'true');
-    newSettings.telegram_enabled = (newSettings.telegram_enabled === 'true');
-    newSettings.auto_backup_enabled = (newSettings.auto_backup_enabled === 'true');
+    // Solo se convierten los interruptores que vinieron en el formulario: si falta uno, se conserva su valor
+    // (antes, guardar Configuración apagaba el respaldo automático porque ese campo no está en el formulario)
+    for (const _k of ['login_otp_enabled', 'telegram_enabled', 'auto_backup_enabled']) {
+      if (newSettings[_k] !== undefined) newSettings[_k] = (newSettings[_k] === 'true' || newSettings[_k] === true);
+    }
     if (newSettings.auto_deactivate_enabled !== undefined) newSettings.auto_deactivate_enabled = (newSettings.auto_deactivate_enabled === 'true');
     if (newSettings.auto_deactivate_months !== undefined) newSettings.auto_deactivate_months = parseInt(newSettings.auto_deactivate_months) || 3;
-    newSettings.use_builtin_acs = (newSettings.use_builtin_acs === 'true' || newSettings.use_builtin_acs === true);
+    if (newSettings.use_builtin_acs !== undefined) newSettings.use_builtin_acs = (newSettings.use_builtin_acs === 'true' || newSettings.use_builtin_acs === true);
 
     // Multi-Router Mode settings
     if (!newSettings.multi_router_mode) newSettings.multi_router_mode = 'disabled';
@@ -5196,6 +5198,19 @@ router.get('/backup', requireAdminSession, requireSidebarMenuAccess('backup'), (
     total: result.total || 0,
     getSetting
   });
+});
+
+router.post('/backup/settings', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
+  try {
+    const hour = Math.min(23, Math.max(0, parseInt(req.body.auto_backup_hour, 10) || 2));
+    saveSettings({
+      auto_backup_enabled: req.body.auto_backup_enabled === 'true',
+      auto_backup_schedule: `0 ${hour} * * *`,
+      backup_retention_days: Math.min(365, Math.max(3, parseInt(req.body.backup_retention_days, 10) || 30)),
+    });
+    req.session._msg = { type: 'success', text: 'Respaldo automático guardado. Se aplica al reiniciar el sistema (o en el próximo despliegue).' };
+  } catch (e) { req.session._msg = { type: 'error', text: 'Error: ' + e.message }; }
+  res.redirect('/admin/backup');
 });
 
 router.get('/backup/download/:fileName', requireAdminSession, (req, res) => {

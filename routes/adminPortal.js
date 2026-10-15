@@ -2612,6 +2612,32 @@ router.post('/customers/:id/documents/:docId/delete', requireAdminSession, (req,
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 
+// ─── Equipo del cliente nuevo: etiqueta, WiFi elegido y ONU detectada (services/installationService.js) ───
+router.get('/customers/:id/equipment', requireAdminSession, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const inst = require('../services/installationService'); inst.ensureSchema();
+    const c = db.prepare('SELECT id, name, pppoe_username, reg_wifi_ssid, reg_wifi_status, reg_onu_mac FROM customers WHERE id=?').get(id);
+    if (!c) throw new Error('Cliente no encontrado');
+    const docs = require('../services/customerDocumentService');
+    const labels = docs.list(id, { kinds: ['etiqueta'] }).map(d => `/admin/customers/${id}/documents/${d.id}`);
+    const linked = require('../services/onuManageService').forCustomer(id);
+    const candidates = linked ? [] : await inst.onuCandidates(id);
+    res.json({ ok: true, customer: c, labels, linked, candidates });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+router.post('/customers/:id/equipment', requireAdminSession, express.json(), async (req, res) => {
+  try {
+    const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    const b = req.body || {};
+    const inst = require('../services/installationService');
+    let out = {};
+    if (b.ssid || b.key || b.mac) out = await inst.setEquipment(Number(req.params.id), { ssid: b.ssid, key: b.key, mac: b.mac }, actor);
+    if (b.onu_ref) out = await inst.linkOnu(Number(req.params.id), b.onu_ref, actor);
+    res.json({ ok: true, ...out, message: (out.wifi && out.wifi.message) || 'Guardado.' });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
 router.get('/customers/:id/payment-info', requireAdminSession, (req, res) => {
   try {
     const pay = require('../services/paymentReversalService');

@@ -177,6 +177,10 @@ router.get('/', requireTechSession, (req, res) => {
     for (const t of myTickets) {
       t.housePhotos = (t.customer_id && ['open', 'in_progress'].includes(t.status))
         ? docs.list(t.customer_id, { kinds: ['casa'] }).map(d => `/tech/customers/${t.customer_id}/house/${d.id}`) : [];
+      if (t.kind === 'install' && t.customer_id) {
+        const c = db.prepare('SELECT reg_wifi_ssid, reg_wifi_status, reg_onu_mac FROM customers WHERE id=?').get(t.customer_id) || {};
+        t.equipment = { ssid: c.reg_wifi_ssid || '', status: c.reg_wifi_status || '', mac: c.reg_onu_mac || '', labels: docs.list(t.customer_id, { kinds: ['etiqueta'] }).length };
+      }
     }
   } catch (_) {}
   
@@ -189,6 +193,35 @@ router.get('/', requireTechSession, (req, res) => {
     tickets: myTickets,
     msg: flashMsg(req)
   });
+});
+
+// Orden de instalación: el técnico carga la foto de la etiqueta de la ONU, la MAC y el WiFi que eligió el cliente
+const equipUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024, files: 3 },
+  fileFilter: (req, file, cb) => cb(null, /^image\//i.test(file.mimetype || '')) });
+router.post('/orders/:ticketId/equipment', requireTechSession, equipUpload.array('label', 3), async (req, res) => {
+  const wantsJson = /json/.test(String(req.headers.accept || ''));
+  try {
+    const t = db.prepare('SELECT * FROM tickets WHERE id=?').get(Number(req.params.ticketId));
+    if (!t || Number(t.technician_id) !== Number(req.session.techId) || t.kind !== 'install' || !['open', 'in_progress'].includes(t.status)) throw new Error('Orden no disponible.');
+    const by = `técnico ${req.session.techName || ''}`.trim();
+    const docs = require('../services/customerDocumentService');
+    let photos = 0;
+    for (const f of (req.files || [])) { await docs.add(t.customer_id, 'etiqueta', f.buffer, by); photos++; }
+    const r = await require('../services/installationService').setEquipment(t.customer_id, { ssid: req.body.ssid, key: req.body.key, mac: req.body.mac }, by);
+    const c = db.prepare('SELECT name FROM customers WHERE id=?').get(t.customer_id);
+    try {
+      await require('../services/waNotifyService').notifyAdmin(`📦 *Datos del equipo cargados* — ${c ? c.name : ''}\nPor: ${by}\n` +
+        [photos ? `Foto(s) de la etiqueta: ${photos}` : '', ...r.saved].filter(Boolean).join('\n') +
+        `\n\n${r.wifi && r.wifi.ok ? '✅ ' + r.wifi.message : '👉 Vinculá la ONU en Clientes → Inscriptos → "Equipo".'}`);
+    } catch (_) {}
+    const msg = (photos ? `${photos} foto(s) guardada(s). ` : '') + (r.saved.length ? 'Datos guardados. ' : '') + (r.wifi && r.wifi.ok ? r.wifi.message : 'La oficina vincula la ONU y el WiFi se aplica solo.');
+    if (wantsJson) return res.json({ ok: true, message: msg });
+    req.session._msg = { type: 'success', text: msg };
+  } catch (e) {
+    if (wantsJson) return res.status(400).json({ ok: false, message: e.message });
+    req.session._msg = { type: 'error', text: e.message };
+  }
+  res.redirect('/tech');
 });
 
 // Foto de la casa: solo si el técnico tiene una orden abierta o en curso de ese cliente

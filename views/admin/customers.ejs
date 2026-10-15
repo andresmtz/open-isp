@@ -260,6 +260,7 @@
                   <% if (_can('clientes_alta')) { %>
                   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
                     <button type="button" class="btn btn-sm btn-p" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="markInstalled(+this.dataset.id, this.dataset.name)"><i class="bi bi-check2-circle"></i> Instalación realizada</button>
+                    <button type="button" class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="openEquip(+this.dataset.id, this.dataset.name)"><i class="bi bi-router"></i> Equipo<%= c.reg_wifi_status === 'aplicado' ? ' ✓' : '' %></button>
                     <button type="button" class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="cancelInstall(+this.dataset.id, this.dataset.name)"><i class="bi bi-x-circle"></i> Cancelar instalación</button>
                   </div>
                   <% } %>
@@ -1268,6 +1269,25 @@
   </div>
 </div>
 
+<div class="mo" id="equipModal">
+  <div class="mb" style="max-width:700px">
+    <div class="mh"><span class="mt"><i class="bi bi-router"></i> <span id="eq_title">Equipo del cliente</span></span><button class="mc" onclick="closeModal('equipModal')">&times;</button></div>
+    <div class="mbody" style="max-height:76vh;overflow:auto">
+      <div id="eq_body"><div class="text-muted" style="padding:12px">Consultando la OLT…</div></div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <div style="font-weight:700;font-size:13px;margin-bottom:6px"><i class="bi bi-wifi"></i> WiFi elegido por el cliente</div>
+        <div class="form-row">
+          <div class="fg"><label class="fl">Nombre de la red (5G = nombre + "-5G")</label><input class="fc" id="eq_ssid" maxlength="28"></div>
+          <div class="fg"><label class="fl">Clave (vacío = no cambiar)</label><input class="fc" id="eq_key" maxlength="63" autocomplete="off"></div>
+          <div class="fg"><label class="fl">MAC de la etiqueta</label><input class="fc" id="eq_mac" placeholder="80:07:1B:F4:EE:68" style="text-transform:uppercase"></div>
+        </div>
+        <button class="btn btn-g btn-sm" onclick="eqSave()"><i class="bi bi-check-lg"></i> Guardar WiFi / MAC</button>
+        <div class="hint" style="margin-top:6px">Con la ONU vinculada, el WiFi se aplica solo: se verifica, se guarda en la ONU y se hace <b>write file</b> en la OLT.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="mo" id="docsModal">
   <div class="mb" style="max-width:640px">
     <div class="mh"><span class="mt"><i class="bi bi-images"></i> <span id="docs_title">Fotos y documentos</span></span><button class="mc" onclick="closeModal('docsModal')">&times;</button></div>
@@ -1796,6 +1816,48 @@ function editCust(idx) {
   loadRouterLists('edit', c.router_id || '', c.id || '');
 }
 
+var _eqId = null;
+function _esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(ch){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); }
+async function openEquip(id, name){
+  _eqId = id;
+  document.getElementById('eq_title').textContent = 'Equipo — ' + (name || '');
+  document.getElementById('eq_body').innerHTML = '<div class="text-muted" style="padding:12px">Consultando la OLT…</div>';
+  openModal('equipModal');
+  await eqLoad();
+}
+async function eqLoad(){
+  var j = await (await fetch('/admin/customers/' + _eqId + '/equipment', { headers: { Accept: 'application/json' } })).json();
+  var b = document.getElementById('eq_body');
+  if (!j.ok) { b.innerHTML = '<div class="text-danger">' + _esc(j.message) + '</div>'; return; }
+  var c = j.customer;
+  document.getElementById('eq_ssid').value = c.reg_wifi_ssid || '';
+  document.getElementById('eq_key').value = '';
+  document.getElementById('eq_mac').value = (c.reg_onu_mac || '').toUpperCase();
+  var h = '<div style="display:flex;gap:12px;flex-wrap:wrap">';
+  h += '<div style="flex:0 0 220px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Etiqueta (foto del técnico)</div>' + (j.labels.length ? j.labels.map(function(u){ return '<a href="' + u + '" target="_blank"><img src="' + u + '" style="width:100%;border-radius:10px;border:1px solid var(--border);margin-bottom:6px"></a>'; }).join('') : '<div class="text-muted" style="font-size:12px">El técnico todavía no subió la foto.</div>') + '</div>';
+  h += '<div style="flex:1;min-width:260px">';
+  if (j.linked) {
+    h += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">ONU vinculada</div><div style="padding:10px;border:1px solid var(--success);border-radius:10px"><b>' + _esc(j.linked.onu_ref) + '</b> · ' + _esc((j.linked.mac || '').toUpperCase()) + ' · ' + _esc(j.linked.type || '') + '<br><span style="font-size:12px">' + (j.linked.compatible === 1 ? 'Permite configurar el WiFi desde el sistema.' : (j.linked.compatible === 0 ? 'No permite configurar el WiFi desde el sistema.' : 'Comprobando…')) + '</span></div>';
+  } else {
+    h += '<div style="font-weight:700;font-size:13px;margin-bottom:6px">ONU nuevas detectadas en la OLT (sin descripción ni cliente)</div>';
+    h += j.candidates.length ? j.candidates.map(function(o){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border:1px solid ' + (o.macMatch ? 'var(--success)' : 'var(--border)') + ';border-radius:10px;margin-bottom:6px">'
+        + '<div><b>' + _esc(o.onu_ref) + '</b> · <span class="mono">' + _esc((o.mac || '').toUpperCase()) + '</span>' + (o.macMatch ? ' <span class="badge bs">coincide con la etiqueta</span>' : '') + '<br><span style="font-size:12px;color:var(--muted)">' + _esc(o.type || '?') + ' · ' + (o.online ? 'en línea' : 'desconectada') + '</span></div>'
+        + '<button class="btn btn-p btn-sm" onclick="eqLink(\'' + _esc(o.onu_ref) + '\')">Esta es</button></div>';
+    }).join('') : '<div class="text-muted" style="font-size:12px">No hay ONU nuevas. Cuando el técnico conecte la fibra, actualizá esta ventana.</div>';
+    h += '<button class="btn btn-g btn-sm" style="margin-top:4px" onclick="eqLoad()"><i class="bi bi-arrow-repeat"></i> Actualizar</button>';
+  }
+  h += '<div style="font-size:12px;margin-top:10px">WiFi: <b>' + _esc(c.reg_wifi_ssid || '—') + '</b> · estado: ' + _esc(c.reg_wifi_status || 'sin cargar') + '</div>';
+  h += '<div class="hint" style="margin-top:6px">La WAN PPPoE de la ONU nueva todavía se configura a mano en la OLT con el usuario <b>' + _esc(c.pppoe_username || '') + '</b> (descripción, usuario y clave).</div>';
+  h += '</div></div>';
+  b.innerHTML = h;
+}
+async function eqPost(body){
+  var r = await fetch('/admin/customers/' + _eqId + '/equipment', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) });
+  var j = await r.json(); alert(j.message || (j.ok ? 'Listo' : 'Error')); await eqLoad();
+}
+function eqLink(ref){ if (confirm('¿Vincular la ONU ' + ref + ' con este cliente?')) eqPost({ onu_ref: ref }); }
+function eqSave(){ eqPost({ ssid: document.getElementById('eq_ssid').value.trim(), key: document.getElementById('eq_key').value, mac: document.getElementById('eq_mac').value.trim() }); }
 var _docsId = null, _docsEdit = false;
 async function openDocs(id, name){
   _docsId = id;

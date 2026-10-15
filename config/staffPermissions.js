@@ -64,6 +64,7 @@ const CATALOG = [
     ['POST', `^/registrations/${ID}/(approve|reject|installed|cancel-install)$`],
     ['POST', '^/registrations$'],
     ['POST', `^/customers/${ID}/documents(/${ID}/delete)?$`],
+    ['GET|POST', `^/customers/${ID}/equipment$`],
     ['GET', `^/registrations/${ID}/plan$`],
     ['GET', '^/api/mikrotik/(users|profiles|hotspot-user-profiles)(/\\d+)?$'],
   ] },

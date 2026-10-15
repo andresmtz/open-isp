@@ -46,6 +46,10 @@ function ensureSchema() {
   add('customers', 'reg_welcome_sent', 'INTEGER DEFAULT 0');
   add('tickets', 'kind', 'TEXT');
   add('customers', 'reg_total_override', 'INTEGER');
+  add('customers', 'reg_wifi_ssid', 'TEXT');
+  add('customers', 'reg_wifi_key', 'TEXT');
+  add('customers', 'reg_wifi_status', 'TEXT');   // pendiente | aplicado | error: …
+  add('customers', 'reg_onu_mac', 'TEXT');
   _schemaOk = true;
 }
 
@@ -332,6 +336,86 @@ async function cancelInstallation(customerId, { reason = '', actor = 'Admin' } =
   return { ok: true };
 }
 
+// ── Equipo del cliente: ONU nueva, foto de la etiqueta y WiFi elegido por el cliente ──────────
+// Etapa actual: la oficina vincula la ONU detectada con el cliente y el sistema aplica el WiFi con el
+// procedimiento ya probado (onuManageService.changeWifi: verifica, save_config en la ONU y write file en la OLT).
+// La WAN PPPoE y TR-069 de la ONU nueva siguen configurándose a mano hasta probar la configuración automática.
+const normMac = (m) => String(m || '').toLowerCase().replace(/[^0-9a-f]/g, '');
+
+/** El técnico (o la oficina) carga el WiFi que eligió el cliente y, opcional, la MAC de la etiqueta. */
+async function setEquipment(customerId, { ssid, key, mac } = {}, by = '') {
+  ensureSchema();
+  const id = Number(customerId);
+  const onu = require('./onuManageService');
+  const fields = [];
+  if (ssid || key) {
+    const prev = db.prepare('SELECT reg_wifi_ssid, reg_wifi_key FROM customers WHERE id=?').get(id) || {};
+    const v = onu.validate(String(ssid || prev.reg_wifi_ssid || '').trim(), String(key || prev.reg_wifi_key || ''));
+    db.prepare("UPDATE customers SET reg_wifi_ssid=?, reg_wifi_key=?, reg_wifi_status='pendiente' WHERE id=?").run(v.name, v.key, id);
+    fields.push(`WiFi "${v.name}" / "${v.name}${onu.SUFFIX_5G}"`);
+  }
+  const m = normMac(mac);
+  if (m) {
+    if (m.length !== 12) throw new Error('La MAC debe tener 12 caracteres (ej. 80:07:1B:F4:EE:68).');
+    db.prepare('UPDATE customers SET reg_onu_mac=? WHERE id=?').run(m.match(/../g).join(':'), id);
+    fields.push('MAC ' + m.match(/../g).join(':').toUpperCase());
+  }
+  logger.info(`[Instalación] Equipo de cliente ${id} cargado por ${by}: ${fields.join(', ') || 'sin cambios'}`);
+  const r = await tryApplyWifi(id, by).catch(e => ({ ok: false, message: e.message }));
+  return { saved: fields, wifi: r };
+}
+
+/** ONU nuevas detectadas en la OLT: en línea, sin cliente vinculado y sin descripción. */
+async function onuCandidates(customerId) {
+  ensureSchema();
+  const onu = require('./onuManageService');
+  try { await onu.syncInventory(); } catch (e) { logger.warn('[Instalación] inventario: ' + e.message); }
+  const c = db.prepare('SELECT reg_onu_mac FROM customers WHERE id=?').get(Number(customerId)) || {};
+  const want = normMac(c.reg_onu_mac);
+  const rows = db.prepare(`SELECT onu_ref, port, onu_id, mac, name, type, status, compatible, seen_at FROM onu_inventory
+    WHERE customer_id IS NULL AND (name IS NULL OR TRIM(name) = '' OR UPPER(name) IN ('N/A','NA','-')) ORDER BY seen_at DESC`).all();
+  return rows.map(r => ({ ...r, online: /online/i.test(r.status || ''), macMatch: !!want && normMac(r.mac) === want }))
+    .sort((a, b) => (b.macMatch - a.macMatch) || (b.online - a.online));
+}
+
+/** Vincula una ONU de la OLT con el cliente (solo en el sistema) y aplica el WiFi pendiente. */
+async function linkOnu(customerId, onuRef, by = '') {
+  ensureSchema();
+  const id = Number(customerId);
+  const row = db.prepare('SELECT * FROM onu_inventory WHERE onu_ref=?').get(String(onuRef));
+  if (!row) throw new Error('ONU no encontrada en el inventario.');
+  if (row.customer_id && Number(row.customer_id) !== id) throw new Error('Esa ONU ya está vinculada a otro cliente.');
+  db.transaction(() => {
+    db.prepare('UPDATE onu_inventory SET customer_id=NULL WHERE customer_id=? AND onu_ref!=?').run(id, row.onu_ref);
+    db.prepare('UPDATE onu_inventory SET customer_id=?, checked_at=NULL WHERE onu_ref=?').run(id, row.onu_ref);
+  })();
+  logger.info(`[Instalación] ONU ${row.onu_ref} (${row.mac}) vinculada al cliente ${id} por ${by}`);
+  try { await require('./onuManageService').syncInventory(); } catch (_) {}   // comprueba si permite gestionar el WiFi
+  const wifi = await tryApplyWifi(id, by).catch(e => ({ ok: false, message: e.message }));
+  return { onu: db.prepare('SELECT onu_ref, mac, type, compatible FROM onu_inventory WHERE onu_ref=?').get(row.onu_ref), wifi };
+}
+
+/** Aplica el WiFi pendiente si la ONU ya está vinculada y es gestionable (incluye write file en la OLT). */
+async function tryApplyWifi(customerId, by = '') {
+  const id = Number(customerId);
+  const c = db.prepare('SELECT name, reg_wifi_ssid, reg_wifi_key, reg_wifi_status FROM customers WHERE id=?').get(id);
+  if (!c || !c.reg_wifi_ssid || !c.reg_wifi_key) return { ok: false, pending: true, message: 'Falta el nombre o la clave del WiFi.' };
+  if (c.reg_wifi_status === 'aplicado') return { ok: true, already: true, message: 'El WiFi ya estaba aplicado.' };
+  const onu = require('./onuManageService');
+  const inv = onu.forCustomer(id);
+  if (!inv) return { ok: false, pending: true, message: 'Falta vincular la ONU del cliente.' };
+  if (inv.compatible !== 1) return { ok: false, pending: true, message: inv.compatible === 0 ? 'Esta ONU no permite configurar el WiFi desde el sistema: hay que hacerlo a mano.' : 'Todavía no se pudo comprobar la ONU (¿está encendida?).' };
+  try {
+    await onu.changeWifi(id, { name: c.reg_wifi_ssid, key: c.reg_wifi_key }, { type: 'admin', name: `Instalación (${by || 'sistema'})` }, { notify: false });
+    db.prepare("UPDATE customers SET reg_wifi_status='aplicado' WHERE id=?").run(id);
+    try { await waNotify().notifyAdmin(`📶 *WiFi configurado:* ${c.name}\nRed: ${c.reg_wifi_ssid} / ${c.reg_wifi_ssid}${onu.SUFFIX_5G}\nGuardado en la ONU y en la OLT (write file).`); } catch (_) {}
+    return { ok: true, message: `WiFi "${c.reg_wifi_ssid}" aplicado y guardado en la ONU y en la OLT.` };
+  } catch (e) {
+    db.prepare('UPDATE customers SET reg_wifi_status=? WHERE id=?').run('error: ' + String(e.message).slice(0, 150), id);
+    return { ok: false, message: 'No se pudo aplicar el WiFi: ' + e.message };
+  }
+}
+
 // ── 4. Bienvenida ─────────────────────────────────────────────────────────────────
 const DEFAULT_WELCOME =
 `🎉 ¡Bienvenido/a a *{{company}}*, *{{nama}}*!
@@ -395,7 +479,7 @@ function onTicketStatus(ticketId, status) {
 
 module.exports = {
   installerRule, DEFAULT_INSTALLER_RULE,
-  completeInstallation, cancelInstallation,
+  completeInstallation, cancelInstallation, setEquipment, onuCandidates, linkOnu, tryApplyWifi,
   ensureSchema, firstInvoicePlan, defaultDueDate, installers, findInstaller, parseLocation,
   createRequest, approve, sendWelcome, renderWelcome, onTicketStatus, DEFAULT_WELCOME,
 };

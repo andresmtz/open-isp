@@ -72,6 +72,9 @@ if (typeof ensureDefaultSettings === 'function') {
 const app = express();
 // Pasarelas de pago de Indonesia (QRIS y otras): desactivadas salvo que se habiliten (config/payments.js)
 app.use(require('./config/payments').guard);
+// Safari pide estos íconos por su cuenta: se sirve el ícono de la app (antes daban 404)
+app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'], (req, res) => res.sendFile(require('path').join(__dirname, 'public', 'img', 'apple-touch-icon.png')));
+app.get('/manifest.json', (req, res) => res.redirect(301, '/manifest.webmanifest'));
 
 // Kompresi gzip (performa: respons HTML/CSS/JS lebih kecil)
 app.use(compression());

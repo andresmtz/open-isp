@@ -153,11 +153,10 @@ function notFoundHandler(req, res, next) {
       }
     });
   } else {
-    if (req.session) {
-      req.session._msg = {
-        type: 'error',
-        text: 'Página no encontrada'
-      };
+    // No se guarda un aviso en la sesión: los pedidos automáticos del navegador (íconos, mapas de código)
+    // dejaban "Página no encontrada" que aparecía en la página siguiente aunque esa existiera.
+    if (!/\.(png|ico|jpe?g|gif|svg|webp|map|json|webmanifest|txt|xml|css|js)$/i.test(req.path)) {
+      try { require('../config/logger').logger.info(`[404] ${req.method} ${req.originalUrl}`); } catch (_) {}
     }
     res.status(404).render('error', {
       title: '404 - Not Found',

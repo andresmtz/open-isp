@@ -444,7 +444,7 @@ async function resendToInstaller(customerId, { actor = 'Admin' } = {}) {
  *  outcome 'postpone': queda en espera para reprogramar (conserva usuario PPPoE e IP).
  *  outcome 'reject'  : se rechaza la solicitud; se borra el usuario PPPoE del MikroTik y se libera la IP.
  */
-async function cancelInstallation(customerId, { reason = '', motive = 'otro', outcome = 'postpone', actor = 'Admin' } = {}) {
+async function cancelInstallation(customerId, { reason = '', motive = 'otro', outcome = 'postpone', actor = 'Admin', fromInstaller = false } = {}) {
   ensureSchema();
   const id = Number(customerId);
   const c = db.prepare('SELECT * FROM customers WHERE id=?').get(id);
@@ -462,7 +462,12 @@ async function cancelInstallation(customerId, { reason = '', motive = 'otro', ou
   } else {
     db.prepare("UPDATE customers SET reg_status='pending', reg_cancel_reason=?, reg_installer=NULL, reg_total_override=NULL WHERE id=?").run('En espera — ' + label, id);
   }
-  if (prev) await tellInstaller(prev, `❌ La instalación de *${c.name}* fue cancelada (${label}). No hace falta que vayas.`);
+  if (prev && !fromInstaller) await tellInstaller(prev, `❌ La instalación de *${c.name}* fue cancelada (${label}). No hace falta que vayas.`);
+  if (fromInstaller) {
+    const msg = `❌ *No se pudo instalar* — ${c.name}\nInformó: ${actor}\nMotivo: ${label}\n\nLa solicitud quedó *en espera* (Clientes → Inactivos). Podés volver a asignarla con "Aprobar e instalar" cuando se pueda, o rechazarla.`;
+    try { await waNotify().notifyAdmin(msg); } catch (_) {}
+    for (const s of officeRecipients()) await sendTo(s.phone, msg);
+  }
   logEvent(id, `${outcome === 'reject' ? 'Solicitud rechazada' : 'Instalación en espera'}: ${label} (por ${actor})`);
   logger.info(`[Instalación] ${c.name}: ${outcome === 'reject' ? 'rechazada' : 'en espera'} — ${label} (${actor})`);
   return { ok: true, outcome, label, mk };

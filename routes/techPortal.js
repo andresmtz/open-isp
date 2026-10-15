@@ -192,6 +192,7 @@ router.get('/', requireTechSession, (req, res) => {
       if (t.kind === 'install' && t.customer_id) {
         const c = db.prepare('SELECT reg_wifi_ssid, reg_wifi_status, reg_onu_mac FROM customers WHERE id=?').get(t.customer_id) || {};
         t.equipment = { ssid: c.reg_wifi_ssid || '', status: c.reg_wifi_status || '', mac: c.reg_onu_mac || '', labels: docs.list(t.customer_id, { kinds: ['etiqueta'] }).length };
+        t.installCancel = require('../services/installationService').CANCEL_REASONS;
       }
     }
   } catch (_) {}
@@ -283,6 +284,22 @@ router.post('/orders/:ticketId/replace', requireTechSession, equipUpload.array('
     setImmediate(() => require('../services/onuAutoProvisionService').replaceOnu(t.customer_id, imgs, { reasonKey: req.body.reason, reasonText: req.body.detail, ticketId: t.id, actor: by, wifi })
       .catch(e => require('../config/logger').logger.warn('[Cambio de equipo] ' + e.message)));
     req.session._msg = { type: 'success', text: 'Foto recibida: se está identificando y configurando la ONU nueva (1 a 3 minutos). Te llega el resultado por WhatsApp. La ONU vieja se da de baja recién cuando la nueva funcione.' };
+  } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
+  res.redirect('/tech');
+});
+
+// Instalación que no se pudo hacer: el técnico informa el motivo; la solicitud queda en espera y se avisa a la oficina
+router.post('/orders/:ticketId/no-install', requireTechSession, express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const t = db.prepare('SELECT * FROM tickets WHERE id=?').get(Number(req.params.ticketId));
+    if (!t || Number(t.technician_id) !== Number(req.session.techId) || t.kind !== 'install' || !['open', 'in_progress'].includes(t.status)) throw new Error('Orden no disponible.');
+    const c = db.prepare('SELECT status FROM customers WHERE id=?').get(t.customer_id);
+    if (!c || c.status !== 'inactive') throw new Error('Esta instalación ya figura como realizada.');
+    const inst = require('../services/installationService');
+    const motive = Object.prototype.hasOwnProperty.call(inst.CANCEL_REASONS, req.body.motive) ? req.body.motive : 'otro';
+    if (motive === 'otro' && String(req.body.detail || '').trim().length < 3) throw new Error('Contá brevemente por qué no se pudo instalar.');
+    await inst.cancelInstallation(t.customer_id, { motive, reason: req.body.detail, outcome: 'postpone', actor: `técnico ${req.session.techName || ''}`.trim(), fromInstaller: true });
+    req.session._msg = { type: 'success', text: 'Listo: quedó registrado que no se pudo instalar. La oficina ya fue avisada.' };
   } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
   res.redirect('/tech');
 });
@@ -407,6 +424,7 @@ router.post('/tickets/:id/update', requireTechSession, upload.array('photos', 10
     if (!['in_progress', 'resolved'].includes(String(status))) throw new Error('estado inválido');
     const _k = db.prepare('SELECT kind FROM tickets WHERE id = ?').get(ticketId);
     if (_k && _k.kind === 'retiro' && String(status) === 'resolved') throw new Error('Para cerrar un retiro usá "Equipo retirado" o "No se pudo retirar".');
+    if (_k && _k.kind === 'install' && String(status) === 'resolved') throw new Error('La instalación se cierra sola cuando la ONU queda configurada. Si no se pudo instalar, usá "No se pudo instalar".');
     
     // Prepare photo data
     let photoPaths = [];

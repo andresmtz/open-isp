@@ -117,6 +117,15 @@
             <% if (eq.status) { %><div style="font-size:12px;margin-top:6px;color:<%= eq.status === 'aplicado' ? 'var(--success,#10b981)' : (eq.status.indexOf('error') === 0 ? '#ef4444' : 'var(--muted)') %>">WiFi: <%= eq.status === 'aplicado' ? 'configurado en la ONU' : (eq.status === 'pendiente' ? 'pendiente: la oficina vincula la ONU y se aplica solo' : eq.status) %></div><% } %>
             <button class="btn btn-primary btn-sm" style="margin-top:8px;width:100%"><i class="bi bi-upload"></i> Guardar datos del equipo</button>
           </form>
+          <details style="margin-top:10px;padding:10px;border:1px solid rgba(239,68,68,.4);border-radius:12px">
+            <summary style="font-weight:700;font-size:13px;cursor:pointer;color:#ef4444"><i class="bi bi-x-circle"></i> No se pudo instalar</summary>
+            <form method="POST" action="/tech/orders/<%= ticket.id %>/no-install" style="margin-top:8px" onsubmit="return confirm('¿Confirmás que NO se pudo hacer la instalación? La oficina recibe el aviso.')">
+              <label style="font-size:12px;display:block;margin:4px 0 2px">Motivo</label>
+              <select name="motive" class="p-input" style="width:100%"><% Object.keys(ticket.installCancel || {}).forEach(function(k){ %><option value="<%= k %>"><%= ticket.installCancel[k] %></option><% }); %></select>
+              <input name="detail" class="p-input" maxlength="200" placeholder="Detalle (ej.: la caja más cercana no tiene puertos libres)" style="width:100%;margin-top:6px">
+              <button class="btn btn-sm" style="margin-top:8px;width:100%;border:1px solid #ef4444;color:#ef4444"><i class="bi bi-send"></i> Avisar a la oficina</button>
+            </form>
+          </details>
           <% if (eq.labels) { %>
             <div id="prov-<%= ticket.id %>" class="prov-watch" data-id="<%= ticket.id %>" style="margin-top:8px;padding:10px;border-radius:12px;border:1px solid var(--border);font-size:13px"><i class="bi bi-hourglass-split"></i> Configurando la ONU automáticamente… (1 a 3 minutos). Esta pantalla se actualiza sola.</div>
           <% } %>
@@ -145,7 +154,7 @@
         <% } %>
       </div>
 
-      <% if (ticket.kind !== 'retiro') { %>
+      <% if (ticket.kind !== 'retiro' && ticket.kind !== 'install') { %>
       <button type="button" class="p-btn success" onclick="openResolve(<%= ticket.id %>)"><i class="bi bi-check-circle-fill"></i> <%= t('tech.ticket.mark_resolved', 'Tandai Selesai') %></button>
       <% } %>
     </div>

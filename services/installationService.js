@@ -231,12 +231,11 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     `Instalación de ${pkg.name} para ${cust.name}.\n` +
     `Teléfono: ${cust.phone || '-'}\nDirección: ${cust.address || '-'}` + (loc ? `\nUbicación: ${loc}` : '') +
     `\nFecha prevista: ${fmtDate(plan.installDate)}` +
-    (pppoeUser ? `\nCuenta: ${pppoeUser} (el usuario PPPoE y la IP se crean al configurar la ONU)` : '') +
     (String(notes || '').trim() ? `\nNotas: ${String(notes).trim()}` : '') +
     `\n\nCobrar al cliente al instalar: ${fmtMoney(plan.installPayment)} (primer mes del plan ${pkg.name}).` +
     `\nExplicale al cliente: su primera factura vence el ${fmtDate(plan.dueDate)} y es de ${fmtMoney(amount)}` + (amount < plan.monthly ? ' (compensa los días del mes de instalación)' : '') +
     `; después paga ${fmtMoney(plan.monthly)} por mes, con vencimiento el día ${Number(plan.dueDate.slice(8, 10))} de cada mes.` +
-    `\nAl terminar, cerrá esta orden como resuelta: el cliente recibe la bienvenida.`;
+    `\n\nAl terminar: en esta orden subí la foto de la etiqueta de la ONU y el WiFi que eligió el cliente. La ONU se configura sola y la orden se cierra sola cuando el cliente tiene internet (te llega el aviso con la potencia).`;
   // (la foto de la casa, si se cargó, se ve en esta orden en el portal del técnico)
   const tk = require('./ticketService').createTicket(id, `Instalación nueva — ${cust.name}`, body, { technicianId: who.type === 'tech' ? who.id : null, status: 'in_progress' });
   const ticketId = Number(tk && tk.lastInsertRowid);
@@ -251,7 +250,7 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     `. Después paga ${fmtMoney(plan.monthly)} por mes, con vencimiento el día ${Number(plan.dueDate.slice(8, 10))} de cada mes.` +
     `\n_(Si instalás otro día, el monto de esa primera factura se ajusta solo a la fecha real.)_` +
     (String(notes || '').trim() ? `\n\n📝 ${String(notes).trim()}` : '') +
-    `\n\nAl terminar, cerrá la orden de trabajo N.º ${ticketId} como resuelta.`;
+    `\n\nAl terminar: en tu orden N.º ${ticketId} del panel subí la foto de la etiqueta de la ONU y el WiFi que eligió el cliente. La ONU se configura sola y te llega el aviso con la potencia.`;
   let installerNotified = false;
   if (who.type === 'admin') { try { await waNotify().notifyAdmin(waMsg); installerNotified = true; } catch (_) {} }
   else {

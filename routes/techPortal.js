@@ -196,13 +196,13 @@ router.get('/', requireTechSession, (req, res) => {
     }
   } catch (_) {}
   
-  // Órdenes terminadas en las últimas 24 h: el técnico ve el resultado y la potencia con que quedó
+  // Órdenes terminadas hoy: el técnico ve el resultado y la potencia con que quedó
   let recentDone = [];
   try {
     recentDone = db.prepare(`SELECT t.id, t.kind, t.subject, t.technician_notes, t.updated_at, t.customer_id, c.name AS customer_name, c.reg_provision_status, c.status AS customer_status
       FROM tickets t JOIN customers c ON c.id = t.customer_id
-      WHERE t.technician_id = ? AND t.status = 'resolved' AND t.updated_at >= datetime(NOW_LOCAL(), '-1 day')
-      ORDER BY t.updated_at DESC LIMIT 10`).all(techId);
+      WHERE t.technician_id = ? AND t.status = 'resolved' AND date(t.updated_at) = date(NOW_LOCAL())
+      ORDER BY t.updated_at DESC LIMIT 30`).all(techId);
   } catch (_) {}
 
   res.render('tech/dashboard', {
@@ -403,7 +403,7 @@ router.post('/tickets/:id/update', requireTechSession, upload.array('photos', 10
     // Solo sus propios reclamos, y solo estos estados
     const own = db.prepare('SELECT technician_id, status FROM tickets WHERE id = ?').get(ticketId);
     if (!own || Number(own.technician_id) !== Number(techId)) throw new Error('este reclamo no está asignado a vos');
-    if (own.status === 'resolved') throw new Error('esta orden ya estaba cerrada (por ejemplo, la instalación se completó sola). Mirá abajo, en "Terminadas en las últimas 24 horas".');
+    if (own.status === 'resolved') throw new Error('esta orden ya estaba cerrada (por ejemplo, la instalación se completó sola). Tocá "Resueltos hoy" para ver el resultado y la potencia.');
     if (!['in_progress', 'resolved'].includes(String(status))) throw new Error('estado inválido');
     const _k = db.prepare('SELECT kind FROM tickets WHERE id = ?').get(ticketId);
     if (_k && _k.kind === 'retiro' && String(status) === 'resolved') throw new Error('Para cerrar un retiro usá "Equipo retirado" o "No se pudo retirar".');

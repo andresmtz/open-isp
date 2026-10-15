@@ -5,17 +5,20 @@
   <div style="font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px"><i class="bi bi-person-badge" style="color:var(--primary)"></i><%= techName %></div>
 </div>
 
+<% var _done = (typeof recentDone !== 'undefined') ? recentDone : []; %>
 <div class="p-stat-grid">
-  <div class="p-stat" style="border-left:3px solid var(--warning)">
+  <button type="button" class="p-stat tech-tab" data-tab="active" onclick="techTab('active')" style="border-left:3px solid var(--warning);cursor:pointer;font:inherit;color:inherit;width:100%">
     <div class="lbl"><%= t('tech.dashboard.in_progress', 'Sedang Dikerjakan') %></div>
-    <div class="val" style="color:var(--warning)"><%= stats.inProgress %></div>
-  </div>
-  <div class="p-stat" style="border-left:3px solid var(--success)">
+    <div class="val" style="color:var(--warning)"><%= tickets.length %></div>
+  </button>
+  <button type="button" class="p-stat tech-tab" data-tab="done" onclick="techTab('done')" style="border-left:3px solid var(--success);cursor:pointer;font:inherit;color:inherit;width:100%">
     <div class="lbl"><%= t('tech.dashboard.resolved_today', 'Selesai Hari Ini') %></div>
-    <div class="val" style="color:var(--success)"><%= stats.resolved %></div>
-  </div>
+    <div class="val" style="color:var(--success)"><%= _done.length %></div>
+  </button>
 </div>
+<style>.tech-tab.on{outline:2px solid var(--primary);outline-offset:-2px}</style>
 
+<div id="tab-active">
 <div class="p-sec"><i class="bi bi-list-task"></i> <%= t('tech.dashboard.active_tasks', 'Tugas Aktif Anda') %> (<%= tickets.length %>)</div>
 
 <% if (tickets.length === 0) { %>
@@ -184,6 +187,7 @@
     </div>
   <% }); %>
 <% } %>
+</div>
 
 <script>
   function showModal(id){ var el=document.getElementById(id); if(el) el.classList.add('show'); }
@@ -217,9 +221,10 @@
   }
 </script>
 
-<% if (typeof recentDone !== 'undefined' && recentDone.length) { %>
-  <div class="p-sec" style="margin-top:18px"><i class="bi bi-check2-all"></i> Terminadas en las últimas 24 horas (<%= recentDone.length %>)</div>
-  <% recentDone.forEach(function(d){ var _inst = String(d.kind || '').indexOf('install') === 0; %>
+<div id="tab-done" style="display:none">
+  <div class="p-sec"><i class="bi bi-check2-all"></i> Resueltos hoy (<%= _done.length %>)</div>
+  <% if (!_done.length) { %><div class="p-empty"><p style="font-size:13px">Todavía no terminaste órdenes hoy.</p></div><% } %>
+  <% _done.forEach(function(d){ var _inst = String(d.kind || '').indexOf('install') === 0; %>
     <div class="p-card" style="border-left:3px solid var(--success)">
       <div style="display:flex;justify-content:space-between;gap:8px"><b><%= d.customer_name %></b><span class="muted" style="font-size:11px"><%= String(d.updated_at || '').slice(11,16) %></span></div>
       <div class="muted" style="font-size:12px"><%= d.subject %></div>
@@ -233,7 +238,7 @@
       <% } %>
     </div>
   <% }); %>
-<% } %>
+</div>
 
 <%- include('partials/bottom_nav') %><script>
 async function measurePower(id, btn){
@@ -241,7 +246,7 @@ async function measurePower(id, btn){
   if (btn) btn.disabled = true; box.innerHTML = '<span class="muted">Midiendo en la OLT…</span>';
   try {
     var j = await (await fetch('/tech/orders/' + id + '/power', { headers: { Accept: 'application/json' } })).json();
-    if (!j.ok) { box.innerHTML = '<span style="color:#ef4444">' + (j.message || 'Error') + '</span>'; }
+    if (!j.ok) { box.innerHTML = /no tiene una ONU vinculada/i.test(j.message || '') ? '<span class="muted">Se mide cuando la ONU esté conectada y configurada.</span>' : '<span style="color:#ef4444">' + (j.message || 'Error') + '</span>'; }
     else {
       var col = { green: '#10b981', orange: '#f59e0b', red: '#ef4444', gray: '#94a3b8' }[j.color] || '#94a3b8';
       box.innerHTML = '<div style="border:2px solid ' + col + ';border-radius:12px;padding:10px">'
@@ -260,7 +265,7 @@ async function measurePower(id, btn){
     boxes.forEach(function(b){
       fetch('/tech/orders/' + b.getAttribute('data-id') + '/status', { headers: { Accept: 'application/json' } }).then(function(r){ return r.json(); }).then(function(j){
         if (!j.ok) return;
-        if (j.resolved) { b.innerHTML = '<b style="color:#10b981"><i class="bi bi-check-circle-fill"></i> ¡Instalación completa!</b> Actualizando…'; setTimeout(function(){ location.reload(); }, 1500); return; }
+        if (j.resolved) { b.innerHTML = '<b style="color:#10b981"><i class="bi bi-check-circle-fill"></i> ¡Instalación completa!</b> Actualizando…'; setTimeout(function(){ location.hash = 'resueltos'; location.reload(); }, 1500); return; }
         if (j.provision === 'ok') b.innerHTML = '<b style="color:#10b981"><i class="bi bi-check-circle-fill"></i> ONU configurada.</b>';
         else if (j.provision.indexOf('error') === 0) b.innerHTML = '<b style="color:#ef4444"><i class="bi bi-exclamation-triangle-fill"></i> La configuración automática falló (' + j.provision.slice(7) + ').</b> La oficina ya fue avisada; esperá su indicación.';
         else if (j.label && j.label !== 'sin lectura') b.innerHTML = '<i class="bi bi-hourglass-split"></i> Etiqueta leída: ' + j.label + '. Configurando la ONU… Esta pantalla se actualiza sola.';
@@ -271,6 +276,22 @@ async function measurePower(id, btn){
   tick(); setInterval(tick, 8000);
 })();
 // Al abrir el panel se mide sola la potencia de cada orden abierta (de a una, para no saturar la OLT)
-(async function(){ var boxes = document.querySelectorAll('.pw-auto'); for (var i = 0; i < boxes.length; i++) await measurePower(boxes[i].getAttribute('data-id')); })();
+function techTab(tab){
+  document.getElementById('tab-active').style.display = tab === 'active' ? '' : 'none';
+  document.getElementById('tab-done').style.display = tab === 'done' ? '' : 'none';
+  document.querySelectorAll('.tech-tab').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-tab') === tab); });
+  try { history.replaceState(null, '', tab === 'done' ? '#resueltos' : location.pathname); } catch (_) {}
+  measureVisible();
+}
+var _measured = {};
+async function measureVisible(){
+  var boxes = document.querySelectorAll('.pw-auto');
+  for (var i = 0; i < boxes.length; i++) {
+    var b = boxes[i], id = b.getAttribute('data-id');
+    if (_measured[id] || !b.offsetParent) continue;
+    _measured[id] = 1; await measurePower(id);
+  }
+}
+techTab(location.hash === '#resueltos' ? 'done' : 'active');
 </script>
 

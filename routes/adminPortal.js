@@ -5676,33 +5676,68 @@ async function oltOnuDevices() {
   return { devices: out, weak };
 }
 
+// Lista de equipos: la OLT es la base (todas las ONU, compatibles o no con TR-069); las que además
+// informan por TR-069 suman sus datos (SSID, equipos conectados, modelo) y conservan sus acciones.
+function mapAcsDevice(d, activeSessionsMap) {
+  const pppoeUser = customerDevice.extractPppoeUser(d);
+  const isPppoeActive = pppoeUser && pppoeUser !== 'N/A' && pppoeUser !== '-' && activeSessionsMap.has(pppoeUser.toLowerCase());
+  const mapped = customerDevice.mapDeviceData(d, d._tags?.[0] || d._id, isPppoeActive) || {};
+  return {
+    id: String(d._id || ''),
+    tags: Array.isArray(d._tags) ? d._tags.filter(Boolean).map(String) : [],
+    serialNumber: String(mapped.serialNumber || '-'),
+    lastInform: d._lastInform,
+    lastInformLabel: String(mapped.lastInform || '-'),
+    lastInformAgo: String(mapped.lastInformAgo || '-'),
+    lastSync: d._updatedAt || mapped.lastSyncRaw || d._lastInform || '',
+    lastSyncLabel: String(mapped.lastSync || '-'),
+    lastSyncAgo: String(mapped.lastSyncAgo || '-'),
+    syncInProgress: !!mapped.syncInProgress,
+    syncPendingCount: Number(mapped.syncPendingCount || 0),
+    syncStatusLabel: String(mapped.syncStatusLabel || 'Idle'),
+    status: String(mapped.status || 'unknown').toLowerCase(),
+    pppoeIP: String(mapped.pppoeIP || '-'),
+    pppoeUsername: String(mapped.pppoeUsername || '-'),
+    rxPower: String(mapped.rxPower || '-'),
+    uptime: String(mapped.uptime || '-'),
+    model: String(mapped.model || '-'),
+    softwareVersion: String(mapped.softwareVersion || '-'),
+    userConnected: mapped.totalAssociations ?? '-',
+    ssid: String(mapped.ssid || '-'),
+    acs_server_id: d._acs_server_id || 'legacy',
+    acs_server_name: d._acs_server_name || 'Default ACS',
+    source: 'tr069', tr069: true,
+  };
+}
+
+async function mergedDevices() {
+  const [acs, od] = await Promise.all([
+    customerDevice.listAllDevices(999999).catch(() => ({ ok: false, devices: [] })),
+    oltOnuDevices().catch(() => ({ devices: [], weak: 0 })),
+  ]);
+  const activeSessionsMap = await require('../services/mikrotikService').getActivePppoeSessionsMap().catch(() => new Map());
+  const acsList = (acs && acs.ok && Array.isArray(acs.devices) ? acs.devices : []).map(d => mapAcsDevice(d, activeSessionsMap));
+  const key = v => String(v || '').trim().toLowerCase();
+  const acsByPppoe = new Map(acsList.filter(d => d.pppoeUsername && d.pppoeUsername !== '-' && d.pppoeUsername !== 'N/A').map(d => [key(d.pppoeUsername), d]));
+  const used = new Set();
+  const out = od.devices.map(o => {
+    const a = acsByPppoe.get(key(o.pppoeUsername));
+    if (!a) return { ...o, tr069: false };
+    used.add(a);
+    // Datos de la OLT (estado, potencia, distancia) + datos TR-069 (modelo, SSID, equipos) y acciones de TR-069
+    return { ...a, tags: o.tags, status: o.status, rxPower: o.rxPower !== '-' ? o.rxPower : a.rxPower,
+      uptime: a.uptime !== '-' ? a.uptime : o.uptime, pppoeIP: a.pppoeIP !== '-' ? a.pppoeIP : o.pppoeIP,
+      note: o.note, oltRef: o.syncStatusLabel, tr069: true };
+  });
+  for (const a of acsList) if (!used.has(a)) out.push(a);
+  return { devices: out, weak: od.weak || 0, oltCount: od.devices.length, tr069Count: acsList.length };
+}
+
 router.get('/api/stats', requireAdmin, async (req, res) => {
   try {
-    const result = await customerDevice.listAllDevices(999999);
-    if (!result.ok || !result.devices || !result.devices.length) {
-      const od = await oltOnuDevices();
-      if (od.devices.length || !result.ok) {
-        const online = od.devices.filter(d => d.status === 'online').length;
-        return res.json({ total: od.devices.length, online, offline: od.devices.length - online, warning: od.weak, source: 'olt', lastUpdate: getNowLocalISO() });
-      }
-    }
-    const mikrotikService = require('../services/mikrotikService');
-    const activeSessionsMap = await mikrotikService.getActivePppoeSessionsMap().catch(() => new Map());
-
-    const devices = result.devices;
-    const total = devices.length;
-    let online = 0, offline = 0;
-
-    devices.forEach(d => {
-      const pppoeUser = customerDevice.extractPppoeUser(d);
-      const isPppoeActive = pppoeUser && pppoeUser !== 'N/A' && pppoeUser !== '-' && activeSessionsMap.has(pppoeUser.toLowerCase());
-      const mapped = customerDevice.mapDeviceData(d, d._tags?.[0] || d._id, isPppoeActive) || {};
-      const status = String(mapped.status || 'offline').toLowerCase();
-      if (status === 'online') online++;
-      else offline++;
-    });
-
-    res.json({ total, online, offline, warning: 0, lastUpdate: getNowLocalISO() });
+    const m = await mergedDevices();
+    const online = m.devices.filter(d => d.status === 'online').length;
+    res.json({ total: m.devices.length, online, offline: m.devices.length - online, warning: m.weak, tr069: m.tr069Count, lastUpdate: getNowLocalISO() });
   } catch (e) {
     res.status(500).json({ error: 'Failed to get stats', detail: e.message });
   }
@@ -5711,69 +5746,23 @@ router.get('/api/stats', requireAdmin, async (req, res) => {
 router.get('/api/devices', requireAdmin, async (req, res) => {
   try {
     const { search, status, limit = 999999, offset = 0 } = req.query;
-    const result = await customerDevice.listAllDevices(999999);
-    if (!result.ok || !result.devices || !result.devices.length) {
-      const od = await oltOnuDevices();
-      if (od.devices.length || !result.ok) {
-        let devs = od.devices;
-        if (search) { const s = String(search).toLowerCase(); devs = devs.filter(d => [d.id, d.serialNumber, d.pppoeUsername, d.pppoeIP, ...(d.tags || [])].some(v => String(v || '').toLowerCase().includes(s))); }
-        if (status && status !== 'all') devs = devs.filter(d => d.status === String(status).toLowerCase());
-        return res.json({ devices: devs, total: od.devices.length, source: 'olt' });
-      }
-    }
-    const mikrotikService = require('../services/mikrotikService');
-    const activeSessionsMap = await mikrotikService.getActivePppoeSessionsMap().catch(() => new Map());
-
-    let devices = result.devices.map(d => {
-      const pppoeUser = customerDevice.extractPppoeUser(d);
-      const isPppoeActive = pppoeUser && pppoeUser !== 'N/A' && pppoeUser !== '-' && activeSessionsMap.has(pppoeUser.toLowerCase());
-      const mapped = customerDevice.mapDeviceData(d, d._tags?.[0] || d._id, isPppoeActive) || {};
-      const tagsArr = Array.isArray(d._tags) ? d._tags.filter(Boolean).map(String) : [];
-      return {
-        id: String(d._id || ''),
-        tags: tagsArr,
-        serialNumber: String(mapped.serialNumber || '-'),
-        lastInform: d._lastInform,
-        lastInformLabel: String(mapped.lastInform || '-'),
-        lastInformAgo: String(mapped.lastInformAgo || '-'),
-        lastSync: d._updatedAt || mapped.lastSyncRaw || d._lastInform || '',
-        lastSyncLabel: String(mapped.lastSync || '-'),
-        lastSyncAgo: String(mapped.lastSyncAgo || '-'),
-        syncInProgress: !!mapped.syncInProgress,
-        syncPendingCount: Number(mapped.syncPendingCount || 0),
-        syncStatusLabel: String(mapped.syncStatusLabel || 'Idle'),
-        status: String(mapped.status || 'unknown').toLowerCase(),
-        pppoeIP: String(mapped.pppoeIP || '-'),
-        pppoeUsername: String(mapped.pppoeUsername || '-'),
-        rxPower: String(mapped.rxPower || '-'),
-        uptime: String(mapped.uptime || '-'),
-        model: String(mapped.model || '-'),
-        softwareVersion: String(mapped.softwareVersion || '-'),
-        userConnected: mapped.totalAssociations ?? '-',
-        ssid: String(mapped.ssid || '-'),
-        acs_server_id: d._acs_server_id || 'legacy',
-        acs_server_name: d._acs_server_name || 'Default ACS'
-      };
-    });
-    if (search) { 
-      const s = search.toLowerCase();
-      const billingCustomers = customerSvc.getAllCustomers(s);
+    const m = await mergedDevices();
+    let devices = m.devices;
+    if (search) {
+      const q = String(search).toLowerCase();
+      const billingCustomers = customerSvc.getAllCustomers(q);
       const matchingTags = new Set(billingCustomers.map(c => c.genieacs_tag?.toLowerCase()).filter(Boolean));
       const matchingPppoes = new Set(billingCustomers.map(c => c.pppoe_username?.toLowerCase()).filter(Boolean));
-
-      devices = devices.filter(d => 
-        String(d.id || '').toLowerCase().includes(s) ||
-        (Array.isArray(d.tags) && d.tags.some(t => String(t || '').toLowerCase().includes(s) || matchingTags.has(String(t || '').toLowerCase()))) || 
-        String(d.serialNumber || '').toLowerCase().includes(s) || 
-        String(d.pppoeIP || '').toLowerCase().includes(s) ||
-        (String(d.pppoeUsername || '') !== 'N/A' && String(d.pppoeUsername || '').toLowerCase().includes(s)) ||
-        matchingPppoes.has(String(d.pppoeUsername || '').toLowerCase())
-      ); 
+      devices = devices.filter(d =>
+        [d.id, d.serialNumber, d.pppoeIP, d.oltRef, d.syncStatusLabel, ...(d.tags || [])].some(v => String(v || '').toLowerCase().includes(q)) ||
+        (Array.isArray(d.tags) && d.tags.some(t => matchingTags.has(String(t || '').toLowerCase()))) ||
+        (String(d.pppoeUsername || '') !== 'N/A' && String(d.pppoeUsername || '').toLowerCase().includes(q)) ||
+        matchingPppoes.has(String(d.pppoeUsername || '').toLowerCase()));
     }
-    if (status && status !== 'all') devices = devices.filter(d => d.status === status);
+    if (status && status !== 'all') devices = devices.filter(d => d.status === String(status).toLowerCase());
     const total = devices.length;
     const paginated = devices.slice(parseInt(offset), parseInt(offset) + parseInt(limit));
-    res.json({ devices: paginated, total, limit: parseInt(limit), offset: parseInt(offset) });
+    res.json({ devices: paginated, total, tr069: m.tr069Count, limit: parseInt(limit), offset: parseInt(offset) });
   } catch (e) {
     res.status(500).json({ error: 'Failed to get devices', detail: e.message });
   }

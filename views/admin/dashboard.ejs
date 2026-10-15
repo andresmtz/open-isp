@@ -669,6 +669,7 @@ async function loadDevices() {
           <td class="text-muted">${i + 1}</td>
           <td>
             <span class="badge bm">${tagStr}</span>
+            ${d.tr069 ? '<span class="badge bs" style="margin-left:4px" title="Gestionada por TR-069: SSID y equipos conectados">TR-069</span>' : '<span class="badge bm" style="margin-left:4px;opacity:.7" title="Solo datos de la OLT">OLT</span>'}
             <div style="font-size:11px;color:var(--muted);margin-top:4px" title="${I18N.lastInform}"><i class="bi bi-clock"></i> ${lastInformStr}</div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px" title="${I18N.lastSync}"><i class="bi bi-arrow-repeat"></i> ${lastSyncStr}</div>
           </td>

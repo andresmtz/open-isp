@@ -208,6 +208,7 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     (pppoeUser ? `\nPPPoE: ${pppoeUser} / ${pppoePass || '-'}` : '') +
     (String(notes || '').trim() ? `\nNotas: ${String(notes).trim()}` : '') +
     `\n\nEl costo de la instalación lo cobrás en el lugar. Al terminar, cerrá esta orden como resuelta: el cliente recibe la bienvenida.`;
+  // (la foto de la casa, si se cargó, se ve en esta orden en el portal del técnico)
   const tk = require('./ticketService').createTicket(id, `Instalación nueva — ${cust.name}`, body, { technicianId: who.type === 'tech' ? who.id : null, status: 'in_progress' });
   const ticketId = Number(tk && tk.lastInsertRowid);
   try { db.prepare("UPDATE tickets SET kind='install', technician_notes=? WHERE id=?").run(who.type === 'tech' ? '' : `Instala: ${who.name}`, ticketId); } catch (_) {}
@@ -220,7 +221,17 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     `\n\nAl terminar, cerrá la orden de trabajo N.º ${ticketId} como resuelta.`;
   let installerNotified = false;
   if (who.type === 'admin') { try { await waNotify().notifyAdmin(waMsg); installerNotified = true; } catch (_) {} }
-  else installerNotified = await sendTo(who.phone, waMsg);
+  else {
+    installerNotified = await sendTo(who.phone, waMsg);
+    // Foto de la casa (nunca la cédula) para ubicar el domicilio
+    try {
+      const docs = require('./customerDocumentService');
+      const casa = docs.list(id, { kinds: ['casa'] })[0];
+      const fp = casa && docs.filePath(casa);
+      const n = regional.normalizePhone(String(who.phone || '').replace(/\D/g, ''));
+      if (fp && n) await waNotify().sendImage(n, require('fs').readFileSync(fp), `🏠 Casa de ${cust.name} — ${cust.address || ''}`.trim());
+    } catch (e) { logger.warn('[Instalación] foto de la casa: ' + e.message); }
+  }
   // El administrador siempre recibe las credenciales (si no es quien instala)
   if (who.type !== 'admin' && pppoeUser) {
     try { await waNotify().notifyAdmin(`🔑 *Alta de ${cust.name}*\nInstala: ${who.name}\nPPPoE: ${pppoeUser} / ${pppoePass || '-'}\nPrimera factura: ${regional.formatMoney(amount)} (vence ${fmtDate(plan.dueDate)})`); } catch (_) {}

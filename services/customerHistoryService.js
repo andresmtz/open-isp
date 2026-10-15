@@ -112,6 +112,12 @@ function timeline(customerId, { money = true, limit = 300 } = {}) {
     if (t.status === 'resolved') push({ at: String(t.updated_at), kind: 'reclamo', icon: 'check2-square', title: `${t.kind === 'install' ? 'Instalación' : 'Reclamo'} N.º ${t.id} resuelto`, detail: t.technician_notes ? String(t.technician_notes).slice(0, 160) : '' });
   });
 
+  // Fotos y documentos cargados
+  if (tableExists('customer_documents')) {
+    safe(() => db.prepare('SELECT * FROM customer_documents WHERE customer_id=?').all(id)).forEach(d => push({ at: String(d.created_at), kind: 'alta', icon: 'images',
+      title: `Foto agregada: ${({ cedula: 'cédula', casa: 'casa', otro: 'otro documento' })[d.kind] || d.kind}`, by: d.uploaded_by || '' }));
+  }
+
   // WhatsApp enviados
   safe(() => db.prepare("SELECT * FROM wa_chat_messages WHERE customer_id=? ORDER BY id DESC LIMIT 60").all(id)).forEach(m => {
     const first = String(m.message_text || '').split('\n').map(x => x.replace(/[*_]/g, '').trim()).find(Boolean) || '';

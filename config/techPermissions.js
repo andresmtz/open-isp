@@ -16,6 +16,7 @@ const BASE = [
   ['GET', '^/history$'],
   ['GET|POST', '^/logout$'],
   ['POST', `^/tickets/${ID}/update$`],        // solo sus reclamos (se valida en la ruta)
+  ['GET', `^/customers/${ID}/house/${ID}$`],    // foto de la casa del cliente de una orden suya (nunca la cédula)
 ];
 
 const CATALOG = [

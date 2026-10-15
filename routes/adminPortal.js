@@ -22,6 +22,9 @@ const XLSX = require('xlsx');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const qrisUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
+// Fotos de cédula y casa (services/customerDocumentService.js): en memoria, se reducen antes de guardar
+const docUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024, files: 8 },
+  fileFilter: (req, file, cb) => cb(null, /^image\//i.test(file.mimetype || '')) });
 
 // Promo slides upload storage
 const promoSlidesStorage = multer.diskStorage({
@@ -2555,6 +2558,44 @@ router.get('/customers/:id/history', requireAdminSession, (req, res) => {
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 
+// ─── Fotos y documentos del cliente (cédula, casa). Archivos privados: solo por estas rutas ───
+router.get('/customers/:id/documents', requireAdminSession, (req, res) => {
+  try {
+    const docs = require('../services/customerDocumentService');
+    const id = Number(req.params.id);
+    res.json({ ok: true, kinds: docs.KINDS, canEdit: staffPerms.has(req.session, 'clientes_alta'),
+      docs: docs.list(id).map(d => ({ id: d.id, kind: d.kind, label: docs.KINDS[d.kind] || d.kind, at: d.created_at, by: d.uploaded_by, url: `/admin/customers/${id}/documents/${d.id}` })) });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+router.get('/customers/:id/documents/:docId', requireAdminSession, (req, res) => {
+  const docs = require('../services/customerDocumentService');
+  const d = docs.get(req.params.docId);
+  if (!d || Number(d.customer_id) !== Number(req.params.id)) return res.status(404).send('No encontrado');
+  const p = docs.filePath(d);
+  if (!p) return res.status(404).send('Archivo no encontrado');
+  res.set('Cache-Control', 'private, max-age=300');
+  res.type('jpg').sendFile(p);
+});
+router.post('/customers/:id/documents', requireAdminSession, docUpload.array('files', 6), async (req, res) => {
+  try {
+    const docs = require('../services/customerDocumentService');
+    const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    if (!(req.files || []).length) throw new Error('Elegí al menos una foto.');
+    let n = 0;
+    for (const f of req.files) { await docs.add(Number(req.params.id), String(req.body.kind || 'otro'), f.buffer, actor); n++; }
+    res.json({ ok: true, message: `${n} foto(s) guardada(s).` });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+router.post('/customers/:id/documents/:docId/delete', requireAdminSession, (req, res) => {
+  try {
+    const docs = require('../services/customerDocumentService');
+    const d = docs.get(req.params.docId);
+    if (!d || Number(d.customer_id) !== Number(req.params.id)) throw new Error('No encontrado');
+    docs.remove(d.id, req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador'));
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
 router.get('/customers/:id/payment-info', requireAdminSession, (req, res) => {
   try {
     const pay = require('../services/paymentReversalService');
@@ -4422,11 +4463,18 @@ router.post('/customers/auto-deactivate-now', requireAdminSession, restrictToAdm
 });
 
 // ─── SOLICITUDES DE INSTALACIÓN (Inscriptos): services/installationService.js ───
-router.post('/registrations', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
+router.post('/registrations', requireAdminSession, docUpload.fields([{ name: 'doc_cedula', maxCount: 2 }, { name: 'doc_casa', maxCount: 4 }]), async (req, res) => {
   try {
     const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
     const c = await require('../services/installationService').createRequest(req.body || {}, { source: 'Panel', actor });
-    req.session._msg = { type: 'success', text: `Solicitud de instalación de ${c.name} cargada (Inscripto). Para asignarla: menú ⋮ → Aprobar e instalar.` };
+    const docs = require('../services/customerDocumentService');
+    let nDocs = 0; const docErr = [];
+    for (const [field, kind] of [['doc_cedula', 'cedula'], ['doc_casa', 'casa']]) {
+      for (const f of ((req.files || {})[field] || [])) {
+        try { await docs.add(c.id, kind, f.buffer, actor); nDocs++; } catch (e) { docErr.push(e.message); }
+      }
+    }
+    req.session._msg = { type: docErr.length ? 'error' : 'success', text: `Solicitud de instalación de ${c.name} cargada (Inscripto)` + (nDocs ? ` con ${nDocs} foto(s)` : '') + '. Para asignarla: botón "Aprobar e instalar".' + (docErr.length ? ' Fotos no guardadas: ' + docErr.join('; ') : '') };
   } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo cargar la solicitud: ' + e.message }; }
   res.redirect('/admin/customers?status=inactive');
 });

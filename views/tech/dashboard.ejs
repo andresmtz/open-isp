@@ -42,7 +42,15 @@
 
       <div class="ticket-msg">
         <div class="subj"><%= ticket.subject %></div>
-        <div><%= ticket.message %></div>
+        <div style="white-space:pre-wrap"><%= ticket.message %></div>
+        <% if (ticket.housePhotos && ticket.housePhotos.length) { %>
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <div style="color:var(--info);font-size:12px;margin-bottom:8px"><i class="bi bi-house-door"></i> Foto de la casa</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+              <% ticket.housePhotos.forEach(function(u){ %><a href="<%= u %>" target="_blank" rel="noopener"><img src="<%= u %>" class="p-img" alt="Casa del cliente" loading="lazy"></a><% }); %>
+            </div>
+          </div>
+        <% } %>
         <% if (ticket.customer_photos && ticket.customer_photos !== '' && ticket.customer_photos !== '[]') { %>
           <% var customerPhotos = JSON.parse(ticket.customer_photos || '[]'); %>
           <% if (customerPhotos.length > 0) { %>

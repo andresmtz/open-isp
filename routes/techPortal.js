@@ -171,6 +171,14 @@ router.get('/', requireTechSession, (req, res) => {
   const stats = techSvc.getTechStats(techId);
   if (!techPerms.has(req.session, 'reclamos_libres')) stats.open = null; // no ve cuántos reclamos hay sin asignar
   const myTickets = techSvc.getAssignedTickets(techId);
+  // Fotos de la casa del cliente (solo en órdenes abiertas o en curso; la cédula nunca se muestra al técnico)
+  try {
+    const docs = require('../services/customerDocumentService');
+    for (const t of myTickets) {
+      t.housePhotos = (t.customer_id && ['open', 'in_progress'].includes(t.status))
+        ? docs.list(t.customer_id, { kinds: ['casa'] }).map(d => `/tech/customers/${t.customer_id}/house/${d.id}`) : [];
+    }
+  } catch (_) {}
   
   res.render('tech/dashboard', {
     title: 'Panel del técnico', 
@@ -181,6 +189,17 @@ router.get('/', requireTechSession, (req, res) => {
     tickets: myTickets,
     msg: flashMsg(req)
   });
+});
+
+// Foto de la casa: solo si el técnico tiene una orden abierta o en curso de ese cliente
+router.get('/customers/:cid/house/:docId', requireTechSession, (req, res) => {
+  const docs = require('../services/customerDocumentService');
+  const d = docs.get(req.params.docId);
+  if (!d || d.kind !== 'casa' || Number(d.customer_id) !== Number(req.params.cid) || !docs.techHasCustomer(req.session.techId, d.customer_id)) return res.status(404).send('No disponible');
+  const p = docs.filePath(d);
+  if (!p) return res.status(404).send('No disponible');
+  res.set('Cache-Control', 'private, max-age=300');
+  res.type('jpg').sendFile(p);
 });
 
 // --- OPEN TICKETS (Pool) ---

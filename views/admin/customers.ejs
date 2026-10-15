@@ -380,6 +380,7 @@
                     <% } %>
                     <button type="button" class="act-item" onclick="viewCustDetail(<%= i %>)"><i class="bi bi-eye"></i> <%- t('admin.cust.view_detail','Lihat Detail &amp; MikroTik') %></button>
                     <button type="button" class="act-item" data-id="<%= c.id %>" onclick="openHistory(+this.dataset.id)"><i class="bi bi-clock-history"></i> Historial</button>
+                    <button type="button" class="act-item" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="openDocs(+this.dataset.id, this.dataset.name)"><i class="bi bi-images"></i> Fotos y documentos</button>
                     <div class="act-sep"></div>
                     <button type="button" class="act-item" onclick="copyCustId(<%= i %>)"><i class="bi bi-person-badge"></i> <%= t('admin.cust.copy_id','Salin ID Pelanggan') %></button>
                     <button type="button" class="act-item" onclick="copyCustIp(<%= i %>)"><i class="bi bi-hdd-network"></i> <%= t('admin.cust.copy_ip','Salin IP Pelanggan') %></button>
@@ -1241,10 +1242,27 @@
   </div>
 </div>
 
+<div class="mo" id="docsModal">
+  <div class="mb" style="max-width:640px">
+    <div class="mh"><span class="mt"><i class="bi bi-images"></i> <span id="docs_title">Fotos y documentos</span></span><button class="mc" onclick="closeModal('docsModal')">&times;</button></div>
+    <div class="mbody" style="max-height:74vh;overflow:auto">
+      <div id="docs_list"></div>
+      <form id="docs_form" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)" onsubmit="return docsUpload(event)">
+        <div class="form-row">
+          <div class="fg"><label class="fl">Tipo</label><select class="fs" name="kind"><option value="cedula">Cédula</option><option value="casa">Casa</option><option value="otro">Otro</option></select></div>
+          <div class="fg" style="flex:2"><label class="fl">Fotos</label><input class="fc" type="file" name="files" accept="image/*" multiple required></div>
+        </div>
+        <button class="btn btn-p btn-sm" id="docs_btn"><i class="bi bi-upload"></i> Agregar</button>
+        <div class="hint" style="margin-top:6px">La cédula solo la ven el administrador y la oficina. La foto de la casa la ve también el técnico mientras tenga una orden de este cliente.</div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="mo" id="newReqModal">
   <div class="mb" style="max-width:540px">
     <div class="mh"><span class="mt"><i class="bi bi-person-plus"></i> Nueva solicitud de instalación</span><button class="mc" onclick="closeModal('newReqModal')">&times;</button></div>
-    <form method="POST" action="/admin/registrations" data-loading="Guardando…">
+    <form method="POST" action="/admin/registrations" enctype="multipart/form-data" data-loading="Guardando…">
       <div class="mbody">
         <div class="hint" style="margin-bottom:10px">Queda como <b>Inscripto</b> (pendiente de instalación). Después se asigna con <b>Aprobar e instalar</b>.</div>
         <div class="fg"><label class="fl">Nombre y apellido *</label><input class="fc" name="name" required></div>
@@ -1260,6 +1278,10 @@
             <option value="">-- Elegí un plan --</option>
             <% packages.filter(p => p.is_active !== 0).forEach(p => { %><option value="<%= p.id %>"><%= p.name %><% if (_can('ver_facturas') && p.price !== undefined) { %> — <%= APP_CUR %> <%= Number(p.price).toLocaleString(APP_LOCALE) %><% } %></option><% }) %>
           </select>
+        </div>
+        <div class="form-row">
+          <div class="fg"><label class="fl"><i class="bi bi-person-vcard"></i> Foto de la cédula (frente y dorso)</label><input class="fc" type="file" name="doc_cedula" accept="image/*" multiple><div class="hint" style="margin-top:4px">Solo la ven el administrador y la oficina.</div></div>
+          <div class="fg"><label class="fl"><i class="bi bi-house-door"></i> Foto de la casa</label><input class="fc" type="file" name="doc_casa" accept="image/*" multiple><div class="hint" style="margin-top:4px">La ve también el técnico que haga la instalación.</div></div>
         </div>
         <div class="fg"><label class="fl">Notas (opcional)</label><textarea class="fc" name="notes" rows="2"></textarea></div>
       </div>
@@ -1748,6 +1770,52 @@ function editCust(idx) {
   loadRouterLists('edit', c.router_id || '', c.id || '');
 }
 
+var _docsId = null, _docsEdit = false;
+async function openDocs(id, name){
+  _docsId = id;
+  document.getElementById('docs_title').textContent = 'Fotos y documentos — ' + (name || '');
+  document.getElementById('docs_list').innerHTML = '<div class="text-muted" style="padding:12px">Cargando…</div>';
+  openModal('docsModal');
+  await docsLoad();
+}
+async function docsLoad(){
+  var j = await (await fetch('/admin/customers/' + _docsId + '/documents', { headers: { Accept: 'application/json' } })).json();
+  if (!j.ok) { document.getElementById('docs_list').innerHTML = '<div class="text-danger">' + (j.message || 'Error') + '</div>'; return; }
+  _docsEdit = !!j.canEdit;
+  document.getElementById('docs_form').style.display = _docsEdit ? '' : 'none';
+  var groups = { cedula: [], casa: [], otro: [] };
+  j.docs.forEach(function(d){ (groups[d.kind] = groups[d.kind] || []).push(d); });
+  var html = '';
+  Object.keys(j.kinds).forEach(function(k){
+    var arr = groups[k] || [];
+    html += '<div style="margin-bottom:12px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">' + j.kinds[k] + ' <span class="text-muted" style="font-weight:400">(' + arr.length + ')</span></div>';
+    html += arr.length ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">' + arr.map(function(d){
+      return '<div style="position:relative;border:1px solid var(--border);border-radius:10px;overflow:hidden">'
+        + '<a href="' + d.url + '" target="_blank" rel="noopener"><img src="' + d.url + '" loading="lazy" style="width:100%;height:110px;object-fit:cover;display:block"></a>'
+        + '<div style="font-size:10px;color:var(--muted);padding:4px 6px">' + String(d.at || '').slice(0, 16) + (d.by ? ' · ' + d.by : '') + '</div>'
+        + (_docsEdit ? '<button type="button" title="Borrar" onclick="docsDelete(' + d.id + ')" style="position:absolute;top:4px;right:4px;border:0;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;padding:2px 7px"><i class="bi bi-trash"></i></button>' : '')
+        + '</div>'; }).join('') + '</div>' : '<div class="text-muted" style="font-size:12px">Sin fotos.</div>';
+    html += '</div>';
+  });
+  document.getElementById('docs_list').innerHTML = html;
+}
+async function docsUpload(ev){
+  ev.preventDefault();
+  var f = document.getElementById('docs_form'), btn = document.getElementById('docs_btn');
+  btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Subiendo…';
+  try {
+    var r = await fetch('/admin/customers/' + _docsId + '/documents', { method: 'POST', body: new FormData(f), headers: { Accept: 'application/json' } });
+    var j = await r.json();
+    if (!j.ok) alert(j.message || 'Error'); else { f.reset(); await docsLoad(); }
+  } catch (e) { alert('Error: ' + e.message); }
+  btn.disabled = false; btn.innerHTML = '<i class="bi bi-upload"></i> Agregar';
+  return false;
+}
+async function docsDelete(docId){
+  if (!confirm('¿Borrar esta foto? No se puede recuperar.')) return;
+  var j = await (await fetch('/admin/customers/' + _docsId + '/documents/' + docId + '/delete', { method: 'POST', headers: { Accept: 'application/json' } })).json();
+  if (!j.ok) alert(j.message || 'Error'); else docsLoad();
+}
 var _hist = [], _histF = 'all';
 var HIST_KINDS = { all: 'Todo', pago: 'Pagos', factura: 'Facturas', estado: 'Cortes y estado', promesa: 'Promesas', reclamo: 'Reclamos', wifi: 'WiFi y equipo', whatsapp: 'WhatsApp' };
 function histRender(){

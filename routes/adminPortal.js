@@ -4503,7 +4503,7 @@ router.get('/registrations/:id/plan', requireAdminSession, (req, res) => {
     const pkg = c.package_id ? customerSvc.getPackageById(c.package_id) : null;
     if (!pkg) throw new Error('El inscripto no tiene plan asignado');
     const plan = inst.firstInvoicePlan(pkg.price, req.query.install, req.query.due);
-    res.json({ ok: true, customer: { id: c.id, name: c.name, phone: c.phone, address: c.address }, packageName: pkg.name, plan,
+    res.json({ ok: true, customer: { id: c.id, name: c.name, phone: c.phone, address: c.address }, packageName: pkg.name, plan, installerRule: inst.installerRule(plan.installPayment),
       installers: inst.installers().map(i => ({ key: i.key, name: i.name, group: i.group || '', hasPhone: i.type === 'admin' || !!i.phone })) });
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
@@ -7094,7 +7094,8 @@ router.get('/whatsapp/templates', requireAdminSession, requireSidebarMenuAccess(
     whatsapp_autolunas_message: db.getAppSetting('whatsapp_autolunas_message', defaultAutolunas),
     whatsapp_deactivated_message: db.getAppSetting('whatsapp_deactivated_message', defaultDeactivated),
     whatsapp_deleted_message: db.getAppSetting('whatsapp_deleted_message', defaultDeleted),
-    whatsapp_welcome_message: db.getAppSetting('whatsapp_welcome_message', require('../services/installationService').DEFAULT_WELCOME)
+    whatsapp_welcome_message: db.getAppSetting('whatsapp_welcome_message', require('../services/installationService').DEFAULT_WELCOME),
+    whatsapp_installer_rule: db.getAppSetting('whatsapp_installer_rule', require('../services/installationService').DEFAULT_INSTALLER_RULE)
   };
 
   res.render('admin/whatsapp_templates', {
@@ -7128,6 +7129,7 @@ router.post('/whatsapp/templates', requireAdminSession, express.urlencoded({ ext
     db.saveAppSetting('whatsapp_deactivated_message', whatsapp_deactivated_message || '');
     db.saveAppSetting('whatsapp_deleted_message', whatsapp_deleted_message || '');
     if (req.body.whatsapp_welcome_message !== undefined) db.saveAppSetting('whatsapp_welcome_message', req.body.whatsapp_welcome_message || '');
+    if (req.body.whatsapp_installer_rule !== undefined) db.saveAppSetting('whatsapp_installer_rule', req.body.whatsapp_installer_rule || '');
 
     req.session._msg = { type: 'success', text: 'Plantillas de WhatsApp guardadas.' };
   } catch (e) {

@@ -107,6 +107,13 @@ function installers() {
 }
 function findInstaller(key) { return installers().find(i => i.key === String(key || '')) || null; }
 
+// ── Regla obligatoria para el instalador (editable en WhatsApp → Plantillas) ─────────────
+const DEFAULT_INSTALLER_RULE = 'ANTES de empezar la instalación, confirmá con el cliente que entendió que al TERMINAR debe pagarte la primera cuota de {{monto}}. Si no lo confirma, NO instales y avisá a la oficina.';
+function installerRule(amount) {
+  const t = String(db.getAppSetting('whatsapp_installer_rule', DEFAULT_INSTALLER_RULE) || DEFAULT_INSTALLER_RULE).trim() || DEFAULT_INSTALLER_RULE;
+  return t.replace(/{{\s*monto\s*}}/gi, fmtMoney(amount));
+}
+
 // ── Avisos ─────────────────────────────────────────────────────────────────────────
 function waNotify() { return require('./waNotifyService'); }
 const mapLink = (lat, lng) => (String(lat || '').trim() && String(lng || '').trim()) ? `https://maps.google.com/?q=${encodeURIComponent(String(lat).trim())},${encodeURIComponent(String(lng).trim())}` : '';
@@ -214,7 +221,9 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
 
   // Orden de trabajo: solo la ve quien instala (si es técnico, en su portal)
   const loc = mapLink(cust.lat, cust.lng);
-  const body = `Instalación de ${pkg.name} para ${cust.name}.\n` +
+  const rule = installerRule(plan.installPayment);
+  const body = `⚠️ REGLA OBLIGATORIA: ${rule}\n\n` +
+    `Instalación de ${pkg.name} para ${cust.name}.\n` +
     `Teléfono: ${cust.phone || '-'}\nDirección: ${cust.address || '-'}` + (loc ? `\nUbicación: ${loc}` : '') +
     `\nFecha prevista: ${fmtDate(plan.installDate)}` +
     (pppoeUser ? `\nPPPoE: ${pppoeUser} / ${pppoePass || '-'}` : '') +
@@ -227,7 +236,7 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
   try { db.prepare("UPDATE tickets SET kind='install', technician_notes=? WHERE id=?").run(who.type === 'tech' ? '' : `Instala: ${who.name}`, ticketId); } catch (_) {}
 
   // Aviso a quien instala (técnico, oficina o administrador) con los datos para configurar el equipo
-  const waMsg = `🛠️ *INSTALACIÓN ASIGNADA*\n\n👤 *Cliente:* ${cust.name}\n📞 *Teléfono:* ${cust.phone || '-'}\n📍 *Dirección:* ${cust.address || '-'}` +
+  const waMsg = `🛠️ *INSTALACIÓN ASIGNADA*\n\n🚨 *REGLA OBLIGATORIA* 🚨\n*${rule}*\n\n👤 *Cliente:* ${cust.name}\n📞 *Teléfono:* ${cust.phone || '-'}\n📍 *Dirección:* ${cust.address || '-'}` +
     (loc ? `\n🗺️ *Ubicación:* ${loc}` : '') + `\n📦 *Plan:* ${pkg.name}\n📅 *Fecha:* ${fmtDate(plan.installDate)}` +
     `\n\n💵 *Cobrar al instalar:* ${fmtMoney(plan.installPayment)} (primer mes del plan)` +
     (pppoeUser ? `\n\n📡 *PPPoE usuario:* ${pppoeUser}\n🔒 *PPPoE clave:* ${pppoePass || '-'}` : '') +
@@ -311,6 +320,7 @@ function onTicketStatus(ticketId, status) {
 }
 
 module.exports = {
+  installerRule, DEFAULT_INSTALLER_RULE,
   ensureSchema, firstInvoicePlan, defaultDueDate, installers, findInstaller, parseLocation,
   createRequest, approve, sendWelcome, renderWelcome, onTicketStatus, DEFAULT_WELCOME,
 };

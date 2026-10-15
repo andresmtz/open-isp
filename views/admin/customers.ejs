@@ -1215,6 +1215,7 @@
           <select class="fs" name="installer" id="rc_installer" required></select>
           <div class="hint" style="margin-top:4px">Recibe por WhatsApp los datos del cliente, la ubicación y el usuario PPPoE. Si es un técnico, la orden aparece solo en su portal.</div>
         </div>
+        <div id="rc_rule" style="display:none;border:2px solid var(--danger);background:rgba(239,68,68,.10);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:13px;font-weight:700"></div>
         <div class="form-row">
           <div class="fg"><label class="fl">Fecha de instalación</label><input class="fc" type="date" name="install_date" id="rc_install_date" required></div>
           <div class="fg"><label class="fl">Primer vencimiento</label><input class="fc" type="date" name="due_date" id="rc_due_date" required></div>
@@ -1878,6 +1879,8 @@ async function openRegCalc(id){
   openModal('regCalcModal');
   var j = await rcLoad(true); if (!j) return;
   var c = j.customer;
+  var rr = document.getElementById('rc_rule');
+  if (j.installerRule) { rr.innerHTML = '<i class="bi bi-exclamation-octagon-fill" style="color:var(--danger)"></i> Regla para el instalador (va en su WhatsApp y en su orden): ' + String(j.installerRule).replace(/</g, '&lt;'); rr.style.display = ''; }
   document.getElementById('regCalcWho').innerHTML = 'Cliente: <b>' + String(c.name||'').replace(/</g,'&lt;') + '</b> &bull; ' + String(c.phone||'-').replace(/</g,'&lt;') + ' &bull; Plan <b>' + String(j.packageName||'').replace(/</g,'&lt;') + '</b>';
   var sel = document.getElementById('rc_installer'), groups = {};
   sel.innerHTML = '<option value="">-- Elegí quién instala --</option>';

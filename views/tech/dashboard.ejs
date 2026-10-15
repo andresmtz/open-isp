@@ -42,7 +42,15 @@
 
       <div class="ticket-msg">
         <div class="subj"><%= ticket.subject %></div>
-        <div style="white-space:pre-wrap"><%= ticket.message %></div>
+        <% var _msg = String(ticket.message || ''); var _rm = /^⚠️ REGLA OBLIGATORIA: ([\s\S]*?)\n\n/.exec(_msg); %>
+        <% if (_rm) { %>
+          <div style="border:2px solid #ef4444;background:rgba(239,68,68,.12);border-radius:12px;padding:10px 12px;margin:8px 0;font-weight:800;font-size:14px;line-height:1.4">
+            <div style="color:#ef4444;font-size:12px;letter-spacing:.06em;margin-bottom:4px"><i class="bi bi-exclamation-octagon-fill"></i> REGLA OBLIGATORIA</div>
+            <%= _rm[1] %>
+          </div>
+          <% _msg = _msg.slice(_rm[0].length); %>
+        <% } %>
+        <div style="white-space:pre-wrap"><%= _msg %></div>
         <% if (ticket.housePhotos && ticket.housePhotos.length) { %>
           <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
             <div style="color:var(--info);font-size:12px;margin-bottom:8px"><i class="bi bi-house-door"></i> Foto de la casa</div>

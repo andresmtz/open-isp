@@ -11,3 +11,7 @@ html[data-theme="light"] .sn-badge-primary{color:#4A7D08;background:rgba(92,154,
 html[data-theme="light"] .sn-badge-danger{color:#DE3B5C;background:rgba(222,59,92,.12);border-color:rgba(222,59,92,.35)}
 html[data-theme="light"] .sn-badge-normal{color:#52604C;background:rgba(82,96,76,.10);border-color:rgba(82,96,76,.25)}
 @media(max-width:640px){.sn-badge{padding:5px 9px;font-size:11px;gap:5px;flex:0 0 auto}.sn-badge i{font-size:12px}}
+.sn-badge-warn{background:rgba(245,158,11,.16);color:#F59E0B;border-color:rgba(245,158,11,.45)}
+html[data-theme="light"] .sn-badge-warn{color:#B45309;background:rgba(245,158,11,.12);border-color:rgba(180,83,9,.35)}
+[data-gowa-badge]{margin-left:6px}
+@media(max-width:640px){[data-gowa-badge] span{max-width:120px;overflow:hidden;text-overflow:ellipsis}}

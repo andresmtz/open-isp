@@ -26,6 +26,7 @@ services:
     environment:
       - NODE_ENV=production
       - TZ=America/Asuncion
+      - GOWA_VERSION=${GOWA_VERSION:-v9.6.0}   # la app muestra la versión de WhatsApp en uso (misma fuente que la imagen de gowa)
     volumes:
       - ./docker-data/settings.json:/app/settings.json
       - ./docker-data/database:/app/database

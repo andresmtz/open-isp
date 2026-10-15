@@ -2820,6 +2820,13 @@ router.post('/customers/:id/withdraw/cancel', requireAdminSession, express.urlen
   res.redirect(req.get('Referrer') || '/admin/customers');
 });
 
+// Versión de WhatsApp (GoWA): en uso, última publicada y conexión (solo administrador)
+router.get('/gowa/status', requireAdminSession, async (req, res) => {
+  if (!req.session.isAdmin) return res.status(403).json({ ok: false });
+  try { res.json({ ok: true, ...(await require('../services/gowaVersionService').state()) }); }
+  catch (e) { res.status(500).json({ ok: false, message: e.message }); }
+});
+
 router.post('/customers/import', requireAdminSession, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) throw new Error('Archivo no encontrado');

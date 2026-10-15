@@ -196,6 +196,15 @@ router.get('/', requireTechSession, (req, res) => {
     }
   } catch (_) {}
   
+  // Órdenes terminadas en las últimas 24 h: el técnico ve el resultado y la potencia con que quedó
+  let recentDone = [];
+  try {
+    recentDone = db.prepare(`SELECT t.id, t.kind, t.subject, t.technician_notes, t.updated_at, t.customer_id, c.name AS customer_name, c.reg_provision_status, c.status AS customer_status
+      FROM tickets t JOIN customers c ON c.id = t.customer_id
+      WHERE t.technician_id = ? AND t.status = 'resolved' AND t.updated_at >= datetime(NOW_LOCAL(), '-1 day')
+      ORDER BY t.updated_at DESC LIMIT 10`).all(techId);
+  } catch (_) {}
+
   res.render('tech/dashboard', {
     title: 'Panel del técnico', 
     company: company(), 
@@ -203,6 +212,7 @@ router.get('/', requireTechSession, (req, res) => {
     activePage: 'dashboard',
     stats,
     tickets: myTickets,
+    recentDone,
     msg: flashMsg(req)
   });
 });
@@ -241,11 +251,20 @@ router.post('/orders/:ticketId/equipment', requireTechSession, equipUpload.array
   res.redirect('/tech');
 });
 
+// Estado de una orden de instalación: avance de la configuración automática de la ONU
+router.get('/orders/:ticketId/status', requireTechSession, (req, res) => {
+  const t = db.prepare('SELECT id, status, technician_id, customer_id FROM tickets WHERE id=?').get(Number(req.params.ticketId));
+  if (!t || Number(t.technician_id) !== Number(req.session.techId)) return res.status(404).json({ ok: false });
+  const c = db.prepare('SELECT reg_provision_status, reg_label_read, reg_wifi_status FROM customers WHERE id=?').get(t.customer_id) || {};
+  res.json({ ok: true, resolved: t.status === 'resolved', provision: c.reg_provision_status || '', label: c.reg_label_read || '', wifi: c.reg_wifi_status || '' });
+});
+
 // Potencia de la ONU del cliente de una orden suya (lectura en el momento desde la OLT)
 router.get('/orders/:ticketId/power', requireTechSession, async (req, res) => {
   try {
     const t = db.prepare('SELECT * FROM tickets WHERE id=?').get(Number(req.params.ticketId));
-    if (!t || Number(t.technician_id) !== Number(req.session.techId) || !['open', 'in_progress'].includes(t.status) || !t.customer_id) throw new Error('Orden no disponible.');
+    const recent = t && t.status === 'resolved' && db.prepare("SELECT 1 FROM tickets WHERE id=? AND updated_at >= datetime(NOW_LOCAL(), '-1 day')").get(t.id);
+    if (!t || Number(t.technician_id) !== Number(req.session.techId) || !(['open', 'in_progress'].includes(t.status) || recent) || !t.customer_id) throw new Error('Orden no disponible.');
     res.json(await require('../services/onuPowerService').forCustomer(t.customer_id));
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
@@ -382,8 +401,9 @@ router.post('/tickets/:id/update', requireTechSession, upload.array('photos', 10
     const ticketId = req.params.id;
     const techId = req.session.techId;
     // Solo sus propios reclamos, y solo estos estados
-    const own = db.prepare('SELECT technician_id FROM tickets WHERE id = ?').get(ticketId);
+    const own = db.prepare('SELECT technician_id, status FROM tickets WHERE id = ?').get(ticketId);
     if (!own || Number(own.technician_id) !== Number(techId)) throw new Error('este reclamo no está asignado a vos');
+    if (own.status === 'resolved') throw new Error('esta orden ya estaba cerrada (por ejemplo, la instalación se completó sola). Mirá abajo, en "Terminadas en las últimas 24 horas".');
     if (!['in_progress', 'resolved'].includes(String(status))) throw new Error('estado inválido');
     const _k = db.prepare('SELECT kind FROM tickets WHERE id = ?').get(ticketId);
     if (_k && _k.kind === 'retiro' && String(status) === 'resolved') throw new Error('Para cerrar un retiro usá "Equipo retirado" o "No se pudo retirar".');

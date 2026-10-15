@@ -53,9 +53,12 @@ function lanBinding(type) {
 async function notifyAll(customer, text) {
   const wa = require('./waNotifyService');
   try { await wa.notifyAdmin(text); } catch (_) {}
-  // técnico de la orden de instalación
+  // técnico de la orden (instalación o asistencia)
   try {
-    const t = db.prepare("SELECT tech.phone FROM tickets t JOIN technicians tech ON tech.id=t.technician_id WHERE t.customer_id=? AND t.kind='install' AND t.status IN ('open','in_progress') LIMIT 1").get(customer.id);
+    // la orden puede haberse cerrado recién (instalación completa): se toma la última orden del técnico de las últimas 24 h
+    const t = db.prepare(`SELECT tech.phone FROM tickets t JOIN technicians tech ON tech.id=t.technician_id
+      WHERE t.customer_id=? AND (t.status IN ('open','in_progress') OR t.updated_at >= datetime(NOW_LOCAL(), '-1 day'))
+      ORDER BY (t.status IN ('open','in_progress')) DESC, t.id DESC LIMIT 1`).get(customer.id);
     if (t && t.phone) await wa.sendText(require('../config/regional').normalizePhone(String(t.phone).replace(/\D/g, '')), text);
   } catch (_) {}
 }

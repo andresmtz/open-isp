@@ -114,6 +114,9 @@
             <% if (eq.status) { %><div style="font-size:12px;margin-top:6px;color:<%= eq.status === 'aplicado' ? 'var(--success,#10b981)' : (eq.status.indexOf('error') === 0 ? '#ef4444' : 'var(--muted)') %>">WiFi: <%= eq.status === 'aplicado' ? 'configurado en la ONU' : (eq.status === 'pendiente' ? 'pendiente: la oficina vincula la ONU y se aplica solo' : eq.status) %></div><% } %>
             <button class="btn btn-primary btn-sm" style="margin-top:8px;width:100%"><i class="bi bi-upload"></i> Guardar datos del equipo</button>
           </form>
+          <% if (eq.labels) { %>
+            <div id="prov-<%= ticket.id %>" class="prov-watch" data-id="<%= ticket.id %>" style="margin-top:8px;padding:10px;border-radius:12px;border:1px solid var(--border);font-size:13px"><i class="bi bi-hourglass-split"></i> Configurando la ONU automáticamente… (1 a 3 minutos). Esta pantalla se actualiza sola.</div>
+          <% } %>
         <% } %>
         <% if (ticket.housePhotos && ticket.housePhotos.length) { %>
           <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
@@ -214,6 +217,24 @@
   }
 </script>
 
+<% if (typeof recentDone !== 'undefined' && recentDone.length) { %>
+  <div class="p-sec" style="margin-top:18px"><i class="bi bi-check2-all"></i> Terminadas en las últimas 24 horas (<%= recentDone.length %>)</div>
+  <% recentDone.forEach(function(d){ var _inst = String(d.kind || '').indexOf('install') === 0; %>
+    <div class="p-card" style="border-left:3px solid var(--success)">
+      <div style="display:flex;justify-content:space-between;gap:8px"><b><%= d.customer_name %></b><span class="muted" style="font-size:11px"><%= String(d.updated_at || '').slice(11,16) %></span></div>
+      <div class="muted" style="font-size:12px"><%= d.subject %></div>
+      <% if (_inst && d.kind === 'install') { %><div style="font-size:13px;margin-top:6px;color:var(--success);font-weight:700"><i class="bi bi-check-circle-fill"></i> <%= d.reg_provision_status === 'ok' ? 'Instalación completa: ONU configurada y cliente activo.' : 'Instalación cerrada.' %> No tenés que hacer nada más.</div><% } %>
+      <% if (d.technician_notes) { %><div class="muted" style="font-size:12px;margin-top:4px;white-space:pre-wrap"><%= d.technician_notes %></div><% } %>
+      <% if (d.customer_status !== 'cancelled' && d.kind !== 'install_cancelled') { %>
+      <div style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:13px"><span><i class="bi bi-reception-4"></i> Potencia con que quedó</span><button type="button" class="btn btn-sm" style="border:1px solid var(--border)" onclick="measurePower(<%= d.id %>, this)"><i class="bi bi-arrow-clockwise"></i> Actualizar</button></div>
+        <div id="pw-<%= d.id %>" class="pw-auto" data-id="<%= d.id %>" style="font-size:13px;margin-top:6px"></div>
+      </div>
+      <% } %>
+    </div>
+  <% }); %>
+<% } %>
+
 <%- include('partials/bottom_nav') %><script>
 async function measurePower(id, btn){
   var box = document.getElementById('pw-' + id);
@@ -232,6 +253,23 @@ async function measurePower(id, btn){
   } catch (e) { box.textContent = 'Error: ' + e.message; }
   if (btn) btn.disabled = false;
 }
+// Orden de instalación con la etiqueta cargada: se consulta el avance cada 8 s; al completarse se recarga el panel
+(function(){
+  var boxes = document.querySelectorAll('.prov-watch'); if (!boxes.length) return;
+  function tick(){
+    boxes.forEach(function(b){
+      fetch('/tech/orders/' + b.getAttribute('data-id') + '/status', { headers: { Accept: 'application/json' } }).then(function(r){ return r.json(); }).then(function(j){
+        if (!j.ok) return;
+        if (j.resolved) { b.innerHTML = '<b style="color:#10b981"><i class="bi bi-check-circle-fill"></i> ¡Instalación completa!</b> Actualizando…'; setTimeout(function(){ location.reload(); }, 1500); return; }
+        if (j.provision === 'ok') b.innerHTML = '<b style="color:#10b981"><i class="bi bi-check-circle-fill"></i> ONU configurada.</b>';
+        else if (j.provision.indexOf('error') === 0) b.innerHTML = '<b style="color:#ef4444"><i class="bi bi-exclamation-triangle-fill"></i> La configuración automática falló (' + j.provision.slice(7) + ').</b> La oficina ya fue avisada; esperá su indicación.';
+        else if (j.label && j.label !== 'sin lectura') b.innerHTML = '<i class="bi bi-hourglass-split"></i> Etiqueta leída: ' + j.label + '. Configurando la ONU… Esta pantalla se actualiza sola.';
+        else if (j.label === 'sin lectura') b.innerHTML = '<b style="color:#f59e0b"><i class="bi bi-camera"></i> No se pudo leer la etiqueta.</b> Sacá otra foto más de cerca, con buena luz, y volvé a guardar.';
+      }).catch(function(){});
+    });
+  }
+  tick(); setInterval(tick, 8000);
+})();
 // Al abrir el panel se mide sola la potencia de cada orden abierta (de a una, para no saturar la OLT)
 (async function(){ var boxes = document.querySelectorAll('.pw-auto'); for (var i = 0; i < boxes.length; i++) await measurePower(boxes[i].getAttribute('data-id')); })();
 </script>

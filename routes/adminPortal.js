@@ -2827,6 +2827,12 @@ router.get('/gowa/status', requireAdminSession, async (req, res) => {
   catch (e) { res.status(500).json({ ok: false, message: e.message }); }
 });
 
+router.post('/gowa/update', requireAdminSession, express.json(), async (req, res) => {
+  if (!req.session.isAdmin) return res.status(403).json({ ok: false, message: 'Solo el administrador.' });
+  try { res.json(await require('../services/gowaVersionService').requestUpdate(String((req.body && req.body.target) || ''), req.session.adminUser || 'admin')); }
+  catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
 router.post('/customers/import', requireAdminSession, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) throw new Error('Archivo no encontrado');

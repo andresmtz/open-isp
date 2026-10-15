@@ -2099,7 +2099,7 @@ app.use('/admin', (req, res, next) => {
         const noticeJson = JSON.stringify(noticeSvc.getServiceNotice()).split('<').join('\\u003c');
         body = body.replace('</head>', '  <link rel="stylesheet" href="/css/service-notice-badge.css?v=4">\n  <script>window.__serviceNotice=' + noticeJson + ';</script>\n  <script src="/js/service-notice-badge.js?v=2" defer></script>\n</head>');
         // Versión de WhatsApp (GoWA) junto al estado del servicio: solo para el administrador
-        if (req.session && req.session.isAdmin) body = body.replace('</head>', '  <script src="/js/gowa-badge.js?v=1" defer></script>\n</head>');
+        if (req.session && req.session.isAdmin) body = body.replace('</head>', '  <script src="/js/gowa-badge.js?v=2" defer></script>\n</head>');
       }
     } catch (e) {}
     return originalSend(body);

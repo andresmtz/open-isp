@@ -5,7 +5,13 @@
  *  - Última: releases de GitHub (aldinokemal/go-whatsapp-web-multidevice), consultada cada 6 h.
  *  - Conexión: estado del dispositivo vinculado (cada 60 s).
  */
+const fs = require('fs');
+const path = require('path');
 const { logger } = require('../config/logger');
+
+// Carpeta compartida con el actualizador del host (scripts/gowa-updater.sh vía systemd)
+const UPD = path.join(__dirname, '..', 'updater');
+const readJson = (f) => { try { return JSON.parse(fs.readFileSync(path.join(UPD, f), 'utf8')); } catch (_) { return null; } };
 
 const REPO = 'aldinokemal/go-whatsapp-web-multidevice';
 let _latest = { at: 0, tag: '', date: '', url: '', notes: '' };
@@ -19,7 +25,32 @@ function newer(a, b) {
   return false;
 }
 
-function current() { return String(process.env.GOWA_VERSION || '').trim() || ''; }
+function current() {
+  const st = readJson('status.json');
+  return (st && st.current) || String(process.env.GOWA_VERSION || '').trim() || '';
+}
+
+/** ¿Está instalado el actualizador del host? (escribe status.json al menos cada hora) */
+function updaterReady() {
+  const st = readJson('status.json');
+  return !!(st && st.at && Date.now() - new Date(st.at).getTime() < 3 * 3600 * 1000);
+}
+
+/** Pide al host la actualización a la última versión publicada. */
+async function requestUpdate(target, actor) {
+  const lat = await latest();
+  if (!lat.tag || target !== lat.tag) throw new Error('Solo se puede actualizar a la última versión publicada (' + (lat.tag || '?') + ').');
+  if (!newer(target, current())) throw new Error('Ya está en ' + current() + '.');
+  if (!updaterReady()) throw new Error('El actualizador del servidor no está instalado o no responde.');
+  if (fs.existsSync(path.join(UPD, 'request.json'))) throw new Error('Ya hay una actualización en curso.');
+  const r = readJson('result.json');
+  if (r && r.ok === null && Date.now() - new Date(r.at).getTime() < 10 * 60 * 1000) throw new Error('Ya hay una actualización en curso.');
+  fs.writeFileSync(path.join(UPD, 'result.json'), JSON.stringify({ ok: null, from: current(), to: target, at: new Date().toISOString(), message: 'Pedido enviado al servidor…' }));
+  fs.writeFileSync(path.join(UPD, 'request.json'), JSON.stringify({ target, actor: String(actor || ''), at: new Date().toISOString() }));
+  _conn.at = 0;
+  logger.info(`[GoWA] actualización a ${target} pedida por ${actor}`);
+  return { ok: true };
+}
 
 async function latest() {
   if (Date.now() - _latest.at < 6 * 3600 * 1000 && _latest.tag) return _latest;
@@ -36,7 +67,7 @@ async function latest() {
 }
 
 async function connection() {
-  if (Date.now() - _conn.at < 60 * 1000 && _conn.connected !== null) return _conn;
+  if (Date.now() - _conn.at < 20 * 1000 && _conn.connected !== null) return _conn;
   try {
     const r = await require('./gowaWhatsappService').gowaStatus();
     const res = (r && r.data && r.data.results) || {};
@@ -51,7 +82,8 @@ async function state() {
   const updateAvailable = !!(cur && lat.tag && newer(lat.tag, cur));
   const major = updateAvailable && parse(lat.tag)[0] !== parse(cur)[0];
   return { current: cur || 'desconocida', latest: lat.tag || '', latestDate: lat.date, latestUrl: lat.url, notes: lat.notes,
-    updateAvailable, majorChange: major, connected: conn.connected, loggedIn: conn.loggedIn };
+    updateAvailable, majorChange: major, connected: conn.connected, loggedIn: conn.loggedIn,
+    updaterReady: updaterReady(), job: readJson('result.json') };
 }
 
-module.exports = { state, current, latest, newer };
+module.exports = { state, current, latest, newer, requestUpdate, updaterReady };

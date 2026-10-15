@@ -34,6 +34,7 @@ services:
       - ./docker-data/logs:/app/logs
       - ./docker-data/uploads:/app/public/uploads
       - ./docker-data/baileys:/app/auth_info_baileys
+      - ./docker-data/updater:/app/updater          # pedidos al actualizador de GoWA del host (scripts/gowa-updater.sh)
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3001/version.txt"]
       interval: 30s

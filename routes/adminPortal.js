@@ -2096,6 +2096,22 @@ router.post('/customers', requireAdminSession, express.urlencoded({ extended: tr
 router.post('/customers/:id/update', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
   try {
     const customerId = Number(req.params.id);
+    // Inscripto (pendiente de instalación): solo datos personales; la red se crea al "Aprobar e instalar"
+    const _cur = customerSvc.getCustomerById(customerId);
+    if (_cur && _cur.status === 'inactive') {
+      const b = req.body || {};
+      const name = String(b.name || '').trim(), address = String(b.address || '').trim();
+      let phone = String(b.phone || '').trim();
+      if (!name || !phone || !address) throw new Error('Nombre, teléfono y dirección son obligatorios.');
+      if (!regional.isValidPhone(phone)) throw new Error('Número de WhatsApp inválido.');
+      phone = regional.toLocalPhone(phone);
+      const pkgId = b.package_id ? Number(b.package_id) : _cur.package_id;
+      db.prepare('UPDATE customers SET name=?, phone=?, email=?, nik=?, address=?, area=?, package_id=?, lat=?, lng=?, notes=? WHERE id=?')
+        .run(name, phone, String(b.email || '').trim(), String(b.nik || '').trim(), address, String(b.area || '').trim(), pkgId,
+          String(b.lat || '').trim(), String(b.lng || '').trim(), String(b.notes || '').trim(), customerId);
+      req.session._msg = { type: 'success', text: `Datos de ${name} actualizados (sigue como Inscripto hasta "Aprobar e instalar").` };
+      return res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
+    }
     const connectionType = String(req.body.connection_type || 'pppoe').trim().toLowerCase() || 'pppoe';
     req.body.connection_type = connectionType;
 

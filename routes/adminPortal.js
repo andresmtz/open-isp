@@ -4515,6 +4515,7 @@ router.post('/registrations/:id/approve', requireAdminSession, express.urlencode
     const r = await require('../services/installationService').approve(Number(req.params.id),
       { installer: b.installer, installDate: b.install_date, dueDate: b.due_date, total: b.final_total, notes: b.installer_notes }, actor);
     let text = `${r.customer.name}: instalación asignada a ${r.installer.name} (orden N.º ${r.ticketId}). ` +
+      (r.pppoeUser ? `Usuario PPPoE ${r.pppoeUser}, IP ${r.remoteIp || '-'}. ` : '') +
       `La primera factura (estimada ${regional.formatMoney(r.amount)}) se genera cuando se confirme la instalación, con la fecha real.`;
     text += r.installerNotified ? ' Se le enviaron los datos por WhatsApp.' : ' No se pudo avisar por WhatsApp a quien instala (revisá su teléfono).';
     if (r.mkWarn) text += ' Atención: no se pudo crear el usuario PPPoE en el MikroTik: ' + r.mkWarn;

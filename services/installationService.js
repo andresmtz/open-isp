@@ -204,12 +204,26 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     const g = customerSvc.generatePppoeAccount(id); pppoeUser = g.username; pppoePass = g.password;
   }
   let mkWarn = '';
+  // IP fija del cliente (como en WispHub): la próxima libre del rango configurado (config/pppoeIp.js)
+  let remoteIp = cust.pppoe_remote_address || '';
+  let localIp = '';
+  try {
+    const ipCfg = require('../config/pppoeIp');
+    if (!remoteIp) { const a = await ipCfg.allocate(cust.router_id || null); remoteIp = a.remote; localIp = a.local; }
+    else localIp = ipCfg.config().local;
+    db.prepare('UPDATE customers SET pppoe_remote_address=?, router_id=COALESCE(router_id, ?) WHERE id=?').run(remoteIp, Number(getSetting('default_router_id', 1)) || 1, id);
+  } catch (e) { mkWarn = 'IP: ' + e.message; }
   try {
     const radius = getSetting('radius_enabled', '0') === '1' && Number(cust.is_radius) === 1;
     if (pppoeUser && !radius) {
-      await mikrotikService.createPppoeSecret({ username: pppoeUser, password: pppoePass, profile: pkg.name, remoteAddress: cust.pppoe_remote_address || '', routerId: cust.router_id || null });
+      await mikrotikService.createPppoeSecret({ username: pppoeUser, password: pppoePass, profile: pkg.name, remoteAddress: remoteIp, localAddress: localIp, routerId: cust.router_id || null });
     }
-  } catch (e) { mkWarn = e.message; logger.error('[Instalación] PPPoE en MikroTik: ' + e.message); }
+  } catch (e) {
+    // Reasignación tras cancelar: el usuario ya existe en el MikroTik → se deja con el perfil del plan
+    if (/already|ya existe|same name/i.test(String(e && e.message))) {
+      try { await mikrotikService.setPppoeProfile(pppoeUser, pkg.name, cust.router_id || null); } catch (_) {}
+    } else { mkWarn = (mkWarn ? mkWarn + '; ' : '') + e.message; logger.error('[Instalación] PPPoE en MikroTik: ' + e.message); }
+  }
 
   // Sigue como Inscripto con la instalación ASIGNADA: sin factura ni cobro hasta que se confirme la instalación
   // (completeInstallation, al cerrar la orden). Se guarda lo previsto; si el total se ajustó a mano, se respeta.
@@ -223,7 +237,7 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     `Instalación de ${pkg.name} para ${cust.name}.\n` +
     `Teléfono: ${cust.phone || '-'}\nDirección: ${cust.address || '-'}` + (loc ? `\nUbicación: ${loc}` : '') +
     `\nFecha prevista: ${fmtDate(plan.installDate)}` +
-    (pppoeUser ? `\nPPPoE: ${pppoeUser} / ${pppoePass || '-'}` : '') +
+    (pppoeUser ? `\nPPPoE: ${pppoeUser} / ${pppoePass || '-'}` + (remoteIp ? ` · IP ${remoteIp}` : '') : '') +
     (String(notes || '').trim() ? `\nNotas: ${String(notes).trim()}` : '') +
     `\n\nCobrar al cliente al instalar: ${fmtMoney(plan.installPayment)} (primer mes del plan ${pkg.name}).` +
     `\nExplicale al cliente: su primera factura vence el ${fmtDate(plan.dueDate)} y es de ${fmtMoney(amount)}` + (amount < plan.monthly ? ' (compensa los días del mes de instalación)' : '') +
@@ -242,7 +256,7 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     (amount < plan.monthly ? ` (compensa los días del mes de instalación)` : '') +
     `. Después paga ${fmtMoney(plan.monthly)} por mes, con vencimiento el día ${Number(plan.dueDate.slice(8, 10))} de cada mes.` +
     `\n_(Si instalás otro día, el monto de esa primera factura se ajusta solo a la fecha real.)_` +
-    (pppoeUser ? `\n\n📡 *PPPoE usuario:* ${pppoeUser}\n🔒 *PPPoE clave:* ${pppoePass || '-'}` : '') +
+    (pppoeUser ? `\n\n📡 *PPPoE usuario:* ${pppoeUser}\n🔒 *PPPoE clave:* ${pppoePass || '-'}` + (remoteIp ? `\n🌐 *IP asignada:* ${remoteIp}` : '') : '') +
     (String(notes || '').trim() ? `\n\n📝 ${String(notes).trim()}` : '') +
     `\n\nAl terminar, cerrá la orden de trabajo N.º ${ticketId} como resuelta.`;
   let installerNotified = false;
@@ -260,10 +274,10 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
   }
   // El administrador siempre recibe las credenciales (si no es quien instala)
   if (who.type !== 'admin' && pppoeUser) {
-    try { await waNotify().notifyAdmin(`🔑 *Alta de ${cust.name}*\nInstala: ${who.name}\nPPPoE: ${pppoeUser} / ${pppoePass || '-'}\nPrimera factura: ${regional.formatMoney(amount)} (vence ${fmtDate(plan.dueDate)})`); } catch (_) {}
+    try { await waNotify().notifyAdmin(`🔑 *Alta de ${cust.name}*\nInstala: ${who.name}\nPPPoE: ${pppoeUser} / ${pppoePass || '-'} · IP ${remoteIp || '-'}\nPrimera factura: ${regional.formatMoney(amount)} (vence ${fmtDate(plan.dueDate)})`); } catch (_) {}
   }
   logger.info(`[Instalación] ${cust.name}: instalación asignada por ${actor} a ${who.name}; orden #${ticketId}; primera factura estimada ${amount}`);
-  return { customer: cust, installer: who, plan, amount, ticketId, pppoeUser, installerNotified, mkWarn };
+  return { customer: cust, installer: who, plan, amount, ticketId, pppoeUser, remoteIp, installerNotified, mkWarn };
 }
 
 // ── 3. Instalación realizada: el cliente pasa a activo y se genera la primera factura con la fecha real ──

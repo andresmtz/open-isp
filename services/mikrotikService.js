@@ -700,7 +700,7 @@ async function deletePppoeSecret(id, routerId = null) {
   }
 }
 
-async function createPppoeSecret({ username, password, profile, remoteAddress, routerId = null }) {
+async function createPppoeSecret({ username, password, profile, remoteAddress, localAddress, routerId = null }) {
   let conn = null;
   try {
     conn = await getConnection(routerId);
@@ -714,6 +714,9 @@ async function createPppoeSecret({ username, password, profile, remoteAddress, r
     // Add remote address if provided
     if (remoteAddress && remoteAddress.trim()) {
       secretData['remote-address'] = remoteAddress.trim();
+    }
+    if (localAddress && String(localAddress).trim()) {
+      secretData['local-address'] = String(localAddress).trim();
     }
     
     const res = await conn.client.menu('/ppp/secret').add(secretData);

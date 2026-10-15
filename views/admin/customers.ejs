@@ -379,6 +379,7 @@
                       <div class="act-sep"></div>
                     <% } %>
                     <button type="button" class="act-item" onclick="viewCustDetail(<%= i %>)"><i class="bi bi-eye"></i> <%- t('admin.cust.view_detail','Lihat Detail &amp; MikroTik') %></button>
+                    <button type="button" class="act-item" data-id="<%= c.id %>" onclick="openHistory(+this.dataset.id)"><i class="bi bi-clock-history"></i> Historial</button>
                     <div class="act-sep"></div>
                     <button type="button" class="act-item" onclick="copyCustId(<%= i %>)"><i class="bi bi-person-badge"></i> <%= t('admin.cust.copy_id','Salin ID Pelanggan') %></button>
                     <button type="button" class="act-item" onclick="copyCustIp(<%= i %>)"><i class="bi bi-hdd-network"></i> <%= t('admin.cust.copy_ip','Salin IP Pelanggan') %></button>
@@ -1230,6 +1231,16 @@
   </div>
 </div>
 
+<div class="mo" id="historyModal">
+  <div class="mb" style="max-width:640px">
+    <div class="mh"><span class="mt"><i class="bi bi-clock-history"></i> <span id="hist_title">Historial</span></span><button class="mc" onclick="closeModal('historyModal')">&times;</button></div>
+    <div class="mbody" style="max-height:72vh;overflow:auto">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="hist_filters"></div>
+      <div id="hist_list"><div class="text-muted" style="padding:16px;text-align:center">Cargando…</div></div>
+    </div>
+  </div>
+</div>
+
 <div class="mo" id="newReqModal">
   <div class="mb" style="max-width:540px">
     <div class="mh"><span class="mt"><i class="bi bi-person-plus"></i> Nueva solicitud de instalación</span><button class="mc" onclick="closeModal('newReqModal')">&times;</button></div>
@@ -1737,6 +1748,34 @@ function editCust(idx) {
   loadRouterLists('edit', c.router_id || '', c.id || '');
 }
 
+var _hist = [], _histF = 'all';
+var HIST_KINDS = { all: 'Todo', pago: 'Pagos', factura: 'Facturas', estado: 'Cortes y estado', promesa: 'Promesas', reclamo: 'Reclamos', wifi: 'WiFi y equipo', whatsapp: 'WhatsApp' };
+function histRender(){
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(ch){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); };
+  document.getElementById('hist_filters').innerHTML = Object.keys(HIST_KINDS).map(function(k){
+    return '<button type="button" class="btn btn-sm ' + (k === _histF ? 'btn-p' : 'btn-g') + '" onclick="_histF=\'' + k + '\';histRender()">' + HIST_KINDS[k] + '</button>'; }).join('');
+  var rows = _hist.filter(function(e){ return _histF === 'all' || e.kind === _histF || (_histF === 'wifi' && e.kind === 'equipo') || (_histF === 'estado' && (e.kind === 'plan' || e.kind === 'alta' || e.kind === 'anulacion')); });
+  var colors = { pago: '#10b981', factura: '#f59e0b', estado: '#ef4444', promesa: '#a78bfa', reclamo: '#38bdf8', wifi: '#22d3ee', equipo: '#22d3ee', whatsapp: '#25d366', anulacion: '#ef4444', plan: '#818cf8', alta: '#adff2f', auditoria: '#94a3b8' };
+  document.getElementById('hist_list').innerHTML = rows.length ? rows.map(function(e){
+    var d = e.at.slice(0, 10).split('-').reverse().join('/') + ' ' + e.at.slice(11, 16);
+    return '<div style="display:flex;gap:10px;padding:9px 2px;border-bottom:1px solid var(--border)">'
+      + '<div style="width:30px;height:30px;border-radius:9px;flex:0 0 30px;display:flex;align-items:center;justify-content:center;background:rgba(148,163,184,.1);color:' + (colors[e.kind] || 'var(--muted)') + '"><i class="bi bi-' + esc(e.icon) + '"></i></div>'
+      + '<div style="min-width:0;flex:1"><div style="font-size:13px;font-weight:700">' + esc(e.title) + '</div>'
+      + (e.detail ? '<div style="font-size:12px;color:var(--muted)">' + esc(e.detail) + '</div>' : '')
+      + '<div style="font-size:11px;color:var(--muted)">' + d + (e.by ? ' · ' + esc(e.by) : '') + '</div></div></div>';
+  }).join('') : '<div class="text-muted" style="padding:16px;text-align:center">Sin eventos.</div>';
+}
+async function openHistory(id){
+  _hist = []; _histF = 'all';
+  document.getElementById('hist_list').innerHTML = '<div class="text-muted" style="padding:16px;text-align:center">Cargando…</div>';
+  openModal('historyModal');
+  try {
+    var j = await (await fetch('/admin/customers/' + id + '/history', { headers: { Accept: 'application/json' } })).json();
+    if (!j.ok) throw new Error(j.message || 'Error');
+    document.getElementById('hist_title').textContent = 'Historial — ' + j.customer.name + (j.customer.code ? ' (' + j.customer.code + ')' : '');
+    _hist = j.events || []; histRender();
+  } catch (e) { document.getElementById('hist_list').innerHTML = '<div class="text-danger" style="padding:16px">' + e.message + '</div>'; }
+}
 function rcFmt(n){ return APP_CUR + ' ' + Math.round(Number(n)||0).toLocaleString(APP_LOCALE); }
 var _rcId = null, _rcAuto = 0;
 async function rcLoad(first){

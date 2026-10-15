@@ -184,6 +184,8 @@ function routerContextMiddleware(req, res, next) {
 // Personal de oficina: solo lo que el administrador habilitó (denegar por defecto)
 const staffPerms = require('../config/staffPermissions');
 router.use(staffPerms.guard);
+// Registro de cortes, rehabilitaciones y cambios de plan para el historial del cliente (disparadores de la base)
+try { require('../services/customerHistoryService').ensureSchema(); } catch (e) { logger.warn('[Historial] ' + e.message); }
 router.use(routerContextMiddleware);
 
 router.get('/set-active-router', requireAdminSession, (req, res) => {
@@ -2542,6 +2544,16 @@ router.get('/customers/export', requireAdminSession, (req, res) => {
 
 // ─── Cancelar servicio (manual) ───
 // Cobro de monto libre (pagos parciales / saldo a favor)
+// Historial del cliente (línea de tiempo). Sin permiso de ver montos, los importes se ocultan.
+router.get('/customers/:id/history', requireAdminSession, (req, res) => {
+  try {
+    const money = staffPerms.has(req.session, 'ver_facturas');
+    const c = customerSvc.getCustomerById(Number(req.params.id));
+    if (!c) throw new Error('Cliente no encontrado');
+    res.json({ ok: true, customer: { id: c.id, name: c.name, code: c.customer_code || '' }, events: require('../services/customerHistoryService').timeline(c.id, { money }) });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
 router.get('/customers/:id/payment-info', requireAdminSession, (req, res) => {
   try {
     const pay = require('../services/paymentReversalService');
@@ -4651,7 +4663,7 @@ router.get('/settings', requireAdminSession, requireSidebarMenuAccess('settings'
   res.render('admin/settings', {
     title: 'Configuración del sistema', company: company(), activePage: 'settings',
     settings, msg: flashMsg(req),
-    paymentWebhookUrl
+    paymentWebhookUrl, cutTexts: require('../config/cutPage').texts(settings)
   });
 });
 
@@ -4674,7 +4686,7 @@ router.get('/ewallet-logs', requireAdminSession, requireSidebarMenuAccess('setti
   res.render('admin/settings', {
     title: 'Log Notifikasi E-Wallet (Webhook)', company: company(), activePage: 'ewallet_logs',
     settings, msg: flashMsg(req),
-    paymentWebhookUrl,
+    paymentWebhookUrl, cutTexts: require('../config/cutPage').texts(settings),
     viewMode: 'ewallet_logs',
     alRows, alTotal, alMonth, alYear
   });

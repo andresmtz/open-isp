@@ -28,6 +28,7 @@ const CATALOG = [
   { key: 'ver_clientes', label: 'Ver clientes', help: 'Lista y ficha de clientes, conexión, consumo y etiquetas de ONU. Solo consulta.', def: true, rules: [
     ['GET', '^/customers$'],
     ['GET', `^/customers/${ID}/sticker-onu$`],
+    ['GET', `^/customers/${ID}/history$`],
     ['GET', `^/api/customers/${ID}/pppoe-traffic$`],
     ['GET', '^/api/customers/live-sessions$'],
     ['GET', `^/api/odps/${ID}/ports$`],

@@ -1817,7 +1817,7 @@ router.get('/dashboard', async (req, res) => {
   const _speedUp = _su > 0 ? Math.round(_su / 1000) : (trafficMaxUpMbps || '-');
   const _statusRaw = String(_prof.status || _dev.status || '-').toLowerCase();
   const _statusActive = ['active','aktif'].indexOf(_statusRaw) !== -1;
-  const _statusText = _statusActive ? _t('common.active','Aktif') : String(_prof.status || _dev.status || '-');
+  const _statusText = ({ active: 'Activo', aktif: 'Activo', ditangguhkan: 'Habilitado con promesa de pago', suspended: 'Cortado', isolir: 'Cortado', inactive: 'Pendiente de instalación', cancelled: 'Dado de baja' })[_statusRaw] || String(_prof.status || _dev.status || '-');
   const _fmt = n => regional.currencySymbol() + ' ' + Number(n || 0).toLocaleString(regional.locale());
   const _isolateDay = Math.max(1, Math.min(28, Number(_prof.isolate_day || (settings && settings.isolir_day) || 10)));
   const _isolirOf = (y, m) => { const d = new Date(y, (m || 1) - 1, _isolateDay); return d.getDate() + ' ' + _mNames[d.getMonth()] + ' ' + d.getFullYear(); };
@@ -1880,10 +1880,12 @@ router.get('/dashboard', async (req, res) => {
       dueFull: (_overdue ? 'Venció el ' : 'Vence el ') + _fmtDate(_dueSt),
       overdue: _overdue, total: _debt.total, count: _debt.count,
     });
-    _isolirText = _suspended ? 'servicio cortado: se rehabilita al registrar el pago' : _fmtDate(_cutSt);
+    const _promise = _prof.promise_until ? String(_prof.promise_until) : '';
+    _isolirText = _suspended ? 'servicio cortado: se rehabilita al registrar el pago'
+      : (_promise ? ('promesa de pago hasta el ' + _fmtDate(_promise) + ' ' + _promise.slice(11, 16)) : _fmtDate(_cutSt));
     _detail = Object.assign({}, _detail, { period: _debt.items.map(it => _perName(it.period)).join(', '), status: _partialPaid ? 'Pago parcial' : _t('pwa.r.pending','Pendiente de pago'), paid: false, amount: _fmt(_debt.total) });
     const _dl = Math.ceil((new Date(_dueSt.replace(' ', 'T')) - _now) / 86400000);
-    _activeDaysText = _suspended ? 'Servicio cortado' : (_dl > 0 ? (_dl + ' días para el vencimiento') : ('Venció hace ' + Math.abs(_dl) + ' días'));
+    _activeDaysText = _suspended ? 'Servicio cortado' : (_promise ? 'Con promesa de pago' : (_dl > 0 ? (_dl + ' días para el vencimiento') : ('Venció hace ' + Math.abs(_dl) + ' días')));
   } else if (_debt) {
     _bill = null;
     _isolirText = 'no corresponde (está al día)';

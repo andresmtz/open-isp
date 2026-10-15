@@ -627,6 +627,24 @@
             <div style="font-size:10px; color:var(--muted); margin-top:4px">Se muestra en el botón <b>Pagar ahora</b> del portal de clientes, en la <b>pantalla de corte</b> y en los mensajes de WhatsApp que usan <code>{{pago}}</code>. El cliente envía el comprobante por WhatsApp y el pago se registra en <b>Clientes → Cobrar</b>.</div>
           </div>
 
+          <% const _ct = (typeof cutTexts !== 'undefined' && cutTexts) || {}; %>
+          <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+            <h6 style="font-size:12px; margin-bottom: 4px;"><i class="bi bi-slash-circle"></i> Pantalla de corte (lo que ve un cliente cortado al navegar)</h6>
+            <div style="font-size:11px; color:var(--muted); margin-bottom:10px">Variables: <code>{{nombre}}</code> <code>{{id}}</code> <code>{{plan}}</code> <code>{{deuda}}</code> <code>{{empresa}}</code>. Las formas de pago de arriba también se muestran ahí. <a href="/isolated?preview=1" target="_blank" rel="noopener">Ver vista previa <i class="bi bi-box-arrow-up-right"></i></a></div>
+            <div class="form-row">
+              <div class="fg"><label class="fl">Etiqueta</label><input class="fc" name="corte_tag" maxlength="40" value="<%= _ct.corte_tag %>"></div>
+              <div class="fg"><label class="fl">Título</label><input class="fc" name="corte_title" maxlength="80" value="<%= _ct.corte_title %>"></div>
+            </div>
+            <div class="fg"><label class="fl">Mensaje</label><textarea class="fc" name="corte_message" rows="3" maxlength="600"><%= _ct.corte_message %></textarea></div>
+            <div class="form-row">
+              <div class="fg"><label class="fl">Mostrar el detalle de la deuda</label><select class="fs" name="corte_show_debt"><option value="true" <%= _ct.corte_show_debt ? 'selected' : '' %>>Sí (meses y total)</option><option value="false" <%= !_ct.corte_show_debt ? 'selected' : '' %>>No</option></select></div>
+              <div class="fg"><label class="fl">Texto del botón de WhatsApp</label><input class="fc" name="corte_whatsapp_button" maxlength="60" value="<%= _ct.corte_whatsapp_button %>"></div>
+            </div>
+            <div class="fg"><label class="fl">Mensaje que se arma en WhatsApp</label><input class="fc" name="corte_whatsapp_text" maxlength="300" value="<%= _ct.corte_whatsapp_text %>"></div>
+            <div class="fg"><label class="fl">Nota al pie</label><textarea class="fc" name="corte_footer" rows="2" maxlength="400"><%= _ct.corte_footer %></textarea></div>
+            <div class="fg"><label class="fl">Mensaje si el servicio ya está habilitado</label><textarea class="fc" name="corte_active_message" rows="2" maxlength="400"><%= _ct.corte_active_message %></textarea></div>
+          </div>
+
           <details style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
             <summary style="cursor:pointer;font-size:12px;font-weight:700">Pasarelas automáticas (QRIS de Indonesia y otras) — no aplican en Paraguay</summary>
           <div style="margin-top:12px">

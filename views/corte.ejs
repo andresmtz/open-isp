@@ -29,27 +29,31 @@
 </head>
 <body>
 <div class="wrap">
+  <% const T = (typeof texts !== 'undefined' && texts) || {};
+     const _f = (typeof fillCut === 'function') ? fillCut : function (x) { return x; };
+     const V = { nombre: customer ? customer.name : '', id: customer ? customer.code : '', plan: customer ? customer.package : '', deuda: (debt && debt.total) ? fmtMoney(debt.total) : '', empresa: company }; %>
   <div class="brand"><%= company %></div>
+  <% if (typeof preview !== 'undefined' && preview) { %><p class="muted" style="text-align:center">Vista previa de la pantalla de corte (así la ve un cliente cortado).</p><% } %>
 
   <% if (customer && customer.status !== 'suspended') { %>
     <div class="card">
       <span class="tag ok">SERVICIO ACTIVO</span>
       <h1>Hola, <%= customer.name %></h1>
-      <p>Tu servicio está habilitado. Si todavía no navegás, reiniciá tu equipo (router/ONU) y volvé a abrir el navegador.</p>
+      <p><%= _f(T.corte_active_message, V) %></p>
     </div>
   <% } else { %>
     <div class="card">
-      <span class="tag">CORTE ADMINISTRATIVO</span>
-      <h1>Servicio suspendido</h1>
+      <span class="tag"><%= _f(T.corte_tag, V) %></span>
+      <h1><%= _f(T.corte_title, V) %></h1>
       <% if (customer) { %>
         <p><b style="color:var(--text)"><%= customer.name %></b><%= customer.code ? ' · ' + customer.code : '' %><%= customer.package ? ' · ' + customer.package : '' %></p>
-        <p>Tu servicio de internet fue suspendido por falta de pago. Se habilita nuevamente al registrarse el pago.</p>
+        <p style="white-space:pre-wrap"><%= _f(T.corte_message, V) %></p>
       <% } else { %>
-        <p>El servicio de internet de esta conexión está suspendido por falta de pago. Se habilita nuevamente al registrarse el pago.</p>
+        <p style="white-space:pre-wrap"><%= _f(T.corte_message, V) %></p>
       <% } %>
     </div>
 
-    <% if (customer && debt && debt.count) { %>
+    <% if (T.corte_show_debt !== false && customer && debt && debt.count) { %>
       <div class="card">
         <b>Facturas pendientes</b>
         <table>
@@ -69,10 +73,10 @@
       <% if (paymentInfo) { %><p class="pay"><%= paymentInfo %></p><% } else { %><p>Comunicate con nosotros para coordinar el pago.</p><% } %>
       <% if (address) { %><p>📍 <%= address %></p><% } %>
       <% if (phone) { %>
-        <a class="btn" href="https://wa.me/<%= String(phone).replace(/\D/g, '') %>?text=<%= encodeURIComponent('Hola ' + company + ', quiero regularizar mi servicio' + (customer ? ' (' + customer.name + ')' : '') + '.') %>">Escribinos por WhatsApp</a>
+        <a class="btn" href="https://wa.me/<%= String(phone).replace(/\D/g, '') %>?text=<%= encodeURIComponent(_f(T.corte_whatsapp_text, V).replace(/\(\s*,?\s*ID\s*\)/, '').replace(/\s+\)/g, ')').replace(/\s+\./g, '.')) %>"><%= T.corte_whatsapp_button || 'Escribinos por WhatsApp' %></a>
       <% } %>
     </div>
-    <p class="muted">Si ya pagaste, enviá el comprobante. Cuando se registre el pago, esta página se actualiza sola.</p>
+    <p class="muted" style="white-space:pre-wrap"><%= _f(T.corte_footer, V) %></p>
   <% } %>
 </div>
 <script>

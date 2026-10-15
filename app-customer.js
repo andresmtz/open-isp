@@ -1307,13 +1307,16 @@ app.get('/isolated', async (req, res) => {
   const settings = getSettingsWithCache();
   const base = {
     company: settings.company_header || 'ISP',
-    phone: (settings.company_phone || settings.company_whatsapp) ? regional.normalizePhone(String(settings.company_phone || settings.company_whatsapp)) : '',
+    phone: regional.publicContactPhone(settings) ? regional.normalizePhone(regional.publicContactPhone(settings)) : '',
     address: settings.company_address || '',
     paymentInfo: String(getSetting('corte_payment_info', '') || ''),
     customer: null, debt: null, promise: null,
+    texts: require('./config/cutPage').texts(settings),
+    fillCut: require('./config/cutPage').fill,
+    preview: req.query.preview === '1',
   };
   try {
-    const { customer } = await identifyCutCustomer(req);
+    const { customer } = base.preview ? { customer: null } : await identifyCutCustomer(req);
     if (customer) {
       const pay = require('./services/paymentReversalService');
       base.customer = { name: customer.name, code: customer.customer_code || '', status: customer.status, package: customer.package_name || '' };

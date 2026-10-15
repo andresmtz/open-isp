@@ -36,7 +36,9 @@
         + (d.credit > 0 && d.total > 0 ? '<label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="rcv-credit" checked> Usar saldo a favor</label>' : '')
         + '<div class="fg"><label class="fl">Forma de pago</label><div id="rcv-methods" style="display:flex;gap:6px;flex-wrap:wrap">'
         + METHODS.map(x => '<button type="button" class="btn btn-sm ' + (x === lm ? 'btn-p' : 'btn-g') + '" data-m="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div></div>'
-        + '<div class="fg"><label class="fl">Nota (opcional)</label><input class="fc" id="rcv-note" placeholder="Ej.: comprobante 1234, Banco"></div>'
+        + ((info.destinations || []).length ? '<div class="fg" id="rcv-dest-wrap"><label class="fl">¿A qué cuenta o billetera entró?</label><div id="rcv-dests" style="display:flex;gap:6px;flex-wrap:wrap">'
+          + info.destinations.map(x => '<button type="button" class="btn btn-sm btn-g" data-d="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div></div>' : '')
+        + '<div class="fg"><label class="fl">Nota (opcional)</label><input class="fc" id="rcv-note" placeholder="Ej.: comprobante 1234"></div>'
         + '<div class="hint" id="rcv-hint" style="margin:8px 0"></div>'
         + (d.carryOver > 0 ? '<div class="hint" style="margin-bottom:8px">Saldo trasladado pendiente (se suma a la próxima factura): <b>' + fmtMoney(d.carryOver) + '</b></div>' : '')
         + '<div style="font-size:12px;color:var(--muted);margin-bottom:6px"><i class="bi bi-whatsapp"></i> Al registrar, el cliente recibe el comprobante por WhatsApp y, si queda sin deuda, se le habilita el servicio.</div>'
@@ -45,11 +47,19 @@
         + '<button class="btn btn-p" type="button" id="rcv-ok" style="min-width:150px"><i class="bi bi-check2"></i> Registrar pago</button></div>'
         + '</div></div>';
       document.body.appendChild(m);
-      let method = lm;
+      let method = lm, destination = '';
+      const destWrap = m.querySelector('#rcv-dest-wrap');
+      const showDest = () => { if (destWrap) destWrap.style.display = method === 'Efectivo' ? 'none' : ''; };
       m.querySelectorAll('#rcv-methods button').forEach(b => b.onclick = () => {
         method = b.dataset.m;
         m.querySelectorAll('#rcv-methods button').forEach(x => { x.classList.toggle('btn-p', x === b); x.classList.toggle('btn-g', x !== b); });
+        showDest();
       });
+      m.querySelectorAll('#rcv-dests button').forEach(b => b.onclick = () => {
+        destination = destination === b.dataset.d ? '' : b.dataset.d;
+        m.querySelectorAll('#rcv-dests button').forEach(x => { const on = x.dataset.d === destination; x.classList.toggle('btn-p', on); x.classList.toggle('btn-g', !on); });
+      });
+      showDest();
       const amt = m.querySelector('#rcv-amount'), cr = m.querySelector('#rcv-credit'), hint = m.querySelector('#rcv-hint');
       const btnAct = m.querySelector('#rcv-act'), btnOk = m.querySelector('#rcv-ok');
       const upd = () => {
@@ -70,7 +80,7 @@
         try {
           saveMethod(method);
           const r = await fetch('/admin/customers/' + id + '/receive', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-            body: JSON.stringify({ amount: Number(amt.value) || 0, use_credit: !!(cr && cr.checked), activate: !!activate, method, note: m.querySelector('#rcv-note').value }) });
+            body: JSON.stringify({ amount: Number(amt.value) || 0, use_credit: !!(cr && cr.checked), activate: !!activate, method, destination, note: m.querySelector('#rcv-note').value }) });
           const j = await r.json();
           alert(j.message || (j.ok ? 'Listo.' : 'Error'));
           if (j.ok) { m.remove(); if (typeof opts.onDone === 'function') opts.onDone(j); else location.reload(); }

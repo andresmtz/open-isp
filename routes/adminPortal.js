@@ -700,7 +700,9 @@ router.get('/pending-payments', requireAdminSession, (req, res) => {
     ORDER BY CASE c.status WHEN 'suspended' THEN 0 WHEN 'ditangguhkan' THEN 1 ELSE 2 END, c.name COLLATE NOCASE`).all();
   let proofs = [];
   try { proofs = require('../services/paymentProofService').pending(); } catch (e) { logger.warn('[Comprobantes] ' + e.message); }
-  res.render('admin/pending_payments', { title: 'Pagos pendientes', company: company(), activePage: 'pending_payments', rows, proofs, msg: flashMsg(req) });
+  let destLabels = [];
+  try { destLabels = [...new Set(require('../services/paymentProofService').destinations().map(d => d.label))]; } catch (_) {}
+  res.render('admin/pending_payments', { title: 'Pagos pendientes', company: company(), activePage: 'pending_payments', rows, proofs, destLabels, msg: flashMsg(req) });
 });
 
 router.get('/onu-inventory', requireAdminSession, (req, res) => {
@@ -2688,7 +2690,9 @@ router.get('/customers/:id/payment-info', requireAdminSession, (req, res) => {
     const pay = require('../services/paymentReversalService');
     const c = customerSvc.getCustomerById(Number(req.params.id));
     if (!c) throw new Error('Cliente no encontrado');
-    res.json({ ok: true, customer: { id: c.id, name: c.name, status: c.status }, debt: pay.debtOf(c.id), receipts: pay.receipts(c.id).slice(0, 10), isCashier: !!req.session.isCashier });
+    // Cuentas y billeteras de la empresa (de las formas de pago de Configuración) para indicar dónde entró el dinero
+    const dests = [...new Set(require('../services/paymentProofService').destinations().map(d => d.label))];
+    res.json({ ok: true, customer: { id: c.id, name: c.name, status: c.status }, debt: pay.debtOf(c.id), receipts: pay.receipts(c.id).slice(0, 10), isCashier: !!req.session.isCashier, destinations: dests });
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 
@@ -2697,7 +2701,7 @@ async function receivePayment(req, customerId, b) {
   const pay = require('../services/paymentReversalService');
   const paidBy = resolvePaidByName(req, b.paid_by_name);
   // activate=true: "Cobrar y activar" — el saldo que falte pasa a la próxima factura y se habilita el servicio
-  const r = pay.receive(Number(customerId), { amount: b.amount, method: b.method, note: b.note, paidBy, useCredit: !!b.use_credit, invoiceIds: b.invoice_ids, carryRemaining: !!b.activate });
+  const r = pay.receive(Number(customerId), { amount: b.amount, method: b.method, note: b.note, paidBy, useCredit: !!b.use_credit, invoiceIds: b.invoice_ids, carryRemaining: !!b.activate, destination: b.destination });
   // Sin deuda pendiente: si estaba cortado se habilita; si tenía promesa, queda cumplida
   const debt = pay.debtOf(r.customer.id);
   let enabled = false;
@@ -2718,7 +2722,7 @@ async function receivePayment(req, customerId, b) {
     waSent = await sendPaymentSuccessWA(cust.phone, cust.name, periodText || 'Saldo a favor', String(cash), paidBy, {
       customerId: cust.id, invoiceId: r.fullyPaid.length === 1 ? r.fullyPaid[0] : '',
       username: cust.pppoe_username || cust.id, customerCode: cust.customer_code || '',
-      packageName: (pkg && pkg.name) || cust.package_name || '-', paidAt: new Date(), method: String(b.method || '').trim(),
+      packageName: (pkg && pkg.name) || cust.package_name || '-', paidAt: new Date(), method: String(b.method || '').trim() + (b.destination && b.method !== 'Efectivo' ? ' a ' + String(b.destination).trim() : ''),
     });
   }
   const parts = r.applied.map(a => `${a.period}: ${regional.formatMoney(a.amount)}${a.full ? ' (pagada)' : ' (parcial, falta ' + regional.formatMoney(a.remaining) + ')'}`);
@@ -2757,7 +2761,7 @@ router.post('/payment-proofs/:id/apply', requireAdminSession, express.json(), as
     const by = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
     const method = ['Transferencia', 'Depósito', 'Giro'].includes(req.body && req.body.method) ? req.body.method : (p.kind || 'Transferencia');
     const note = `Comprobante por WhatsApp${p.ref ? ' N.º ' + p.ref : ''}${p.dest_label ? ' → ' + p.dest_label : ''} (#${p.id})`;
-    const r = await receivePayment(req, p.customer_id, { amount, method, note });
+    const r = await receivePayment(req, p.customer_id, { amount, method, note, destination: String((req.body && req.body.destination) || p.dest_label || '').trim() });
     pp.markApplied(p.id, { by, receiptId: r.receiptId, amount, note: r.message });
     res.json({ ok: true, message: r.message });
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
@@ -2885,6 +2889,35 @@ router.post('/gowa/update', requireAdminSession, express.json(), async (req, res
   if (!req.session.isAdmin) return res.status(403).json({ ok: false, message: 'Solo el administrador.' });
   try { res.json(await require('../services/gowaVersionService').requestUpdate(String((req.body && req.body.target) || ''), req.session.adminUser || 'admin')); }
   catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
+// Cobros por cuenta o billetera (para conciliar con los extractos): detalle y totales por destino, en un rango de fechas
+router.get('/finance/by-account', requireAdminSession, restrictToAdmin, (req, res) => {
+  require('../services/paymentReversalService').ensureSchema();
+  const today = require('../config/billingCycle').nowStamp().slice(0, 10);
+  const from = /^\d{4}-\d{2}-\d{2}$/.test(req.query.from || '') ? req.query.from : today.slice(0, 8) + '01';
+  const to = /^\d{4}-\d{2}-\d{2}$/.test(req.query.to || '') ? req.query.to : today;
+  const rows = db.prepare(`SELECT r.id, r.created_at, r.amount, r.method, r.destination, r.paid_by, r.note, c.name AS customer_name, c.customer_code
+    FROM payment_receipts r JOIN customers c ON c.id = r.customer_id
+    WHERE r.annulled_at IS NULL AND r.amount > 0 AND date(r.created_at) BETWEEN date(?) AND date(?)
+    ORDER BY r.created_at`).all(from, to);
+  const keyOf = (r) => r.method === 'Efectivo' ? 'Efectivo' : (r.destination || 'Sin indicar');
+  const groups = {};
+  for (const r of rows) { const k = keyOf(r); (groups[k] = groups[k] || { key: k, total: 0, count: 0, rows: [] }); groups[k].total += Number(r.amount) || 0; groups[k].count++; groups[k].rows.push(r); }
+  const order = (k) => k === 'Sin indicar' ? 2 : (k === 'Efectivo' ? 1 : 0);
+  const list = Object.values(groups).sort((a, b) => order(a.key) - order(b.key) || b.total - a.total);
+  if (req.query.format === 'csv') {
+    const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const lines = ['Cuenta;Fecha;Cliente;Codigo;Monto;Forma;Registrado por;Nota'];
+    for (const g of list) for (const r of g.rows) lines.push([g.key, r.created_at, r.customer_name, r.customer_code, r.amount, r.method, r.paid_by, r.note].map(q).join(';'));
+    lines.push('');
+    for (const g of list) lines.push([q('TOTAL ' + g.key), '', '', '', g.total, q(g.count + ' cobros')].join(';'));
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="cobros-por-cuenta_${from}_${to}.csv"`);
+    return res.send('\ufeff' + lines.join('\n'));
+  }
+  res.render('admin/finance_by_account', { title: 'Cobros por cuenta', company: company(), activePage: 'account_collections', from, to, list,
+    total: rows.reduce((s, r) => s + (Number(r.amount) || 0), 0), count: rows.length, msg: flashMsg(req) });
 });
 
 router.post('/customers/import', requireAdminSession, upload.single('file'), async (req, res) => {

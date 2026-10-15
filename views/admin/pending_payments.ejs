@@ -59,6 +59,7 @@
               <div class="pp-name"><%= p.customer_name || ('Número ' + (p.phone || '?')) %></div>
               <div class="pp-sub">Recibido <%= String(p.received_at || '').slice(8,10) %>/<%= String(p.received_at || '').slice(5,7) %> <%= String(p.received_at || '').slice(11,16) %> · <%= p.kind %></div>
               <div class="pp-debt" style="margin-top:4px"><%= p.amount ? fmtMoney(p.amount) : 'Monto no leído' %></div>
+              <div style="font-size:13px;font-weight:700;margin-top:2px"><i class="bi bi-bank"></i> A: <%= p.dest_label || 'cuenta no identificada' %></div>
               <% if (p.origin_name) { %><div class="pp-sub">Pagó: <%= p.origin_name %></div><% } %>
             </div>
           </div>
@@ -72,6 +73,10 @@
               <input class="fc" id="pf-a-<%= p.id %>" inputmode="numeric" value="<%= p.amount || (p.debt ? p.debt.total : '') %>" style="flex:1;min-width:110px;font-size:16px;font-weight:700">
               <select class="fs" id="pf-m-<%= p.id %>" style="flex:0 0 auto"><% ['Transferencia','Depósito','Giro'].forEach(m => { %><option <%= m === p.kind ? 'selected' : '' %>><%= m %></option><% }) %></select>
             </div>
+            <select class="fs" id="pf-d-<%= p.id %>" title="Cuenta o billetera donde entró el dinero">
+              <option value="">— ¿A qué cuenta entró? —</option>
+              <% (typeof destLabels !== 'undefined' ? destLabels : []).forEach(d => { %><option <%= d === p.dest_label ? 'selected' : '' %>><%= d %></option><% }) %>
+            </select>
             <button type="button" class="btn btn-p btn-pay" onclick="pfApply(<%= p.id %>, this)"><i class="bi bi-check2-circle"></i> Aplicar pago</button>
           <% } %>
           <button type="button" class="btn btn-g btn-sm" onclick="pfReject(<%= p.id %>)"><i class="bi bi-x-circle"></i> Rechazar</button>
@@ -121,7 +126,7 @@
     </div>
   </div>
 </div>
-<script src="/js/receive-payment.js"></script>
+<script src="/js/receive-payment.js?v=2"></script>
 <script>
 (function () {
   const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -150,10 +155,12 @@ async function pfPost(url, body){ const r = await fetch(url, { method: 'POST', h
 async function pfApply(id, btn){
   const amt = Number(String(document.getElementById('pf-a-' + id).value).replace(/\D/g, '')) || 0;
   const method = document.getElementById('pf-m-' + id).value;
+  const destination = document.getElementById('pf-d-' + id).value;
   if (!amt) { alert('Indicá el monto.'); return; }
-  if (!confirm('¿Aplicar el pago de ' + fmtMoney(amt) + ' (' + method + ')?\nSe registra el cobro, se le manda el comprobante al cliente y, si no le queda deuda, se habilita el servicio.')) return;
+  if (!destination) { alert('Elegí a qué cuenta o billetera entró el dinero.'); return; }
+  if (!confirm('¿Aplicar el pago de ' + fmtMoney(amt) + ' (' + method + ' a ' + destination + ')?\nSe registra el cobro, se le manda el comprobante al cliente y, si no le queda deuda, se habilita el servicio.')) return;
   btn.disabled = true;
-  const j = await pfPost('/admin/payment-proofs/' + id + '/apply', { amount: amt, method });
+  const j = await pfPost('/admin/payment-proofs/' + id + '/apply', { amount: amt, method, destination });
   alert(j.message || (j.ok ? 'Listo' : 'Error'));
   if (j.ok) setTimeout(function(){ location.reload(); }, 1800); else btn.disabled = false;
 }

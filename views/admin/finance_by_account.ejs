@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cobros por cuenta | <%= company %></title>
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .fa-sum{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:12px 0}
+    .fa-card{margin:0;padding:12px 14px;cursor:pointer}
+    .fa-card .k{font-size:13px;font-weight:700;display:flex;gap:6px;align-items:center}
+    .fa-card .v{font-size:20px;font-weight:800;margin-top:4px}
+    .fa-card .c{font-size:12px;color:var(--muted)}
+    .fa-warn{border:1px solid rgba(245,158,11,.5)}
+    .fa-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+    .fa-tools .fg{margin:0}
+    details.fa-det{margin-top:10px}
+    details.fa-det summary{cursor:pointer;font-weight:800;padding:8px 0}
+  </style>
+</head>
+<body>
+<%- include('partials/sidebar', { activePage: 'account_collections', company }) %>
+<div class="mw">
+  <div class="topbar">
+    <div class="tb-title">
+      <button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+      <i class="bi bi-bank"></i><span>Cobros por cuenta</span>
+    </div>
+  </div>
+  <div class="page">
+    <% if (msg) { %><div class="alert alert-<%= msg.type==='error'?'d':'s' %>" data-flash="1"><%= msg.text %></div><% } %>
+    <div class="card" style="padding:12px 14px">
+      <form class="fa-tools" method="GET">
+        <div class="fg"><label class="fl">Desde</label><input class="fc" type="date" name="from" value="<%= from %>"></div>
+        <div class="fg"><label class="fl">Hasta</label><input class="fc" type="date" name="to" value="<%= to %>"></div>
+        <button class="btn btn-p btn-sm"><i class="bi bi-funnel"></i> Ver</button>
+        <a class="btn btn-g btn-sm" href="?from=<%= from %>&to=<%= to %>&format=csv"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar (Excel)</a>
+      </form>
+      <div class="pp-sub" style="margin-top:8px;font-size:13px">Cobros registrados del <b><%= from.split('-').reverse().join('/') %></b> al <b><%= to.split('-').reverse().join('/') %></b>, por la cuenta o billetera donde entró el dinero. Los cobros anulados no se cuentan.</div>
+    </div>
+
+    <div class="fa-sum">
+      <% list.forEach((g, i) => { %>
+        <div class="card fa-card <%= g.key === 'Sin indicar' ? 'fa-warn' : '' %>" onclick="var d=document.getElementById('fa-d-<%= i %>');d.open=true;d.scrollIntoView({behavior:'smooth'})">
+          <div class="k"><i class="bi <%= g.key === 'Efectivo' ? 'bi-cash' : (g.key === 'Sin indicar' ? 'bi-question-circle' : 'bi-bank') %>"></i> <%= g.key %></div>
+          <div class="v"><%= fmtMoney(g.total) %></div>
+          <div class="c"><%= g.count %> cobro<%= g.count === 1 ? '' : 's' %></div>
+        </div>
+      <% }) %>
+      <div class="card fa-card" style="border:2px solid var(--primary)">
+        <div class="k"><i class="bi bi-sigma"></i> Total</div>
+        <div class="v"><%= fmtMoney(total) %></div>
+        <div class="c"><%= count %> cobro<%= count === 1 ? '' : 's' %></div>
+      </div>
+    </div>
+    <% if (list.some(g => g.key === 'Sin indicar')) { %>
+      <div class="alert alert-w" style="margin-bottom:10px"><i class="bi bi-exclamation-triangle"></i> Hay cobros <b>sin cuenta indicada</b> (los registrados antes de este cambio, o sin elegir la cuenta). Desde ahora, al registrar un pago por transferencia, depósito o giro se elige a qué cuenta entró.</div>
+    <% } %>
+    <% if (!list.length) { %><div class="card" style="padding:20px;text-align:center;color:var(--muted)">No hay cobros en ese rango.</div><% } %>
+
+    <% list.forEach((g, i) => { %>
+      <details class="card fa-det" id="fa-d-<%= i %>" style="padding:4px 14px 10px">
+        <summary><%= g.key %> — <%= fmtMoney(g.total) %> (<%= g.count %>)</summary>
+        <div style="overflow-x:auto">
+          <table class="dtbl" style="width:100%;font-size:13px">
+            <thead><tr><th>Fecha</th><th>Cliente</th><th style="text-align:right">Monto</th><th>Forma</th><th>Registró</th><th>Nota</th></tr></thead>
+            <tbody>
+              <% g.rows.forEach(r => { %>
+                <tr><td style="white-space:nowrap"><%= String(r.created_at).slice(8,10) %>/<%= String(r.created_at).slice(5,7) %> <%= String(r.created_at).slice(11,16) %></td>
+                  <td><%= r.customer_name %> <span class="text-muted" style="font-size:11px"><%= r.customer_code || '' %></span></td>
+                  <td style="text-align:right;white-space:nowrap;font-weight:700"><%= fmtMoney(r.amount) %></td>
+                  <td><%= r.method || '-' %></td><td><%= r.paid_by || '-' %></td><td class="text-muted" style="font-size:12px"><%= r.note || '' %></td></tr>
+              <% }) %>
+              <tr><td colspan="2" style="font-weight:800">Total <%= g.key %></td><td style="text-align:right;font-weight:800"><%= fmtMoney(g.total) %></td><td colspan="3"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    <% }) %>
+  </div>
+</div>
+</body>
+</html>

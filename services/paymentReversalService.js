@@ -76,6 +76,7 @@ function ensureSchema() {
   try { db.exec('ALTER TABLE invoices ADD COLUMN carried_out INTEGER DEFAULT 0'); } catch (e) {}
   try { db.exec('ALTER TABLE invoices ADD COLUMN carried_in INTEGER DEFAULT 0'); } catch (e) {}
   try { db.exec('ALTER TABLE payment_receipts ADD COLUMN carry_added INTEGER DEFAULT 0'); } catch (e) {}
+  try { db.exec('ALTER TABLE payment_receipts ADD COLUMN destination TEXT'); } catch (e) {}   // cuenta o billetera donde entró el dinero
   try { db.exec("ALTER TABLE payment_allocations ADD COLUMN kind TEXT DEFAULT 'pay'"); } catch (e) {}
   try { db.exec('ALTER TABLE payment_allocations ADD COLUMN prev_amount INTEGER'); } catch (e) {}
   try { db.exec('ALTER TABLE payment_allocations ADD COLUMN prev_status TEXT'); } catch (e) {}
@@ -164,9 +165,10 @@ function snapshotCustomer(customerId) {
 function insertReceipt(customerId, data) {
   const snap = snapshotCustomer(customerId);
   const r = db.prepare(`INSERT INTO payment_receipts (customer_id, created_at, amount, credit_used, credit_added, method, paid_by, note, source,
-      prev_customer_status, prev_promise_until, prev_expired_at, prev_unpaid_streak) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      prev_customer_status, prev_promise_until, prev_expired_at, prev_unpaid_streak, destination) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
     .run(customerId, cycle.nowStamp(), data.amount || 0, data.credit_used || 0, data.credit_added || 0, data.method || '', data.paid_by || '',
-      String(data.note || '').slice(0, 300), data.source || 'manual', snap.prev_customer_status, snap.prev_promise_until, snap.prev_expired_at, snap.prev_unpaid_streak);
+      String(data.note || '').slice(0, 300), data.source || 'manual', snap.prev_customer_status, snap.prev_promise_until, snap.prev_expired_at, snap.prev_unpaid_streak,
+      String(data.destination || '').slice(0, 60) || null);
   return Number(r.lastInsertRowid);
 }
 
@@ -217,7 +219,7 @@ function recordPayment(invoiceId, paidBy) {
  * Cobro de un monto libre: cubre facturas pendientes (más antiguas primero, o las indicadas primero)
  * y el sobrante queda como saldo a favor. Con useCredit también consume el saldo a favor.
  */
-function receive(customerId, { amount, method, note, paidBy, invoiceIds, useCredit = false, carryRemaining = false } = {}) {
+function receive(customerId, { amount, method, note, paidBy, invoiceIds, useCredit = false, carryRemaining = false, destination = '' } = {}) {
   ensureSchema();
   const cid = Number(customerId);
   const c = db.prepare('SELECT id, name, status FROM customers WHERE id=?').get(cid);
@@ -236,7 +238,7 @@ function receive(customerId, { amount, method, note, paidBy, invoiceIds, useCred
   if (carryRemaining && cash <= 0) throw new Error('Para activar con saldo pendiente hay que registrar un pago.');
   const result = { receiptId: null, applied: [], fullyPaid: [], creditUsed: 0, creditAdded: 0, carried: 0, customer: c };
   db.transaction(() => {
-    const rid = insertReceipt(cid, { amount: cash, method, paid_by: paidBy, note, source: cash ? 'manual' : 'credit' });
+    const rid = insertReceipt(cid, { amount: cash, method, paid_by: paidBy, note, source: cash ? 'manual' : 'credit', destination: method === 'Efectivo' ? '' : destination });
     result.receiptId = rid;
     let available = cash + credit;
     for (const inv of pending) {

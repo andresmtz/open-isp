@@ -51,8 +51,9 @@ const MENU_DEFINITIONS = [
     { key: 'collector_payments', section: 'billing', href: '/admin/collector-payments', icon: 'bi bi-check2-square', labelKey: 'admin.nav.collector_payments', labelDefault: 'Aprobación de cobradores', roles: ['admin', 'cashier'], activePages: ['collector_payments'] }
   ] },
 
-  { key: 'grp_finance', section: 'finance', href: '/admin/reports', icon: 'bi bi-cash-stack', labelKey: 'admin.nav.grp_finance', labelDefault: 'Finanzas', roles: ['admin', 'cashier'], activePages: ['reports', 'cashiers_reports', 'payroll', 'cash_in', 'expenses', 'expense_categories'], children: [
+  { key: 'grp_finance', section: 'finance', href: '/admin/reports', icon: 'bi bi-cash-stack', labelKey: 'admin.nav.grp_finance', labelDefault: 'Finanzas', roles: ['admin', 'cashier'], activePages: ['reports', 'account_collections', 'cashiers_reports', 'payroll', 'cash_in', 'expenses', 'expense_categories'], children: [
     { key: 'reports', section: 'finance', href: '/admin/reports', icon: 'bi bi-bar-chart-line', labelKey: 'admin.nav.finance_report', labelDefault: 'Reporte financiero', roles: ['admin', 'cashier'], activePages: ['reports'] },
+    { key: 'account_collections', section: 'finance', href: '/admin/finance/by-account', icon: 'bi bi-bank', labelKey: 'admin.nav.account_collections', labelDefault: 'Cobros por cuenta', roles: ['admin'], activePages: ['account_collections'] },
     { key: 'cashiers_reports', section: 'finance', href: '/admin/cashiers/reports', icon: 'bi bi-journal-text', labelKey: 'admin.nav.cashiers_reports', labelDefault: 'Reporte de cajeros', roles: ['admin', 'cashier'], activePages: ['cashiers_reports'] },
     { key: 'cash_in', section: 'finance', href: '/admin/finance/cash-in', icon: 'bi bi-cash-stack', labelKey: 'admin.nav.cash_in', labelDefault: 'Otros ingresos', roles: ['admin', 'cashier'], activePages: ['cash_in'] },
     { key: 'expenses', section: 'finance', href: '/admin/finance/expenses', icon: 'bi bi-wallet2', labelKey: 'admin.nav.expenses', labelDefault: 'Gastos', roles: ['admin', 'cashier'], activePages: ['expenses'] },
@@ -116,6 +117,7 @@ const DEFAULT_MENU_STATES = {
   billing: STATE_VISIBLE,
   reports: STATE_VISIBLE,
   cashiers_reports: STATE_VISIBLE,
+  account_collections: STATE_VISIBLE,
   collector_payments: STATE_VISIBLE,
   tickets: STATE_VISIBLE,
   inventory: STATE_VISIBLE,

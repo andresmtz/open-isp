@@ -12,16 +12,24 @@
 const sharp = require('sharp');
 const { logger } = require('../config/logger');
 
-const HEX = '0-9A-Fa-f';
-const MAC_RE = new RegExp(`(?:[${HEX}]{2}[:\\-. ]?){5}[${HEX}]{2}`, 'g');
 const norm = (m) => String(m || '').toUpperCase().replace(/[^0-9A-F]/g, '');
 const pretty = (m) => norm(m).match(/../g).join(':');
 
-/** MACs (12 hex) que aparecen en un texto. */
+/**
+ * MACs (12 hex) que aparecen en un texto: bloques completos (con ":" "-" "." o sin separador), que no estén
+ * pegados a otras letras o números (así "MAC 80:07:…" no toma la "AC" de la palabra MAC). En OCR la letra O se
+ * toma como cero solo dentro del bloque.
+ */
 function macsInText(text) {
   const out = new Set();
-  const t = String(text || '').toUpperCase().replace(/[O]/g, '0');
-  for (const m of t.match(MAC_RE) || []) { const n = norm(m); if (n.length === 12) out.add(n); }
+  const t = String(text || '').toUpperCase();
+  const res = [
+    /(?<![0-9A-Z])([0-9A-FO]{2}(?:([:\-.])[0-9A-FO]{2})(?:\2[0-9A-FO]{2}){4})(?![0-9A-Z])/g,
+    /(?<![0-9A-Z])([0-9A-FO]{12})(?![0-9A-Z])/g,
+  ];
+  for (const re of res) {
+    let m; while ((m = re.exec(t))) { const n = norm(m[1].replace(/O/g, '0')); if (n.length === 12 && !/^0+$|^F+$/.test(n)) out.add(n); }
+  }
   return [...out];
 }
 

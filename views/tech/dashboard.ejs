@@ -53,8 +53,8 @@
         <div style="white-space:pre-wrap"><%= _msg %></div>
         <% if (ticket.customer_id && ['open','in_progress'].indexOf(ticket.status) !== -1) { %>
           <div style="margin-top:10px">
-            <button type="button" class="btn btn-sm" style="width:100%;border:1px solid var(--border)" onclick="measurePower(<%= ticket.id %>, this)"><i class="bi bi-reception-4"></i> Medir potencia de la ONU</button>
-            <div id="pw-<%= ticket.id %>" style="font-size:13px;margin-top:6px"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:13px"><span><i class="bi bi-reception-4"></i> Potencia de la ONU</span><button type="button" class="btn btn-sm" style="border:1px solid var(--border)" onclick="measurePower(<%= ticket.id %>, this)"><i class="bi bi-arrow-clockwise"></i> Actualizar</button></div>
+            <div id="pw-<%= ticket.id %>" class="pw-auto" data-id="<%= ticket.id %>" style="font-size:13px;margin-top:6px"></div>
           </div>
         <% } %>
         <% if (ticket.support) { var sp = ticket.support; %>
@@ -193,7 +193,7 @@
 <%- include('partials/bottom_nav') %><script>
 async function measurePower(id, btn){
   var box = document.getElementById('pw-' + id);
-  btn.disabled = true; box.innerHTML = '<span class="muted">Consultando la OLT…</span>';
+  if (btn) btn.disabled = true; box.innerHTML = '<span class="muted">Midiendo en la OLT…</span>';
   try {
     var j = await (await fetch('/tech/orders/' + id + '/power', { headers: { Accept: 'application/json' } })).json();
     if (!j.ok) { box.innerHTML = '<span style="color:#ef4444">' + (j.message || 'Error') + '</span>'; }
@@ -203,10 +203,12 @@ async function measurePower(id, btn){
         + '<div style="font-size:22px;font-weight:800;color:' + col + '">' + (j.rx || '—') + ' dBm <span style="font-size:13px">(' + j.level + ')</span></div>'
         + '<div class="muted" style="font-size:12px">ONU ' + j.onu + ' · ' + (j.status || '') + (j.distance && j.distance !== '-' ? ' · fibra ' + j.distance + ' m' : '') + (j.temp ? ' · ' + j.temp + ' °C' : '') + '</div>'
         + '<div style="font-size:12px;margin-top:4px">' + j.advice + '</div>'
-        + '<div class="muted" style="font-size:11px;margin-top:2px">Medido ' + new Date(j.at).toLocaleTimeString() + ' · tocá de nuevo para volver a medir</div></div>';
+        + '<div class="muted" style="font-size:11px;margin-top:2px">Medido ' + new Date(j.at).toLocaleTimeString() + ' · Actualizar para volver a medir</div></div>';
     }
   } catch (e) { box.textContent = 'Error: ' + e.message; }
-  btn.disabled = false;
+  if (btn) btn.disabled = false;
 }
+// Al abrir el panel se mide sola la potencia de cada orden abierta (de a una, para no saturar la OLT)
+(async function(){ var boxes = document.querySelectorAll('.pw-auto'); for (var i = 0; i < boxes.length; i++) await measurePower(boxes[i].getAttribute('data-id')); })();
 </script>
 

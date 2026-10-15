@@ -168,6 +168,13 @@ async function createRequest(data, { source = 'Portal web', actor = '' } = {}) {
   const address = String(data.address || '').trim();
   const pkg = data.package_id ? customerSvc.getPackageById(data.package_id) : null;
   if (!name || !phone || !address || !pkg) throw new Error('Nombre, WhatsApp, dirección y plan son obligatorios.');
+  // ¿Ya está registrado (por teléfono o cédula)? Se retoma su ficha en vez de crear otra
+  const dup = findDuplicates({ phone, nik: data.nik }).filter(d => d.match.includes('teléfono') || d.match.includes('cédula'))[0];
+  if (dup) {
+    const st = dup.status === 'cancelled' ? `cancelado${dup.cancelled_at ? ' el ' + String(dup.cancelled_at).slice(0, 10).split('-').reverse().join('/') : ''}` : ({ active: 'activo', suspended: 'suspendido', inactive: 'inscripto' }[dup.status] || dup.status);
+    throw new Error(`Esta persona ya está registrada: ${dup.name} (${dup.customer_code || 'ID ' + dup.id}, ${st}; coincide ${dup.match.join(' y ')}). ` +
+      (dup.status === 'cancelled' || dup.reg_status === 'rejected' ? 'Usá "Retomar" en su ficha (Clientes → Cancelados) para conservar su historial.' : 'No hace falta cargarla de nuevo.'));
+  }
   if (!regional.isValidPhone(phone)) throw new Error(regional.phoneHelp());
   phone = regional.toLocalPhone(phone);
   let { lat, lng } = data;
@@ -357,6 +364,30 @@ const CANCEL_REASONS = {
   otro: 'Otro motivo',
 };
 
+/** Personas ya registradas que coinciden con una solicitud nueva (teléfono, cédula o nombre), en cualquier estado. */
+function findDuplicates({ phone = '', nik = '', name = '' } = {}, { exceptId = null } = {}) {
+  const out = new Map();
+  const add = (c, why) => { if (!c || c.id === exceptId) return; const e = out.get(c.id) || { ...c, match: [] }; if (!e.match.includes(why)) e.match.push(why); out.set(c.id, e); };
+  const cols = 'id, name, customer_code, phone, nik, address, status, reg_status, reg_cancel_reason, cancelled_at, cancel_reason';
+  const p = String(phone || '').trim();
+  if (p && regional.isValidPhone(p)) {
+    const vars = regional.phoneVariants(p), loc = regional.toLocalPhone(p);
+    let alt = ''; try { require('../config/customerPhones').ensureSchema(); alt = ' OR alt_phones LIKE ?'; } catch (_) {}
+    for (const c of db.prepare(`SELECT ${cols} FROM customers WHERE phone IN (${vars.map(() => '?').join(',')})${alt}`).all(...vars, ...(alt ? [`%,${loc},%`] : []))) add(c, 'teléfono');
+  }
+  const n = String(nik || '').replace(/\D/g, '');
+  if (n.length >= 5) for (const c of db.prepare(`SELECT ${cols} FROM customers WHERE REPLACE(REPLACE(nik,'.',''),' ','') = ?`).all(n)) add(c, 'cédula');
+  const norm = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+  const t = norm(name);
+  if (t.length >= 2) {
+    for (const c of db.prepare(`SELECT ${cols} FROM customers WHERE name LIKE ?`).all('%' + t[0] + '%')) {
+      const ct = norm(c.name);
+      if (ct[0] === t[0] && t.slice(1).some(w => ct.includes(w))) add(c, 'nombre');
+    }
+  }
+  return [...out.values()].slice(0, 5);
+}
+
 function logEvent(id, text) {
   try { db.prepare("INSERT INTO customer_events (customer_id, type, old_value, new_value) VALUES (?, 'install', NULL, ?)").run(id, String(text).slice(0, 300)); } catch (_) {}
 }
@@ -458,7 +489,10 @@ async function cancelInstallation(customerId, { reason = '', motive = 'otro', ou
       try { const r = await require('./mikrotikService').removePppoeSecretByName(c.pppoe_username, c.router_id || null); mk = r.removed ? ' Usuario PPPoE borrado del MikroTik.' : ''; }
       catch (e) { mk = ' No se pudo borrar el usuario PPPoE del MikroTik: ' + e.message; }
     }
-    db.prepare("UPDATE customers SET reg_status='rejected', reg_cancel_reason=?, reg_installer=NULL, reg_total_override=NULL, pppoe_username=NULL, pppoe_password=NULL, pppoe_remote_address=NULL WHERE id=?").run(label, id);
+    // Solicitud rechazada: pasa a Cancelado (conserva ficha, fotos e historial; se puede retomar). Nunca recibe mensajes.
+    db.prepare(`UPDATE customers SET status='cancelled', reg_status='rejected', reg_cancel_reason=?, reg_installer=NULL, reg_total_override=NULL,
+      pppoe_username=NULL, pppoe_password=NULL, pppoe_remote_address=NULL, cancelled_at=(NOW_LOCAL()), cancel_reason=?, cancelled_by=?, auto_isolate=0 WHERE id=?`)
+      .run(label, 'Solicitud de instalación rechazada: ' + label, actor, id);
   } else {
     db.prepare("UPDATE customers SET reg_status='pending', reg_cancel_reason=?, reg_installer=NULL, reg_total_override=NULL WHERE id=?").run('En espera — ' + label, id);
   }
@@ -478,9 +512,11 @@ function reactivateRequest(customerId, { actor = 'Admin' } = {}) {
   ensureSchema();
   const id = Number(customerId);
   const c = db.prepare('SELECT * FROM customers WHERE id=?').get(id);
-  if (!c || c.status !== 'inactive' || c.reg_status !== 'rejected') throw new Error('La solicitud no está rechazada.');
-  db.prepare("UPDATE customers SET reg_status='pending', reg_cancel_reason=NULL WHERE id=?").run(id);
-  logEvent(id, `Solicitud retomada (por ${actor})`);
+  // Se retoma una solicitud rechazada, o vuelve un cliente cancelado: queda como Inscripto (pendiente) con todo su historial
+  if (!c || !(c.status === 'cancelled' || (c.status === 'inactive' && c.reg_status === 'rejected'))) throw new Error('Solo se puede retomar una solicitud rechazada o un cliente cancelado.');
+  const prev = c.status === 'cancelled' ? `cancelado${c.cancelled_at ? ' el ' + String(c.cancelled_at).slice(0, 10).split('-').reverse().join('/') : ''}${c.cancel_reason ? ' (' + c.cancel_reason + ')' : ''}` : 'solicitud rechazada';
+  db.prepare("UPDATE customers SET status='inactive', reg_status='pending', reg_cancel_reason=NULL, reg_installer=NULL, cancelled_at=NULL, cancel_reason='', cancelled_by='' WHERE id=?").run(id);
+  logEvent(id, `Solicitud retomada: vuelve como inscripto, antes ${prev} (por ${actor})`);
   return { ok: true };
 }
 
@@ -634,6 +670,6 @@ module.exports = {
   installerRule, DEFAULT_INSTALLER_RULE,
   ensureNetworkAccount, completeInstallation, cancelInstallation, reassignInstallation, resendToInstaller, reactivateRequest, CANCEL_REASONS, setEquipment, onuCandidates, linkOnu, tryApplyWifi,
   ensureSchema, firstInvoicePlan, defaultDueDate, installers, findInstaller, parseLocation,
-  createRequest, approve, sendWelcome, renderWelcome, onTicketStatus, DEFAULT_WELCOME,
+  createRequest, findDuplicates, approve, sendWelcome, renderWelcome, onTicketStatus, DEFAULT_WELCOME,
   _sendTo: sendTo, _tellInstaller: tellInstaller, _officeRecipients: officeRecipients,
 };

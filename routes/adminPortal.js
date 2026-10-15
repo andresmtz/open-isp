@@ -4788,6 +4788,14 @@ router.post('/registrations/:id/reassign', requireAdminSession, express.urlencod
   res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
 });
 
+router.get('/registrations/duplicates', requireAdminSession, (req, res) => {
+  try {
+    const d = require('../services/installationService').findDuplicates({ phone: req.query.phone, nik: req.query.nik, name: req.query.name });
+    res.json({ ok: true, matches: d.map(c => ({ id: c.id, name: c.name, code: c.customer_code, phone: c.phone, address: c.address, status: c.status, regStatus: c.reg_status,
+      reason: c.cancel_reason || c.reg_cancel_reason || '', cancelledAt: c.cancelled_at, match: c.match })) });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
 router.post('/registrations/:id/resend', requireAdminSession, async (req, res) => {
   try {
     const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
@@ -4803,9 +4811,9 @@ router.post('/registrations/:id/reactivate', requireAdminSession, (req, res) => 
   try {
     const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
     require('../services/installationService').reactivateRequest(Number(req.params.id), { actor });
-    req.session._msg = { type: 'success', text: 'Solicitud retomada: vuelve a pendiente para asignar la instalación.' };
+    req.session._msg = { type: 'success', text: 'Solicitud retomada: vuelve a Inactivos como inscripto (con todo su historial) para asignar la instalación.' };
   } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
-  res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
+  res.redirect('/admin/customers?status=inactive');
 });
 
 router.get('/registrations/installers', requireAdminSession, (req, res) => {

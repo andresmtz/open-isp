@@ -66,6 +66,7 @@ const CATALOG = [
     ['POST', `^/customers/${ID}/(update|generate-pppoe)$`],
     ['POST', `^/registrations/${ID}/(approve|reject|installed|cancel-install|reassign|reactivate|resend)$`],
     ['GET', '^/registrations/installers$'],
+    ['GET', '^/registrations/duplicates$'],
     ['POST', '^/registrations$'],
     ['POST', `^/customers/${ID}/documents(/${ID}/delete)?$`],
     ['GET|POST', `^/customers/${ID}/equipment$`],

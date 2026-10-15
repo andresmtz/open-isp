@@ -267,7 +267,7 @@
                     <button type="button" class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="cancelInstall(+this.dataset.id, this.dataset.name)"><i class="bi bi-x-circle"></i> Cancelar instalación</button>
                   </div>
                   <% } %>
-                <% } else if (c.status === 'inactive' && c.reg_status === 'rejected') { %>
+                <% } else if ((c.status === 'inactive' || c.status === 'cancelled') && c.reg_status === 'rejected') { %>
                   <div style="font-size:11px;margin-top:4px;color:var(--danger);font-weight:700"><i class="bi bi-x-octagon"></i> Solicitud rechazada<%= c.reg_cancel_reason ? ': ' + c.reg_cancel_reason : '' %></div>
                   <% if (_can('clientes_alta')) { %><form method="POST" action="/admin/registrations/<%= c.id %>/reactivate" style="margin-top:6px" onsubmit="return confirm('¿Retomar esta solicitud? Vuelve a pendiente para asignar la instalación.')"><button class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px"><i class="bi bi-arrow-counterclockwise"></i> Retomar</button></form><% } %>
                 <% } else if (c.status === 'inactive' && _can('clientes_alta')) { %>
@@ -470,6 +470,10 @@
                     <% } %>
                     <% if (c.status !== 'cancelled' && c.status !== 'inactive' && (_adm || (_can('clientes_baja') && c.withdraw_status === 'retirado'))) { %>
                     <button type="button" class="act-item danger" data-id="<%= c.id %>" onclick="cancelCustService(+this.dataset.id)"><i class="bi bi-x-octagon"></i> Cancelar servicio</button>
+                    <% } %>
+                    <% if (c.status === 'cancelled' && c.reg_status !== 'rejected' && _can('clientes_alta')) { %>
+                    <form id="ret-<%= c.id %>" method="POST" action="/admin/registrations/<%= c.id %>/reactivate" style="display:none"></form>
+                    <button type="button" class="act-item success" onclick="if(confirm('¿Vuelve como cliente? Queda como Inscripto (solicitud de instalación) con todo su historial.'))document.getElementById('ret-<%= c.id %>').submit()"><i class="bi bi-arrow-counterclockwise"></i> Retomar como nueva solicitud</button>
                     <% } %>
                     <% if (c.status === 'inactive' && _adm) { %>
                     <button type="submit" form="del-<%= c.id %>" class="act-item danger"><i class="bi bi-trash"></i> <%= t('admin.cust.btn_delete','Hapus Pelanggan') %></button>
@@ -1409,10 +1413,11 @@
     <form method="POST" action="/admin/registrations" enctype="multipart/form-data" data-loading="Guardando…">
       <div class="mbody">
         <div class="hint" style="margin-bottom:10px">Queda como <b>Inscripto</b> (pendiente de instalación). Después se asigna con <b>Aprobar e instalar</b>.</div>
-        <div class="fg"><label class="fl">Nombre y apellido *</label><input class="fc" name="name" required></div>
+        <div class="fg"><label class="fl">Nombre y apellido *</label><input class="fc" name="name" required onchange="nrDup()"></div>
+        <div id="nrDupBox" style="display:none;margin-bottom:10px"></div>
         <div class="form-row">
-          <div class="fg"><label class="fl">WhatsApp *</label><input class="fc" name="phone" inputmode="tel" placeholder="09xx xxx xxx" required><div class="hint" style="margin-top:4px">Línea de otro país: con + y el código, ej. +55 11 91234 5678</div></div>
-          <div class="fg"><label class="fl">Cédula</label><input class="fc" name="nik" inputmode="numeric"></div>
+          <div class="fg"><label class="fl">WhatsApp *</label><input class="fc" name="phone" inputmode="tel" placeholder="09xx xxx xxx" required onchange="nrDup()"><div class="hint" style="margin-top:4px">Línea de otro país: con + y el código, ej. +55 11 91234 5678</div></div>
+          <div class="fg"><label class="fl">Cédula</label><input class="fc" name="nik" inputmode="numeric" onchange="nrDup()"></div>
         </div>
         <div class="fg"><label class="fl">Dirección *</label><input class="fc" name="address" required></div>
         <div class="fg"><label class="fl">Ubicación</label><input class="fc" name="location" placeholder="Link de Google Maps o coordenadas (-25.39, -57.14)"><div class="hint" style="margin-top:4px">Pegá el link que manda el cliente por WhatsApp.</div></div>
@@ -2089,6 +2094,38 @@ async function cancelInstall(id, name){
   document.getElementById('ci_form').action = '/admin/registrations/' + id + '/cancel-install';
   document.getElementById('ci_motive').innerHTML = Object.keys(m.reasons).map(function(k){ return '<option value="' + k + '">' + m.reasons[k] + '</option>'; }).join('');
   openModal('cancelInstModal');
+}
+// Solicitud nueva: avisa si la persona ya está registrada (teléfono, cédula o nombre), en cualquier estado
+var _nrT = null;
+function nrDup(){
+  clearTimeout(_nrT);
+  _nrT = setTimeout(async function(){
+    var f = document.querySelector('#newReqModal form'); if (!f) return;
+    var q = new URLSearchParams({ phone: f.phone.value, nik: f.nik.value, name: f.name.value });
+    var box = document.getElementById('nrDupBox');
+    try {
+      var j = await (await fetch('/admin/registrations/duplicates?' + q, { headers: { Accept: 'application/json' } })).json();
+      if (!j.ok || !j.matches.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+      var ST = { active: 'Activo', suspended: 'Suspendido', inactive: 'Inscripto', cancelled: 'Cancelado' };
+      box.innerHTML = '<div style="padding:10px;border:2px solid #f59e0b;border-radius:10px;font-size:13px"><b><i class="bi bi-exclamation-triangle"></i> Esta persona podría estar ya registrada:</b>'
+        + j.matches.map(function(m){
+            var retake = m.status === 'cancelled' || m.regStatus === 'rejected';
+            return '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><b>' + _esc(m.name) + '</b> · ' + _esc(m.code || ('ID ' + m.id)) + ' · ' + (ST[m.status] || _esc(m.status))
+              + (m.cancelledAt ? ' el ' + String(m.cancelledAt).slice(0, 10).split('-').reverse().join('/') : '')
+              + '<br><span class="text-muted">Coincide: ' + m.match.join(', ') + ' · ' + _esc(m.phone || '') + (m.address ? ' · ' + _esc(m.address) : '') + '</span>'
+              + (m.reason ? '<br><span class="text-muted">Motivo: ' + _esc(m.reason) + '</span>' : '')
+              + (retake ? '<br><button type="button" class="btn btn-p btn-sm" style="margin-top:6px" onclick="nrRetake(' + m.id + ')"><i class="bi bi-arrow-counterclockwise"></i> Retomar su ficha (no cargar de nuevo)</button>' : '')
+              + '</div>';
+          }).join('') + '</div>';
+      box.style.display = '';
+    } catch (e) { box.style.display = 'none'; }
+  }, 400);
+}
+// (el formulario de la solicitud ya está abierto: no se puede anidar otro form adentro)
+function nrRetake(id){
+  if (!confirm('¿Retomar esta ficha como solicitud nueva? Conserva todo su historial. Después podés actualizar sus datos con Editar.')) return;
+  var f = document.createElement('form'); f.method = 'POST'; f.action = '/admin/registrations/' + id + '/reactivate'; f.setAttribute('data-no-ajax', '1');
+  document.body.appendChild(f); f.submit();
 }
 async function openWithdraw(btn){
   var id = +btn.dataset.id, name = btn.dataset.name, st = btn.dataset.st;

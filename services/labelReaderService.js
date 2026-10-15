@@ -112,6 +112,16 @@ function matchCandidates(readMacs, candidates) {
   for (const r of readMacs.filter(x => /OCR/.test(x.source))) for (const c of cands) if (distance(r.mac, c._n) === 1) fuzzy.push({ c, r });
   const uniq = [...new Map(fuzzy.map(f => [f.c.onu_ref, f])).values()];
   if (uniq.length === 1) return { match: uniq[0].c, how: `MAC ${pretty(uniq[0].c.mac)} (lectura OCR con 1 carácter dudoso: ${pretty(uniq[0].r.mac)})`, exact: false };
+  // 3) Algunas ONU registran en la fibra una MAC correlativa a la impresa (mismo fabricante, últimos dígitos ±8):
+  //    se acepta solo si hay una única ONU nueva así
+  const near = [];
+  for (const r of readMacs) for (const c of cands) {
+    if (r.mac.slice(0, 6) !== c._n.slice(0, 6)) continue;
+    const diff = Math.abs(parseInt(r.mac.slice(6), 16) - parseInt(c._n.slice(6), 16));
+    if (diff > 0 && diff <= 8) near.push({ c, r, diff });
+  }
+  const uniqNear = [...new Map(near.map(f => [f.c.onu_ref, f])).values()];
+  if (uniqNear.length === 1) return { match: uniqNear[0].c, how: `MAC de la fibra ${pretty(uniqNear[0].c.mac)} correlativa a la de la etiqueta ${pretty(uniqNear[0].r.mac)} (diferencia ${uniqNear[0].diff})`, exact: false };
   return { match: null, how: readMacs.length ? `Se leyó ${readMacs.map(r => pretty(r.mac)).join(', ')} pero no coincide con ninguna ONU nueva de la OLT.` : 'No se pudo leer ninguna MAC en la foto.', exact: false };
 }
 

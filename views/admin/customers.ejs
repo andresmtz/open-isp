@@ -212,6 +212,7 @@
             <option value=""><%= t('admin.cust.all_billing','Semua Tagihan') %></option>
             <option value="unpaid" <%= filterBilling==='unpaid'?'selected':'' %>><%= t('collector.filter_belum','Belum Bayar') %></option>
             <option value="paid" <%= filterBilling==='paid'?'selected':'' %>><%= t('admin.cust.paid','Lunas') %></option>
+            <option value="oldest" <%= filterBilling==='oldest'?'selected':'' %>>Con deuda: más antigua primero</option>
           </select>
           <select class="fs" name="auto_isolate" style="width:170px" onchange="this.form.submit()">
             <option value=""><%= t('admin.cust.f_auto_all','Auto-Isolir: Semua') %></option>
@@ -383,6 +384,14 @@
                 <% if (c.unpaid_count > 0) { %>
                   <span class="badge bd"><%= c.unpaid_count %> <%= t('admin.customers.unpaid_suffix', 'tagihan') %></span>
                   <div style="font-size:11px;margin-top:3px;font-weight:700"><%= fmtMoney(c.unpaid_balance || 0) %></div>
+                  <% if (c.unpaid_periods) {
+                       var _MS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                       var _pp = String(c.unpaid_periods).split(',').map(function(x){ var a = x.split('-'); return { y: +a[0], m: +a[1] }; });
+                       var _lbl = _pp.slice(0, 3).map(function(p, i){ return _MS[p.m - 1] + (i === _pp.length - 1 || i === 2 || _pp[i + 1].y !== p.y ? ' ' + p.y : ''); }).join(', ') + (_pp.length > 3 ? ' …' : '');
+                       var _now = new Date(), _age = (_now.getFullYear() * 12 + _now.getMonth() + 1) - (_pp[0].y * 12 + _pp[0].m); %>
+                    <div style="font-size:11px;margin-top:2px" title="Períodos adeudados: <%= _pp.map(function(p){ return _MS[p.m - 1] + ' ' + p.y; }).join(', ') %>"><%= _lbl %></div>
+                    <% if (_age >= 1) { %><div style="font-size:11px;font-weight:800;color:<%= _age >= 2 ? 'var(--danger)' : '#f59e0b' %>">desde hace <%= _age %> mes<%= _age === 1 ? '' : 'es' %></div><% } %>
+                  <% } %>
                 <% } else { %><span class="text-muted" style="font-size:12px"><%= t('admin.customers.paid_label', 'Lunas') %></span><% } %>
                 <% if (Number(c.credit_balance || 0) > 0) { %><div style="font-size:11px;margin-top:3px;color:#10b981" title="Saldo a favor"><i class="bi bi-piggy-bank"></i> <%= fmtMoney(c.credit_balance) %></div><% } %>
               </td><% } %>

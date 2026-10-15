@@ -88,6 +88,8 @@ function getAllCustomers(search = '', routerId = null, filterStatus = '', filter
            odp.name as odp_name,
            (SELECT COUNT(*) FROM invoices WHERE customer_id=c.id AND status='unpaid') as unpaid_count,
            (SELECT COALESCE(SUM(amount - COALESCE(amount_paid,0)),0) FROM invoices WHERE customer_id=c.id AND status='unpaid') as unpaid_balance,
+           (SELECT GROUP_CONCAT(per, ',') FROM (SELECT period_year || '-' || printf('%02d', period_month) AS per FROM invoices WHERE customer_id=c.id AND status='unpaid' ORDER BY period_year, period_month)) as unpaid_periods,
+           (SELECT MIN(period_year * 100 + period_month) FROM invoices WHERE customer_id=c.id AND status='unpaid') as unpaid_oldest,
            u.bytes_in, u.bytes_out
     FROM customers c
     LEFT JOIN packages p ON c.package_id = p.id
@@ -137,9 +139,12 @@ function getAllCustomers(search = '', routerId = null, filterStatus = '', filter
   else if (autoIsolate === 'off') whereClauses.push('(c.auto_isolate = 0 OR c.auto_isolate IS NULL)');
   if (billing === 'unpaid') whereClauses.push("(SELECT COUNT(*) FROM invoices WHERE customer_id=c.id AND status='unpaid') > 0");
   else if (billing === 'paid') whereClauses.push("(SELECT COUNT(*) FROM invoices WHERE customer_id=c.id AND status='unpaid') = 0");
+  else if (billing === 'oldest') whereClauses.push("(SELECT COUNT(*) FROM invoices WHERE customer_id=c.id AND status='unpaid') > 0");
 
   const whereSql = whereClauses.length > 0 ? ` WHERE ` + whereClauses.join(' AND ') : '';
-  return db.prepare(base + whereSql + ` ORDER BY c.name ASC`).all(...params);
+  // "Deuda más antigua primero": para decidir retiros de equipo
+  const orderSql = billing === 'oldest' ? ` ORDER BY unpaid_oldest ASC, c.name ASC` : ` ORDER BY c.name ASC`;
+  return db.prepare(base + whereSql + orderSql).all(...params);
 }
 
 function getAllCustomerAreas() {

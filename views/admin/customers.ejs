@@ -1912,6 +1912,7 @@ function eqRenderActive(j){
   h += '<div style="flex:0 0 220px">' + (cur && cur.photo ? '<a href="' + cur.photo + '" target="_blank"><img src="' + cur.photo + '" style="width:100%;border-radius:10px;border:1px solid var(--border)"></a>' : '<div class="text-muted" style="font-size:12px;padding:30px 8px;text-align:center;border:1px dashed var(--border);border-radius:10px">Sin foto de la etiqueta.<br>Se agrega en la próxima visita del técnico o en Fotos y documentos.</div>') + '</div>';
   h += '<div style="flex:1;min-width:240px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">Equipo actual</div>';
   h += cur ? '<div style="font-size:13px;line-height:1.7"><b>' + _esc(cur.type || 'ONU') + '</b><br>MAC <span class="mono">' + _esc(String(cur.mac || '').toUpperCase()) + '</span><br>OLT: ' + _esc(cur.onu_ref || '-') + '<br>Desde: ' + _esc(String(cur.installed_at || '-').slice(0, 10)) + (cur.installed_by ? ' · ' + _esc(cur.installed_by) : '') + '</div>' : '<div class="text-muted" style="font-size:12px">Sin equipo registrado.</div>';
+  h += '<div style="margin-top:8px"><button class="btn btn-g btn-sm" onclick="eqPower(this)"><i class="bi bi-reception-4"></i> Medir potencia</button> <span id="eq_power" style="font-size:13px"></span></div>';
   h += '<div style="font-size:13px;margin-top:8px"><i class="bi bi-wifi"></i> WiFi guardado: <b>' + _esc(c.wifi_ssid || '—') + '</b>' + (c.wifi_ssid ? ' / ' + _esc(c.wifi_ssid) + '-5G' : '') + (j.canKey && c.wifi_ssid ? ' <button class="btn btn-g btn-sm" style="padding:2px 8px" onclick="eqRevealKey(this)">Ver clave</button>' : '') + '</div>';
   if (j.money) h += '<div style="margin-top:10px"><button class="btn btn-g btn-sm" onclick="eqCharge()"><i class="bi bi-plus-circle"></i> Agregar cargo (ej. ONU dañada)</button>' + (Number(c.carry_over) > 0 ? ' <span style="font-size:12px;color:#f59e0b">Pendiente para la próxima factura: ' + fmtMoney(c.carry_over) + '</span>' : '') + '</div>';
   h += '</div></div>';
@@ -1919,6 +1920,15 @@ function eqRenderActive(j){
   h += '<div style="font-weight:700;font-size:13px;margin:14px 0 6px">Historial de equipos (' + j.equipment.length + ')</div>';
   h += past.length ? past.map(function(e){ return '<div style="display:flex;gap:10px;align-items:center;padding:8px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px">' + (e.photo ? '<a href="' + e.photo + '" target="_blank"><img src="' + e.photo + '" style="width:64px;height:48px;object-fit:cover;border-radius:6px"></a>' : '<div style="width:64px;height:48px;border-radius:6px;background:rgba(148,163,184,.1)"></div>') + '<div style="font-size:12px"><b>' + _esc(e.type || 'ONU') + '</b> · ' + _esc(String(e.mac || '').toUpperCase()) + ' · ' + _esc(e.onu_ref || '') + '<br>' + _esc(String(e.installed_at || '').slice(0, 10)) + ' → ' + _esc(String(e.removed_at || '').slice(0, 10)) + ' · ' + _esc(e.removed_reason || '') + (e.removed_by ? ' (' + _esc(e.removed_by) + ')' : '') + '</div></div>'; }).join('') : '<div class="text-muted" style="font-size:12px">Sin cambios de equipo.</div>';
   b.innerHTML = h;
+}
+async function eqPower(btn){
+  var s = document.getElementById('eq_power'); btn.disabled = true; s.textContent = 'Consultando la OLT…';
+  try {
+    var j = await (await fetch('/admin/customers/' + _eqId + '/onu-power', { headers: { Accept: 'application/json' } })).json();
+    var col = { green: 'var(--success)', orange: 'var(--warning)', red: 'var(--danger)' }[j.color] || 'var(--muted)';
+    s.innerHTML = j.ok ? '<b style="color:' + col + '">' + _esc(j.rx) + ' dBm (' + _esc(j.level) + ')</b> · ' + _esc(j.status || '') + (j.distance && j.distance !== '-' ? ' · fibra ' + _esc(j.distance) + ' m' : '') + '<br><span style="font-size:12px">' + _esc(j.advice) + '</span>' : _esc(j.message || 'Error');
+  } catch (e) { s.textContent = 'Error: ' + e.message; }
+  btn.disabled = false;
 }
 async function eqRevealKey(btn){
   var r = await fetch('/admin/customers/' + _eqId + '/equipment', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ reveal_wifi: 1 }) });

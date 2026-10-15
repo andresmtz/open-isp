@@ -51,6 +51,12 @@
           <% _msg = _msg.slice(_rm[0].length); %>
         <% } %>
         <div style="white-space:pre-wrap"><%= _msg %></div>
+        <% if (ticket.customer_id && ['open','in_progress'].indexOf(ticket.status) !== -1) { %>
+          <div style="margin-top:10px">
+            <button type="button" class="btn btn-sm" style="width:100%;border:1px solid var(--border)" onclick="measurePower(<%= ticket.id %>, this)"><i class="bi bi-reception-4"></i> Medir potencia de la ONU</button>
+            <div id="pw-<%= ticket.id %>" style="font-size:13px;margin-top:6px"></div>
+          </div>
+        <% } %>
         <% if (ticket.support) { var sp = ticket.support; %>
           <div class="muted" style="font-size:12px;margin-top:8px"><i class="bi bi-box-seam"></i> Plan: <%= sp.plan || '-' %><% if (sp.onu) { %> · <i class="bi bi-router"></i> Equipo actual: <%= sp.onu %><% } %></div>
           <% if (sp.active) { %>
@@ -184,4 +190,23 @@
   }
 </script>
 
-<%- include('partials/bottom_nav') %>
+<%- include('partials/bottom_nav') %><script>
+async function measurePower(id, btn){
+  var box = document.getElementById('pw-' + id);
+  btn.disabled = true; box.innerHTML = '<span class="muted">Consultando la OLT…</span>';
+  try {
+    var j = await (await fetch('/tech/orders/' + id + '/power', { headers: { Accept: 'application/json' } })).json();
+    if (!j.ok) { box.innerHTML = '<span style="color:#ef4444">' + (j.message || 'Error') + '</span>'; }
+    else {
+      var col = { green: '#10b981', orange: '#f59e0b', red: '#ef4444', gray: '#94a3b8' }[j.color] || '#94a3b8';
+      box.innerHTML = '<div style="border:2px solid ' + col + ';border-radius:12px;padding:10px">'
+        + '<div style="font-size:22px;font-weight:800;color:' + col + '">' + (j.rx || '—') + ' dBm <span style="font-size:13px">(' + j.level + ')</span></div>'
+        + '<div class="muted" style="font-size:12px">ONU ' + j.onu + ' · ' + (j.status || '') + (j.distance && j.distance !== '-' ? ' · fibra ' + j.distance + ' m' : '') + (j.temp ? ' · ' + j.temp + ' °C' : '') + '</div>'
+        + '<div style="font-size:12px;margin-top:4px">' + j.advice + '</div>'
+        + '<div class="muted" style="font-size:11px;margin-top:2px">Medido ' + new Date(j.at).toLocaleTimeString() + ' · tocá de nuevo para volver a medir</div></div>';
+    }
+  } catch (e) { box.textContent = 'Error: ' + e.message; }
+  btn.disabled = false;
+}
+</script>
+

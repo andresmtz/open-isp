@@ -196,9 +196,11 @@ async function provision(customerId, { actor = 'sistema', mode = 'install' } = {
   note(`MikroTik: sesión activa ${session.address || ''}`);
   finish({ ok: true, step: 'listo', message: 'ok' });
 
+  let powerTxt = '';
+  try { const pw = await require('./onuPowerService').forCustomer(id); powerTxt = require('./onuPowerService').text(pw); note(powerTxt); } catch (_) {}
   if (mode === 'replace') {
     logger.info(`[Provisión] ${c.name}: ONU de reemplazo ${inv.onu_ref} configurada`);
-    return { ok: true, step: 'listo', message: `ONU ${inv.onu_ref} configurada. ${wifiMsg}`, session, inv };
+    return { ok: true, step: 'listo', message: `ONU ${inv.onu_ref} configurada. ${wifiMsg}` + (powerTxt ? `\n📶 ${powerTxt}` : ''), session, inv };
   }
 
   // 7. Instalación realizada (factura con la fecha real + bienvenida) y orden cerrada
@@ -207,7 +209,7 @@ async function provision(customerId, { actor = 'sistema', mode = 'install' } = {
     done = await require('./installationService').completeInstallation(id, { actor: 'configuración automática' });
     db.prepare("UPDATE tickets SET status='resolved', technician_notes=TRIM(COALESCE(technician_notes,'') || ' ONU configurada automáticamente'), updated_at=(NOW_LOCAL()) WHERE customer_id=? AND kind='install' AND status IN ('open','in_progress')").run(id);
   } catch (e) { note('alta: ' + e.message); }
-  await notifyAll(c, `✅ *Instalación completa (automática)*\nCliente: ${c.name}\nONU: ${inv.onu_ref} · descripción ${U}\nPPPoE conectado · IP ${session.address || '-'}\n${wifiMsg}\nGuardado en la ONU y en la OLT (write file).` + (done && done.ok ? `\nPrimera factura: ${require('../config/regional').formatMoney(done.amount)}, vence ${String(done.plan.dueDate).split('-').reverse().join('/')}.` : ''));
+  await notifyAll(c, `✅ *Instalación completa (automática)*\nCliente: ${c.name}\nONU: ${inv.onu_ref} · descripción ${U}\nPPPoE conectado · IP ${session.address || '-'}\n${powerTxt ? '📶 ' + powerTxt + '\n' : ''}${wifiMsg}\nGuardado en la ONU y en la OLT (write file).` + (done && done.ok ? `\nPrimera factura: ${require('../config/regional').formatMoney(done.amount)}, vence ${String(done.plan.dueDate).split('-').reverse().join('/')}.` : ''));
   logger.info(`[Provisión] ${c.name}: ONU ${inv.onu_ref} configurada automáticamente`);
   return { ok: true, step: 'listo', message: 'Instalación completa.' };
 }

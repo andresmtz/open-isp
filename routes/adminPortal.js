@@ -2635,6 +2635,10 @@ router.get('/customers/:id/equipment', requireAdminSession, async (req, res) => 
       money: staffPerms.has(req.session, 'ver_facturas'), autoProvision: require('../services/onuAutoProvisionService').enabled() });
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
+router.get('/customers/:id/onu-power', requireAdminSession, async (req, res) => {
+  try { res.json(await require('../services/onuPowerService').forCustomer(Number(req.params.id))); }
+  catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
 router.post('/customers/:id/equipment', requireAdminSession, express.json(), async (req, res) => {
   try {
     const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');

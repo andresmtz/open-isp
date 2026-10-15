@@ -235,6 +235,15 @@ router.post('/orders/:ticketId/equipment', requireTechSession, equipUpload.array
   res.redirect('/tech');
 });
 
+// Potencia de la ONU del cliente de una orden suya (lectura en el momento desde la OLT)
+router.get('/orders/:ticketId/power', requireTechSession, async (req, res) => {
+  try {
+    const t = db.prepare('SELECT * FROM tickets WHERE id=?').get(Number(req.params.ticketId));
+    if (!t || Number(t.technician_id) !== Number(req.session.techId) || !['open', 'in_progress'].includes(t.status) || !t.customer_id) throw new Error('Orden no disponible.');
+    res.json(await require('../services/onuPowerService').forCustomer(t.customer_id));
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
 // Cambio de equipo en una orden de asistencia: foto de la etiqueta de la ONU nueva, motivo y (opcional) WiFi nuevo
 router.post('/orders/:ticketId/replace', requireTechSession, equipUpload.array('label', 3), async (req, res) => {
   try {

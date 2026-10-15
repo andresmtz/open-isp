@@ -102,8 +102,9 @@ function getAllCustomers(search = '', routerId = null, filterStatus = '', filter
 
   if (search) {
     const s = `%${search}%`;
-    whereClauses.push(`(c.name LIKE ? OR c.phone LIKE ? OR c.nik LIKE ? OR c.genieacs_tag LIKE ? OR c.address LIKE ? OR c.area LIKE ? OR c.pppoe_username LIKE ? OR c.static_ip LIKE ? OR c.hotspot_username LIKE ? OR c.customer_code LIKE ?)`);
-    params.push(s, s, s, s, s, s, s, s, s, s);
+    try { require('../config/customerPhones').ensureSchema(); } catch (_) {}
+    whereClauses.push(`(c.name LIKE ? OR c.phone LIKE ? OR COALESCE(c.alt_phones,'') LIKE ? OR c.nik LIKE ? OR c.genieacs_tag LIKE ? OR c.address LIKE ? OR c.area LIKE ? OR c.pppoe_username LIKE ? OR c.static_ip LIKE ? OR c.hotspot_username LIKE ? OR c.customer_code LIKE ?)`);
+    params.push(s, s, s, s, s, s, s, s, s, s, s);
   }
 
   const rId = routerId ? Number(routerId) : null;
@@ -632,6 +633,8 @@ function findCustomerByAny(val) {
     const suffix = phoneDigits.slice(-9);
     const p1 = db.prepare('SELECT id FROM customers WHERE phone LIKE ?').get(`%${suffix}`);
     if (p1) return getCustomerById(p1.id);
+    // números de WhatsApp adicionales del cliente
+    try { const p2 = require('../config/customerPhones').findByPhone(phoneDigits); if (p2) return getCustomerById(p2.id); } catch (_) {}
   }
 
   // 2. Try Customer Code / ID Pelanggan (mis. SKY-48213) — exact, case-insensitive

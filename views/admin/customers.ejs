@@ -816,7 +816,9 @@
           <div class="fw6 mb-2" style="font-size:13px; color:var(--text);"><i class="bi bi-person-vcard text-info me-1"></i> <%= t('admin.cust.sec_personal','Informasi Pribadi Pelanggan') %></div>
           <div class="form-row">
             <div class="fg"><label class="fl"><%= t('admin.cust.full_name','Nama Lengkap *') %></label><input class="fc" name="name" id="e_name" required></div>
-            <div class="fg"><label class="fl"><%= t('admin.cust.phone_req','No. Telepon / WA *') %></label><input class="fc" name="phone" id="e_phone" required></div>
+            <div class="fg"><label class="fl"><%= t('admin.cust.phone_req','No. Telepon / WA *') %></label><input class="fc" name="phone" id="e_phone" required>
+              <label class="fl" style="margin-top:8px">Otros números de WhatsApp (opcional)</label><input class="fc" name="alt_phones" id="e_alt_phones" placeholder="Ej.: 0982 111 222, 0971 333 444">
+              <div class="hint" style="margin-top:4px">Para reconocerlo si escribe o manda comprobantes desde otro número. Los avisos van al principal.</div></div>
           </div>
           <div class="form-row">
             <div class="fg">
@@ -1865,6 +1867,7 @@ function editCust(idx) {
   document.getElementById('e_name').value=c.name||'';
   if (document.getElementById('e_nik')) document.getElementById('e_nik').value=c.nik||'';
   document.getElementById('e_phone').value=c.phone||'';
+  if (document.getElementById('e_alt_phones')) document.getElementById('e_alt_phones').value=String(c.alt_phones||'').split(',').filter(Boolean).join(', ');
   document.getElementById('e_email').value=c.email||'';
   document.getElementById('e_address').value=c.address||'';
   document.getElementById('e_package').value=c.package_id||'';

@@ -138,9 +138,8 @@ async function gowa(pathq) {
 function customerByJid(jid) {
   const m = /^(\d{8,15})@s\.whatsapp\.net$/.exec(String(jid || ''));
   if (!m) return null;
-  const vars = regional.phoneVariants(m[1]);
-  const q = db.prepare(`SELECT id, name, status FROM customers WHERE phone IN (${vars.map(() => '?').join(',')}) AND status NOT IN ('cancelled') ORDER BY (status='inactive') ASC LIMIT 1`);
-  return q.get(...vars) || null;
+  const c = require('../config/customerPhones').findByPhone(m[1]);
+  return c && c.status !== 'cancelled' ? c : null;
 }
 
 function debtOf(customerId) {
@@ -172,6 +171,13 @@ function checks(p) {
     else if (p.amount < debt.total) out.push({ ok: null, text: `Pago parcial: ${regional.formatMoney(p.amount)} de ${regional.formatMoney(debt.total)}` });
     else out.push({ ok: null, text: `Paga ${regional.formatMoney(p.amount)}, debe ${regional.formatMoney(debt.total)}: ${regional.formatMoney(p.amount - debt.total)} a favor` });
   } else out.push({ ok: false, text: 'El número que lo envió no es de un cliente: elegí a qué cliente corresponde' });
+  // ¿Ya se cobró a mano? Mismo monto registrado desde el día anterior al comprobante (evita cobrar dos veces)
+  if (p.customer_id && p.amount) {
+    const since = p.op_date || String(p.received_at || '').slice(0, 10);
+    const dup = since && db.prepare(`SELECT id, created_at FROM payment_receipts WHERE customer_id=? AND amount=? AND annulled_at IS NULL
+      AND date(created_at) >= date(?, '-1 day') ORDER BY id LIMIT 1`).get(p.customer_id, p.amount, since);
+    if (dup) out.push({ ok: false, text: `Ya hay un cobro de ${regional.formatMoney(p.amount)} registrado el ${String(dup.created_at).slice(8, 10)}/${String(dup.created_at).slice(5, 7)} ${String(dup.created_at).slice(11, 16)} (cobro #${dup.id}): probablemente ya está aplicado` });
+  }
   return out;
 }
 

@@ -829,6 +829,7 @@ function findCustomerForPublicLookup(query) {
     const suffix = digits.slice(-9);
     const rows = db.prepare('SELECT id FROM customers WHERE phone LIKE ? LIMIT 2').all('%' + suffix);
     if (rows.length === 1) return customerSvc.getCustomerById(rows[0].id);
+    if (!rows.length) { try { const a = require('../config/customerPhones').findByPhone(digits); if (a) return customerSvc.getCustomerById(a.id); } catch (_) {} }
   }
   return null;
 }

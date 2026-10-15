@@ -1848,6 +1848,7 @@ router.get('/customers/:id/sticker-onu', requireAdminSession, async (req, res) =
 // ─── CUSTOMERS ─────────────────────────────────────────────────────────────
 router.get('/customers', requireAdminSession, requireSidebarMenuAccess('customers'), async (req, res) => {
   try { require('../services/withdrawalService').ensureSchema(); } catch (_) {}
+  try { require('../config/customerPhones').ensureSchema(); } catch (_) {}
   const { search = '', status: filterStatus = '', area: filterArea = '',
     package_id: filterPackage = '', collector_id: filterCollector = '', olt_id: filterOlt = '',
     connection_type: filterConn = '', billing: filterBilling = '', auto_isolate: filterAuto = '' } = req.query;
@@ -2099,6 +2100,11 @@ router.post('/customers', requireAdminSession, express.urlencoded({ extended: tr
 router.post('/customers/:id/update', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
   try {
     const customerId = Number(req.params.id);
+    // Números de WhatsApp adicionales (se validan antes de tocar nada)
+    if (req.body.alt_phones !== undefined) {
+      const cp = require('../config/customerPhones');
+      cp.save(customerId, cp.parse(req.body.alt_phones, { exceptId: customerId, main: req.body.phone }));
+    }
     // Inscripto (pendiente de instalación): solo datos personales; la red se crea al "Aprobar e instalar"
     const _cur = customerSvc.getCustomerById(customerId);
     if (_cur && _cur.status === 'inactive') {

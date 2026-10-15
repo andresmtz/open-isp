@@ -4774,7 +4774,7 @@ router.post('/registrations/:id/cancel-install', requireAdminSession, express.ur
     const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
     const b = req.body || {};
     const r = await require('../services/installationService').cancelInstallation(Number(req.params.id), { reason: b.reason, motive: b.motive, outcome: b.outcome === 'reject' ? 'reject' : 'postpone', actor });
-    req.session._msg = { type: r.mk && /No se pudo/.test(r.mk) ? 'error' : 'success', text: (r.outcome === 'reject' ? 'Solicitud rechazada' : 'Instalación en espera para reprogramar') + ` (${r.label}). Sin facturas; se avisó al instalador.` + (r.mk || '') };
+    req.session._msg = { type: r.mk && /No se pudo/.test(r.mk) ? 'error' : 'success', text: (r.outcome === 'reject' ? 'Solicitud cancelada: pasó a Cancelados con su historial' : 'Instalación en espera para reprogramar') + ` (${r.label}). Sin facturas; se avisó al instalador si tenía uno asignado.` + (r.mk || '') };
   } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo cancelar: ' + e.message }; }
   res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
 });

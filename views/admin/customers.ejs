@@ -268,7 +268,7 @@
                   </div>
                   <% } %>
                 <% } else if ((c.status === 'inactive' || c.status === 'cancelled') && c.reg_status === 'rejected') { %>
-                  <div style="font-size:11px;margin-top:4px;color:var(--danger);font-weight:700"><i class="bi bi-x-octagon"></i> Solicitud rechazada<%= c.reg_cancel_reason ? ': ' + c.reg_cancel_reason : '' %></div>
+                  <div style="font-size:11px;margin-top:4px;color:var(--danger);font-weight:700"><i class="bi bi-x-octagon"></i> Solicitud cancelada<%= c.reg_cancel_reason ? ': ' + c.reg_cancel_reason : '' %></div>
                   <% if (_can('clientes_alta')) { %><form method="POST" action="/admin/registrations/<%= c.id %>/reactivate" style="margin-top:6px" onsubmit="return confirm('¿Retomar esta solicitud? Vuelve a pendiente para asignar la instalación.')"><button class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px"><i class="bi bi-arrow-counterclockwise"></i> Retomar</button></form><% } %>
                 <% } else if (c.status === 'inactive' && _can('clientes_alta')) { %>
                   <% if (c.reg_cancel_reason) { %><div style="font-size:11px;margin-top:4px;color:#f59e0b;font-weight:700"><i class="bi bi-pause-circle"></i> <%= c.reg_cancel_reason %></div><% } %>
@@ -423,7 +423,7 @@
                       <div class="act-sep"></div>
                     <% } else if (c.status === 'inactive' && _can('clientes_alta')) { %>
                       <button type="button" class="act-item success" data-id="<%= c.id %>" onclick="openRegCalc(+this.dataset.id)"><i class="bi bi-tools"></i> Aprobar e instalar</button>
-                      <% if (c.reg_status !== 'rejected') { %><button type="button" class="act-item danger" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="cancelInstall(+this.dataset.id, this.dataset.name)"><i class="bi bi-x-lg"></i> Rechazar o poner en espera</button><% } %>
+                      <% if (c.reg_status !== 'rejected') { %><button type="button" class="act-item danger" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="cancelInstall(+this.dataset.id, this.dataset.name)"><i class="bi bi-x-lg"></i> Cancelar o poner en espera</button><% } %>
                       <div class="act-sep"></div>
                     <% } %>
                     <% if (c.status !== 'inactive') { %>
@@ -1349,7 +1349,7 @@
         <div class="fg">
           <label class="fl">¿Qué hacemos con la solicitud?</label>
           <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:13px"><input type="radio" name="outcome" value="postpone" checked> <span><b>Dejar en espera</b> para reprogramar (por ejemplo, cuando haya caja o puerto). Conserva el nombre de cuenta reservado.</span></label>
-          <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:13px"><input type="radio" name="outcome" value="reject"> <span><b>Rechazar la solicitud</b> (desistió, no quiere). Se borra el usuario PPPoE del MikroTik y se libera la IP. Se puede retomar después.</span></label>
+          <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:13px"><input type="radio" name="outcome" value="reject"> <span><b>Cancelar la solicitud</b> (desistió, no quiere, sin factibilidad definitiva). Pasa a <b>Cancelados</b> con todo su historial; si existía, se borra el usuario PPPoE y se libera la IP. Se puede retomar después.</span></label>
         </div>
         <div class="hint">No se genera ninguna factura. Si tenía instalador asignado, se le avisa por WhatsApp para que no vaya.</div>
       </div>

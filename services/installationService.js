@@ -492,7 +492,7 @@ async function cancelInstallation(customerId, { reason = '', motive = 'otro', ou
     // Solicitud rechazada: pasa a Cancelado (conserva ficha, fotos e historial; se puede retomar). Nunca recibe mensajes.
     db.prepare(`UPDATE customers SET status='cancelled', reg_status='rejected', reg_cancel_reason=?, reg_installer=NULL, reg_total_override=NULL,
       pppoe_username=NULL, pppoe_password=NULL, pppoe_remote_address=NULL, cancelled_at=(NOW_LOCAL()), cancel_reason=?, cancelled_by=?, auto_isolate=0 WHERE id=?`)
-      .run(label, 'Solicitud de instalación rechazada: ' + label, actor, id);
+      .run(label, 'Solicitud de instalación cancelada: ' + label, actor, id);
   } else {
     db.prepare("UPDATE customers SET reg_status='pending', reg_cancel_reason=?, reg_installer=NULL, reg_total_override=NULL WHERE id=?").run('En espera — ' + label, id);
   }
@@ -502,7 +502,7 @@ async function cancelInstallation(customerId, { reason = '', motive = 'otro', ou
     try { await waNotify().notifyAdmin(msg); } catch (_) {}
     for (const s of officeRecipients()) await sendTo(s.phone, msg);
   }
-  logEvent(id, `${outcome === 'reject' ? 'Solicitud rechazada' : 'Instalación en espera'}: ${label} (por ${actor})`);
+  logEvent(id, `${outcome === 'reject' ? 'Solicitud cancelada' : 'Instalación en espera'}: ${label} (por ${actor})`);
   logger.info(`[Instalación] ${c.name}: ${outcome === 'reject' ? 'rechazada' : 'en espera'} — ${label} (${actor})`);
   return { ok: true, outcome, label, mk };
 }
@@ -513,7 +513,7 @@ function reactivateRequest(customerId, { actor = 'Admin' } = {}) {
   const id = Number(customerId);
   const c = db.prepare('SELECT * FROM customers WHERE id=?').get(id);
   // Se retoma una solicitud rechazada, o vuelve un cliente cancelado: queda como Inscripto (pendiente) con todo su historial
-  if (!c || !(c.status === 'cancelled' || (c.status === 'inactive' && c.reg_status === 'rejected'))) throw new Error('Solo se puede retomar una solicitud rechazada o un cliente cancelado.');
+  if (!c || !(c.status === 'cancelled' || (c.status === 'inactive' && c.reg_status === 'rejected'))) throw new Error('Solo se puede retomar una solicitud cancelada o un cliente cancelado.');
   const prev = c.status === 'cancelled' ? `cancelado${c.cancelled_at ? ' el ' + String(c.cancelled_at).slice(0, 10).split('-').reverse().join('/') : ''}${c.cancel_reason ? ' (' + c.cancel_reason + ')' : ''}` : 'solicitud rechazada';
   db.prepare("UPDATE customers SET status='inactive', reg_status='pending', reg_cancel_reason=NULL, reg_installer=NULL, cancelled_at=NULL, cancel_reason='', cancelled_by='' WHERE id=?").run(id);
   logEvent(id, `Solicitud retomada: vuelve como inscripto, antes ${prev} (por ${actor})`);

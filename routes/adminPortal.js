@@ -698,7 +698,9 @@ router.get('/pending-payments', requireAdminSession, (req, res) => {
     WHERE c.status NOT IN ('cancelled', 'inactive')
     GROUP BY c.id
     ORDER BY CASE c.status WHEN 'suspended' THEN 0 WHEN 'ditangguhkan' THEN 1 ELSE 2 END, c.name COLLATE NOCASE`).all();
-  res.render('admin/pending_payments', { title: 'Pagos pendientes', company: company(), activePage: 'pending_payments', rows, msg: flashMsg(req) });
+  let proofs = [];
+  try { proofs = require('../services/paymentProofService').pending(); } catch (e) { logger.warn('[Comprobantes] ' + e.message); }
+  res.render('admin/pending_payments', { title: 'Pagos pendientes', company: company(), activePage: 'pending_payments', rows, proofs, msg: flashMsg(req) });
 });
 
 router.get('/onu-inventory', requireAdminSession, (req, res) => {
@@ -2684,47 +2686,93 @@ router.get('/customers/:id/payment-info', requireAdminSession, (req, res) => {
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 
+// Cobro (Registrar pago y comprobantes por WhatsApp): aplica el pago, habilita si no queda deuda y manda el comprobante
+async function receivePayment(req, customerId, b) {
+  const pay = require('../services/paymentReversalService');
+  const paidBy = resolvePaidByName(req, b.paid_by_name);
+  // activate=true: "Cobrar y activar" — el saldo que falte pasa a la próxima factura y se habilita el servicio
+  const r = pay.receive(Number(customerId), { amount: b.amount, method: b.method, note: b.note, paidBy, useCredit: !!b.use_credit, invoiceIds: b.invoice_ids, carryRemaining: !!b.activate });
+  // Sin deuda pendiente: si estaba cortado se habilita; si tenía promesa, queda cumplida
+  const debt = pay.debtOf(r.customer.id);
+  let enabled = false;
+  if (!debt.count) {
+    if (r.customer.status === 'suspended') { await customerSvc.activateCustomer(r.customer.id, 'active'); enabled = true; }
+    else if (r.customer.status === 'ditangguhkan') { db.prepare("UPDATE customers SET status='active' WHERE id=?").run(r.customer.id); require('../services/promiseService').close(r.customer.id, 'kept'); }
+  }
+  for (const invId of r.fullyPaid) billingSvc.setPaymentMethod(invId, b.method);
+  // Comprobante por WhatsApp (solo si entró dinero; no para clientes dados de baja)
+  let waSent = null;
+  const cash = Math.round(Number(b.amount) || 0);
+  const cust = customerSvc.getCustomerById(r.customer.id);
+  if (cash > 0 && cust && cust.phone && cust.status !== 'cancelled') {
+    const periods = r.applied.map(a => a.period);
+    const years = [...new Set(periods.map(p => p.split('/')[1]))];
+    const periodText = !periods.length ? '' : (years.length === 1 ? `${periods.map(p => p.split('/')[0]).join(', ')}/${years[0]}` : periods.join(', ').replace(/\//g, '-'));
+    const pkg = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
+    waSent = await sendPaymentSuccessWA(cust.phone, cust.name, periodText || 'Saldo a favor', String(cash), paidBy, {
+      customerId: cust.id, invoiceId: r.fullyPaid.length === 1 ? r.fullyPaid[0] : '',
+      username: cust.pppoe_username || cust.id, customerCode: cust.customer_code || '',
+      packageName: (pkg && pkg.name) || cust.package_name || '-', paidAt: new Date(), method: String(b.method || '').trim(),
+    });
+  }
+  const parts = r.applied.map(a => `${a.period}: ${regional.formatMoney(a.amount)}${a.full ? ' (pagada)' : ' (parcial, falta ' + regional.formatMoney(a.remaining) + ')'}`);
+  let msg = `Cobro #${r.receiptId} registrado.` + (parts.length ? ' Aplicado a ' + parts.join('; ') + '.' : '');
+  if (r.creditUsed) msg += ` Se usó ${regional.formatMoney(r.creditUsed)} de saldo a favor.`;
+  if (r.creditAdded) msg += ` Saldo a favor: +${regional.formatMoney(r.creditAdded)}.`;
+  if (r.carried) msg += ` Saldo de ${regional.formatMoney(r.carried)} trasladado a la próxima factura.`;
+  msg += debt.count ? ` Deuda restante: ${regional.formatMoney(debt.total)}.` : (r.carried ? '' : ' El cliente no tiene deuda.');
+  if (enabled) msg += ' Servicio habilitado.';
+  if (waSent === true) msg += ' Comprobante enviado por WhatsApp.';
+  else if (waSent === false) msg += ' No se pudo enviar el comprobante por WhatsApp.';
+  return { ok: true, ...r, debt, enabled, waSent, message: msg };
+}
+
 router.post('/customers/:id/receive', requireAdminSession, express.json(), async (req, res) => {
   try {
-    const pay = require('../services/paymentReversalService');
-    const b = req.body || {};
-    const paidBy = resolvePaidByName(req, b.paid_by_name);
-    // activate=true: "Cobrar y activar" — el saldo que falte pasa a la próxima factura y se habilita el servicio
-    const r = pay.receive(Number(req.params.id), { amount: b.amount, method: b.method, note: b.note, paidBy, useCredit: !!b.use_credit, invoiceIds: b.invoice_ids, carryRemaining: !!b.activate });
-    // Sin deuda pendiente: si estaba cortado se habilita; si tenía promesa, queda cumplida
-    const debt = pay.debtOf(r.customer.id);
-    let enabled = false;
-    if (!debt.count) {
-      if (r.customer.status === 'suspended') { await customerSvc.activateCustomer(r.customer.id, 'active'); enabled = true; }
-      else if (r.customer.status === 'ditangguhkan') { db.prepare("UPDATE customers SET status='active' WHERE id=?").run(r.customer.id); require('../services/promiseService').close(r.customer.id, 'kept'); }
-    }
-    for (const invId of r.fullyPaid) billingSvc.setPaymentMethod(invId, b.method);
-    // Comprobante por WhatsApp (solo si entró dinero; no para clientes dados de baja)
-    let waSent = null;
-    const cash = Math.round(Number(b.amount) || 0);
-    const cust = customerSvc.getCustomerById(r.customer.id);
-    if (cash > 0 && cust && cust.phone && cust.status !== 'cancelled') {
-      const periods = r.applied.map(a => a.period);
-      const years = [...new Set(periods.map(p => p.split('/')[1]))];
-      const periodText = !periods.length ? '' : (years.length === 1 ? `${periods.map(p => p.split('/')[0]).join(', ')}/${years[0]}` : periods.join(', ').replace(/\//g, '-'));
-      const pkg = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
-      waSent = await sendPaymentSuccessWA(cust.phone, cust.name, periodText || 'Saldo a favor', String(cash), paidBy, {
-        customerId: cust.id, invoiceId: r.fullyPaid.length === 1 ? r.fullyPaid[0] : '',
-        username: cust.pppoe_username || cust.id, customerCode: cust.customer_code || '',
-        packageName: (pkg && pkg.name) || cust.package_name || '-', paidAt: new Date(), method: String(b.method || '').trim(),
-      });
-    }
-    const parts = r.applied.map(a => `${a.period}: ${regional.formatMoney(a.amount)}${a.full ? ' (pagada)' : ' (parcial, falta ' + regional.formatMoney(a.remaining) + ')'}`);
-    let msg = `Cobro #${r.receiptId} registrado.` + (parts.length ? ' Aplicado a ' + parts.join('; ') + '.' : '');
-    if (r.creditUsed) msg += ` Se usó ${regional.formatMoney(r.creditUsed)} de saldo a favor.`;
-    if (r.creditAdded) msg += ` Saldo a favor: +${regional.formatMoney(r.creditAdded)}.`;
-    if (r.carried) msg += ` Saldo de ${regional.formatMoney(r.carried)} trasladado a la próxima factura.`;
-    msg += debt.count ? ` Deuda restante: ${regional.formatMoney(debt.total)}.` : (r.carried ? '' : ' El cliente no tiene deuda.');
-    if (enabled) msg += ' Servicio habilitado.';
-    if (waSent === true) msg += ' Comprobante enviado por WhatsApp.';
-    else if (waSent === false) msg += ' No se pudo enviar el comprobante por WhatsApp.';
-    res.json({ ok: true, ...r, debt, enabled, waSent, message: msg });
+    res.json(await receivePayment(req, Number(req.params.id), req.body || {}));
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
+// ── Comprobantes de pago recibidos por WhatsApp ─────────────────────────────
+router.get('/payment-proofs/:id/file', requireAdminSession, (req, res) => {
+  const pp = require('../services/paymentProofService');
+  const p = pp.get(req.params.id); const fp = pp.filePath(p);
+  if (!fp || !require('fs').existsSync(fp)) return res.status(404).send('No disponible');
+  res.type(p.media_type === 'pdf' ? 'application/pdf' : 'jpg').sendFile(fp);
+});
+router.post('/payment-proofs/:id/apply', requireAdminSession, express.json(), async (req, res) => {
+  try {
+    const pp = require('../services/paymentProofService');
+    const p = pp.get(req.params.id);
+    if (!p || p.status !== 'pendiente') throw new Error('Este comprobante ya fue procesado.');
+    if (!p.customer_id) throw new Error('Primero elegí a qué cliente corresponde.');
+    const amount = Math.round(Number(req.body && req.body.amount) || 0);
+    if (amount <= 0) throw new Error('Indicá el monto a aplicar.');
+    const by = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    const method = ['Transferencia', 'Depósito', 'Giro'].includes(req.body && req.body.method) ? req.body.method : (p.kind || 'Transferencia');
+    const note = `Comprobante por WhatsApp${p.ref ? ' N.º ' + p.ref : ''}${p.dest_label ? ' → ' + p.dest_label : ''} (#${p.id})`;
+    const r = await receivePayment(req, p.customer_id, { amount, method, note });
+    pp.markApplied(p.id, { by, receiptId: r.receiptId, amount, note: r.message });
+    res.json({ ok: true, message: r.message });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+router.post('/payment-proofs/:id/reject', requireAdminSession, express.json(), (req, res) => {
+  try {
+    const by = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    require('../services/paymentProofService').reject(req.params.id, req.body && req.body.reason, by);
+    res.json({ ok: true, message: 'Comprobante rechazado.' });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+router.post('/payment-proofs/:id/assign', requireAdminSession, express.json(), (req, res) => {
+  try {
+    const by = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    const c = require('../services/paymentProofService').assign(req.params.id, req.body && req.body.customer, by);
+    res.json({ ok: true, message: `Asignado a ${c.name}.` });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+router.post('/payment-proofs/scan', requireAdminSession, async (req, res) => {
+  try { const r = await require('../services/paymentProofService').scan(); res.json({ ok: true, ...r }); }
+  catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 
 router.post('/customers/:id/credit-adjust', requireAdminSession, express.json(), (req, res) => {

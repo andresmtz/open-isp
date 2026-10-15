@@ -410,6 +410,10 @@ function startCronJobs() {
     try { const eq = require('./customerEquipmentService'); eq.backfill(); await eq.snapshotWifi(); } catch (e) { logger.warn('[Equipo] ' + e.message); }
   }, { timezone: getSetting('timezone', 'America/Asuncion') || 'America/Asuncion' });
   cron.schedule('*/2 * * * *', async () => {
+    // Comprobantes de pago recibidos por WhatsApp (services/paymentProofService.js): se leen y quedan para revisar
+    try { await require('./paymentProofService').scan(); } catch (e) { logger.warn('[Comprobantes] ' + e.message); }
+  });
+  cron.schedule('*/2 * * * *', async () => {
     // ONU de instalaciones con etiqueta leída que todavía no aparecían en la OLT (services/onuAutoProvisionService.js)
     try { await require('./onuAutoProvisionService').retryPending(); } catch (e) { logger.warn('[Provisión] reintento: ' + e.message); }
   });

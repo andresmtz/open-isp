@@ -39,6 +39,47 @@
   <div class="page">
     <% if (msg) { %><div class="alert alert-<%= msg.type==='error'?'d':'s' %>" data-flash="1"><%= msg.text %></div><% } %>
 
+    <% const _pf = (typeof proofs !== 'undefined' && proofs) ? proofs : []; %>
+    <div class="card" style="padding:12px 14px;margin-bottom:14px;border:1px solid rgba(56,189,248,.35)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="font-weight:800;font-size:15px"><i class="bi bi-receipt"></i> Comprobantes por revisar (<%= _pf.length %>)</div>
+        <button type="button" class="btn btn-g btn-sm" onclick="pfScan(this)"><i class="bi bi-arrow-repeat"></i> Buscar nuevos en WhatsApp</button>
+      </div>
+      <div class="pp-sub" style="margin-top:2px">Los comprobantes que los clientes mandan por WhatsApp se leen solos cada 2 minutos. Nada se aplica sin que lo apruebes.</div>
+      <% if (!_pf.length) { %><div class="pp-sub" style="padding:10px 0 2px">No hay comprobantes pendientes.</div><% } %>
+      <div class="pp-list" style="margin-top:10px">
+      <% _pf.forEach(p => { const _ok = p.checks.filter(c => c.ok === false).length === 0; %>
+        <div class="card pp-card" style="border:2px solid <%= _ok ? 'rgba(16,185,129,.5)' : 'rgba(245,158,11,.55)' %>" id="pf-<%= p.id %>">
+          <div style="display:flex;gap:10px">
+            <a href="/admin/payment-proofs/<%= p.id %>/file" target="_blank" rel="noopener" style="flex:0 0 92px">
+              <% if (p.media_type === 'pdf') { %><div style="width:92px;height:120px;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:30px"><i class="bi bi-file-earmark-pdf"></i></div>
+              <% } else { %><img src="/admin/payment-proofs/<%= p.id %>/file" alt="Comprobante" style="width:92px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"><% } %>
+            </a>
+            <div style="flex:1;min-width:0">
+              <div class="pp-name"><%= p.customer_name || ('Número ' + (p.phone || '?')) %></div>
+              <div class="pp-sub">Recibido <%= String(p.received_at || '').slice(8,10) %>/<%= String(p.received_at || '').slice(5,7) %> <%= String(p.received_at || '').slice(11,16) %> · <%= p.kind %></div>
+              <div class="pp-debt" style="margin-top:4px"><%= p.amount ? fmtMoney(p.amount) : 'Monto no leído' %></div>
+              <% if (p.origin_name) { %><div class="pp-sub">Pagó: <%= p.origin_name %></div><% } %>
+            </div>
+          </div>
+          <div style="font-size:12px;line-height:1.6">
+            <% p.checks.forEach(c => { %><div><%= c.ok === true ? '✅' : (c.ok === false ? '❌' : '⚠️') %> <%= c.text %></div><% }) %>
+          </div>
+          <% if (!p.customer_id) { %>
+            <div style="display:flex;gap:6px"><input class="fc" id="pf-c-<%= p.id %>" placeholder="ID, código ISP-… o usuario PPPoE" style="flex:1"><button type="button" class="btn btn-g btn-sm" onclick="pfAssign(<%= p.id %>)">Asignar</button></div>
+          <% } else { %>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <input class="fc" id="pf-a-<%= p.id %>" inputmode="numeric" value="<%= p.amount || (p.debt ? p.debt.total : '') %>" style="flex:1;min-width:110px;font-size:16px;font-weight:700">
+              <select class="fs" id="pf-m-<%= p.id %>" style="flex:0 0 auto"><% ['Transferencia','Depósito','Giro'].forEach(m => { %><option <%= m === p.kind ? 'selected' : '' %>><%= m %></option><% }) %></select>
+            </div>
+            <button type="button" class="btn btn-p btn-pay" onclick="pfApply(<%= p.id %>, this)"><i class="bi bi-check2-circle"></i> Aplicar pago</button>
+          <% } %>
+          <button type="button" class="btn btn-g btn-sm" onclick="pfReject(<%= p.id %>)"><i class="bi bi-x-circle"></i> Rechazar</button>
+        </div>
+      <% }) %>
+      </div>
+    </div>
+
     <div class="pp-sub" style="margin-bottom:10px;font-size:13px">
       <b><%= rows.length %></b> clientes con deuda · Total: <b><%= fmtMoney(total) %></b>
     </div>
@@ -103,6 +144,36 @@
     apply();
   });
 })();
+</script>
+<script>
+async function pfPost(url, body){ const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body || {}) }); return r.json(); }
+async function pfApply(id, btn){
+  const amt = Number(String(document.getElementById('pf-a-' + id).value).replace(/\D/g, '')) || 0;
+  const method = document.getElementById('pf-m-' + id).value;
+  if (!amt) { alert('Indicá el monto.'); return; }
+  if (!confirm('¿Aplicar el pago de ' + fmtMoney(amt) + ' (' + method + ')?\nSe registra el cobro, se le manda el comprobante al cliente y, si no le queda deuda, se habilita el servicio.')) return;
+  btn.disabled = true;
+  const j = await pfPost('/admin/payment-proofs/' + id + '/apply', { amount: amt, method });
+  alert(j.message || (j.ok ? 'Listo' : 'Error'));
+  if (j.ok) setTimeout(function(){ location.reload(); }, 1800); else btn.disabled = false;
+}
+async function pfReject(id){
+  const r = prompt('Motivo del rechazo (queda en el historial del cliente):', 'No corresponde a un pago a la empresa');
+  if (r === null) return;
+  const j = await pfPost('/admin/payment-proofs/' + id + '/reject', { reason: r });
+  alert(j.message || 'Error'); if (j.ok) setTimeout(function(){ location.reload(); }, 1200);
+}
+async function pfAssign(id){
+  const v = document.getElementById('pf-c-' + id).value.trim(); if (!v) return;
+  const j = await pfPost('/admin/payment-proofs/' + id + '/assign', { customer: v });
+  alert(j.message || 'Error'); if (j.ok) setTimeout(function(){ location.reload(); }, 1200);
+}
+async function pfScan(btn){
+  btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Buscando…';
+  const j = await pfPost('/admin/payment-proofs/scan');
+  alert(j.ok ? (j.proofs ? j.proofs + ' comprobante(s) nuevo(s).' : 'No hay comprobantes nuevos.') : (j.message || 'Error'));
+  if (j.ok && j.proofs) location.reload(); else { btn.disabled = false; btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Buscar nuevos en WhatsApp'; }
+}
 </script>
 </body>
 </html>

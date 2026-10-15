@@ -254,7 +254,16 @@
                   <i class="bi bi-info-circle-fill" style="font-size:12px;opacity:0.75;"></i>
                 </a>
                 <% if (c.customer_code) { %><div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px;" title="ID de cliente"><i class="bi bi-person-badge"></i> <%= c.customer_code %></div><% } %>
-                <% if (c.status === 'inactive' && c.reg_status !== 'rejected' && _can('clientes_alta')) { %>
+                <% if (c.status === 'inactive' && c.reg_status === 'approved') { %>
+                  <% var _ins = String(c.reg_installer || '').split(':').slice(2).join(':'); %>
+                  <div style="font-size:11px;margin-top:4px;color:#f59e0b;font-weight:700"><i class="bi bi-tools"></i> Instalación asignada<%= _ins ? ' a ' + _ins : '' %><%= c.install_date ? ' · prevista ' + String(c.install_date).slice(8,10) + '/' + String(c.install_date).slice(5,7) : '' %></div>
+                  <% if (_can('clientes_alta')) { %>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+                    <button type="button" class="btn btn-sm btn-p" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="markInstalled(+this.dataset.id, this.dataset.name)"><i class="bi bi-check2-circle"></i> Instalación realizada</button>
+                    <button type="button" class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="cancelInstall(+this.dataset.id, this.dataset.name)"><i class="bi bi-x-circle"></i> Cancelar instalación</button>
+                  </div>
+                  <% } %>
+                <% } else if (c.status === 'inactive' && c.reg_status !== 'rejected' && _can('clientes_alta')) { %>
                   <button type="button" class="btn btn-sm btn-p" style="margin-top:6px;padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" onclick="openRegCalc(+this.dataset.id)"><i class="bi bi-tools"></i> Aprobar e instalar</button>
                 <% } %>
                 <% if (_can('cobrar') && c.status !== 'cancelled' && c.status !== 'inactive') { %>
@@ -373,7 +382,11 @@
                 <div class="act">
                   <button type="button" class="act-btn" title="Aksi" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
-                    <% if (c.status === 'inactive' && _can('clientes_alta')) { %>
+                    <% if (c.status === 'inactive' && c.reg_status === 'approved' && _can('clientes_alta')) { %>
+                      <button type="button" class="act-item success" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="markInstalled(+this.dataset.id, this.dataset.name)"><i class="bi bi-check2-circle"></i> Instalación realizada</button>
+                      <button type="button" class="act-item danger" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="cancelInstall(+this.dataset.id, this.dataset.name)"><i class="bi bi-x-circle"></i> Cancelar instalación</button>
+                      <div class="act-sep"></div>
+                    <% } else if (c.status === 'inactive' && _can('clientes_alta')) { %>
                       <button type="button" class="act-item success" data-id="<%= c.id %>" onclick="openRegCalc(+this.dataset.id)"><i class="bi bi-tools"></i> Aprobar e instalar</button>
                       <button type="submit" form="rej-<%= c.id %>" class="act-item danger"><i class="bi bi-x-lg"></i> <%= t('admin.cust.reject_reg','Tolak Pendaftar') %></button>
                       <div class="act-sep"></div>
@@ -1824,6 +1837,23 @@ async function docsDelete(docId){
   var j = await (await fetch('/admin/customers/' + _docsId + '/documents/' + docId + '/delete', { method: 'POST', headers: { Accept: 'application/json' } })).json();
   if (!j.ok) alert(j.message || 'Error'); else docsLoad();
 }
+function _postForm(url, fields){
+  var f = document.createElement('form'); f.method = 'POST'; f.action = url; f.style.display = 'none';
+  Object.keys(fields || {}).forEach(function(k){ var i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = fields[k]; f.appendChild(i); });
+  document.body.appendChild(f); f.submit();
+}
+function markInstalled(id, name){
+  var today = new Date(); var iso = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  var d = prompt('Instalación de ' + name + ' realizada.\n\nFecha de instalación (AAAA-MM-DD). La primera factura se calcula con esta fecha y el cliente recibe la bienvenida:', iso);
+  if (d === null) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d.trim())) { alert('Fecha inválida. Usá el formato AAAA-MM-DD, por ejemplo ' + iso + '.'); return; }
+  _postForm('/admin/registrations/' + id + '/installed', { date: d.trim() });
+}
+function cancelInstall(id, name){
+  var r = prompt('¿Cancelar la instalación de ' + name + '?\nVuelve a pendiente, sin facturas, y se puede asignar de nuevo.\n\nMotivo (opcional):', '');
+  if (r === null) return;
+  _postForm('/admin/registrations/' + id + '/cancel-install', { reason: r });
+}
 var _hist = [], _histF = 'all';
 var HIST_KINDS = { all: 'Todo', pago: 'Pagos', factura: 'Facturas', estado: 'Cortes y estado', promesa: 'Promesas', reclamo: 'Reclamos', wifi: 'WiFi y equipo', whatsapp: 'WhatsApp' };
 function histRender(){
@@ -1900,7 +1930,7 @@ async function openRegCalc(id){
 function rcSubmit(f){
   if (!f.installer.value) { alert('Elegí quién va a hacer la instalación.'); return false; }
   var who = f.installer.options[f.installer.selectedIndex].textContent;
-  if (!confirm('¿Aprobar el alta y asignar la instalación a ' + who + '?\n\nSe crea el usuario PPPoE en el MikroTik, el cliente pasa a activo y se genera la primera factura de ' + rcFmt(rcTotalNum()) + '.')) return false;
+  if (!confirm('¿Aprobar el alta y asignar la instalación a ' + who + '?\n\nSe crea el usuario PPPoE en el MikroTik y se crea la orden de instalación. La primera factura (estimada ' + rcFmt(rcTotalNum()) + ') se genera cuando se confirme la instalación, con la fecha real.')) return false;
   document.getElementById('rc_total_val').value = rcTotalNum();
   document.getElementById('rc_submit').disabled = true;
   return true;

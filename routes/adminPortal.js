@@ -4514,12 +4514,34 @@ router.post('/registrations/:id/approve', requireAdminSession, express.urlencode
     const b = req.body || {};
     const r = await require('../services/installationService').approve(Number(req.params.id),
       { installer: b.installer, installDate: b.install_date, dueDate: b.due_date, total: b.final_total, notes: b.installer_notes }, actor);
-    let text = `${r.customer.name}: alta aprobada. Instala ${r.installer.name} (orden de trabajo N.º ${r.ticketId}). ` +
-      `Primera factura ${regional.formatMoney(r.amount)}, vence el ${r.plan.dueDate.split('-').reverse().join('/')}.`;
+    let text = `${r.customer.name}: instalación asignada a ${r.installer.name} (orden N.º ${r.ticketId}). ` +
+      `La primera factura (estimada ${regional.formatMoney(r.amount)}) se genera cuando se confirme la instalación, con la fecha real.`;
     text += r.installerNotified ? ' Se le enviaron los datos por WhatsApp.' : ' No se pudo avisar por WhatsApp a quien instala (revisá su teléfono).';
     if (r.mkWarn) text += ' Atención: no se pudo crear el usuario PPPoE en el MikroTik: ' + r.mkWarn;
     req.session._msg = { type: r.mkWarn ? 'error' : 'success', text };
   } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo aprobar: ' + e.message }; }
+  res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
+});
+
+// Instalación realizada (desde el panel): cierra la orden y da de alta con la fecha indicada
+router.post('/registrations/:id/installed', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    const id = Number(req.params.id);
+    const r = await require('../services/installationService').completeInstallation(id, { date: req.body && req.body.date, actor });
+    if (r.skipped) throw new Error('El cliente no tiene una instalación asignada pendiente.');
+    db.prepare("UPDATE tickets SET status='resolved', technician_notes=TRIM(COALESCE(technician_notes,'') || ' Instalación confirmada por ' || ?), updated_at=(NOW_LOCAL()) WHERE customer_id=? AND kind='install' AND status IN ('open','in_progress')").run(actor, id);
+    req.session._msg = { type: 'success', text: `Instalación confirmada (${r.date.split('-').reverse().join('/')}). Cliente activo; primera factura ${regional.formatMoney(r.amount)}, vence el ${r.plan.dueDate.split('-').reverse().join('/')}. Se envió la bienvenida.` };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo confirmar: ' + e.message }; }
+  res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
+});
+
+router.post('/registrations/:id/cancel-install', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    await require('../services/installationService').cancelInstallation(Number(req.params.id), { reason: req.body && req.body.reason, actor });
+    req.session._msg = { type: 'success', text: 'Instalación cancelada: el inscripto vuelve a pendiente, sin facturas. Se puede volver a asignar.' };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo cancelar: ' + e.message }; }
   res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
 });
 

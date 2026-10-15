@@ -45,6 +45,7 @@ function ensureSchema() {
   add('customers', 'reg_installer', 'TEXT');
   add('customers', 'reg_welcome_sent', 'INTEGER DEFAULT 0');
   add('tickets', 'kind', 'TEXT');
+  add('customers', 'reg_total_override', 'INTEGER');
   _schemaOk = true;
 }
 
@@ -186,6 +187,7 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
   const cust = customerSvc.getCustomerById(id);
   if (!cust) throw new Error('Inscripto no encontrado');
   if (cust.status !== 'inactive') throw new Error('Este cliente ya no está pendiente de instalación.');
+  if (cust.reg_status === 'approved') throw new Error('La instalación ya está asignada. Para reasignarla, primero cancelala.');
   const pkg = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
   if (!pkg) throw new Error('El inscripto no tiene plan asignado.');
   const who = findInstaller(installer);
@@ -209,15 +211,10 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     }
   } catch (e) { mkWarn = e.message; logger.error('[Instalación] PPPoE en MikroTik: ' + e.message); }
 
-  const P = plan.period;
-  const periodKey = `${P.year}-${pad(P.month)}`;
-  const breakdown = plan.lines.map(l => `${l.label}: ${regional.formatMoney(l.amount)}`).join(' | ') + (amount !== plan.total ? ` | Ajustado a ${regional.formatMoney(amount)}` : '');
-  db.transaction(() => {
-    const ex = db.prepare('SELECT id FROM invoices WHERE customer_id=? AND period_month=? AND period_year=?').get(id, P.month, P.year);
-    if (!ex) db.prepare("INSERT INTO invoices (customer_id, period_month, period_year, amount, status, notes) VALUES (?,?,?,?, 'unpaid', ?)").run(id, P.month, P.year, amount, 'Primera factura: ' + breakdown);
-    db.prepare(`UPDATE customers SET status='active', reg_status='approved', reg_total=?, reg_prorata=?, reg_install_fee=0, reg_due_date=?, install_date=?, first_invoice_period=?, reg_installer=? WHERE id=?`)
-      .run(amount, plan.prorata, plan.dueDate, plan.installDate, periodKey, `${who.type}:${who.id}:${who.name}`, id);
-  })();
+  // Sigue como Inscripto con la instalación ASIGNADA: sin factura ni cobro hasta que se confirme la instalación
+  // (completeInstallation, al cerrar la orden). Se guarda lo previsto; si el total se ajustó a mano, se respeta.
+  db.prepare(`UPDATE customers SET reg_status='approved', reg_total=?, reg_prorata=?, reg_install_fee=0, reg_due_date=?, install_date=?, reg_installer=?, reg_total_override=? WHERE id=?`)
+    .run(amount, plan.prorata, plan.dueDate, plan.installDate, `${who.type}:${who.id}:${who.name}`, amount !== plan.total ? amount : null, id);
 
   // Orden de trabajo: solo la ve quien instala (si es técnico, en su portal)
   const loc = mapLink(cust.lat, cust.lng);
@@ -244,6 +241,7 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     `\n🗓️ *Explicale al cliente:* su primera factura vence el ${fmtDate(plan.dueDate)} y es de *${fmtMoney(amount)}*` +
     (amount < plan.monthly ? ` (compensa los días del mes de instalación)` : '') +
     `. Después paga ${fmtMoney(plan.monthly)} por mes, con vencimiento el día ${Number(plan.dueDate.slice(8, 10))} de cada mes.` +
+    `\n_(Si instalás otro día, el monto de esa primera factura se ajusta solo a la fecha real.)_` +
     (pppoeUser ? `\n\n📡 *PPPoE usuario:* ${pppoeUser}\n🔒 *PPPoE clave:* ${pppoePass || '-'}` : '') +
     (String(notes || '').trim() ? `\n\n📝 ${String(notes).trim()}` : '') +
     `\n\nAl terminar, cerrá la orden de trabajo N.º ${ticketId} como resuelta.`;
@@ -268,7 +266,52 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
   return { customer: cust, installer: who, plan, amount, ticketId, pppoeUser, installerNotified, mkWarn };
 }
 
-// ── 3. Bienvenida ─────────────────────────────────────────────────────────────────
+// ── 3. Instalación realizada: el cliente pasa a activo y se genera la primera factura con la fecha real ──
+async function completeInstallation(customerId, { date, actor = 'Sistema' } = {}) {
+  ensureSchema();
+  const customerSvc = require('./customerService');
+  const id = Number(customerId);
+  const cust = customerSvc.getCustomerById(id);
+  if (!cust) throw new Error('Cliente no encontrado');
+  if (cust.status !== 'inactive' || cust.reg_status !== 'approved') return { skipped: true, reason: 'no está con instalación asignada' };
+  const pkg = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
+  if (!pkg) throw new Error('El cliente no tiene plan');
+  const real = /^\d{4}-\d{2}-\d{2}$/.test(String(date || '')) ? String(date) : cycle.nowStamp().slice(0, 10);
+  // Vencimiento elegido al aprobar si sigue siendo válido para la fecha real; si no, el que corresponde
+  let due = cust.reg_due_date;
+  try { firstInvoicePlan(pkg.price, real, due); } catch (_) { due = null; }
+  const plan = firstInvoicePlan(pkg.price, real, due);
+  const amount = cust.reg_total_override != null ? Number(cust.reg_total_override) : plan.total;
+  const P = plan.period;
+  const periodKey = `${P.year}-${pad(P.month)}`;
+  const breakdown = plan.lines.map(l => `${l.label}: ${regional.formatMoney(l.amount)}`).join(' | ') + (amount !== plan.total ? ` | Ajustado a ${regional.formatMoney(amount)}` : '');
+  db.transaction(() => {
+    const ex = db.prepare('SELECT id FROM invoices WHERE customer_id=? AND period_month=? AND period_year=?').get(id, P.month, P.year);
+    if (!ex) db.prepare("INSERT INTO invoices (customer_id, period_month, period_year, amount, status, notes) VALUES (?,?,?,?, 'unpaid', ?)").run(id, P.month, P.year, amount, `Primera factura (instalado el ${fmtDate(real)}): ` + breakdown);
+    db.prepare(`UPDATE customers SET status='active', reg_status='installed', reg_total=?, reg_prorata=?, reg_due_date=?, install_date=?, first_invoice_period=? WHERE id=?`)
+      .run(amount, plan.prorata, plan.dueDate, real, periodKey, id);
+  })();
+  logger.info(`[Instalación] ${cust.name} instalado el ${real} (${actor}); primera factura ${amount} período ${periodKey}`);
+  try { await waNotify().notifyAdmin(`✅ *Instalación realizada:* ${cust.name}\nFecha: ${fmtDate(real)} · Confirmó: ${actor}\nPrimera factura: ${fmtMoney(amount)}, vence el ${fmtDate(plan.dueDate)}`); } catch (_) {}
+  await sendWelcome(id).catch(() => {});
+  return { ok: true, amount, plan, date: real };
+}
+
+/** Cancela una instalación asignada: el inscripto vuelve a pendiente (sin facturas). */
+async function cancelInstallation(customerId, { reason = '', actor = 'Admin' } = {}) {
+  ensureSchema();
+  const id = Number(customerId);
+  const c = db.prepare('SELECT * FROM customers WHERE id=?').get(id);
+  if (!c || c.status !== 'inactive' || c.reg_status !== 'approved') throw new Error('No tiene una instalación asignada.');
+  db.prepare("UPDATE customers SET reg_status='pending', reg_installer=NULL, reg_total_override=NULL WHERE id=?").run(id);
+  // La orden se cierra como cancelada (sin disparar el alta)
+  db.prepare("UPDATE tickets SET status='resolved', kind='install_cancelled', technician_notes=TRIM(COALESCE(technician_notes,'') || ' Instalación cancelada' || ?), updated_at=(NOW_LOCAL()) WHERE customer_id=? AND kind='install' AND status IN ('open','in_progress')")
+    .run(reason ? ': ' + String(reason).slice(0, 200) : '', id);
+  logger.info(`[Instalación] ${c.name}: instalación cancelada por ${actor}${reason ? ' — ' + reason : ''}`);
+  return { ok: true };
+}
+
+// ── 4. Bienvenida ─────────────────────────────────────────────────────────────────
 const DEFAULT_WELCOME =
 `🎉 ¡Bienvenido/a a *{{company}}*, *{{nama}}*!
 
@@ -320,13 +363,18 @@ function onTicketStatus(ticketId, status) {
   if (String(status) !== 'resolved') return;
   try {
     ensureSchema();
-    const t = db.prepare('SELECT customer_id, kind FROM tickets WHERE id=?').get(Number(ticketId));
-    if (t && t.kind === 'install' && t.customer_id) sendWelcome(t.customer_id).catch(() => {});
+    const t = db.prepare('SELECT customer_id, kind, technician_id FROM tickets WHERE id=?').get(Number(ticketId));
+    if (t && t.kind === 'install' && t.customer_id) {
+      const tech = t.technician_id ? db.prepare('SELECT name FROM technicians WHERE id=?').get(t.technician_id) : null;
+      completeInstallation(t.customer_id, { actor: tech ? `técnico ${tech.name}` : 'orden cerrada en el panel' })
+        .then(r => { if (r && r.skipped) return sendWelcome(t.customer_id); }).catch(e => logger.warn('[Instalación] alta: ' + e.message));
+    }
   } catch (e) { logger.warn('[Instalación] bienvenida: ' + e.message); }
 }
 
 module.exports = {
   installerRule, DEFAULT_INSTALLER_RULE,
+  completeInstallation, cancelInstallation,
   ensureSchema, firstInvoicePlan, defaultDueDate, installers, findInstaller, parseLocation,
   createRequest, approve, sendWelcome, renderWelcome, onTicketStatus, DEFAULT_WELCOME,
 };

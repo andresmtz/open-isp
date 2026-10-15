@@ -2902,7 +2902,8 @@ router.get('/packages', requireAdminSession, requireSidebarMenuAccess('packages'
   res.render('admin/packages', {
     title: 'Planes de internet', company: company(), activePage: 'packages',
     packages, routers, selectedRouterId, msg: flashMsg(req),
-    profileMode: _pkgMode, isolirSource, isolirProfileName, isolirExists, isolirLiveRl, isolirLiveLocal, isolirLiveRemote, radiusIsolir
+    profileMode: _pkgMode, isolirSource, isolirProfileName,
+    isolationByList: String(getSetting('isolation_method', 'address_list') || 'address_list').toLowerCase() === 'address_list', isolirExists, isolirLiveRl, isolirLiveLocal, isolirLiveRemote, radiusIsolir
   });
 });
 

@@ -38,6 +38,8 @@
     </div>
     <% } %>
 
+    <% const _byList = (typeof isolationByList !== 'undefined') && isolationByList; %>
+    <% if (!_byList) { %>
     <div class="card mb16" style="border:1px solid rgba(239,68,68,.35)">
       <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
         <h6 style="margin:0"><i class="bi bi-shield-slash" style="color:#ef4444"></i> <%= t('admin.packages.isolir_title', 'Profil Isolir') %> <span class="text-muted" style="font-weight:400;font-size:11.5px">— read-only</span></h6>
@@ -71,6 +73,8 @@
       </div>
     </div>
 
+    <% } %>
+
     <div class="card">
       <div class="card-hd">
         <h6><i class="bi bi-box-seam"></i> <%= t('admin.packages.list', 'Daftar Paket') %> (<%= packages.length %>)</h6>
@@ -96,7 +100,7 @@
               <th><%= t('admin.pkg.th_promo','Promo / Prorata') %></th>
               <th><%= t('admin.packages.table.speed', 'Kecepatan') %></th>
               <th><%= t('admin.packages.table.description', 'Deskripsi') %></th>
-              <th><%= t('admin.packages.table.isolir', 'Profil Isolir') %></th>
+              <% if (!_byList) { %><th><%= t('admin.packages.table.isolir', 'Profil Isolir') %></th><% } %>
               <th><%= t('admin.packages.table.customers', 'Pelanggan') %></th>
               <th><%= t('admin.packages.table.status', 'Status') %></th>
               <th><%= t('common.actions', 'Aksi') %></th>
@@ -113,9 +117,9 @@
                 <div><%= p.name %></div>
                 <div style="margin-top:3px">
                   <% if (p.billing_type === 'prepaid') { %>
-                    <span class="badge bs" style="font-size:10px;padding:2px 6px;font-weight:700;"><i class="bi bi-clock-history"></i> Prabayar (<%= p.duration_days || 30 %> días)</span>
+                    <span class="badge bs" style="font-size:10px;padding:2px 6px;font-weight:700;"><i class="bi bi-clock-history"></i> Por días (<%= p.duration_days || 30 %> días)</span>
                   <% } else { %>
-                    <span class="badge bp" style="font-size:10px;padding:2px 6px;font-weight:600;"><i class="bi bi-calendar-check"></i> Pascabayar</span>
+                    <span class="badge bp" style="font-size:10px;padding:2px 6px;font-weight:600;"><i class="bi bi-calendar-check"></i> Mensual</span>
                   <% } %>
                 </div>
               </td>
@@ -148,7 +152,7 @@
                 <% } else { %><span class="text-muted">-</span><% } %>
               </td>
               <td style="color:var(--muted);font-size:12px"><%= p.description||'-' %></td>
-              <td><% if (p.isolir_profile) { %><span class="badge" style="background:rgba(239,68,68,.16);color:#ef4444;border:1px solid rgba(239,68,68,.3)"><i class="bi bi-shield-slash"></i> <%= p.isolir_profile %></span><% } else { %><span class="text-muted">—</span><% } %></td>
+              <% if (!_byList) { %><td><% if (p.isolir_profile) { %><span class="badge" style="background:rgba(239,68,68,.16);color:#ef4444;border:1px solid rgba(239,68,68,.3)"><i class="bi bi-shield-slash"></i> <%= p.isolir_profile %></span><% } else { %><span class="text-muted">—</span><% } %></td><% } %>
               <td class="text-center"><span class="badge bm"><%= p.customer_count %> <%= t('admin.packages.customers_suffix', 'pelanggan') %></span></td>
               <td><% if(p.is_active){%><span class="badge bs"><%= t('common.active', 'Aktif') %></span><%}else{%><span class="badge bd"><%= t('common.inactive', 'Nonaktif') %></span><%}%></td>
               <td style="white-space:nowrap">
@@ -324,7 +328,7 @@
             </div>
           </div>
           <div class="form-row">
-            <div class="fg"><label class="fl"><i class="bi bi-shield-slash"></i> <%= t('admin.pkg.isolir_profile','Profil Isolir (paket ini)') %></label><select class="fs" name="isolir_profile" id="add_isolir_profile"><option value=""><%= t('admin.pkg.ph_isolir_profile','— pakai default global/customer —') %></option></select></div>
+            <div class="fg"<% if (_byList) { %> style="display:none"<% } %>><label class="fl"><i class="bi bi-shield-slash"></i> <%= t('admin.pkg.isolir_profile','Profil Isolir (paket ini)') %></label><select class="fs" name="isolir_profile" id="add_isolir_profile"><option value=""><%= t('admin.pkg.ph_isolir_profile','— pakai default global/customer —') %></option></select></div>
           </div>
           <small class="text-muted" style="font-size:11px;display:block;margin-top:2px"><%- t('admin.pkg.profile_hint2','Profil PPP + IP pool dibuat/diperbarui otomatis ke MikroTik (mode MikroTik / RADIUS profil). Pada mode RADIUS-atribut, IP &amp; rate-limit dari RADIUS.') %></small>
         </div>
@@ -525,7 +529,7 @@
             </div>
           </div>
           <div class="form-row">
-            <div class="fg"><label class="fl"><i class="bi bi-shield-slash"></i> <%= t('admin.pkg.isolir_profile','Profil Isolir (paket ini)') %></label><select class="fs" name="isolir_profile" id="e_isolir_profile"><option value=""><%= t('admin.pkg.ph_isolir_profile','— pakai default global/customer —') %></option></select></div>
+            <div class="fg"<% if (_byList) { %> style="display:none"<% } %>><label class="fl"><i class="bi bi-shield-slash"></i> <%= t('admin.pkg.isolir_profile','Profil Isolir (paket ini)') %></label><select class="fs" name="isolir_profile" id="e_isolir_profile"><option value=""><%= t('admin.pkg.ph_isolir_profile','— pakai default global/customer —') %></option></select></div>
           </div>
           <small class="text-muted" style="font-size:11px;display:block;margin-top:2px"><%- t('admin.pkg.profile_hint2','Profil PPP + IP pool dibuat/diperbarui otomatis ke MikroTik (mode MikroTik / RADIUS profil). Pada mode RADIUS-atribut, IP &amp; rate-limit dari RADIUS.') %></small>
         </div>

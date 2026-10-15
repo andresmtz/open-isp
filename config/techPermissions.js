@@ -2,7 +2,8 @@
  * Permisos de técnicos (portal /tech), por persona. Pensado para técnicos tercerizados.
  *
  * Regla general: todo lo no habilitado queda prohibido (denegar por defecto).
- * Siempre puede: ver y trabajar SUS reclamos asignados, su historial, marcar asistencia.
+ * Siempre puede: ver y trabajar SUS reclamos y órdenes de instalación asignados y su historial.
+ * Nunca puede dar de alta clientes: eso lo hace la oficina o el administrador (Clientes → Nueva solicitud).
  * Nunca ve montos (precios, deudas, pagos) ni contraseñas de clientes.
  * Se guarda en technicians.permissions (JSON { clave: true|false }); el admin lo edita en Usuarios → Técnicos.
  */
@@ -15,24 +16,20 @@ const BASE = [
   ['GET', '^/history$'],
   ['GET|POST', '^/logout$'],
   ['POST', `^/tickets/${ID}/update$`],        // solo sus reclamos (se valida en la ruta)
-  ['GET', '^/attendance$'],
-  ['POST', '^/attendance/(checkin|checkout)$'],
-  ['GET', '^/api/attendance/history$'],
 ];
 
 const CATALOG = [
-  { key: 'reclamos_libres', label: 'Ver y tomar reclamos sin asignar', help: 'Ve la bolsa de reclamos abiertos y puede tomarlos. También recibe por WhatsApp los reclamos y solicitudes de instalación nuevos. Sin esto solo ve lo que vos le asignás.', rules: [
+  { key: 'reclamos_libres', label: 'Ver y tomar reclamos sin asignar', help: 'Ve la bolsa de reclamos abiertos y puede tomarlos. También recibe por WhatsApp los reclamos nuevos sin asignar. Sin esto solo ve lo que vos le asignás.', rules: [
     ['GET', '^/pool$'],
     ['POST', `^/tickets/${ID}/take$`],
   ] },
   { key: 'mapa', label: 'Ver mapa de red', help: 'Clientes y cajas NAP en el mapa (nombre, dirección y estado; sin montos ni contraseñas).', rules: [
     ['GET', '^/map$'],
   ] },
-  { key: 'instalaciones', label: 'Dar de alta clientes (instalaciones)', help: 'Cargar un cliente nuevo con su plan, caja NAP y usuario PPPoE. El cliente empieza a facturarse.', rules: [
-    ['GET', '^/customers/new$'],
-    ['POST', '^/customers$'],
-    ['GET', '^/api/mikrotik/(pppoe-users|pppoe-profiles)$'],
-    ['GET', `^/api/odps/${ID}/ports$`],
+  { key: 'asistencia', label: 'Marcar asistencia', help: 'Registrar entrada y salida (solo para personal propio; los tercerizados no lo necesitan).', rules: [
+    ['GET', '^/attendance$'],
+    ['POST', '^/attendance/(checkin|checkout)$'],
+    ['GET', '^/api/attendance/history$'],
   ] },
   { key: 'equipos', label: 'Gestionar equipos del cliente', help: 'Monitoreo de ONU, cambiar nombre y clave del WiFi, reiniciar equipos (requiere GenieACS).', rules: [
     ['GET', '^/monitoring$'],

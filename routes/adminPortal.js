@@ -2023,7 +2023,8 @@ router.post('/customers', requireAdminSession, express.urlencoded({ extended: tr
       // If manual input (password provided), create PPPoE secret in MikroTik
       if (password) {
         let targetProfile = '';
-        if (req.body.status === 'suspended') {
+        const _byProfile = String(getSetting('isolation_method', 'address_list')).toLowerCase() !== 'address_list';
+        if (req.body.status === 'suspended' && _byProfile) {
           targetProfile = req.body.isolir_profile || 'isolir';
         } else if (req.body.package_id) {
           const pkg = customerSvc.getPackageById(req.body.package_id);
@@ -2047,7 +2048,8 @@ router.post('/customers', requireAdminSession, express.urlencoded({ extended: tr
       } else {
         // If from MikroTik list (no password input), just update profile
         let targetProfile = '';
-        if (req.body.status === 'suspended') {
+        const _byProfile = String(getSetting('isolation_method', 'address_list')).toLowerCase() !== 'address_list';
+        if (req.body.status === 'suspended' && _byProfile) {
           targetProfile = req.body.isolir_profile || 'isolir';
         } else if (req.body.package_id) {
           const pkg = customerSvc.getPackageById(req.body.package_id);
@@ -2236,7 +2238,8 @@ router.post('/customers/:id/update', requireAdminSession, express.urlencoded({ e
         const remoteAddress = String(req.body.pppoe_remote_address || '').trim();
         
         let targetProfile = '';
-        if (req.body.status === 'suspended') {
+        const _byProfile = String(getSetting('isolation_method', 'address_list')).toLowerCase() !== 'address_list';
+        if (req.body.status === 'suspended' && _byProfile) {
           targetProfile = req.body.isolir_profile || 'isolir';
         } else if (req.body.package_id) {
           const pkg = customerSvc.getPackageById(req.body.package_id);
@@ -5823,11 +5826,12 @@ router.get('/api/mikrotik/users', requireAdmin, async (req, res) => {
     const users = await mikrotikService.getPppoeUsers(routerId);
     if (!onlyUnused) return res.json(users);
 
-    const rows = excludeCustomerId
-      ? db.prepare("SELECT pppoe_username FROM customers WHERE router_id IS ? AND id != ? AND pppoe_username IS NOT NULL AND TRIM(pppoe_username) != ''").all(routerId, excludeCustomerId)
-      : db.prepare("SELECT pppoe_username FROM customers WHERE router_id IS ? AND pppoe_username IS NOT NULL AND TRIM(pppoe_username) != ''").all(routerId);
-    const used = new Set(rows.map(r => String(r.pppoe_username).trim()).filter(Boolean));
-    const filtered = (Array.isArray(users) ? users : []).filter(u => u && u.name && !used.has(String(u.name).trim()));
+    // Sin router elegido (= el predeterminado) se comparan todos los clientes; antes se buscaba router_id NULL
+    // y ningún usuario figuraba como usado. Comparación sin distinguir mayúsculas.
+    const rows = db.prepare(`SELECT pppoe_username FROM customers WHERE ${routerId ? 'router_id IS ? AND ' : ''}id != ? AND pppoe_username IS NOT NULL AND TRIM(pppoe_username) != ''`)
+      .all(...(routerId ? [routerId] : []), excludeCustomerId || -1);
+    const used = new Set(rows.map(r => String(r.pppoe_username).trim().toLowerCase()).filter(Boolean));
+    const filtered = (Array.isArray(users) ? users : []).filter(u => u && u.name && !used.has(String(u.name).trim().toLowerCase()));
     res.json(filtered);
   } catch (e) {
         if (/not configured|belum dikonfigurasi|settings not/i.test(String(e.message || ''))) return res.json([]);
@@ -7869,11 +7873,12 @@ router.get('/api/mikrotik/users/:routerId', requireAdmin, async (req, res) => {
     const users = await mikrotikService.getPppoeUsers(routerId);
     if (!onlyUnused) return res.json(users);
 
-    const rows = excludeCustomerId
-      ? db.prepare("SELECT pppoe_username FROM customers WHERE router_id IS ? AND id != ? AND pppoe_username IS NOT NULL AND TRIM(pppoe_username) != ''").all(routerId, excludeCustomerId)
-      : db.prepare("SELECT pppoe_username FROM customers WHERE router_id IS ? AND pppoe_username IS NOT NULL AND TRIM(pppoe_username) != ''").all(routerId);
-    const used = new Set(rows.map(r => String(r.pppoe_username).trim()).filter(Boolean));
-    const filtered = (Array.isArray(users) ? users : []).filter(u => u && u.name && !used.has(String(u.name).trim()));
+    // Sin router elegido (= el predeterminado) se comparan todos los clientes; antes se buscaba router_id NULL
+    // y ningún usuario figuraba como usado. Comparación sin distinguir mayúsculas.
+    const rows = db.prepare(`SELECT pppoe_username FROM customers WHERE ${routerId ? 'router_id IS ? AND ' : ''}id != ? AND pppoe_username IS NOT NULL AND TRIM(pppoe_username) != ''`)
+      .all(...(routerId ? [routerId] : []), excludeCustomerId || -1);
+    const used = new Set(rows.map(r => String(r.pppoe_username).trim().toLowerCase()).filter(Boolean));
+    const filtered = (Array.isArray(users) ? users : []).filter(u => u && u.name && !used.has(String(u.name).trim().toLowerCase()));
     res.json(filtered);
   } catch (e) {
     res.status(500).json({ error: e.message });

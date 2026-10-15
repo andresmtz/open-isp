@@ -639,7 +639,7 @@
                 <% } %>
               </select>
             </div>
-            <div class="fg">
+            <div class="fg"<% if (String((settings && settings.isolation_method) || 'address_list') === 'address_list') { %> style="display:none" title="El corte se hace con la lista Moroso del MikroTik: no se usa perfil"<% } %>>
               <label class="fl"><%= t('admin.cust.isolir_profile','Profile Isolir / Address List') %></label>
               <select class="fs" name="isolir_profile" id="add_isolir_select">
                 <option value="isolir">isolir</option>
@@ -685,11 +685,11 @@
             </div>
           </div>
           <div class="form-row">
-            <div class="fg"><label class="fl">Latitude</label><input class="fc" name="lat" id="add_lat" placeholder="-6.xxx"></div>
+            <div class="fg"><label class="fl">Latitude</label><input class="fc" name="lat" id="add_lat" placeholder="-25.xxx"></div>
             <div class="fg">
               <label class="fl">Longitude</label>
               <div style="display:flex;gap:4px">
-                <input class="fc" name="lng" id="add_lng" placeholder="106.xxx">
+                <input class="fc" name="lng" id="add_lng" placeholder="-57.xxx">
                 <button type="button" class="btn btn-g btn-sm" onclick="openPicker('add')" title="<%= t('admin.cust.tt_pick_map','Pilih di Peta') %>"><i class="bi bi-geo-alt"></i></button>
               </div>
             </div>
@@ -929,7 +929,7 @@
                 <% } %>
               </select>
             </div>
-            <div class="fg">
+            <div class="fg"<% if (String((settings && settings.isolation_method) || 'address_list') === 'address_list') { %> style="display:none" title="El corte se hace con la lista Moroso del MikroTik: no se usa perfil"<% } %>>
               <label class="fl"><%= t('admin.cust.isolir_profile','Profile Isolir / Address List') %></label>
               <select class="fs" name="isolir_profile" id="e_isolir_profile">
                 <option value="isolir">isolir</option>
@@ -975,11 +975,11 @@
             </div>
           </div>
           <div class="form-row">
-            <div class="fg"><label class="fl">Latitude</label><input class="fc" name="lat" id="e_lat" placeholder="-6.xxx"></div>
+            <div class="fg"><label class="fl">Latitude</label><input class="fc" name="lat" id="e_lat" placeholder="-25.xxx"></div>
             <div class="fg">
               <label class="fl">Longitude</label>
               <div style="display:flex;gap:4px">
-                <input class="fc" name="lng" id="e_lng" placeholder="106.xxx">
+                <input class="fc" name="lng" id="e_lng" placeholder="-57.xxx">
                 <button type="button" class="btn btn-g btn-sm" onclick="openPicker('edit')" title="<%= t('admin.cust.tt_pick_map','Pilih di Peta') %>"><i class="bi bi-geo-alt"></i></button>
               </div>
             </div>

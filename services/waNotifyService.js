@@ -170,19 +170,4 @@ async function notifyAdmin(text) {
   return sendToStaff(text);
 }
 
-/** Credenciales/datos de instalación: técnicos activos con permiso "instalaciones" (config/techPermissions.js). */
-async function notifyInstallers(text) {
-  if (!require('../config/waGate').ready()) return { sent: 0, total: 0 };
-  const set = new Set();
-  try {
-    const tp = require('../config/techPermissions');
-    (require('./techService').getAllTechnicians() || [])
-      .filter((t) => t.is_active === 1 && t.phone && tp.current(t.id).instalaciones)
-      .forEach((t) => { const n = normalizeNum(t.phone); if (n) set.add(n); });
-  } catch (e) {}
-  let sent = 0;
-  for (const p of set) { if (await sendText(p, text)) sent++; }
-  return { sent, total: set.size };
-}
-
-module.exports = { sendText, sendImage, sendDocument, sendToStaff, notifyAdmin, notifyInstallers, isConnected, gateway };
+module.exports = { sendText, sendImage, sendDocument, sendToStaff, notifyAdmin, isConnected, gateway };

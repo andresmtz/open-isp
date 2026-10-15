@@ -278,11 +278,11 @@
           <div class="form-row">
             <div class="fg">
               <label class="fl"><%= t('admin.settings.office_lat', 'Latitude Kantor') %></label>
-              <input class="fc" name="office_lat" value="<%= settings.office_lat || '' %>" placeholder="-6.xxx">
+              <input class="fc" name="office_lat" value="<%= settings.office_lat || '' %>" placeholder="-25.xxx">
             </div>
             <div class="fg">
               <label class="fl"><%= t('admin.settings.office_lng', 'Longitude Kantor') %></label>
-              <input class="fc" name="office_lng" value="<%= settings.office_lng || '' %>" placeholder="106.xxx">
+              <input class="fc" name="office_lng" value="<%= settings.office_lng || '' %>" placeholder="-57.xxx">
             </div>
           <div class="hint" style="margin-top:6px;color:var(--muted)">
             <i class="bi bi-info-circle"></i> <%= t('admin.set.office_coord_hint','Koordinat kantor digunakan untuk validasi lokasi absensi karyawan (geofencing)') %>

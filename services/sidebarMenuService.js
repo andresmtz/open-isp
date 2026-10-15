@@ -45,7 +45,8 @@ const MENU_DEFINITIONS = [
     { key: 'discounts', section: 'billing', href: '/admin/discounts', icon: 'bi bi-percent', labelKey: 'admin.nav.discounts', labelDefault: 'Descuentos', roles: ['admin', 'cashier'], activePages: ['discounts'] },
     { key: 'promo_slides', section: 'billing', href: '/admin/promo-slides', icon: 'bi bi-image', labelKey: 'admin.nav.promo_slides', labelDefault: 'Diapositivas de promoción', roles: ['admin'], activePages: ['promo_slides'] }
   ] },
-  { key: 'grp_billing', section: 'billing', href: '/admin/billing', icon: 'bi bi-receipt', labelKey: 'admin.nav.invoices', labelDefault: 'Facturación', roles: ['admin', 'cashier'], bottomNav: true, bottomNavOrder: 3, activePages: ['billing', 'collector_payments'], children: [
+  { key: 'grp_billing', section: 'billing', href: '/admin/billing', icon: 'bi bi-receipt', labelKey: 'admin.nav.invoices', labelDefault: 'Facturación', roles: ['admin', 'cashier'], bottomNav: true, bottomNavOrder: 3, activePages: ['billing', 'collector_payments', 'pending_payments'], children: [
+    { key: 'pending_payments', section: 'billing', href: '/admin/pending-payments', icon: 'bi bi-cash-coin', labelKey: 'admin.nav.pending_payments', labelDefault: 'Pagos pendientes', roles: ['admin', 'cashier'], activePages: ['pending_payments'] },
     { key: 'billing', section: 'billing', href: '/admin/billing', icon: 'bi bi-receipt', labelKey: 'admin.nav.invoices_list', labelDefault: 'Facturas', roles: ['admin', 'cashier'], activePages: ['billing'] },
     { key: 'collector_payments', section: 'billing', href: '/admin/collector-payments', icon: 'bi bi-check2-square', labelKey: 'admin.nav.collector_payments', labelDefault: 'Aprobación de cobradores', roles: ['admin', 'cashier'], activePages: ['collector_payments'] }
   ] },

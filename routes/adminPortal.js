@@ -679,6 +679,22 @@ router.post('/customers/:id/onu/recheck', requireAdminSession, async (req, res) 
   } catch (e) { res.status(500).json({ ok: false, message: e.message }); }
 });
 
+// Pagos pendientes: clientes con deuda y botón "Registrar pago" siempre a la vista (pensado para el celular)
+router.get('/pending-payments', requireAdminSession, (req, res) => {
+  require('../services/paymentReversalService').ensureSchema();
+  const rows = db.prepare(`
+    SELECT c.id, c.name, c.phone, c.customer_code, c.pppoe_username, c.status, c.promise_until, c.address,
+           COUNT(i.id) AS months,
+           SUM(i.amount - COALESCE(i.amount_paid, 0)) AS debt,
+           GROUP_CONCAT(i.period_month || '/' || i.period_year, ',') AS periods,
+           MIN(i.period_year * 100 + i.period_month) AS oldest
+    FROM customers c JOIN invoices i ON i.customer_id = c.id AND i.status = 'unpaid'
+    WHERE c.status NOT IN ('cancelled', 'inactive')
+    GROUP BY c.id
+    ORDER BY CASE c.status WHEN 'suspended' THEN 0 WHEN 'ditangguhkan' THEN 1 ELSE 2 END, c.name COLLATE NOCASE`).all();
+  res.render('admin/pending_payments', { title: 'Pagos pendientes', company: company(), activePage: 'pending_payments', rows, msg: flashMsg(req) });
+});
+
 router.get('/onu-inventory', requireAdminSession, (req, res) => {
   const onuMgr = require('../services/onuManageService');
   const ro = require('../services/tr069RolloutService');
@@ -2547,6 +2563,22 @@ router.post('/customers/:id/receive', requireAdminSession, express.json(), async
       if (r.customer.status === 'suspended') { await customerSvc.activateCustomer(r.customer.id, 'active'); enabled = true; }
       else if (r.customer.status === 'ditangguhkan') { db.prepare("UPDATE customers SET status='active' WHERE id=?").run(r.customer.id); require('../services/promiseService').close(r.customer.id, 'kept'); }
     }
+    for (const invId of r.fullyPaid) billingSvc.setPaymentMethod(invId, b.method);
+    // Comprobante por WhatsApp (solo si entró dinero; no para clientes dados de baja)
+    let waSent = null;
+    const cash = Math.round(Number(b.amount) || 0);
+    const cust = customerSvc.getCustomerById(r.customer.id);
+    if (cash > 0 && cust && cust.phone && cust.status !== 'cancelled') {
+      const periods = r.applied.map(a => a.period);
+      const years = [...new Set(periods.map(p => p.split('/')[1]))];
+      const periodText = !periods.length ? '' : (years.length === 1 ? `${periods.map(p => p.split('/')[0]).join(', ')}/${years[0]}` : periods.join(', ').replace(/\//g, '-'));
+      const pkg = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
+      waSent = await sendPaymentSuccessWA(cust.phone, cust.name, periodText || 'Saldo a favor', String(cash), paidBy, {
+        customerId: cust.id, invoiceId: r.fullyPaid.length === 1 ? r.fullyPaid[0] : '',
+        username: cust.pppoe_username || cust.id, customerCode: cust.customer_code || '',
+        packageName: (pkg && pkg.name) || cust.package_name || '-', paidAt: new Date(), method: String(b.method || '').trim(),
+      });
+    }
     const parts = r.applied.map(a => `${a.period}: ${regional.formatMoney(a.amount)}${a.full ? ' (pagada)' : ' (parcial, falta ' + regional.formatMoney(a.remaining) + ')'}`);
     let msg = `Cobro #${r.receiptId} registrado.` + (parts.length ? ' Aplicado a ' + parts.join('; ') + '.' : '');
     if (r.creditUsed) msg += ` Se usó ${regional.formatMoney(r.creditUsed)} de saldo a favor.`;
@@ -2554,7 +2586,9 @@ router.post('/customers/:id/receive', requireAdminSession, express.json(), async
     if (r.carried) msg += ` Saldo de ${regional.formatMoney(r.carried)} trasladado a la próxima factura.`;
     msg += debt.count ? ` Deuda restante: ${regional.formatMoney(debt.total)}.` : (r.carried ? '' : ' El cliente no tiene deuda.');
     if (enabled) msg += ' Servicio habilitado.';
-    res.json({ ok: true, ...r, debt, enabled, message: msg });
+    if (waSent === true) msg += ' Comprobante enviado por WhatsApp.';
+    else if (waSent === false) msg += ' No se pudo enviar el comprobante por WhatsApp.';
+    res.json({ ok: true, ...r, debt, enabled, waSent, message: msg });
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 

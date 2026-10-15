@@ -395,6 +395,10 @@ function setPaymentMethod(invoiceId, method) {
   if (!m) return;
   if (!_pmOk) { try { db.exec('ALTER TABLE invoices ADD COLUMN payment_method TEXT'); } catch (_) {} _pmOk = true; }
   try { db.prepare('UPDATE invoices SET payment_method = ? WHERE id = ?').run(m.slice(0, 40), invoiceId); } catch (_) {}
+  // También en el recibo interno del cobro (lo muestra la anulación de pagos)
+  try {
+    db.prepare(`UPDATE payment_receipts SET method = ? WHERE COALESCE(method,'') = '' AND id IN (SELECT receipt_id FROM payment_allocations WHERE invoice_id = ?)`).run(m.slice(0, 40), invoiceId);
+  } catch (_) {}
 }
 
 function markAsPaid(invoiceId, paidByName, notes, actor = null) {

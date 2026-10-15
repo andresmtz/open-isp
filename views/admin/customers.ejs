@@ -253,6 +253,9 @@
                   <i class="bi bi-info-circle-fill" style="font-size:12px;opacity:0.75;"></i>
                 </a>
                 <% if (c.customer_code) { %><div style="font-size:11px;font-weight:700;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:4px;" title="ID de cliente"><i class="bi bi-person-badge"></i> <%= c.customer_code %></div><% } %>
+                <% if (_can('cobrar') && c.status !== 'cancelled' && c.status !== 'inactive') { %>
+                  <button type="button" class="btn btn-sm <%= c.unpaid_count > 0 ? 'btn-p' : 'btn-g' %>" style="margin-top:6px;padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" onclick="openReceive(+this.dataset.id)" title="<%= c.unpaid_count > 0 ? 'Registrar el pago de la deuda' : 'Sin deuda: el pago queda como saldo a favor' %>"><i class="bi bi-cash-coin"></i> Registrar pago</button>
+                <% } %>
               </td>
               <td>
                 <div><%= c.phone || '-' %></div>
@@ -379,8 +382,8 @@
                     <a class="act-item" href="/admin/customers/<%= c.id %>/sticker-onu" target="_blank"><i class="bi bi-qr-code"></i> Imprimir etiquetas ONU</a>
                     <% if (_can('facturar')) { %><button type="button" class="act-item success" data-idx="<%= i %>" onclick="openGenInvoice(+this.dataset.idx)"><i class="bi bi-lightning-charge"></i> Generar factura</button><% } %>
                     <% if (_can('cobrar')) { %>
-                    <button type="button" class="act-item primary" data-id="<%= c.id %>" onclick="openReceive(+this.dataset.id)"><i class="bi bi-wallet2"></i> Cobrar (monto libre)</button>
-                    <button type="button" class="act-item primary" data-idx="<%= i %>" onclick="openPayInvoice(+this.dataset.idx)"><i class="bi bi-cash-coin"></i> Registrar pago por mes</button>
+                    <button type="button" class="act-item primary" data-id="<%= c.id %>" onclick="openReceive(+this.dataset.id)"><i class="bi bi-cash-coin"></i> Registrar pago</button>
+                    <button type="button" class="act-item primary" data-idx="<%= i %>" onclick="openPayInvoice(+this.dataset.idx)"><i class="bi bi-calendar-check"></i> Pagar meses (adelantado)</button>
                     <% } %>
                     <% if (typeof session !== 'undefined' && session && !session.isCashier) { %>
                       <% if (c.package_id && (c.package_promo_cycles || 0) > 0) { %>
@@ -2077,64 +2080,6 @@ setTimeout(()=>document.querySelectorAll('.alert').forEach(a=>a.style.display='n
 </script>
 <script>
 // Cobro de monto libre: pagos parciales y saldo a favor
-async function openReceive(id) {
-  try {
-    const info = await (await fetch('/admin/customers/' + id + '/payment-info', { headers: { Accept: 'application/json' } })).json();
-    if (!info.ok) { alert(info.message || 'Error'); return; }
-    const d = info.debt;
-    const old = document.getElementById('rcv-modal'); if (old) old.remove();
-    const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
-    const rows = d.items.length ? d.items.map(i => '<tr><td>' + esc(i.period) + '</td><td style="text-align:right">' + fmtMoney(i.amount) + '</td><td style="text-align:right">' + (i.paid ? fmtMoney(i.paid) : '-') + '</td><td style="text-align:right;font-weight:700">' + fmtMoney(i.balance) + '</td></tr>').join('')
-      : '<tr><td colspan="4" style="text-align:center;color:var(--muted)">Sin deuda</td></tr>';
-    const m = document.createElement('div');
-    m.id = 'rcv-modal';
-    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
-    m.innerHTML = '<div class="card" style="max-width:520px;width:100%;max-height:90vh;overflow:auto">'
-      + '<div class="card-hd"><h6><i class="bi bi-wallet2"></i> Cobrar — ' + esc(info.customer.name) + '</h6></div>'
-      + '<div style="padding:14px">'
-      + '<table class="dtbl" style="width:100%;font-size:12px"><thead><tr><th>Período</th><th style="text-align:right">Monto</th><th style="text-align:right">Pagado</th><th style="text-align:right">Saldo</th></tr></thead><tbody>' + rows + '</tbody></table>'
-      + '<div style="display:flex;justify-content:space-between;margin:10px 0;font-weight:800"><span>Deuda total</span><span>' + fmtMoney(d.total) + '</span></div>'
-      + (d.credit > 0 ? '<div style="display:flex;justify-content:space-between;margin-bottom:10px;color:#10b981;font-weight:700"><span><i class="bi bi-piggy-bank"></i> Saldo a favor</span><span>' + fmtMoney(d.credit) + '</span></div>' : '')
-      + '<div class="fg"><label class="fl">Monto recibido</label><input class="fc" id="rcv-amount" type="number" min="0" step="1" value="' + Math.max(0, d.total - (d.credit || 0)) + '"></div>'
-      + (d.credit > 0 && d.total > 0 ? '<label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="rcv-credit" checked> Usar saldo a favor</label>' : '')
-      + '<div class="form-row"><div class="fg"><label class="fl">Medio</label><select class="fs" id="rcv-method"><option>Efectivo</option><option>Transferencia</option><option>Giro</option><option>Depósito</option><option>Otro</option></select></div>'
-      + '<div class="fg" style="flex:2"><label class="fl">Nota</label><input class="fc" id="rcv-note" placeholder="Ej.: comprobante 1234"></div></div>'
-      + '<div class="hint" id="rcv-hint" style="margin:8px 0"></div>'
-      + (d.carryOver > 0 ? '<div class="hint" style="margin-bottom:8px">Saldo trasladado pendiente (se suma a la próxima factura): <b>' + fmtMoney(d.carryOver) + '</b></div>' : '')
-      + '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px"><button class="btn btn-g" type="button" id="rcv-cancel">Cancelar</button>'
-      + '<button class="btn btn-g" type="button" id="rcv-act" style="display:none" title="Habilita el servicio; lo que falta se suma a la factura del próximo mes"><i class="bi bi-wifi"></i> Cobrar y activar</button>'
-      + '<button class="btn btn-p" type="button" id="rcv-ok"><i class="bi bi-check2"></i> Registrar cobro</button></div>'
-      + '</div></div>';
-    document.body.appendChild(m);
-    const amt = m.querySelector('#rcv-amount'), cr = m.querySelector('#rcv-credit'), hint = m.querySelector('#rcv-hint');
-    const upd = () => {
-      const a = Math.max(0, Number(amt.value) || 0) + (cr && cr.checked ? d.credit : 0);
-      if (!d.total) hint.textContent = 'Sin deuda: todo el monto queda como saldo a favor.';
-      else if (a < d.total) hint.textContent = 'Pago parcial de ' + fmtMoney(a) + ', faltan ' + fmtMoney(d.total - a) + '. «Solo cobrar»: la deuda sigue y el corte se aplica según el ciclo. «Cobrar y activar»: se habilita el servicio y lo que falta se suma a la factura del próximo mes.';
-      else if (a > d.total) hint.textContent = 'Cubre toda la deuda; ' + fmtMoney(a - d.total) + ' quedan como saldo a favor.';
-      else hint.textContent = 'Cubre toda la deuda.';
-    };
-    const btnAct = m.querySelector('#rcv-act'), btnOk = m.querySelector('#rcv-ok');
-    const upd2 = () => { const a = Math.max(0, Number(amt.value) || 0) + (cr && cr.checked ? d.credit : 0); const partial = d.total > 0 && a < d.total && Number(amt.value) > 0;
-      btnAct.style.display = partial ? '' : 'none'; btnOk.innerHTML = partial ? '<i class="bi bi-check2"></i> Solo cobrar' : '<i class="bi bi-check2"></i> Registrar cobro'; };
-    amt.addEventListener('input', () => { upd(); upd2(); }); if (cr) cr.addEventListener('change', () => { upd(); upd2(); }); upd(); upd2();
-    m.querySelector('#rcv-cancel').onclick = () => m.remove();
-    const send = async (btn, activate) => {
-      if (activate && !confirm('Se habilita el servicio y el saldo faltante se suma a la factura del próximo mes. ¿Continuar?')) return;
-      btn.disabled = true;
-      try {
-        const r = await fetch('/admin/customers/' + id + '/receive', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ amount: Number(amt.value) || 0, use_credit: !!(cr && cr.checked), activate: !!activate, method: m.querySelector('#rcv-method').value, note: m.querySelector('#rcv-note').value }) });
-        const j = await r.json();
-        alert(j.message || (j.ok ? 'Listo.' : 'Error'));
-        if (j.ok) location.reload(); else btn.disabled = false;
-      } catch (e) { alert('Error: ' + e.message); btn.disabled = false; }
-    };
-    btnOk.onclick = () => send(btnOk, false);
-    btnAct.onclick = () => send(btnAct, true);
-  } catch (e) { alert('Error: ' + e.message); }
-}
-
 // Promesa de pago: habilita (si está cortado) hasta la fecha límite
 async function promiseCust(id) {
   try {
@@ -2281,5 +2226,6 @@ async function cancelCustService(id) {
   };
 })();
 </script>
+<script src="/js/receive-payment.js"></script>
 </body>
 </html>

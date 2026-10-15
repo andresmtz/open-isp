@@ -1136,6 +1136,7 @@
       "grp_system": "Sistema",
       "customers_data": "Clientes",
       "invoices_list": "Facturas",
+      "pending_payments": "Pagos pendientes",
       "mikrotik": "MikroTik",
       "radius_server": "Servidor RADIUS",
       "acs_pro": "GenieACS Pro",

@@ -154,10 +154,11 @@
           <div class="card-bd" style="height:260px"><canvas id="revenueChart"></canvas></div>
         </div>
         <% } %>
-        <% if (_adm || _can('clientes_alta') || _can('facturar') || _can('finanzas') || _can('red_ver')) { %>
+        <% if (_adm || _can('cobrar') || _can('clientes_alta') || _can('facturar') || _can('finanzas') || _can('red_ver')) { %>
         <div class="card" style="margin:0">
           <div class="card-hd"><h6><i class="bi bi-lightning-charge"></i> <%= t('admin.dashboard.quick_actions','Aksi Cepat') %></h6></div>
           <div class="card-bd quick-actions-grid">
+            <% if (_can('cobrar')) { %><a href="/admin/pending-payments" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-cash-coin" style="font-size:20px;color:var(--success)"></i><span style="font-size:11.5px">Registrar pago</span></a><% } %>
             <% if (_can('clientes_alta')) { %><a href="/admin/customers" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-person-plus" style="font-size:20px;color:var(--primary)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_add_customer','Tambah Pelanggan') %></span></a><% } %>
             <% if (_can('facturar')) { %><a href="/admin/billing" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-receipt" style="font-size:20px;color:var(--warning)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_create_invoice','Buat Tagihan') %></span></a><% } %>
             <% if (_adm) { %><a href="/admin/packages" class="btn btn-g" style="flex-direction:column;gap:5px;padding:14px 8px;text-align:center"><i class="bi bi-box-seam" style="font-size:20px;color:var(--success)"></i><span style="font-size:11.5px"><%= t('admin.dashboard.qa_manage_packages','Kelola Paket') %></span></a><% } %>

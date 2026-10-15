@@ -44,6 +44,7 @@ const CATALOG = [
   ] },
   { key: 'cobrar', label: 'Cobrar y registrar pagos', help: 'Cobrar a clientes (pago total o parcial), marcar facturas como pagadas y ver su propio reporte de cobros.', def: true, needs: ['ver_clientes', 'ver_facturas'], rules: [
     ['GET', '^/cashiers/reports$'],
+    ['GET', '^/pending-payments$'],
     ['POST', `^/customers/${ID}/(receive|billing/pay)$`],
     ['POST', `^/billing/${ID}/pay$`],
     ['POST', '^/billing/pay-bulk$'],

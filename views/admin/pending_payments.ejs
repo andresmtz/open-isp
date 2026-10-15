@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pagos pendientes | <%= company %></title>
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .pp-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+    .pp-tools .fc{flex:1 1 260px;font-size:16px}
+    .pp-chips{display:flex;gap:6px;flex-wrap:wrap}
+    .pp-chips button{border-radius:999px}
+    .pp-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+    .pp-card{margin:0;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+    .pp-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+    .pp-name{font-weight:800;font-size:15px;line-height:1.25}
+    .pp-sub{font-size:12px;color:var(--muted)}
+    .pp-debt{font-size:18px;font-weight:800;white-space:nowrap}
+    .pp-months{font-size:12px}
+    .pp-card .btn-pay{width:100%;justify-content:center;padding:10px;font-size:15px;font-weight:700;margin-top:4px}
+    .pp-empty{text-align:center;color:var(--muted);padding:30px 10px}
+    @media (max-width:600px){ .pp-list{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+<%- include('partials/sidebar', { activePage: 'pending_payments', company }) %>
+<% const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+   const per = (p) => { const [m, y] = String(p).split('/'); return (MESES[Number(m) - 1] || m) + ' ' + y; };
+   const total = rows.reduce((s, r) => s + Number(r.debt || 0), 0);
+   const nSusp = rows.filter(r => r.status === 'suspended').length, nProm = rows.filter(r => r.status === 'ditangguhkan').length, nAct = rows.filter(r => r.status === 'active').length; %>
+<div class="mw">
+  <div class="topbar">
+    <div class="tb-title">
+      <button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+      <i class="bi bi-cash-coin"></i><span>Pagos pendientes</span>
+    </div>
+  </div>
+
+  <div class="page">
+    <% if (msg) { %><div class="alert alert-<%= msg.type==='error'?'d':'s' %>" data-flash="1"><%= msg.text %></div><% } %>
+
+    <div class="pp-sub" style="margin-bottom:10px;font-size:13px">
+      <b><%= rows.length %></b> clientes con deuda · Total: <b><%= fmtMoney(total) %></b>
+    </div>
+
+    <div class="pp-tools">
+      <input class="fc" id="pp-q" type="search" placeholder="Buscar por nombre, ID, teléfono o usuario PPPoE" autocomplete="off" autofocus>
+      <div class="pp-chips" id="pp-chips">
+        <button type="button" class="btn btn-sm btn-p" data-f="all">Todos (<%= rows.length %>)</button>
+        <button type="button" class="btn btn-sm btn-g" data-f="suspended">Cortados (<%= nSusp %>)</button>
+        <button type="button" class="btn btn-sm btn-g" data-f="ditangguhkan">Con promesa (<%= nProm %>)</button>
+        <button type="button" class="btn btn-sm btn-g" data-f="active">Activos (<%= nAct %>)</button>
+      </div>
+    </div>
+
+    <div class="pp-list" id="pp-list">
+      <% rows.forEach(r => {
+           const periods = String(r.periods || '').split(',').filter(Boolean).sort((a, b) => { const [ma, ya] = a.split('/').map(Number), [mb, yb] = b.split('/').map(Number); return (ya * 100 + ma) - (yb * 100 + mb); });
+           const hay = [r.name, r.customer_code, r.phone, r.pppoe_username, r.address].filter(Boolean).join(' '); %>
+        <div class="card pp-card" data-status="<%= r.status %>" data-hay="<%= hay %>">
+          <div class="pp-top">
+            <div>
+              <div class="pp-name"><%= r.name %></div>
+              <div class="pp-sub"><%= [r.customer_code, r.phone].filter(Boolean).join(' · ') || r.pppoe_username || '' %></div>
+            </div>
+            <div style="text-align:right">
+              <div class="pp-debt"><%= fmtMoney(r.debt || 0) %></div>
+              <% if (r.status === 'suspended') { %><span class="badge bd"><i class="bi bi-slash-circle"></i> Cortado</span>
+              <% } else if (r.status === 'ditangguhkan') { %><span class="badge bw" title="<%= r.promise_until ? 'Promesa hasta ' + r.promise_until : 'Habilitado con deuda' %>"><i class="bi bi-hand-thumbs-up"></i> <%= r.promise_until ? 'Promesa ' + String(r.promise_until).slice(8,10) + '/' + String(r.promise_until).slice(5,7) : 'Habilitado c/deuda' %></span>
+              <% } else { %><span class="badge bs">Activo</span><% } %>
+            </div>
+          </div>
+          <div class="pp-months"><i class="bi bi-calendar3"></i> Debe <%= r.months %> <%= r.months === 1 ? 'mes' : 'meses' %>: <%= periods.map(per).join(', ') %></div>
+          <button type="button" class="btn btn-p btn-pay" data-id="<%= r.id %>" onclick="openReceive(+this.dataset.id)"><i class="bi bi-cash-coin"></i> Registrar pago</button>
+        </div>
+      <% }) %>
+    </div>
+    <div class="pp-empty" id="pp-empty" style="display:<%= rows.length ? 'none' : 'block' %>">
+      <i class="bi bi-emoji-smile" style="font-size:28px"></i><div><%= rows.length ? 'Ningún cliente coincide con la búsqueda.' : 'No hay clientes con deuda.' %></div>
+    </div>
+  </div>
+</div>
+<script src="/js/receive-payment.js"></script>
+<script>
+(function () {
+  const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const q = document.getElementById('pp-q'), cards = Array.from(document.querySelectorAll('.pp-card')), empty = document.getElementById('pp-empty');
+  cards.forEach(c => { c._hay = norm(c.dataset.hay); });
+  let f = 'all';
+  const apply = () => {
+    const words = norm(q.value).split(/\s+/).filter(Boolean);
+    let n = 0;
+    cards.forEach(c => {
+      const ok = (f === 'all' || c.dataset.status === f) && words.every(w => c._hay.includes(w) || c._hay.replace(/\D/g, '').includes(w.replace(/\D/g, '') || '\u0000'));
+      c.style.display = ok ? '' : 'none'; if (ok) n++;
+    });
+    if (cards.length) { empty.style.display = n ? 'none' : 'block'; empty.querySelector('div').textContent = 'Ningún cliente coincide con la búsqueda.'; }
+  };
+  q.addEventListener('input', apply);
+  document.querySelectorAll('#pp-chips button').forEach(b => b.onclick = () => {
+    f = b.dataset.f;
+    document.querySelectorAll('#pp-chips button').forEach(x => { x.classList.toggle('btn-p', x === b); x.classList.toggle('btn-g', x !== b); });
+    apply();
+  });
+})();
+</script>
+</body>
+</html>

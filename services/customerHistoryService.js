@@ -109,9 +109,10 @@ function timeline(customerId, { money = true, limit = 300 } = {}) {
 
   // Órdenes de trabajo y reclamos
   safe(() => db.prepare('SELECT t.*, tech.name tech_name FROM tickets t LEFT JOIN technicians tech ON tech.id=t.technician_id WHERE t.customer_id=?').all(id)).forEach(t => {
-    push({ at: String(t.created_at), kind: 'reclamo', icon: t.kind === 'install' ? 'tools' : 'headset', title: (t.kind === 'install' ? 'Orden de instalación' : 'Reclamo') + ` N.º ${t.id}: ${t.subject}`,
+    const isInst = /^install/.test(String(t.kind || ''));
+    push({ at: String(t.created_at), kind: 'reclamo', icon: isInst ? 'tools' : 'headset', title: (isInst ? 'Orden de instalación' + (t.kind === 'install_cancelled' ? ' (cancelada)' : '') : 'Reclamo') + ` N.º ${t.id}: ${t.subject}`,
       detail: [t.tech_name ? `asignado a ${t.tech_name}` : (t.technician_notes || '')].filter(Boolean).join(' · ') });
-    if (t.status === 'resolved') push({ at: String(t.updated_at), kind: 'reclamo', icon: 'check2-square', title: `${t.kind === 'install' ? 'Instalación' : 'Reclamo'} N.º ${t.id} resuelto`, detail: t.technician_notes ? String(t.technician_notes).slice(0, 160) : '' });
+    if (t.status === 'resolved' && t.kind !== 'install_cancelled') push({ at: String(t.updated_at), kind: 'reclamo', icon: 'check2-square', title: `${t.kind === 'install' ? 'Instalación' : 'Reclamo'} N.º ${t.id} resuelto`, detail: t.technician_notes ? String(t.technician_notes).slice(0, 160) : '' });
   });
 
   // Fotos y documentos cargados

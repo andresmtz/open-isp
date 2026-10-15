@@ -42,9 +42,9 @@ services:
 
   # WhatsApp (GoWA). Sin puertos publicados: solo Open-ISP lo alcanza por la red interna
   # (http://gowa:3000). Usuario/contraseña en docker-data/gowa.env (APP_BASIC_AUTH=usuario:clave).
-  # Versión fija: actualizar a mano después de probar.
+  # Versión fija (GOWA_VERSION en .env, o la de abajo por defecto): se cambia solo a propósito, nunca "latest".
   gowa:
-    image: aldinokemal2104/go-whatsapp-web-multidevice:v9.5.0
+    image: aldinokemal2104/go-whatsapp-web-multidevice:${GOWA_VERSION:-v9.6.0}
     container_name: gowa
     restart: unless-stopped
     command: rest

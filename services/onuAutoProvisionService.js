@@ -50,16 +50,24 @@ function lanBinding(type) {
   return Array.from({ length: n }, (_, i) => `lan${i + 1}`).join(' ') + (/wifi/i.test(String(type || '')) ? ' ssid1 ssid5' : '');
 }
 
-async function notifyAll(customer, text) {
+/**
+ * Avisa a administración (texto técnico) y al técnico de la orden (texto simple, sin términos de OLT/MikroTik).
+ * techText null → el técnico no recibe nada.
+ */
+const TECH_WAIT = 'La oficina ya fue avisada y lo resuelve desde el sistema. Dejá la ONU conectada y encendida, y esperá su confirmación antes de irte.';
+const techPower = async (id) => { try { const ps = require('./onuPowerService'); const p = await ps.forCustomer(id); return p && p.ok ? `\n📶 Potencia: ${p.rx} dBm (${p.level})` + (p.level !== 'buena' ? ` — ${p.advice}` : '') : ''; } catch (_) { return ''; } };
+
+async function notifyAll(customer, text, techText = null) {
   const wa = require('./waNotifyService');
   try { await wa.notifyAdmin(text); } catch (_) {}
+  if (!techText) return;
   // técnico de la orden (instalación o asistencia)
   try {
     // la orden puede haberse cerrado recién (instalación completa): se toma la última orden del técnico de las últimas 24 h
     const t = db.prepare(`SELECT tech.phone FROM tickets t JOIN technicians tech ON tech.id=t.technician_id
       WHERE t.customer_id=? AND (t.status IN ('open','in_progress') OR t.updated_at >= datetime(NOW_LOCAL(), '-1 day'))
       ORDER BY (t.status IN ('open','in_progress')) DESC, t.id DESC LIMIT 1`).get(customer.id);
-    if (t && t.phone) await wa.sendText(require('../config/regional').normalizePhone(String(t.phone).replace(/\D/g, '')), text);
+    if (t && t.phone) await wa.sendText(require('../config/regional').normalizePhone(String(t.phone).replace(/\D/g, '')), techText);
   } catch (_) {}
 }
 
@@ -77,7 +85,7 @@ async function provision(customerId, { actor = 'sistema', mode = 'install' } = {
   if (!c) return { ok: false, step: 'cliente', message: 'Cliente no encontrado' };
   // El usuario PPPoE y la IP se crean recién ahora, al configurar la ONU (no al aprobar)
   try { await require('./installationService').ensureNetworkAccount(id); }
-  catch (e) { await notifyAll(c, `⚠️ *No se pudo crear la cuenta PPPoE* de ${c.name}: ${e.message}`); return finish({ ok: false, step: 'cuenta PPPoE', message: e.message }); }
+  catch (e) { await notifyAll(c, `⚠️ *No se pudo crear la cuenta PPPoE* de ${c.name}: ${e.message}`, `⏳ *${c.name}*: falta un paso de la oficina para darle internet. ${TECH_WAIT}`); return finish({ ok: false, step: 'cuenta PPPoE', message: e.message }); }
   Object.assign(c, db.prepare('SELECT pppoe_username, pppoe_password, pppoe_remote_address, router_id FROM customers WHERE id=?').get(id));
   const inv = onuMgr().forCustomer(id);
   if (!inv) return finish({ ok: false, step: 'vínculo', message: 'La ONU no está vinculada al cliente.' });
@@ -103,7 +111,7 @@ async function provision(customerId, { actor = 'sistema', mode = 'install' } = {
     finish({ ok: false, step: 'manual', message: why });
     await notifyAll(c, `🛠️ *ONU identificada — configurar a mano*\nCliente: ${c.name}\nONU: ${inv.onu_ref} · ${String(inv.mac || '').toUpperCase()} · ${inv.type || ''}\nEsta ONU ${why}.\n` +
       (r.ok ? `Ya quedó nombrada en la OLT como *${U}* (write file).\n` : `No se pudo poner la descripción: ${r.message}\n`) +
-      `\nCargar en la ONU: WAN PPPoE usuario y clave *${U}*` + (c.reg_wifi_ssid ? `, WiFi "${c.reg_wifi_ssid}" / "${c.reg_wifi_ssid}-5G"` : '') + (mode === 'replace' ? `.\nDespués tocar "Confirmar cambio de equipo" en Equipo (da de baja la ONU vieja).` : `.\nDespués marcar "Instalación realizada".`));
+      `\nCargar en la ONU: WAN PPPoE usuario y clave *${U}*` + (c.reg_wifi_ssid ? `, WiFi "${c.reg_wifi_ssid}" / "${c.reg_wifi_ssid}-5G"` : '') + (mode === 'replace' ? `.\nDespués tocar "Confirmar cambio de equipo" en Equipo (da de baja la ONU vieja).` : `.\nDespués marcar "Instalación realizada".`), `🛠️ *${c.name}*: este modelo de ONU (${inv.type || 'otra marca'}) no se configura solo. Dejala conectada y encendida; la oficina te indica cómo seguir.`);
     return { ok: false, manual: true, step: 'manual', message: `ONU ${why}: configurar WAN y WiFi a mano.` };
   }
   let step = 'inicio';
@@ -182,7 +190,8 @@ async function provision(customerId, { actor = 'sistema', mode = 'install' } = {
   });
   if (!result.ok) {
     finish(result);
-    await notifyAll(c, `⚠️ *Configuración automática de la ONU: falló*\nCliente: ${c.name}\nONU: ${inv.onu_ref} (${String(inv.mac || '').toUpperCase()})\nPaso: ${result.step}\nDetalle: ${result.message}\n\nTerminarla a mano en la OLT. Lo hecho hasta ese paso quedó guardado (write file).`);
+    await notifyAll(c, `⚠️ *Configuración automática de la ONU: falló*\nCliente: ${c.name}\nONU: ${inv.onu_ref} (${String(inv.mac || '').toUpperCase()})\nPaso: ${result.step}\nDetalle: ${result.message}\n\nTerminarla a mano en la OLT. Lo hecho hasta ese paso quedó guardado (write file).`,
+      `⚠️ *${c.name}*: ${mode === 'replace' ? 'la ONU nueva' : 'la ONU'} todavía no quedó lista automáticamente.${mode === 'replace' ? ' La ONU anterior sigue configurada.' : ''}\n${TECH_WAIT}\nMientras tanto revisá que la luz PON de la ONU esté fija (no parpadeando).` + await techPower(id));
     return result;
   }
 
@@ -205,7 +214,8 @@ async function provision(customerId, { actor = 'sistema', mode = 'install' } = {
   }
   if (!session) {
     const r = finish({ ok: false, step: 'verificación MikroTik', message: 'La ONU quedó configurada pero el MikroTik no muestra la sesión PPPoE.' });
-    await notifyAll(c, `⚠️ *ONU configurada, falta verificar*\nCliente: ${c.name}\nEl MikroTik no muestra la sesión PPPoE de ${U}. Revisar antes de confirmar la instalación.`);
+    await notifyAll(c, `⚠️ *ONU configurada, falta verificar*\nCliente: ${c.name}\nEl MikroTik no muestra la sesión PPPoE de ${U}. Revisar antes de confirmar la instalación.`,
+      `⚠️ *${c.name}*: la ONU quedó configurada pero todavía no se confirma que el cliente tenga internet.\n${TECH_WAIT}` + await techPower(id));
     return r;
   }
   note(`MikroTik: sesión activa ${session.address || ''}`);
@@ -224,7 +234,11 @@ async function provision(customerId, { actor = 'sistema', mode = 'install' } = {
     done = await require('./installationService').completeInstallation(id, { actor: 'configuración automática' });
     db.prepare("UPDATE tickets SET status='resolved', technician_notes=TRIM(COALESCE(technician_notes,'') || ' ONU configurada automáticamente'), updated_at=(NOW_LOCAL()) WHERE customer_id=? AND kind='install' AND status IN ('open','in_progress')").run(id);
   } catch (e) { note('alta: ' + e.message); }
-  await notifyAll(c, `✅ *Instalación completa (automática)*\nCliente: ${c.name}\nONU: ${inv.onu_ref} · descripción ${U}\nPPPoE conectado · IP ${session.address || '-'}\n${powerTxt ? '📶 ' + powerTxt + '\n' : ''}${wifiMsg}\nGuardado en la ONU y en la OLT (write file).` + (done && done.ok ? `\nPrimera factura: ${require('../config/regional').formatMoney(done.amount)}, vence ${String(done.plan.dueDate).split('-').reverse().join('/')}.` : ''));
+  await notifyAll(c, `✅ *Instalación completa (automática)*\nCliente: ${c.name}\nONU: ${inv.onu_ref} · descripción ${U}\nPPPoE conectado · IP ${session.address || '-'}\n${powerTxt ? '📶 ' + powerTxt + '\n' : ''}${wifiMsg}\nGuardado en la ONU y en la OLT (write file).` + (done && done.ok ? `\nPrimera factura: ${require('../config/regional').formatMoney(done.amount)}, vence ${String(done.plan.dueDate).split('-').reverse().join('/')}.` : ''),
+    `✅ *Instalación completa — ${c.name}*\nEl cliente ya tiene internet.` + (powerTxt ? `\n📶 ${powerTxt}` : '') +
+    (c.reg_wifi_ssid ? `\n📡 WiFi: ${c.reg_wifi_ssid} / ${c.reg_wifi_ssid}-5G` : '') +
+    (done && done.ok ? `\n\n💵 Cobrale ${require('../config/regional').formatMoney(done.plan.installPayment)} (primer mes) y recordale que su primera factura es de ${require('../config/regional').formatMoney(done.amount)} y vence el ${String(done.plan.dueDate).split('-').reverse().join('/')}.` : '') +
+    `\n\nNo tenés que hacer nada más en el sistema.`);
   logger.info(`[Provisión] ${c.name}: ONU ${inv.onu_ref} configurada automáticamente`);
   return { ok: true, step: 'listo', message: 'Instalación completa.' };
 }
@@ -246,7 +260,8 @@ async function fromLabel(customerId, images, { actor = 'técnico' } = {}) {
   const cands = await inst.onuCandidates(id);
   const m = reader.matchCandidates(readMacs, cands);
   if (!m.match) {
-    await notifyAll(c, `🔎 *Etiqueta de la ONU recibida — falta identificarla*\nCliente: ${c.name}\n${m.how}\nONU nuevas en la OLT: ${cands.length ? cands.map(x => `${x.onu_ref} ${String(x.mac).toUpperCase()}`).join(', ') : 'ninguna todavía (¿está conectada la fibra?)'}.\nElegila en Clientes → Inscriptos → "Equipo", o el sistema reintenta cuando aparezca.`);
+    await notifyAll(c, `🔎 *Etiqueta de la ONU recibida — falta identificarla*\nCliente: ${c.name}\n${m.how}\nONU nuevas en la OLT: ${cands.length ? cands.map(x => `${x.onu_ref} ${String(x.mac).toUpperCase()}`).join(', ') : 'ninguna todavía (¿está conectada la fibra?)'}.\nElegila en Clientes → Inscriptos → "Equipo", o el sistema reintenta cuando aparezca.`,
+      `🔎 *${c.name}*: recibimos la foto de la etiqueta pero todavía no encontramos la ONU.\nRevisá que esté conectada a la fibra y encendida (luz PON fija). El sistema vuelve a probar solo cada 2 minutos.` + (m.how && /No se pudo leer/.test(m.how) ? '\nLa foto no se pudo leer: sacá otra más de cerca, con buena luz, y volvé a subirla.' : ''));
     if (readMacs.length) db.prepare('UPDATE customers SET reg_onu_mac=COALESCE(reg_onu_mac, ?) WHERE id=?').run(reader.pretty(readMacs[0].mac).toLowerCase(), id);
     return { linked: false, message: m.how };
   }
@@ -347,7 +362,8 @@ async function replaceOnu(customerId, images, { reasonKey = 'falla', reasonText 
 Cliente: ${c.name}
 ${m.how}
 ONU nuevas en la OLT: ${cands.length ? cands.map(x => `${x.onu_ref} ${String(x.mac).toUpperCase()}`).join(', ') : 'ninguna todavía (¿está conectada la fibra?)'}.
-El sistema reintenta cada 2 minutos; o elegila en el panel (Equipo).`);
+El sistema reintenta cada 2 minutos; o elegila en el panel (Equipo).`,
+      `🔎 *${c.name}*: recibimos la foto de la etiqueta de la ONU nueva pero todavía no la encontramos.\nRevisá que esté conectada a la fibra y encendida (luz PON fija). El sistema vuelve a probar solo cada 2 minutos.` + (m.how && /No se pudo leer/.test(m.how) ? '\nLa foto no se pudo leer: sacá otra más de cerca, con buena luz, y volvé a subirla.' : ''));
     return { ok: false, message: m.how };
   }
   return applyReplacement(id, m.match, { how: m.how, actor });
@@ -373,7 +389,8 @@ Cliente: ${c.name}
 ONU nueva: ${inv.onu_ref} · ${String(inv.mac || '').toUpperCase()} (${how})
 ${r.message}
 ${f.dereg}.
-Guardado en la ONU y en la OLT (write file).`);
+Guardado en la ONU y en la OLT (write file).`,
+    `✅ *Cambio de equipo completo — ${c.name}*\nLa ONU nueva ya tiene internet${c.wifi_ssid ? ` con el WiFi ${c.wifi_ssid}` : ''}.` + await techPower(id) + `\nPodés llevarte la ONU anterior. No tenés que hacer nada más en el sistema.`);
   return { ok: true, message: 'Cambio de equipo completo.' };
 }
 

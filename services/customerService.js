@@ -227,15 +227,24 @@ function generatePppoeAccount(customerId) {
   const domain = String(getSetting('pppoe_domain', '') || '').replace(/^@/, '').trim();
   const sfx = domain ? '@' + domain : '';
   const _pat = String(getSetting('pppoe_username_pattern', 'name') || 'name');
-  const base = slugifyPppoeName(_pat === 'customer_code' ? (c.customer_code || c.name) : c.name);
-  let username = base + sfx;
-  let n = 1;
-  while (db.prepare('SELECT id FROM customers WHERE pppoe_username = ? AND id != ?').get(username, customerId)) {
-    n++; username = base + n + sfx;
+  const names = require('../config/accountNames');
+  let username;
+  if (_pat === 'first_last') {
+    // Convención PrimerNombre+Apellido (config/accountNames.js); sin consultar el MikroTik (sincrónico)
+    const cands = names.candidates(c.name);
+    username = cands.find(x => !names.isTaken(x + sfx, { exceptCustomerId: customerId }));
+    if (username) username += sfx;
+    for (let i = 2; !username && i < 100; i++) if (!names.isTaken(cands[0] + i + sfx, { exceptCustomerId: customerId })) username = cands[0] + i + sfx;
+  } else {
+    const base = slugifyPppoeName(_pat === 'customer_code' ? (c.customer_code || c.name) : c.name);
+    username = base + sfx;
+    let n = 1;
+    while (db.prepare('SELECT id FROM customers WHERE pppoe_username = ? AND id != ?').get(username, customerId)) {
+      n++; username = base + n + sfx;
+    }
   }
-  // Clave: la fija de Configuración (pppoe_default_password) o, si no hay, una aleatoria por cliente
-  const fixed = String(getSetting('pppoe_default_password', '') || '').trim();
-  const password = fixed || require('crypto').randomBytes(6).toString('base64').replace(/[^A-Za-z0-9]/g, '').slice(0, 8).padEnd(8, '7');
+  // Clave según pppoe_password_mode: igual al usuario, fija o aleatoria
+  const password = names.passwordFor(username);
   db.prepare("UPDATE customers SET pppoe_username=?, pppoe_password=?, connection_type = CASE WHEN connection_type IS NULL OR connection_type='' THEN 'pppoe' ELSE connection_type END WHERE id=?").run(username, password, customerId);
   return { username: username, password: password };
 }

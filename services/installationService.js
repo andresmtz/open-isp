@@ -179,7 +179,7 @@ async function createRequest(data, { source = 'Portal web', actor = '' } = {}) {
 }
 
 // ── 2. Aprobar e instalar ─────────────────────────────────────────────────────────
-async function approve(customerId, { installer, installDate, dueDate, total, notes } = {}, actor = 'Admin') {
+async function approve(customerId, { installer, installDate, dueDate, total, notes, account } = {}, actor = 'Admin') {
   ensureSchema();
   const customerSvc = require('./customerService');
   const mikrotikService = require('./mikrotikService');
@@ -201,7 +201,14 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
   let pppoeUser = cust.pppoe_username || '';
   let pppoePass = cust.pppoe_password || '';
   if (!pppoeUser && getSetting('pppoe_auto_generate', '1') !== '0') {
-    const g = customerSvc.generatePppoeAccount(id); pppoeUser = g.username; pppoePass = g.password;
+    // Nombre de cuenta (convención: usuario PPPoE = descripción de la ONU = WiFi; config/accountNames.js)
+    const names = require('../config/accountNames');
+    let acc = String(account || '').trim();
+    if (!acc) acc = (await names.suggest(cust)).name;
+    if (!names.VALID.test(acc)) throw new Error('Nombre de cuenta inválido: solo letras, números, punto, guion y guion bajo (3 a 40), sin espacios.');
+    if (names.isTaken(acc, { exceptCustomerId: id, mikrotikNames: await names.mikrotikSecretNames(cust.router_id) })) throw new Error(`El nombre de cuenta "${acc}" ya lo usa otro cliente o existe en el MikroTik.`);
+    pppoeUser = acc; pppoePass = names.passwordFor(acc);
+    db.prepare("UPDATE customers SET pppoe_username=?, pppoe_password=?, connection_type=CASE WHEN connection_type IS NULL OR connection_type='' THEN 'pppoe' ELSE connection_type END WHERE id=?").run(pppoeUser, pppoePass, id);
   }
   let mkWarn = '';
   // IP fija del cliente (como en WispHub): la próxima libre del rango configurado (config/pppoeIp.js)

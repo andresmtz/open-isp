@@ -4495,7 +4495,7 @@ router.post('/registrations', requireAdminSession, docUpload.fields([{ name: 'do
   res.redirect('/admin/customers?status=inactive');
 });
 
-router.get('/registrations/:id/plan', requireAdminSession, (req, res) => {
+router.get('/registrations/:id/plan', requireAdminSession, async (req, res) => {
   try {
     const inst = require('../services/installationService');
     const c = customerSvc.getCustomerById(Number(req.params.id));
@@ -4503,7 +4503,11 @@ router.get('/registrations/:id/plan', requireAdminSession, (req, res) => {
     const pkg = c.package_id ? customerSvc.getPackageById(c.package_id) : null;
     if (!pkg) throw new Error('El inscripto no tiene plan asignado');
     const plan = inst.firstInvoicePlan(pkg.price, req.query.install, req.query.due);
+    let account = c.pppoe_username || '';
+    let accountNote = c.pppoe_username ? 'ya tiene usuario PPPoE' : '';
+    if (!account) { try { const sg = await require('../config/accountNames').suggest(c); account = sg.name; accountNote = sg.mikrotikChecked ? 'libre en el sistema y en el MikroTik' : 'libre en el sistema (no se pudo consultar el MikroTik)'; } catch (e) { accountNote = e.message; } }
     res.json({ ok: true, customer: { id: c.id, name: c.name, phone: c.phone, address: c.address }, packageName: pkg.name, plan, installerRule: inst.installerRule(plan.installPayment),
+      account, accountLocked: !!c.pppoe_username, accountNote, passwordSame: String(getSetting('pppoe_password_mode', 'random')) === 'same_as_user',
       installers: inst.installers().map(i => ({ key: i.key, name: i.name, group: i.group || '', hasPhone: i.type === 'admin' || !!i.phone })) });
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
@@ -4513,7 +4517,7 @@ router.post('/registrations/:id/approve', requireAdminSession, express.urlencode
     const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
     const b = req.body || {};
     const r = await require('../services/installationService').approve(Number(req.params.id),
-      { installer: b.installer, installDate: b.install_date, dueDate: b.due_date, total: b.final_total, notes: b.installer_notes }, actor);
+      { installer: b.installer, installDate: b.install_date, dueDate: b.due_date, total: b.final_total, notes: b.installer_notes, account: b.account }, actor);
     let text = `${r.customer.name}: instalación asignada a ${r.installer.name} (orden N.º ${r.ticketId}). ` +
       (r.pppoeUser ? `Usuario PPPoE ${r.pppoeUser}, IP ${r.remoteIp || '-'}. ` : '') +
       `La primera factura (estimada ${regional.formatMoney(r.amount)}) se genera cuando se confirme la instalación, con la fecha real.`;

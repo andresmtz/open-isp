@@ -1228,6 +1228,11 @@
           <select class="fs" name="installer" id="rc_installer" required></select>
           <div class="hint" style="margin-top:4px">Recibe por WhatsApp los datos del cliente, la ubicación y el usuario PPPoE. Si es un técnico, la orden aparece solo en su portal.</div>
         </div>
+        <div class="fg">
+          <label class="fl">Nombre de cuenta (usuario PPPoE · descripción de la ONU · WiFi)</label>
+          <input class="fc" name="account" id="rc_account" maxlength="40" pattern="[A-Za-z0-9._-]{3,40}" style="font-weight:700">
+          <div class="hint" id="rc_account_note" style="margin-top:4px"></div>
+        </div>
         <div id="rc_rule" style="display:none;border:2px solid var(--danger);background:rgba(239,68,68,.10);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:13px;font-weight:700"></div>
         <div class="form-row">
           <div class="fg"><label class="fl">Fecha de instalación</label><input class="fc" type="date" name="install_date" id="rc_install_date" required></div>
@@ -1914,6 +1919,9 @@ async function openRegCalc(id){
   openModal('regCalcModal');
   var j = await rcLoad(true); if (!j) return;
   var c = j.customer;
+  var acc = document.getElementById('rc_account');
+  acc.value = j.account || ''; acc.readOnly = !!j.accountLocked;
+  document.getElementById('rc_account_note').textContent = (j.accountLocked ? 'Ya tiene usuario PPPoE: ' : 'Propuesto: primer nombre + apellido (' + (j.accountNote || '') + '). Podés corregirlo. ') + (j.passwordSame ? 'La clave PPPoE es igual al usuario. ' : '') + 'El WiFi será "' + (j.account || 'NOMBRE') + '" y "' + (j.account || 'NOMBRE') + '-5G".';
   var rr = document.getElementById('rc_rule');
   if (j.installerRule) { rr.innerHTML = '<i class="bi bi-exclamation-octagon-fill" style="color:var(--danger)"></i> Regla para el instalador (va en su WhatsApp y en su orden): ' + String(j.installerRule).replace(/</g, '&lt;'); rr.style.display = ''; }
   document.getElementById('regCalcWho').innerHTML = 'Cliente: <b>' + String(c.name||'').replace(/</g,'&lt;') + '</b> &bull; ' + String(c.phone||'-').replace(/</g,'&lt;') + ' &bull; Plan <b>' + String(j.packageName||'').replace(/</g,'&lt;') + '</b>';

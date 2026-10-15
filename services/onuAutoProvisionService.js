@@ -81,6 +81,24 @@ async function provision(customerId, { actor = 'sistema' } = {}) {
   const olt = getOlt(inv.olt_id);
   const N = inv.onu_id, port = inv.port;
   const run = async (cmds) => { const out = await runOnPort(olt, port, cmds); out.forEach((o, i) => note(`${cmds[i]} → ${String(o).replace(/\s+/g, ' ').slice(-120)}`)); return out; };
+
+  // ONU que no admite la configuración remota de VSOL (TP-Link y otras): solo se identifica y se nombra en la OLT
+  if (inv.compatible !== 1) {
+    const r = await serial(async () => {
+      try {
+        const [d] = await run([`onu ${N} description ${U}`]);
+        if (errOf(d)) return { ok: false, step: 'descripción', message: 'La OLT no aceptó la descripción: ' + errOf(d)[0] };
+        return { ok: true };
+      } catch (e) { return { ok: false, step: 'descripción', message: e.message }; }
+      finally { try { await writeOlt(olt); note('write file → guardado en la OLT'); } catch (e) { note('write file FALLÓ: ' + e.message); } }
+    });
+    const why = inv.compatible === 0 ? 'no admite la configuración remota (TP-Link u otra marca)' : 'no se pudo comprobar si admite la configuración remota';
+    finish({ ok: false, step: 'manual', message: why });
+    await notifyAll(c, `🛠️ *ONU identificada — configurar a mano*\nCliente: ${c.name}\nONU: ${inv.onu_ref} · ${String(inv.mac || '').toUpperCase()} · ${inv.type || ''}\nEsta ONU ${why}.\n` +
+      (r.ok ? `Ya quedó nombrada en la OLT como *${U}* (write file).\n` : `No se pudo poner la descripción: ${r.message}\n`) +
+      `\nCargar en la ONU: WAN PPPoE usuario y clave *${U}*` + (c.reg_wifi_ssid ? `, WiFi "${c.reg_wifi_ssid}" / "${c.reg_wifi_ssid}-5G"` : '') + `.\nDespués marcar "Instalación realizada".`);
+    return { ok: false, manual: true, step: 'manual', message: `ONU ${why}: configurar WAN y WiFi a mano.` };
+  }
   let step = 'inicio';
   const result = await serial(async () => {
     try {

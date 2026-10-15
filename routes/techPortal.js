@@ -214,7 +214,12 @@ router.post('/orders/:ticketId/equipment', requireTechSession, equipUpload.array
         [photos ? `Foto(s) de la etiqueta: ${photos}` : '', ...r.saved].filter(Boolean).join('\n') +
         `\n\n${r.wifi && r.wifi.ok ? '✅ ' + r.wifi.message : '👉 Vinculá la ONU en Clientes → Inscriptos → "Equipo".'}`);
     } catch (_) {}
-    const msg = (photos ? `${photos} foto(s) guardada(s). ` : '') + (r.saved.length ? 'Datos guardados. ' : '') + (r.wifi && r.wifi.ok ? r.wifi.message : 'La oficina vincula la ONU y el WiFi se aplica solo.');
+    // Lectura de la etiqueta y configuración automática de la ONU (en segundo plano: tarda 1 a 3 minutos)
+    if (photos) {
+      const imgs = (req.files || []).map(f => f.buffer);
+      setImmediate(() => require('../services/onuAutoProvisionService').fromLabel(t.customer_id, imgs, { actor: by }).catch(e => require('../config/logger').logger.warn('[Etiqueta] ' + e.message)));
+    }
+    const msg = (photos ? `${photos} foto(s) guardada(s): se está leyendo la etiqueta y configurando la ONU; te llega el resultado por WhatsApp. ` : '') + (r.saved.length ? 'Datos guardados. ' : '') + (r.wifi && r.wifi.ok ? r.wifi.message : '');
     if (wantsJson) return res.json({ ok: true, message: msg });
     req.session._msg = { type: 'success', text: msg };
   } catch (e) {

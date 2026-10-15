@@ -2617,13 +2617,14 @@ router.get('/customers/:id/equipment', requireAdminSession, async (req, res) => 
   try {
     const id = Number(req.params.id);
     const inst = require('../services/installationService'); inst.ensureSchema();
-    const c = db.prepare('SELECT id, name, pppoe_username, reg_wifi_ssid, reg_wifi_status, reg_onu_mac FROM customers WHERE id=?').get(id);
+    require('../services/onuAutoProvisionService').ensureSchema();
+    const c = db.prepare('SELECT id, name, pppoe_username, reg_wifi_ssid, reg_wifi_status, reg_onu_mac, reg_label_read, reg_provision_status, reg_provision_log FROM customers WHERE id=?').get(id);
     if (!c) throw new Error('Cliente no encontrado');
     const docs = require('../services/customerDocumentService');
     const labels = docs.list(id, { kinds: ['etiqueta'] }).map(d => `/admin/customers/${id}/documents/${d.id}`);
     const linked = require('../services/onuManageService').forCustomer(id);
     const candidates = linked ? [] : await inst.onuCandidates(id);
-    res.json({ ok: true, customer: c, labels, linked, candidates });
+    res.json({ ok: true, customer: c, labels, linked, candidates, autoProvision: require('../services/onuAutoProvisionService').enabled() });
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 router.post('/customers/:id/equipment', requireAdminSession, express.json(), async (req, res) => {
@@ -2634,6 +2635,12 @@ router.post('/customers/:id/equipment', requireAdminSession, express.json(), asy
     let out = {};
     if (b.ssid || b.key || b.mac) out = await inst.setEquipment(Number(req.params.id), { ssid: b.ssid, key: b.key, mac: b.mac }, actor);
     if (b.onu_ref) out = await inst.linkOnu(Number(req.params.id), b.onu_ref, actor);
+    const prov = require('../services/onuAutoProvisionService');
+    if ((b.onu_ref || b.provision) && prov.enabled()) {
+      const cid = Number(req.params.id);
+      setImmediate(() => prov.provision(cid, { actor }).catch(e => logger.warn('[Provisión] ' + e.message)));
+      out.wifi = { message: 'Configurando la ONU automáticamente (1 a 3 minutos). El resultado llega por WhatsApp y se ve en esta ventana.' };
+    }
     res.json({ ok: true, ...out, message: (out.wifi && out.wifi.message) || 'Guardado.' });
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });

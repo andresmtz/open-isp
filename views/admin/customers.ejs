@@ -1847,8 +1847,13 @@ async function eqLoad(){
     }).join('') : '<div class="text-muted" style="font-size:12px">No hay ONU nuevas. Cuando el técnico conecte la fibra, actualizá esta ventana.</div>';
     h += '<button class="btn btn-g btn-sm" style="margin-top:4px" onclick="eqLoad()"><i class="bi bi-arrow-repeat"></i> Actualizar</button>';
   }
-  h += '<div style="font-size:12px;margin-top:10px">WiFi: <b>' + _esc(c.reg_wifi_ssid || '—') + '</b> · estado: ' + _esc(c.reg_wifi_status || 'sin cargar') + '</div>';
-  h += '<div class="hint" style="margin-top:6px">La WAN PPPoE de la ONU nueva todavía se configura a mano en la OLT con el usuario <b>' + _esc(c.pppoe_username || '') + '</b> (descripción, usuario y clave).</div>';
+  h += '<div style="font-size:12px;margin-top:10px">Lectura de la etiqueta: <b>' + _esc(c.reg_label_read || 'sin foto todavía') + '</b></div>';
+  h += '<div style="font-size:12px;margin-top:4px">WiFi: <b>' + _esc(c.reg_wifi_ssid || '—') + '</b> · estado: ' + _esc(c.reg_wifi_status || 'sin cargar') + '</div>';
+  var ps = c.reg_provision_status || '';
+  h += '<div style="font-size:12px;margin-top:4px">Configuración automática: <b style="color:' + (ps === 'ok' ? 'var(--success)' : (ps.indexOf('error') === 0 ? 'var(--danger)' : 'inherit')) + '">' + (ps === 'ok' ? 'completa' : (ps ? _esc(ps) : (j.autoProvision ? 'pendiente' : 'desactivada (configurar a mano)'))) + '</b></div>';
+  if (j.linked && ps !== 'ok' && j.autoProvision) h += '<button class="btn btn-p btn-sm" style="margin-top:6px" onclick="if(confirm(\'¿Configurar la ONU automáticamente? Descripción, WAN PPPoE, TR-069, WiFi y write file.\'))eqPost({provision:1})"><i class="bi bi-magic"></i> Configurar automáticamente</button>';
+  if (c.reg_provision_log) h += '<details style="margin-top:6px"><summary style="font-size:12px;cursor:pointer">Ver el detalle de cada paso</summary><pre style="font-size:10.5px;white-space:pre-wrap;max-height:220px;overflow:auto;background:rgba(0,0,0,.2);padding:8px;border-radius:8px">' + _esc(String(c.reg_provision_log).replace(/pwd \S+/g, 'pwd ***').replace(/password \S+/g, 'password ***')) + '</pre></details>';
+  if (!j.autoProvision) h += '<div class="hint" style="margin-top:6px">Configurá la WAN a mano en la OLT con <b>' + _esc(c.pppoe_username || '') + '</b> (descripción, usuario y clave).</div>';
   h += '</div></div>';
   b.innerHTML = h;
 }

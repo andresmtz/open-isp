@@ -627,6 +627,14 @@
             <div style="font-size:10px; color:var(--muted); margin-top:4px">Se muestra en el botón <b>Pagar ahora</b> del portal de clientes, en la <b>pantalla de corte</b> y en los mensajes de WhatsApp que usan <code>{{pago}}</code>. El cliente envía el comprobante por WhatsApp y el pago se registra en <b>Clientes → Cobrar</b>.</div>
           </div>
 
+          <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+            <h6 style="font-size:12px; margin-bottom: 6px;"><i class="bi bi-magic"></i> Instalaciones: configuración automática de la ONU</h6>
+            <select class="fs" name="onu_auto_provision_enabled" style="max-width:320px">
+              <option value="true" <%= String(settings.onu_auto_provision_enabled) === 'true' ? 'selected' : '' %>>Activada</option>
+              <option value="false" <%= String(settings.onu_auto_provision_enabled) !== 'true' ? 'selected' : '' %>>Desactivada (se configura a mano)</option>
+            </select>
+            <div style="font-size:10px; color:var(--muted); margin-top:4px">Con la foto de la etiqueta que sube el técnico se identifica la ONU nueva en la OLT y se le cargan descripción, WAN PPPoE (modo TR-069), TR-069 y el WiFi elegido; siempre termina con <b>write file</b>. Si algo falla, avisa por WhatsApp a la oficina y al técnico.</div>
+          </div>
           <% const _ct = (typeof cutTexts !== 'undefined' && cutTexts) || {}; %>
           <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
             <h6 style="font-size:12px; margin-bottom: 4px;"><i class="bi bi-slash-circle"></i> Pantalla de corte (lo que ve un cliente cortado al navegar)</h6>

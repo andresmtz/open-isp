@@ -398,6 +398,10 @@ function startCronJobs() {
   // Promesas de pago: cada minuto. Corta en el minuto exacto en que vence la promesa (hora local) y
   // cierra como cumplidas las de clientes que ya no deben nada.
   let _promiseBusy = false;
+  cron.schedule('*/2 * * * *', async () => {
+    // ONU de instalaciones con etiqueta leída que todavía no aparecían en la OLT (services/onuAutoProvisionService.js)
+    try { await require('./onuAutoProvisionService').retryPending(); } catch (e) { logger.warn('[Provisión] reintento: ' + e.message); }
+  });
   cron.schedule('* * * * *', async () => {
     if (_promiseBusy) return;
     if (inMigrationMode('vencimiento de promesas de pago', true)) return;

@@ -87,27 +87,42 @@ function formatMoney(value) {
 
 /**
  * Normaliza un teléfono al formato internacional sin '+' (para WhatsApp/gateways).
- *   "0981 123 456" -> "595981123456"
- *   "+595981123456" -> "595981123456"
- *   "981123456"     -> "595981123456"
+ *   "0981 123 456"      -> "595981123456"
+ *   "+595981123456"     -> "595981123456"
+ *   "981123456"         -> "595981123456"
+ *   "+55 11 91234 5678" -> "5511912345678"   (número de otro país: se escribe con + o 00)
+ *   "5511912345678"     -> "5511912345678"   (ya internacional: más largo que un número local)
  * Devuelve '' si no hay dígitos.
  */
 function normalizePhone(input) {
-  let d = String(input || '').replace(/\D/g, '');
+  const raw = String(input || '').trim();
+  let d = raw.replace(/\D/g, '');
   if (!d) return '';
   const cc = phoneCountryCode();
   const trunk = phoneTrunkPrefix();
+  const explicitIntl = /^(\+|00)/.test(raw);
   if (d.startsWith('00')) d = d.slice(2);
   if (cc && d.startsWith(cc)) return d;
+  if (explicitIntl) return d;
+  const maxLocal = int('phone_max_digits') + trunk.length;
+  if (d.length > maxLocal && d.length >= 11 && d.length <= 15) return d; // ya viene con código de otro país
   if (trunk && d.startsWith(trunk)) d = d.slice(trunk.length);
   return cc + d;
 }
 
-/** Formato nacional para mostrar/guardar: "595981123456" -> "0981123456" */
+/** ¿El número (ya normalizado) es de otro país? */
+function isForeignPhone(input) {
+  const full = normalizePhone(input);
+  const cc = phoneCountryCode();
+  return !!(full && cc && !full.startsWith(cc));
+}
+
+/** Formato para mostrar/guardar: "595981123456" -> "0981123456"; otro país -> "+5511912345678" */
 function toLocalPhone(input) {
   const full = normalizePhone(input);
   if (!full) return '';
   const cc = phoneCountryCode();
+  if (cc && !full.startsWith(cc)) return '+' + full;
   const national = cc && full.startsWith(cc) ? full.slice(cc.length) : full;
   return phoneTrunkPrefix() + national;
 }
@@ -132,12 +147,25 @@ function phoneVariants(input) {
   return Array.from(new Set([full, local, national, '+' + full]));
 }
 
-/** Valida longitud del número nacional (sin prefijo troncal ni código de país). */
+/**
+ * Valida el número. Local: longitud nacional (sin prefijo troncal ni código de país).
+ * De otro país: debe escribirse con + (o 00) y el código del país; 8 a 15 dígitos en total (norma E.164).
+ */
 function isValidPhone(input) {
-  const full = normalizePhone(input);
+  const raw = String(input || '').trim();
+  const full = normalizePhone(raw);
   const cc = phoneCountryCode();
+  if (cc && full && !full.startsWith(cc)) {
+    const written = /^(\+|00)/.test(raw) || raw.replace(/\D/g, '').length >= 11;
+    return written && /^[1-9]\d{7,14}$/.test(full);
+  }
   const national = cc && full.startsWith(cc) ? full.slice(cc.length) : full;
   return national.length >= int('phone_min_digits') && national.length <= int('phone_max_digits');
+}
+
+/** Mensaje de ayuda para un número inválido. */
+function phoneHelp() {
+  return `Número de WhatsApp inválido. Local: ${phoneExample()}. De otro país: con + y el código del país, ej. +55 11 91234 5678 (Brasil) o +54 9 11 1234 5678 (Argentina).`;
 }
 
 /** Ejemplo de número local para placeholders/mensajes de error. */
@@ -181,6 +209,8 @@ module.exports = {
   toLocalPhone,
   phoneVariants,
   isValidPhone,
+  isForeignPhone,
+  phoneHelp,
   phoneExample,
   applyPlaceholders,
   clientConfig

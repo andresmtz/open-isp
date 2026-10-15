@@ -168,7 +168,7 @@ async function createRequest(data, { source = 'Portal web', actor = '' } = {}) {
   const address = String(data.address || '').trim();
   const pkg = data.package_id ? customerSvc.getPackageById(data.package_id) : null;
   if (!name || !phone || !address || !pkg) throw new Error('Nombre, WhatsApp, dirección y plan son obligatorios.');
-  if (!regional.isValidPhone(phone)) throw new Error(`Número de WhatsApp inválido. Ejemplo: ${regional.phoneExample()}`);
+  if (!regional.isValidPhone(phone)) throw new Error(regional.phoneHelp());
   phone = regional.toLocalPhone(phone);
   let { lat, lng } = data;
   if ((!lat || !lng) && data.location) ({ lat, lng } = parseLocation(data.location));

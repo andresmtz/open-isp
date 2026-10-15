@@ -2103,7 +2103,7 @@ router.post('/customers/:id/update', requireAdminSession, express.urlencoded({ e
       const name = String(b.name || '').trim(), address = String(b.address || '').trim();
       let phone = String(b.phone || '').trim();
       if (!name || !phone || !address) throw new Error('Nombre, teléfono y dirección son obligatorios.');
-      if (!regional.isValidPhone(phone)) throw new Error('Número de WhatsApp inválido.');
+      if (!regional.isValidPhone(phone)) throw new Error(regional.phoneHelp());
       phone = regional.toLocalPhone(phone);
       const pkgId = b.package_id ? Number(b.package_id) : _cur.package_id;
       db.prepare('UPDATE customers SET name=?, phone=?, email=?, nik=?, address=?, area=?, package_id=?, lat=?, lng=?, notes=? WHERE id=?')

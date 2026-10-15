@@ -2077,7 +2077,7 @@ app.use('/admin', (req, res, next) => {
         body.indexOf('/css/admin-theme.css') === -1 &&
         body.indexOf('no-admin-theme') === -1
       ) {
-        body = body.replace('</head>', '  <link rel="stylesheet" href="/css/admin-theme.css?v=8">\n  <script src="/js/admin-theme-sync.js?v=7"></script>\n  <script src="/js/admin-sw-cleanup.js" defer></script>\n  <script src="/js/admin-toast.js?v=3"></script>\n  <script src="/js/admin-search.js?v=1"></script>\n</head>');
+        body = body.replace('</head>', '  <link rel="stylesheet" href="/css/admin-theme.css?v=8">\n  <script src="/js/admin-theme-sync.js?v=7"></script>\n  <script src="/js/admin-sw-cleanup.js" defer></script>\n  <script src="/js/admin-toast.js?v=4"></script>\n  <script src="/js/admin-search.js?v=1"></script>\n</head>');
       }
     } catch (e) {}
     return originalSend(body);

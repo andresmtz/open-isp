@@ -167,6 +167,48 @@
     } catch (e) { try { _nativeAlert(msg); } catch (_) { } }
   };
 
+  // Formularios dentro de una ventana (modal): se envían sin recargar la página. Si el servidor responde con un
+  // error, la ventana queda abierta con todo lo cargado para corregir y volver a guardar. Si sale bien, se sigue
+  // a la página de destino como siempre (el mensaje de éxito se muestra allí).
+  function keepOpenSubmit(f, submitter) {
+    window.notifyLoading(f.getAttribute('data-loading') || 'Guardando cambios…', 'Espere por favor');
+    var fd = new FormData(f);
+    if (submitter && submitter.name) fd.append(submitter.name, submitter.value || '');
+    var multipart = String(f.getAttribute('enctype') || '').toLowerCase().indexOf('multipart') !== -1;
+    var keep = '<br><small>Los datos siguen cargados en la ventana: corregí y volvé a guardar.</small>';
+    fetch(f.action, { method: 'POST', body: multipart ? fd : new URLSearchParams(fd), credentials: 'same-origin', redirect: 'follow' })
+      .then(function (res) {
+        var ct = res.headers.get('content-type') || '';
+        if (ct.indexOf('application/json') !== -1) {
+          return res.json().then(function (j) {
+            if (j && (j.ok === false || j.success === false)) { window.notify('error', 'No se guardó', (j.message || 'Error') + keep); return; }
+            try { sessionStorage.setItem('__pendingFlash', JSON.stringify({ type: 'success', html: (j && j.message) || 'Guardado' })); } catch (_) { }
+            location.reload();
+          });
+        }
+        if (ct.indexOf('text/html') === -1 && res.ok) {
+          // archivo (exportación, PDF…): se descarga como lo haría el navegador
+          return res.blob().then(function (b) {
+            var cd = res.headers.get('content-disposition') || '', m = /filename\*?=(?:UTF-8'')?"?([^";]+)/i.exec(cd);
+            var u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = m ? decodeURIComponent(m[1]) : 'archivo';
+            document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 5000);
+            window.closeNotify();
+          });
+        }
+        return res.text().then(function (html) {
+          var doc = new DOMParser().parseFromString(html, 'text/html');
+          var fl = doc.querySelector('.alert[data-flash]');
+          var tp = fl ? flashType(fl.className || '') : '';
+          var msg = fl ? fl.innerHTML.replace(/^\s*<i[^>]*>\s*<\/i>\s*/i, '').trim() : '';
+          if (!res.ok && !fl) { window.notify('error', 'No se guardó', 'El servidor respondió ' + res.status + '.' + keep); return; }
+          if (tp === 'error') { window.notify('error', 'No se guardó', msg + keep); return; }
+          if (fl) { try { sessionStorage.setItem('__pendingFlash', JSON.stringify({ type: tp, html: msg })); } catch (_) { } }
+          location.href = res.url;
+        });
+      })
+      .catch(function (err) { window.notify('error', 'Sin conexión', 'No se pudo enviar (' + err.message + ').' + keep); });
+  }
+
   // form POST → tampilkan loading blur
   document.addEventListener('submit', function (e) {
     try {
@@ -174,11 +216,28 @@
       if (!f || f.tagName !== 'FORM') return;
       if ((f.getAttribute('method') || 'get').toLowerCase() !== 'post') return;
       if (f.getAttribute('target') === '_blank') return;
-      if (f.hasAttribute('data-no-loading')) return;
       if (e.defaultPrevented) return;
+      if (f.closest && f.closest('.mo') && !f.hasAttribute('data-no-ajax') && window.fetch && window.FormData && window.DOMParser) {
+        e.preventDefault();
+        keepOpenSubmit(f, e.submitter);
+        return;
+      }
+      if (f.hasAttribute('data-no-loading')) return;
       window.notifyLoading(f.getAttribute('data-loading') || 'Guardando cambios…', 'Espere por favor');
     } catch (_) { }
   }, false);
+
+  function pendingFlash() {
+    try {
+      var p = sessionStorage.getItem('__pendingFlash'); if (!p) return;
+      sessionStorage.removeItem('__pendingFlash');
+      var o = JSON.parse(p); if (!o || !o.html) return;
+      var title = o.type === 'success' ? 'Listo' : o.type === 'error' ? 'Error' : o.type === 'warning' ? 'Atención' : 'Info';
+      window.notify(o.type || 'info', title, o.html);
+    } catch (_) { }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pendingFlash);
+  else pendingFlash();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', convertFlash);
   else convertFlash();

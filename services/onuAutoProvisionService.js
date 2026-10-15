@@ -108,10 +108,14 @@ async function provision(customerId, { actor = 'sistema', mode = 'install' } = {
     try {
       // 0. Estado actual
       step = 'lectura';
-      const [w0] = await run([`show onu ${N} pri wan_conn`]);
-      if (/unsupport|not online|offline/i.test(w0) && !/WAN Index/i.test(w0)) return { ok: false, step, message: 'La ONU no responde (¿apagada o sin fibra?).' };
+      // Algunas ONU (recién salidas de fábrica) responden "VarNoResource" a wan_conn: se lee también wan_adv show
+      const [w0, a0] = await run([`show onu ${N} pri wan_conn`, `onu ${N} pri wan_adv show`]);
+      if (/unsupport|not online|offline/i.test(w0) && !/WAN Index/i.test(w0) && !/wan_adv/i.test(a0)) return { ok: false, step, message: 'La ONU no responde (¿apagada o sin fibra?).' };
       const before = wanBlocks(w0);
-      const already = before.length === 1 && before[0].user === U && /pppoe/i.test(before[0].conn);
+      const advIdx = [...new Set([...String(a0).matchAll(new RegExp(`onu ${N} pri wan_adv index (\\d+) route`, 'g'))].map(m => Number(m[1])))];
+      for (const k of advIdx) if (!before.some(b => Number(b.idx) === k)) before.push({ idx: k });
+      const already = (before.length === 1 && before[0].user === U && /pppoe/i.test(before[0].conn || '')) ||
+        (advIdx.length === 1 && advIdx[0] === 1 && new RegExp(`index 1 route ipv4 pppoe .*user ${U} `).test(a0));
 
       // 1. Descripción en la OLT
       step = 'descripción';
@@ -136,8 +140,16 @@ async function provision(customerId, { actor = 'sistema', mode = 'install' } = {
       }
       step = 'conexión PPPoE';
       let up = false;
+      // Conectada = sesión activa en el MikroTik con ese usuario (lo que cuenta) o la ONU informa "connected"
+      const mkUp = async () => {
+        try {
+          const { api } = await require('./mikrotikService').getConnection(c.router_id || null);
+          try { return (await api.send(['/ppp/active/print', `?name=${U}`])).length > 0; } finally { try { api.close(); } catch (_) {} }
+        } catch (_) { return false; }
+      };
       for (let i = 0; i < 24 && !up; i++) {
         await wait(5000);
+        if (await mkUp()) { up = true; note('MikroTik: sesión PPPoE activa'); break; }
         const b = wanBlocks((await run([`show onu ${N} pri wan_conn`]))[0]);
         up = b.length === 1 && b[0].user === U && b[0].status === 'connected';
       }

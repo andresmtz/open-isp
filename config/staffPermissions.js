@@ -61,7 +61,8 @@ const CATALOG = [
   { key: 'clientes_alta', label: 'Agregar y editar clientes', help: 'Alta de clientes nuevos (crea el usuario PPPoE en el MikroTik), edición de datos y aprobación de solicitudes.', def: true, needs: ['ver_clientes'], rules: [
     ['POST', '^/customers$'],
     ['POST', `^/customers/${ID}/(update|generate-pppoe)$`],
-    ['POST', `^/registrations/${ID}/(approve|reject|installed|cancel-install)$`],
+    ['POST', `^/registrations/${ID}/(approve|reject|installed|cancel-install|reassign|reactivate)$`],
+    ['GET', '^/registrations/installers$'],
     ['POST', '^/registrations$'],
     ['POST', `^/customers/${ID}/documents(/${ID}/delete)?$`],
     ['GET|POST', `^/customers/${ID}/equipment$`],

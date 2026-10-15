@@ -72,6 +72,10 @@ async function provision(customerId, { actor = 'sistema' } = {}) {
     return r;
   };
   if (!c) return { ok: false, step: 'cliente', message: 'Cliente no encontrado' };
+  // El usuario PPPoE y la IP se crean recién ahora, al configurar la ONU (no al aprobar)
+  try { await require('./installationService').ensureNetworkAccount(id); }
+  catch (e) { await notifyAll(c, `⚠️ *No se pudo crear la cuenta PPPoE* de ${c.name}: ${e.message}`); return finish({ ok: false, step: 'cuenta PPPoE', message: e.message }); }
+  Object.assign(c, db.prepare('SELECT pppoe_username, pppoe_password, pppoe_remote_address, router_id FROM customers WHERE id=?').get(id));
   const inv = onuMgr().forCustomer(id);
   if (!inv) return finish({ ok: false, step: 'vínculo', message: 'La ONU no está vinculada al cliente.' });
   const U = String(c.pppoe_username || ''), P = String(c.pppoe_password || '');

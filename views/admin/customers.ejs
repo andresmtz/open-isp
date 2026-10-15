@@ -261,10 +261,15 @@
                   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
                     <button type="button" class="btn btn-sm btn-p" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="markInstalled(+this.dataset.id, this.dataset.name)"><i class="bi bi-check2-circle"></i> Instalación realizada</button>
                     <button type="button" class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="openEquip(+this.dataset.id, this.dataset.name)"><i class="bi bi-router"></i> Equipo<%= c.reg_wifi_status === 'aplicado' ? ' ✓' : '' %></button>
+                    <button type="button" class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="openReassign(+this.dataset.id, this.dataset.name)"><i class="bi bi-arrow-left-right"></i> Reasignar</button>
                     <button type="button" class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="cancelInstall(+this.dataset.id, this.dataset.name)"><i class="bi bi-x-circle"></i> Cancelar instalación</button>
                   </div>
                   <% } %>
-                <% } else if (c.status === 'inactive' && c.reg_status !== 'rejected' && _can('clientes_alta')) { %>
+                <% } else if (c.status === 'inactive' && c.reg_status === 'rejected') { %>
+                  <div style="font-size:11px;margin-top:4px;color:var(--danger);font-weight:700"><i class="bi bi-x-octagon"></i> Solicitud rechazada<%= c.reg_cancel_reason ? ': ' + c.reg_cancel_reason : '' %></div>
+                  <% if (_can('clientes_alta')) { %><form method="POST" action="/admin/registrations/<%= c.id %>/reactivate" style="margin-top:6px" onsubmit="return confirm('¿Retomar esta solicitud? Vuelve a pendiente para asignar la instalación.')"><button class="btn btn-sm btn-g" style="padding:4px 10px;font-size:12px"><i class="bi bi-arrow-counterclockwise"></i> Retomar</button></form><% } %>
+                <% } else if (c.status === 'inactive' && _can('clientes_alta')) { %>
+                  <% if (c.reg_cancel_reason) { %><div style="font-size:11px;margin-top:4px;color:#f59e0b;font-weight:700"><i class="bi bi-pause-circle"></i> <%= c.reg_cancel_reason %></div><% } %>
                   <button type="button" class="btn btn-sm btn-p" style="margin-top:6px;padding:4px 10px;font-size:12px;white-space:nowrap" data-id="<%= c.id %>" onclick="openRegCalc(+this.dataset.id)"><i class="bi bi-tools"></i> Aprobar e instalar</button>
                 <% } %>
                 <% if (_can('cobrar') && c.status !== 'cancelled' && c.status !== 'inactive') { %>
@@ -385,11 +390,12 @@
                   <div class="act-menu">
                     <% if (c.status === 'inactive' && c.reg_status === 'approved' && _can('clientes_alta')) { %>
                       <button type="button" class="act-item success" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="markInstalled(+this.dataset.id, this.dataset.name)"><i class="bi bi-check2-circle"></i> Instalación realizada</button>
+                      <button type="button" class="act-item" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="openReassign(+this.dataset.id, this.dataset.name)"><i class="bi bi-arrow-left-right"></i> Reasignar instalador</button>
                       <button type="button" class="act-item danger" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="cancelInstall(+this.dataset.id, this.dataset.name)"><i class="bi bi-x-circle"></i> Cancelar instalación</button>
                       <div class="act-sep"></div>
                     <% } else if (c.status === 'inactive' && _can('clientes_alta')) { %>
                       <button type="button" class="act-item success" data-id="<%= c.id %>" onclick="openRegCalc(+this.dataset.id)"><i class="bi bi-tools"></i> Aprobar e instalar</button>
-                      <button type="submit" form="rej-<%= c.id %>" class="act-item danger"><i class="bi bi-x-lg"></i> <%= t('admin.cust.reject_reg','Tolak Pendaftar') %></button>
+                      <% if (c.reg_status !== 'rejected') { %><button type="button" class="act-item danger" data-id="<%= c.id %>" data-name="<%= c.name %>" onclick="cancelInstall(+this.dataset.id, this.dataset.name)"><i class="bi bi-x-lg"></i> Rechazar o poner en espera</button><% } %>
                       <div class="act-sep"></div>
                     <% } %>
                     <% if (c.status !== 'inactive') { %>
@@ -1269,6 +1275,38 @@
   </div>
 </div>
 
+<div class="mo" id="cancelInstModal">
+  <div class="mb" style="max-width:520px">
+    <div class="mh"><span class="mt"><i class="bi bi-x-circle"></i> <span id="ci_title">Cancelar instalación</span></span><button class="mc" onclick="closeModal('cancelInstModal')">&times;</button></div>
+    <form method="POST" id="ci_form">
+      <div class="mbody">
+        <div class="fg"><label class="fl">Motivo</label><select class="fs" name="motive" id="ci_motive" required></select></div>
+        <div class="fg"><label class="fl">Detalle (opcional)</label><input class="fc" name="reason" maxlength="200" placeholder="Ej.: la caja más cercana está llena"></div>
+        <div class="fg">
+          <label class="fl">¿Qué hacemos con la solicitud?</label>
+          <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:13px"><input type="radio" name="outcome" value="postpone" checked> <span><b>Dejar en espera</b> para reprogramar (por ejemplo, cuando haya caja o puerto). Conserva el nombre de cuenta reservado.</span></label>
+          <label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:13px"><input type="radio" name="outcome" value="reject"> <span><b>Rechazar la solicitud</b> (desistió, no quiere). Se borra el usuario PPPoE del MikroTik y se libera la IP. Se puede retomar después.</span></label>
+        </div>
+        <div class="hint">No se genera ninguna factura. Si tenía instalador asignado, se le avisa por WhatsApp para que no vaya.</div>
+      </div>
+      <div class="mf"><button type="button" class="btn btn-g" onclick="closeModal('cancelInstModal')">Volver</button><button type="submit" class="btn btn-d"><i class="bi bi-check-lg"></i> Confirmar</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="mo" id="reassignModal">
+  <div class="mb" style="max-width:480px">
+    <div class="mh"><span class="mt"><i class="bi bi-arrow-left-right"></i> <span id="ra_title">Reasignar instalador</span></span><button class="mc" onclick="closeModal('reassignModal')">&times;</button></div>
+    <form method="POST" id="ra_form">
+      <div class="mbody">
+        <div class="fg"><label class="fl">Nuevo instalador</label><select class="fs" name="installer" id="ra_installer" required></select></div>
+        <div class="hint">El nuevo recibe por WhatsApp todos los datos (regla, monto, PPPoE, ubicación y foto de la casa) y ve la orden en su portal. El anterior recibe un aviso y deja de ver la orden.</div>
+      </div>
+      <div class="mf"><button type="button" class="btn btn-g" onclick="closeModal('reassignModal')">Volver</button><button type="submit" class="btn btn-p"><i class="bi bi-check-lg"></i> Reasignar</button></div>
+    </form>
+  </div>
+</div>
+
 <div class="mo" id="equipModal">
   <div class="mb" style="max-width:700px">
     <div class="mh"><span class="mt"><i class="bi bi-router"></i> <span id="eq_title">Equipo del cliente</span></span><button class="mc" onclick="closeModal('equipModal')">&times;</button></div>
@@ -1853,7 +1891,8 @@ async function eqLoad(){
   h += '<div style="font-size:12px;margin-top:4px">Configuración automática: <b style="color:' + (ps === 'ok' ? 'var(--success)' : (ps.indexOf('error') === 0 ? 'var(--danger)' : 'inherit')) + '">' + (ps === 'ok' ? 'completa' : (ps ? _esc(ps) : (j.autoProvision ? 'pendiente' : 'desactivada (configurar a mano)'))) + '</b></div>';
   if (j.linked && ps !== 'ok' && j.autoProvision) h += '<button class="btn btn-p btn-sm" style="margin-top:6px" onclick="if(confirm(\'¿Configurar la ONU automáticamente? Descripción, WAN PPPoE, TR-069, WiFi y write file.\'))eqPost({provision:1})"><i class="bi bi-magic"></i> Configurar automáticamente</button>';
   if (c.reg_provision_log) h += '<details style="margin-top:6px"><summary style="font-size:12px;cursor:pointer">Ver el detalle de cada paso</summary><pre style="font-size:10.5px;white-space:pre-wrap;max-height:220px;overflow:auto;background:rgba(0,0,0,.2);padding:8px;border-radius:8px">' + _esc(String(c.reg_provision_log).replace(/pwd \S+/g, 'pwd ***').replace(/password \S+/g, 'password ***')) + '</pre></details>';
-  if (!j.autoProvision) h += '<div class="hint" style="margin-top:6px">Configurá la WAN a mano en la OLT con <b>' + _esc(c.pppoe_username || '') + '</b> (descripción, usuario y clave).</div>';
+  h += '<div style="font-size:12px;margin-top:6px">Cuenta PPPoE: <b>' + (c.pppoe_username ? _esc(c.pppoe_username) + ' · creada' : 'todavía no creada (se crea al configurar la ONU)') + '</b></div>';
+  if (!c.pppoe_username) h += '<button class="btn btn-g btn-sm" style="margin-top:6px" onclick="if(confirm(\'¿Crear ahora el usuario PPPoE y su IP en el MikroTik para configurar la ONU a mano?\'))eqPost({create_account:1})"><i class="bi bi-person-plus"></i> Crear usuario PPPoE e IP (configuración a mano)</button>';
   h += '</div></div>';
   b.innerHTML = h;
 }
@@ -1921,10 +1960,24 @@ function markInstalled(id, name){
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d.trim())) { alert('Fecha inválida. Usá el formato AAAA-MM-DD, por ejemplo ' + iso + '.'); return; }
   _postForm('/admin/registrations/' + id + '/installed', { date: d.trim() });
 }
-function cancelInstall(id, name){
-  var r = prompt('¿Cancelar la instalación de ' + name + '?\nVuelve a pendiente, sin facturas, y se puede asignar de nuevo.\n\nMotivo (opcional):', '');
-  if (r === null) return;
-  _postForm('/admin/registrations/' + id + '/cancel-install', { reason: r });
+var _instMeta = null;
+async function _loadInstMeta(){ if (!_instMeta) _instMeta = await (await fetch('/admin/registrations/installers', { headers: { Accept: 'application/json' } })).json(); return _instMeta; }
+async function cancelInstall(id, name){
+  var m = await _loadInstMeta();
+  document.getElementById('ci_title').textContent = 'Cancelar / poner en espera — ' + name;
+  document.getElementById('ci_form').action = '/admin/registrations/' + id + '/cancel-install';
+  document.getElementById('ci_motive').innerHTML = Object.keys(m.reasons).map(function(k){ return '<option value="' + k + '">' + m.reasons[k] + '</option>'; }).join('');
+  openModal('cancelInstModal');
+}
+async function openReassign(id, name){
+  var m = await _loadInstMeta();
+  document.getElementById('ra_title').textContent = 'Reasignar instalador — ' + name;
+  document.getElementById('ra_form').action = '/admin/registrations/' + id + '/reassign';
+  var sel = document.getElementById('ra_installer'), groups = {};
+  sel.innerHTML = '<option value="">-- Elegí --</option>';
+  m.installers.forEach(function(i){ var g = i.group || '', parent = sel; if (g) { if (!groups[g]) { groups[g] = document.createElement('optgroup'); groups[g].label = g; sel.appendChild(groups[g]); } parent = groups[g]; } var o = document.createElement('option'); o.value = i.key; o.textContent = i.name; parent.appendChild(o); });
+  openModal('reassignModal');
+});
 }
 var _hist = [], _histF = 'all';
 var HIST_KINDS = { all: 'Todo', pago: 'Pagos', factura: 'Facturas', estado: 'Cortes y estado', promesa: 'Promesas', reclamo: 'Reclamos', wifi: 'WiFi y equipo', whatsapp: 'WhatsApp' };

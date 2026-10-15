@@ -39,6 +39,11 @@ function isTaken(name, { exceptCustomerId = null, mikrotikNames = null } = {}) {
   const n = String(name || '').toLowerCase();
   const r = db.prepare('SELECT id FROM customers WHERE LOWER(pppoe_username)=? AND id IS NOT ?').get(n, exceptCustomerId);
   if (r) return true;
+  // nombres reservados por otras instalaciones asignadas (todavía sin usuario PPPoE)
+  try {
+    const q = db.prepare("SELECT id FROM customers WHERE LOWER(reg_account)=? AND id IS NOT ? AND status='inactive' AND reg_status='approved'").get(n, exceptCustomerId);
+    if (q) return true;
+  } catch (_) { /* columna todavía no creada */ }
   if (mikrotikNames && mikrotikNames.has(n)) return true;
   return false;
 }

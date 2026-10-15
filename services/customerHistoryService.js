@@ -93,6 +93,8 @@ function timeline(customerId, { money = true, limit = 300 } = {}) {
       const icon = n === 'suspended' ? 'slash-circle' : (n === 'active' ? 'check-circle' : 'arrow-left-right');
       const title = n === 'suspended' ? 'Servicio cortado' : (n === 'active' && ['suspended', 'ditangguhkan'].includes(String(e.old_value)) ? 'Servicio rehabilitado' : `Estado: ${st(e.old_value)} → ${st(n)}`);
       push({ at: String(e.created_at), kind: 'estado', icon, title });
+    } else if (e.type === 'install') {
+      push({ at: String(e.created_at), kind: 'reclamo', icon: 'tools', title: String(e.new_value || 'Instalación') });
     } else if (e.type === 'plan') {
       push({ at: String(e.created_at), kind: 'plan', icon: 'box-seam', title: `Cambio de plan: ${pkgName(e.old_value)} → ${pkgName(e.new_value)}` });
     }

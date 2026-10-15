@@ -50,6 +50,8 @@ function ensureSchema() {
   add('customers', 'reg_wifi_key', 'TEXT');
   add('customers', 'reg_wifi_status', 'TEXT');   // pendiente | aplicado | error: …
   add('customers', 'reg_onu_mac', 'TEXT');
+  add('customers', 'reg_cancel_reason', 'TEXT');
+  add('customers', 'reg_account', 'TEXT');
   _schemaOk = true;
 }
 
@@ -201,39 +203,20 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
   let amount = parseInt(total, 10);
   if (!Number.isFinite(amount) || amount < 0) amount = plan.total;
 
-  // Usuario PPPoE (se genera si falta) y alta en el MikroTik
+  // Solo se RESERVA el nombre de cuenta (usuario PPPoE = descripción de la ONU = WiFi). El usuario PPPoE y la IP
+  // se crean recién al configurar la ONU (ensureNetworkAccount): una instalación que no se hace no consume nada.
   let pppoeUser = cust.pppoe_username || '';
   let pppoePass = cust.pppoe_password || '';
-  if (!pppoeUser && getSetting('pppoe_auto_generate', '1') !== '0') {
-    // Nombre de cuenta (convención: usuario PPPoE = descripción de la ONU = WiFi; config/accountNames.js)
+  const remoteIp = cust.pppoe_remote_address || '';
+  const mkWarn = '';
+  if (!pppoeUser) {
     const names = require('../config/accountNames');
     let acc = String(account || '').trim();
     if (!acc) acc = (await names.suggest(cust)).name;
     if (!names.VALID.test(acc)) throw new Error('Nombre de cuenta inválido: solo letras, números, punto, guion y guion bajo (3 a 40), sin espacios.');
     if (names.isTaken(acc, { exceptCustomerId: id, mikrotikNames: await names.mikrotikSecretNames(cust.router_id) })) throw new Error(`El nombre de cuenta "${acc}" ya lo usa otro cliente o existe en el MikroTik.`);
-    pppoeUser = acc; pppoePass = names.passwordFor(acc);
-    db.prepare("UPDATE customers SET pppoe_username=?, pppoe_password=?, connection_type=CASE WHEN connection_type IS NULL OR connection_type='' THEN 'pppoe' ELSE connection_type END WHERE id=?").run(pppoeUser, pppoePass, id);
-  }
-  let mkWarn = '';
-  // IP fija del cliente (como en WispHub): la próxima libre del rango configurado (config/pppoeIp.js)
-  let remoteIp = cust.pppoe_remote_address || '';
-  let localIp = '';
-  try {
-    const ipCfg = require('../config/pppoeIp');
-    if (!remoteIp) { const a = await ipCfg.allocate(cust.router_id || null); remoteIp = a.remote; localIp = a.local; }
-    else localIp = ipCfg.config().local;
-    db.prepare('UPDATE customers SET pppoe_remote_address=?, router_id=COALESCE(router_id, ?) WHERE id=?').run(remoteIp, Number(getSetting('default_router_id', 1)) || 1, id);
-  } catch (e) { mkWarn = 'IP: ' + e.message; }
-  try {
-    const radius = getSetting('radius_enabled', '0') === '1' && Number(cust.is_radius) === 1;
-    if (pppoeUser && !radius) {
-      await mikrotikService.createPppoeSecret({ username: pppoeUser, password: pppoePass, profile: pkg.name, remoteAddress: remoteIp, localAddress: localIp, routerId: cust.router_id || null });
-    }
-  } catch (e) {
-    // Reasignación tras cancelar: el usuario ya existe en el MikroTik → se deja con el perfil del plan
-    if (/already|ya existe|same name/i.test(String(e && e.message))) {
-      try { await mikrotikService.setPppoeProfile(pppoeUser, pkg.name, cust.router_id || null); } catch (_) {}
-    } else { mkWarn = (mkWarn ? mkWarn + '; ' : '') + e.message; logger.error('[Instalación] PPPoE en MikroTik: ' + e.message); }
+    db.prepare('UPDATE customers SET reg_account=? WHERE id=?').run(acc, id);
+    pppoeUser = acc; pppoePass = names.passwordFor(acc);  // solo para los mensajes; todavía no existe en el MikroTik
   }
 
   // Sigue como Inscripto con la instalación ASIGNADA: sin factura ni cobro hasta que se confirme la instalación
@@ -248,7 +231,7 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     `Instalación de ${pkg.name} para ${cust.name}.\n` +
     `Teléfono: ${cust.phone || '-'}\nDirección: ${cust.address || '-'}` + (loc ? `\nUbicación: ${loc}` : '') +
     `\nFecha prevista: ${fmtDate(plan.installDate)}` +
-    (pppoeUser ? `\nPPPoE: ${pppoeUser} / ${pppoePass || '-'}` + (remoteIp ? ` · IP ${remoteIp}` : '') : '') +
+    (pppoeUser ? `\nCuenta: ${pppoeUser} (el usuario PPPoE y la IP se crean al configurar la ONU)` : '') +
     (String(notes || '').trim() ? `\nNotas: ${String(notes).trim()}` : '') +
     `\n\nCobrar al cliente al instalar: ${fmtMoney(plan.installPayment)} (primer mes del plan ${pkg.name}).` +
     `\nExplicale al cliente: su primera factura vence el ${fmtDate(plan.dueDate)} y es de ${fmtMoney(amount)}` + (amount < plan.monthly ? ' (compensa los días del mes de instalación)' : '') +
@@ -267,7 +250,6 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     (amount < plan.monthly ? ` (compensa los días del mes de instalación)` : '') +
     `. Después paga ${fmtMoney(plan.monthly)} por mes, con vencimiento el día ${Number(plan.dueDate.slice(8, 10))} de cada mes.` +
     `\n_(Si instalás otro día, el monto de esa primera factura se ajusta solo a la fecha real.)_` +
-    (pppoeUser ? `\n\n📡 *PPPoE usuario:* ${pppoeUser}\n🔒 *PPPoE clave:* ${pppoePass || '-'}` + (remoteIp ? `\n🌐 *IP asignada:* ${remoteIp}` : '') : '') +
     (String(notes || '').trim() ? `\n\n📝 ${String(notes).trim()}` : '') +
     `\n\nAl terminar, cerrá la orden de trabajo N.º ${ticketId} como resuelta.`;
   let installerNotified = false;
@@ -285,10 +267,53 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
   }
   // El administrador siempre recibe las credenciales (si no es quien instala)
   if (who.type !== 'admin' && pppoeUser) {
-    try { await waNotify().notifyAdmin(`🔑 *Alta de ${cust.name}*\nInstala: ${who.name}\nPPPoE: ${pppoeUser} / ${pppoePass || '-'} · IP ${remoteIp || '-'}\nPrimera factura: ${regional.formatMoney(amount)} (vence ${fmtDate(plan.dueDate)})`); } catch (_) {}
+    try { await waNotify().notifyAdmin(`🔑 *Instalación asignada: ${cust.name}*\nInstala: ${who.name}\nCuenta reservada: ${pppoeUser} (usuario PPPoE e IP se crean al configurar la ONU)\nPrimera factura: ${regional.formatMoney(amount)} (vence ${fmtDate(plan.dueDate)})`); } catch (_) {}
   }
   logger.info(`[Instalación] ${cust.name}: instalación asignada por ${actor} a ${who.name}; orden #${ticketId}; primera factura estimada ${amount}`);
   return { customer: cust, installer: who, plan, amount, ticketId, pppoeUser, remoteIp, installerNotified, mkWarn };
+}
+
+/**
+ * Crea (si falta) el usuario PPPoE del cliente con su IP fija y lo da de alta en el MikroTik.
+ * Se llama al configurar la ONU (automática o a mano) y al confirmar la instalación; es idempotente.
+ */
+async function ensureNetworkAccount(customerId) {
+  ensureSchema();
+  const customerSvc = require('./customerService');
+  const id = Number(customerId);
+  const cust = customerSvc.getCustomerById(id);
+  if (!cust) throw new Error('Cliente no encontrado');
+  const pkg = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
+  if (!pkg) throw new Error('El cliente no tiene plan');
+  const names = require('../config/accountNames');
+  let user = cust.pppoe_username || '', pass = cust.pppoe_password || '';
+  let created = false;
+  if (!user) {
+    let acc = String(cust.reg_account || '').trim();
+    const mkNames = await names.mikrotikSecretNames(cust.router_id);
+    if (!acc || !names.VALID.test(acc) || names.isTaken(acc, { exceptCustomerId: id, mikrotikNames: mkNames })) acc = (await names.suggest(cust)).name;
+    user = acc; pass = names.passwordFor(acc);
+    db.prepare("UPDATE customers SET pppoe_username=?, pppoe_password=?, reg_account=?, connection_type=CASE WHEN connection_type IS NULL OR connection_type='' THEN 'pppoe' ELSE connection_type END WHERE id=?").run(user, pass, user, id);
+    created = true;
+  }
+  const ipCfg = require('../config/pppoeIp');
+  let remoteIp = cust.pppoe_remote_address || '';
+  if (!remoteIp) {
+    remoteIp = (await ipCfg.allocate(cust.router_id || null)).remote;
+    db.prepare('UPDATE customers SET pppoe_remote_address=?, router_id=COALESCE(router_id, ?) WHERE id=?').run(remoteIp, Number(getSetting('default_router_id', 1)) || 1, id);
+  }
+  const radius = getSetting('radius_enabled', '0') === '1' && Number(cust.is_radius) === 1;
+  if (!radius) {
+    const mk = require('./mikrotikService');
+    try {
+      await mk.createPppoeSecret({ username: user, password: pass, profile: pkg.name, remoteAddress: remoteIp, localAddress: ipCfg.config().local, routerId: cust.router_id || null });
+    } catch (e) {
+      if (/already|ya existe|same name/i.test(String(e && e.message))) { try { await mk.setPppoeProfile(user, pkg.name, cust.router_id || null); } catch (_) {} }
+      else throw new Error('No se pudo crear el usuario PPPoE en el MikroTik: ' + e.message);
+    }
+  }
+  if (created) logger.info(`[Instalación] ${cust.name}: usuario PPPoE ${user} creado con IP ${remoteIp}`);
+  return { user, pass, ip: remoteIp, created };
 }
 
 // ── 3. Instalación realizada: el cliente pasa a activo y se genera la primera factura con la fecha real ──
@@ -301,6 +326,7 @@ async function completeInstallation(customerId, { date, actor = 'Sistema' } = {}
   if (cust.status !== 'inactive' || cust.reg_status !== 'approved') return { skipped: true, reason: 'no está con instalación asignada' };
   const pkg = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
   if (!pkg) throw new Error('El cliente no tiene plan');
+  await ensureNetworkAccount(id);   // por si se instaló sin pasar por la configuración de la ONU
   const real = /^\d{4}-\d{2}-\d{2}$/.test(String(date || '')) ? String(date) : cycle.nowStamp().slice(0, 10);
   // Vencimiento elegido al aprobar si sigue siendo válido para la fecha real; si no, el que corresponde
   let due = cust.reg_due_date;
@@ -323,16 +349,112 @@ async function completeInstallation(customerId, { date, actor = 'Sistema' } = {}
 }
 
 /** Cancela una instalación asignada: el inscripto vuelve a pendiente (sin facturas). */
-async function cancelInstallation(customerId, { reason = '', actor = 'Admin' } = {}) {
+const CANCEL_REASONS = {
+  desistio: 'El cliente desistió',
+  sin_dinero: 'El cliente no tenía el dinero',
+  sin_columna: 'Sin factibilidad: no hay columna',
+  sin_caja: 'Sin factibilidad: no hay caja NAP o puerto disponible',
+  fuera_zona: 'Fuera de la zona de cobertura',
+  otro: 'Otro motivo',
+};
+
+function logEvent(id, text) {
+  try { db.prepare("INSERT INTO customer_events (customer_id, type, old_value, new_value) VALUES (?, 'install', NULL, ?)").run(id, String(text).slice(0, 300)); } catch (_) {}
+}
+
+/** Teléfono del instalador guardado en reg_installer ("tipo:id:nombre"). */
+function installerOf(regInstaller) {
+  const [type, idStr] = String(regInstaller || '').split(':');
+  if (type === 'tech') return findInstaller(`tech:${idStr}`);
+  if (type === 'staff') return findInstaller(`staff:${idStr}`);
+  if (type === 'admin') return findInstaller('admin');
+  return null;
+}
+async function tellInstaller(who, text) {
+  if (!who) return false;
+  if (who.type === 'admin') { try { await waNotify().notifyAdmin(text); return true; } catch (_) { return false; } }
+  return sendTo(who.phone, text);
+}
+
+/** Mensaje completo para quien instala, armado con lo guardado del cliente. */
+function installerMessage(id) {
+  const customerSvc = require('./customerService');
+  const cust = customerSvc.getCustomerById(id);
+  const pkg = cust.package_id ? customerSvc.getPackageById(cust.package_id) : null;
+  const plan = firstInvoicePlan(pkg ? pkg.price : 0, cust.install_date, cust.reg_due_date);
+  const amount = cust.reg_total != null ? Number(cust.reg_total) : plan.total;
+  const loc = mapLink(cust.lat, cust.lng);
+  const t = db.prepare("SELECT id FROM tickets WHERE customer_id=? AND kind='install' AND status IN ('open','in_progress') ORDER BY id DESC LIMIT 1").get(id);
+  return `🛠️ *INSTALACIÓN ASIGNADA*\n\n🚨 *REGLA OBLIGATORIA* 🚨\n*${installerRule(plan.installPayment)}*\n\n👤 *Cliente:* ${cust.name}\n📞 *Teléfono:* ${cust.phone || '-'}\n📍 *Dirección:* ${cust.address || '-'}` +
+    (loc ? `\n🗺️ *Ubicación:* ${loc}` : '') + `\n📦 *Plan:* ${pkg ? pkg.name : '-'}\n📅 *Fecha:* ${fmtDate(cust.install_date)}` +
+    `\n\n💵 *Cobrar al instalar:* ${fmtMoney(plan.installPayment)} (primer mes del plan)` +
+    `\n🗓️ *Explicale al cliente:* su primera factura vence el ${fmtDate(plan.dueDate)} y es de *${fmtMoney(amount)}*. Después paga ${fmtMoney(plan.monthly)} por mes.` +
+    `\n\nEn tu orden${t ? ' N.º ' + t.id : ''} subí la foto de la etiqueta de la ONU y el WiFi que elija el cliente.`;
+}
+
+/** Cambia quién hace la instalación: avisa al nuevo (todo el detalle) y al anterior (ya no está a su cargo). */
+async function reassignInstallation(customerId, installerKey, { actor = 'Admin' } = {}) {
   ensureSchema();
   const id = Number(customerId);
   const c = db.prepare('SELECT * FROM customers WHERE id=?').get(id);
   if (!c || c.status !== 'inactive' || c.reg_status !== 'approved') throw new Error('No tiene una instalación asignada.');
-  db.prepare("UPDATE customers SET reg_status='pending', reg_installer=NULL, reg_total_override=NULL WHERE id=?").run(id);
-  // La orden se cierra como cancelada (sin disparar el alta)
-  db.prepare("UPDATE tickets SET status='resolved', kind='install_cancelled', technician_notes=TRIM(COALESCE(technician_notes,'') || ' Instalación cancelada' || ?), updated_at=(NOW_LOCAL()) WHERE customer_id=? AND kind='install' AND status IN ('open','in_progress')")
-    .run(reason ? ': ' + String(reason).slice(0, 200) : '', id);
-  logger.info(`[Instalación] ${c.name}: instalación cancelada por ${actor}${reason ? ' — ' + reason : ''}`);
+  const who = findInstaller(installerKey);
+  if (!who) throw new Error('Elegí a quién reasignar.');
+  const prev = installerOf(c.reg_installer);
+  if (prev && prev.key === who.key) throw new Error('Ya está asignada a ' + who.name + '.');
+  db.prepare('UPDATE customers SET reg_installer=? WHERE id=?').run(`${who.type}:${who.id}:${who.name}`, id);
+  db.prepare("UPDATE tickets SET technician_id=?, technician_notes=?, status='in_progress', updated_at=(NOW_LOCAL()) WHERE customer_id=? AND kind='install' AND status IN ('open','in_progress')")
+    .run(who.type === 'tech' ? who.id : null, who.type === 'tech' ? '' : `Instala: ${who.name}`, id);
+  const notified = await tellInstaller(who, installerMessage(id));
+  try {
+    const docs = require('./customerDocumentService');
+    const casa = docs.list(id, { kinds: ['casa'] })[0];
+    const fp = casa && docs.filePath(casa);
+    if (fp && who.type !== 'admin' && who.phone) await waNotify().sendImage(regional.normalizePhone(String(who.phone).replace(/\D/g, '')), require('fs').readFileSync(fp), `🏠 Casa de ${c.name}`);
+  } catch (_) {}
+  if (prev) await tellInstaller(prev, `ℹ️ La instalación de *${c.name}* fue reasignada a ${who.name}. Ya no está a tu cargo; no hace falta que vayas.`);
+  logEvent(id, `Instalación reasignada de ${prev ? prev.name : '-'} a ${who.name} (por ${actor})`);
+  logger.info(`[Instalación] ${c.name}: reasignada a ${who.name} por ${actor}`);
+  return { ok: true, installer: who, notified };
+}
+
+/**
+ * Cancela una instalación asignada (o una solicitud pendiente).
+ *  outcome 'postpone': queda en espera para reprogramar (conserva usuario PPPoE e IP).
+ *  outcome 'reject'  : se rechaza la solicitud; se borra el usuario PPPoE del MikroTik y se libera la IP.
+ */
+async function cancelInstallation(customerId, { reason = '', motive = 'otro', outcome = 'postpone', actor = 'Admin' } = {}) {
+  ensureSchema();
+  const id = Number(customerId);
+  const c = db.prepare('SELECT * FROM customers WHERE id=?').get(id);
+  if (!c || c.status !== 'inactive') throw new Error('Solo se puede cancelar una solicitud de instalación (inscripto).');
+  const label = (CANCEL_REASONS[motive] || CANCEL_REASONS.otro) + (String(reason || '').trim() ? ': ' + String(reason).trim().slice(0, 200) : '');
+  const prev = c.reg_status === 'approved' ? installerOf(c.reg_installer) : null;
+  db.prepare("UPDATE tickets SET status='resolved', kind='install_cancelled', technician_notes=TRIM(COALESCE(technician_notes,'') || ' Instalación cancelada: ' || ?), updated_at=(NOW_LOCAL()) WHERE customer_id=? AND kind='install' AND status IN ('open','in_progress')").run(label, id);
+  let mk = '';
+  if (outcome === 'reject') {
+    if (c.pppoe_username) {
+      try { const r = await require('./mikrotikService').removePppoeSecretByName(c.pppoe_username, c.router_id || null); mk = r.removed ? ' Usuario PPPoE borrado del MikroTik.' : ''; }
+      catch (e) { mk = ' No se pudo borrar el usuario PPPoE del MikroTik: ' + e.message; }
+    }
+    db.prepare("UPDATE customers SET reg_status='rejected', reg_cancel_reason=?, reg_installer=NULL, reg_total_override=NULL, pppoe_username=NULL, pppoe_password=NULL, pppoe_remote_address=NULL WHERE id=?").run(label, id);
+  } else {
+    db.prepare("UPDATE customers SET reg_status='pending', reg_cancel_reason=?, reg_installer=NULL, reg_total_override=NULL WHERE id=?").run('En espera — ' + label, id);
+  }
+  if (prev) await tellInstaller(prev, `❌ La instalación de *${c.name}* fue cancelada (${label}). No hace falta que vayas.`);
+  logEvent(id, `${outcome === 'reject' ? 'Solicitud rechazada' : 'Instalación en espera'}: ${label} (por ${actor})`);
+  logger.info(`[Instalación] ${c.name}: ${outcome === 'reject' ? 'rechazada' : 'en espera'} — ${label} (${actor})`);
+  return { ok: true, outcome, label, mk };
+}
+
+/** Vuelve a pendiente una solicitud rechazada (para retomarla). */
+function reactivateRequest(customerId, { actor = 'Admin' } = {}) {
+  ensureSchema();
+  const id = Number(customerId);
+  const c = db.prepare('SELECT * FROM customers WHERE id=?').get(id);
+  if (!c || c.status !== 'inactive' || c.reg_status !== 'rejected') throw new Error('La solicitud no está rechazada.');
+  db.prepare("UPDATE customers SET reg_status='pending', reg_cancel_reason=NULL WHERE id=?").run(id);
+  logEvent(id, `Solicitud retomada (por ${actor})`);
   return { ok: true };
 }
 
@@ -479,7 +601,7 @@ function onTicketStatus(ticketId, status) {
 
 module.exports = {
   installerRule, DEFAULT_INSTALLER_RULE,
-  completeInstallation, cancelInstallation, setEquipment, onuCandidates, linkOnu, tryApplyWifi,
+  ensureNetworkAccount, completeInstallation, cancelInstallation, reassignInstallation, reactivateRequest, CANCEL_REASONS, setEquipment, onuCandidates, linkOnu, tryApplyWifi,
   ensureSchema, firstInvoicePlan, defaultDueDate, installers, findInstaller, parseLocation,
   createRequest, approve, sendWelcome, renderWelcome, onTicketStatus, DEFAULT_WELCOME,
 };

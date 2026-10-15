@@ -2634,6 +2634,7 @@ router.post('/customers/:id/equipment', requireAdminSession, express.json(), asy
     const inst = require('../services/installationService');
     let out = {};
     if (b.ssid || b.key || b.mac) out = await inst.setEquipment(Number(req.params.id), { ssid: b.ssid, key: b.key, mac: b.mac }, actor);
+    if (b.create_account) { const a = await inst.ensureNetworkAccount(Number(req.params.id)); out.wifi = { message: `Usuario PPPoE ${a.user} (clave según la convención) con IP ${a.ip}${a.created ? ' creado' : ' ya existía'} en el MikroTik.` }; }
     if (b.onu_ref) out = await inst.linkOnu(Number(req.params.id), b.onu_ref, actor);
     const prov = require('../services/onuAutoProvisionService');
     if ((b.onu_ref || b.provision) && prov.enabled()) {
@@ -4552,7 +4553,7 @@ router.post('/registrations/:id/approve', requireAdminSession, express.urlencode
     const r = await require('../services/installationService').approve(Number(req.params.id),
       { installer: b.installer, installDate: b.install_date, dueDate: b.due_date, total: b.final_total, notes: b.installer_notes, account: b.account }, actor);
     let text = `${r.customer.name}: instalación asignada a ${r.installer.name} (orden N.º ${r.ticketId}). ` +
-      (r.pppoeUser ? `Usuario PPPoE ${r.pppoeUser}, IP ${r.remoteIp || '-'}. ` : '') +
+      (r.pppoeUser ? `Cuenta reservada ${r.pppoeUser} (el usuario PPPoE y la IP se crean al configurar la ONU). ` : '') +
       `La primera factura (estimada ${regional.formatMoney(r.amount)}) se genera cuando se confirme la instalación, con la fecha real.`;
     text += r.installerNotified ? ' Se le enviaron los datos por WhatsApp.' : ' No se pudo avisar por WhatsApp a quien instala (revisá su teléfono).';
     if (r.mkWarn) text += ' Atención: no se pudo crear el usuario PPPoE en el MikroTik: ' + r.mkWarn;
@@ -4577,10 +4578,34 @@ router.post('/registrations/:id/installed', requireAdminSession, express.urlenco
 router.post('/registrations/:id/cancel-install', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
   try {
     const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
-    await require('../services/installationService').cancelInstallation(Number(req.params.id), { reason: req.body && req.body.reason, actor });
-    req.session._msg = { type: 'success', text: 'Instalación cancelada: el inscripto vuelve a pendiente, sin facturas. Se puede volver a asignar.' };
+    const b = req.body || {};
+    const r = await require('../services/installationService').cancelInstallation(Number(req.params.id), { reason: b.reason, motive: b.motive, outcome: b.outcome === 'reject' ? 'reject' : 'postpone', actor });
+    req.session._msg = { type: r.mk && /No se pudo/.test(r.mk) ? 'error' : 'success', text: (r.outcome === 'reject' ? 'Solicitud rechazada' : 'Instalación en espera para reprogramar') + ` (${r.label}). Sin facturas; se avisó al instalador.` + (r.mk || '') };
   } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo cancelar: ' + e.message }; }
   res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
+});
+
+router.post('/registrations/:id/reassign', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    const r = await require('../services/installationService').reassignInstallation(Number(req.params.id), req.body && req.body.installer, { actor });
+    req.session._msg = { type: 'success', text: `Instalación reasignada a ${r.installer.name}.` + (r.notified ? ' Se le enviaron los datos por WhatsApp; el anterior fue avisado.' : ' No se pudo avisar por WhatsApp al nuevo instalador.') };
+  } catch (e) { req.session._msg = { type: 'error', text: 'No se pudo reasignar: ' + e.message }; }
+  res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
+});
+
+router.post('/registrations/:id/reactivate', requireAdminSession, (req, res) => {
+  try {
+    const actor = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    require('../services/installationService').reactivateRequest(Number(req.params.id), { actor });
+    req.session._msg = { type: 'success', text: 'Solicitud retomada: vuelve a pendiente para asignar la instalación.' };
+  } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
+  res.redirect(req.get('Referrer') || '/admin/customers?status=inactive');
+});
+
+router.get('/registrations/installers', requireAdminSession, (req, res) => {
+  const inst = require('../services/installationService');
+  res.json({ ok: true, installers: inst.installers().map(i => ({ key: i.key, name: i.name, group: i.group || '' })), reasons: inst.CANCEL_REASONS });
 });
 
 router.post('/registrations/:id/reject', requireAdminSession, (req, res) => {

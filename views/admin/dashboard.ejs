@@ -240,10 +240,10 @@
 
       <!-- Stats mini -->
       <div class="stat-grid" style="margin-bottom:18px">
-        <div class="sc p"><i class="bi bi-router sc-icon"></i><div class="sc-label"><%= t('admin.dashboard.total_onu', 'Total ONU') %></div><div class="sc-val" id="m-total">-</div></div>
-        <div class="sc s"><i class="bi bi-wifi sc-icon"></i><div class="sc-label"><%= t('admin.dashboard.online', 'Online') %></div><div class="sc-val" id="m-online">-</div></div>
-        <div class="sc d"><i class="bi bi-wifi-off sc-icon"></i><div class="sc-label"><%= t('admin.dashboard.offline', 'Offline') %></div><div class="sc-val" id="m-offline">-</div></div>
-        <div class="sc i"><i class="bi bi-percent sc-icon"></i><div class="sc-label"><%= t('admin.dashboard.uptime', 'Uptime') %></div><div class="sc-val" id="m-pct">-%</div></div>
+        <div class="sc p m-card" data-f="all" style="cursor:pointer" onclick="showMon('all')" title="Ver todas"><i class="bi bi-router sc-icon"></i><div class="sc-label"><%= t('admin.dashboard.total_onu', 'Total ONU') %></div><div class="sc-val" id="m-total">-</div></div>
+        <div class="sc s m-card" data-f="online" style="cursor:pointer" onclick="showMon('online')" title="Ver las que están en línea"><i class="bi bi-wifi sc-icon"></i><div class="sc-label"><%= t('admin.dashboard.online', 'Online') %></div><div class="sc-val" id="m-online">-</div><div class="sc-sub"><span id="m-pct">-%</span> del total</div></div>
+        <div class="sc d m-card" data-f="offline" style="cursor:pointer" onclick="showMon('offline')" title="Ver las desconectadas"><i class="bi bi-wifi-off sc-icon"></i><div class="sc-label"><%= t('admin.dashboard.offline', 'Offline') %></div><div class="sc-val" id="m-offline">-</div></div>
+        <div class="sc w m-card" data-f="weak" style="cursor:pointer" onclick="showMon('weak')" title="Ver las que tienen señal débil"><i class="bi bi-exclamation-triangle sc-icon"></i><div class="sc-label"><%= t('admin.dashboard.warning','Warning') %></div><div class="sc-val" id="m-weak">-</div><div class="sc-sub">Señal débil</div></div>
       </div>
 
       <!-- Search & Filter -->
@@ -595,6 +595,7 @@ async function loadDevices() {
   try {
     const search = document.getElementById('search-device')?.value || '';
     const status = document.getElementById('filter-status')?.value || 'all';
+    document.querySelectorAll('.m-card').forEach(c => { c.style.outline = c.dataset.f === status ? '2px solid var(--primary)' : ''; c.style.outlineOffset = '-2px'; });
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (status && status !== 'all') params.set('status', status);
@@ -629,6 +630,8 @@ async function loadDevices() {
       if (mOn) mOn.textContent = on;
       if (mOff) mOff.textContent = off;
       if (mPct) mPct.textContent = (tot > 0 ? Math.round(on / tot * 100) : 0) + '%';
+      const mWeak = document.getElementById('m-weak');
+      if (mWeak) mWeak.textContent = devicesData.filter(x => x.weak).length;
 
       const legOn = document.getElementById('leg-online');
       const legOff = document.getElementById('leg-offline');
@@ -637,6 +640,13 @@ async function loadDevices() {
       if (legOff) legOff.textContent = off;
       if (donutPct) donutPct.textContent = (tot > 0 ? Math.round(on / tot * 100) : 0) + '%';
       updateDonut(on, off);
+    } else if (document.getElementById('m-total') && document.getElementById('m-total').textContent === '-') {
+      // Se abrió filtrado (desde una tarjeta del panel): completa los totales de las tarjetas
+      fetch('/admin/api/stats').then(r => r.json()).then(st => {
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        set('m-total', st.total); set('m-online', st.online); set('m-offline', st.offline); set('m-weak', st.warning || 0);
+        set('m-pct', (st.total > 0 ? Math.round(st.online / st.total * 100) : 0) + '%');
+      }).catch(() => {});
     }
 
     document.getElementById('device-count').textContent = devicesData.length + I18N.devicesSuffix;

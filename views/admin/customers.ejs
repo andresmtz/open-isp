@@ -1220,7 +1220,7 @@
           <div class="fg"><label class="fl">Primer vencimiento</label><input class="fc" type="date" name="due_date" id="rc_due_date" required></div>
         </div>
         <div style="background:rgba(173,255,47,.08);border:1px solid var(--primary-glow);border-radius:12px;padding:12px;margin-top:6px">
-          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Primera factura (el costo de instalación lo cobra el instalador, no se factura)</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px" id="rc_head">Primera factura</div>
           <div id="rc_lines"></div>
           <div style="display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:800;padding:8px 0 2px;border-top:1px solid var(--border);margin-top:6px;gap:10px">
             <span>Total</span>
@@ -1861,7 +1861,8 @@ async function rcLoad(first){
   var p = j.plan;
   document.getElementById('rc_install_date').value = p.installDate;
   document.getElementById('rc_due_date').value = p.dueDate;
-  document.getElementById('rc_lines').innerHTML = p.lines.map(function(l){ return '<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;gap:10px"><span>' + l.label + '</span><span>' + rcFmt(l.amount) + '</span></div>'; }).join('');
+  document.getElementById('rc_head').innerHTML = 'Al instalar, el cliente le paga al instalador el primer mes: <b>' + rcFmt(p.installPayment) + '</b> (no pasa por la caja). Primera factura:';
+  document.getElementById('rc_lines').innerHTML = p.lines.map(function(l){ return '<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;gap:10px"><span>' + l.label + '</span><span' + (l.amount < 0 ? ' style="color:var(--success)"' : '') + '>' + (l.amount < 0 ? '− ' + rcFmt(-l.amount) : rcFmt(l.amount)) + '</span></div>'; }).join('');
   var tot = document.getElementById('rc_total');
   if (first || Number(tot.value) === _rcAuto) tot.value = p.total;
   _rcAuto = p.total;

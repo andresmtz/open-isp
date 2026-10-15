@@ -9,12 +9,16 @@
  *  2. Aprobar e instalar: se elige quién instala (técnico, personal de oficina o administrador), la fecha de
  *     instalación y el primer vencimiento. Se crea el usuario PPPoE, el cliente pasa a activo, se genera la
  *     primera factura y una orden de trabajo "Instalación" asignada (solo la ve quien instala).
- *     El costo de instalación lo cobra el instalador en el lugar: el sistema no lo factura.
+ *     Al instalar, el cliente le paga al instalador UN MES COMPLETO del plan (no hay costo de instalación aparte);
+ *     ese pago no pasa por la caja y cubre 30 días desde la instalación.
  *  3. Instalación realizada: al cerrar la orden de trabajo como resuelta, el cliente recibe la bienvenida por WhatsApp.
  *
- * Primera factura (prepago): se cobra el proporcional desde el día de instalación hasta el día 1 del mes siguiente
- * más las mensualidades hasta el período del primer vencimiento. Ej.: instala el 14/10, vence el 05/11:
- * 18 días de octubre + noviembre completo, en una sola factura del período noviembre (corte el 10/11).
+ * Primera factura (prepago): el mes completo pagado al instalar cubre los días que quedan del mes de instalación y
+ * el resto queda a favor para el mes siguiente. La primera factura es la mensualidad del mes siguiente menos ese saldo
+ * (= el proporcional de los días del mes de instalación). Ej. plan Gs. 100.000, instala el 15/10:
+ *   al instalar paga 100.000 al técnico (17 días de octubre = 55.000; quedan 45.000 a favor);
+ *   factura de noviembre (vence 05/11): 100.000 − 45.000 = 55.000; diciembre: 100.000 normal.
+ * Si el primer vencimiento se pone más adelante, se suman las mensualidades completas de los meses intermedios.
  * El ciclo mensual no vuelve a facturar ese período ni los anteriores (customers.first_invoice_period).
  *
  * Parámetros: billing_due_day (día de vencimiento), billing_round_to (redondeo de montos, Gs.).
@@ -27,6 +31,7 @@ const cycle = require('../config/billingCycle');
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const pad = (n) => String(n).padStart(2, '0');
+const fmtMoney = (n) => regional.formatMoney(Number(n) || 0);
 const fmtDate = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? `${m[3]}/${m[2]}/${m[1]}` : String(s || ''); };
 
 let _schemaOk = false;
@@ -73,13 +78,20 @@ function firstInvoicePlan(price, installDate, dueDate) {
   const prorata = round(monthly * days / dim);
   // mensualidades completas desde el mes siguiente a la instalación hasta el período del vencimiento (inclusive)
   const months = (dy * 12 + dm) - (iy * 12 + im);
-  const lines = [{ label: `Proporcional ${fmtDate(inst)} al ${pad(dim)}/${pad(im)}/${iy} (${days} ${days === 1 ? 'día' : 'días'})`, amount: prorata }];
-  for (let k = 1; k <= months; k++) {
+  if (months < 1) throw new Error('El primer vencimiento tiene que ser del mes siguiente a la instalación o posterior (el pago al instalar cubre el mes en curso).');
+  const credit = monthly - prorata; // saldo del mes pagado al instalar que pasa al mes siguiente
+  const first = cycle.shiftMonth(iy, im, 1);
+  const lines = [
+    { label: `Mensualidad ${MESES[first.month - 1]} ${first.year}`, amount: monthly },
+    { label: `Menos saldo del pago al instalar (${fmtMoney(monthly)} − ${days} ${days === 1 ? 'día' : 'días'} de ${MESES[im - 1]} ${fmtMoney(prorata)})`, amount: -credit },
+  ];
+  for (let k = 2; k <= months; k++) {
     const p = cycle.shiftMonth(iy, im, k);
     lines.push({ label: `Mensualidad ${MESES[p.month - 1]} ${p.year}`, amount: monthly });
   }
-  const total = lines.reduce((s, l) => s + l.amount, 0);
-  return { installDate: inst, dueDate: due, period: { year: dy, month: dm }, monthly, days, daysInMonth: dim, prorata, months, lines, total };
+  const total = lines.reduce((s2, l) => s2 + l.amount, 0);
+  const installPayment = monthly;
+  return { installDate: inst, dueDate: due, period: { year: dy, month: dm }, monthly, days, daysInMonth: dim, prorata, credit, months, lines, total, installPayment };
 }
 
 /** Quién puede instalar: técnicos activos, personal de oficina activo y el administrador. */
@@ -207,7 +219,8 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
     `\nFecha prevista: ${fmtDate(plan.installDate)}` +
     (pppoeUser ? `\nPPPoE: ${pppoeUser} / ${pppoePass || '-'}` : '') +
     (String(notes || '').trim() ? `\nNotas: ${String(notes).trim()}` : '') +
-    `\n\nEl costo de la instalación lo cobrás en el lugar. Al terminar, cerrá esta orden como resuelta: el cliente recibe la bienvenida.`;
+    `\n\nCobrar al cliente al instalar: ${fmtMoney(plan.installPayment)} (primer mes del plan ${pkg.name}).` +
+    `\nAl terminar, cerrá esta orden como resuelta: el cliente recibe la bienvenida.`;
   // (la foto de la casa, si se cargó, se ve en esta orden en el portal del técnico)
   const tk = require('./ticketService').createTicket(id, `Instalación nueva — ${cust.name}`, body, { technicianId: who.type === 'tech' ? who.id : null, status: 'in_progress' });
   const ticketId = Number(tk && tk.lastInsertRowid);
@@ -216,6 +229,7 @@ async function approve(customerId, { installer, installDate, dueDate, total, not
   // Aviso a quien instala (técnico, oficina o administrador) con los datos para configurar el equipo
   const waMsg = `🛠️ *INSTALACIÓN ASIGNADA*\n\n👤 *Cliente:* ${cust.name}\n📞 *Teléfono:* ${cust.phone || '-'}\n📍 *Dirección:* ${cust.address || '-'}` +
     (loc ? `\n🗺️ *Ubicación:* ${loc}` : '') + `\n📦 *Plan:* ${pkg.name}\n📅 *Fecha:* ${fmtDate(plan.installDate)}` +
+    `\n\n💵 *Cobrar al instalar:* ${fmtMoney(plan.installPayment)} (primer mes del plan)` +
     (pppoeUser ? `\n\n📡 *PPPoE usuario:* ${pppoeUser}\n🔒 *PPPoE clave:* ${pppoePass || '-'}` : '') +
     (String(notes || '').trim() ? `\n\n📝 ${String(notes).trim()}` : '') +
     `\n\nAl terminar, cerrá la orden de trabajo N.º ${ticketId} como resuelta.`;

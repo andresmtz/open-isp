@@ -2901,6 +2901,23 @@ router.get('/finance/by-account', requireAdminSession, restrictToAdmin, (req, re
     FROM payment_receipts r JOIN customers c ON c.id = r.customer_id
     WHERE r.annulled_at IS NULL AND r.amount > 0 AND date(r.created_at) BETWEEN date(?) AND date(?)
     ORDER BY r.created_at`).all(from, to);
+  // Pagos importados de WispHub: forma de pago y "referencia" (banco o billetera) quedaron en la nota de la factura
+  try {
+    const labels = [...new Set(require('../services/paymentProofService').destinations().map(d => d.label))];
+    const ALIAS = [[/bancop|bacop/i, 'Bancop'], [/fliar|familiar|fluar/i, 'Banco Familiar'], [/tigo/i, 'Giros Tigo'], [/basa/i, 'Banco BASA'], [/ueno/i, 'Ueno Bank'], [/mango/i, 'Billetera Mango'], [/claro/i, 'Claro']];
+    const pickLabel = (ref) => { for (const [re, name] of ALIAS) if (re.test(ref)) { return labels.find(l => re.test(l)) || name; } return ref ? 'Otros (ref. WispHub)' : 'Sin indicar'; };
+    const wh = db.prepare(`SELECT i.id, i.paid_at, i.amount_paid, i.amount, i.paid_by_name, i.notes, c.name AS customer_name, c.customer_code
+      FROM invoices i JOIN customers c ON c.id = i.customer_id
+      WHERE i.wisphub_invoice_id IS NOT NULL AND i.status = 'paid' AND i.notes LIKE '%Forma de pago:%' AND date(i.paid_at) BETWEEN date(?) AND date(?)`).all(from, to);
+    for (const i of wh) {
+      const method = (/Forma de pago:\s*([^|]+)/.exec(i.notes || '') || [])[1] || '';
+      const ref = ((/Ref:\s*([^|]+)/.exec(i.notes || '') || [])[1] || '').trim();
+      const m = /efectivo/i.test(method) ? 'Efectivo' : /giro/i.test(method) ? 'Giro' : /dep[oó]sito/i.test(method) ? 'Depósito' : 'Transferencia';
+      rows.push({ id: 'wh' + i.id, created_at: i.paid_at, amount: Number(i.amount_paid || i.amount) || 0, method: m, destination: m === 'Efectivo' ? '' : pickLabel(ref),
+        paid_by: (i.paid_by_name || '') + ' (WispHub)', note: ref ? 'Ref. WispHub: ' + ref : '', customer_name: i.customer_name, customer_code: i.customer_code });
+    }
+    rows.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+  } catch (e) { logger.warn('[Cobros por cuenta] WispHub: ' + e.message); }
   const keyOf = (r) => r.method === 'Efectivo' ? 'Efectivo' : (r.destination || 'Sin indicar');
   const groups = {};
   for (const r of rows) { const k = keyOf(r); (groups[k] = groups[k] || { key: k, total: 0, count: 0, rows: [] }); groups[k].total += Number(r.amount) || 0; groups[k].count++; groups[k].rows.push(r); }

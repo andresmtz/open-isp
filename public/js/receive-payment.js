@@ -75,6 +75,8 @@
       amt.addEventListener('input', upd); if (cr) cr.addEventListener('change', upd); upd();
       m.querySelector('#rcv-cancel').onclick = () => m.remove();
       const send = async (btn, activate) => {
+        // Igual que la "referencia" de WispHub: en pagos que no son en efectivo se indica a qué cuenta o billetera entró
+        if (destWrap && method !== 'Efectivo' && !destination && Number(amt.value) > 0) { alert('Elegí a qué cuenta o billetera entró el pago.'); return; }
         if (activate && !confirm('Se habilita el servicio y el saldo faltante se suma a la factura del próximo mes. ¿Continuar?')) return;
         btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Registrando…';
         try {

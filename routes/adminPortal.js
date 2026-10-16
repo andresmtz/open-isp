@@ -2784,7 +2784,12 @@ router.post('/payment-proofs/:id/assign', requireAdminSession, express.json(), (
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 router.post('/payment-proofs/scan', requireAdminSession, async (req, res) => {
-  try { const r = await require('../services/paymentProofService').scan(); res.json({ ok: true, ...r }); }
+  try {
+    const pps = require('../services/paymentProofService');
+    const r = await pps.scan();
+    const again = await pps.retryIgnored({ days: 7 }); // descartados que el lector actual sí reconoce
+    res.json({ ok: true, ...r, proofs: (r.proofs || 0) + (again.nuevos || 0), recovered: again.nuevos || 0 });
+  }
   catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 

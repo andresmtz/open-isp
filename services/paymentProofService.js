@@ -75,7 +75,12 @@ function parse(text) {
       }
     }
   }
-  if (!r.amount) { const m = /(?:gs\.?|₲)\s*(\d{1,3}(?:[.,]\d{3})+)|(\d{1,3}(?:[.,]\d{3})+)\s*(?:gs\b|₲)/i.exec(t); if (m) r.amount = toInt(m[1] || m[2]); }
+  // "Gs." que el lector suele confundir: cs, 6s, G5, G$, gS…
+  if (!r.amount) { const m = /(?:\b[gc6][s5$]\.?|₲)\s*(\d{1,3}(?:[.,]\d{3})+)|(\d{1,3}(?:[.,]\d{3})+)\s*(?:\b[gc6][s5$]\b|₲)/i.exec(t); if (m) r.amount = toInt(m[1] || m[2]); }
+  // Comprobante evidente sin "Gs" legible: el importe que aparece solo en su línea
+  if (!r.amount && /comprobante de (transferencia|dep[oó]sito|pago)|transferencia (exitosa|realizada)|enviaste|pago exitoso/i.test(t)) {
+    for (const l of lines) { const m2 = /^\W{0,4}[a-z₲$]{0,3}\.?\s*(\d{1,3}(?:\.\d{3})+)\s*$/i.exec(l.trim()); if (m2 && toInt(m2[1]) >= 1000) { r.amount = toInt(m2[1]); break; } }
+  }
   // Fecha y hora
   let m = /(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/.exec(t);
   if (m) { const y = Number(m[3].length === 2 ? '20' + m[3] : m[3]); r.date = `${y}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`; }
@@ -232,6 +237,22 @@ async function processMessage(chatJid, m) {
   return id;
 }
 
+/** Vuelve a analizar los descartados recientes con el lector actual; los que ahora son comprobantes se bajan de nuevo. */
+async function retryIgnored({ days = 7 } = {}) {
+  ensureSchema();
+  const rows = db.prepare("SELECT * FROM payment_proofs WHERE status='ignorado' AND ocr_text != '' AND created_at >= datetime('now', ?)").all(`-${Math.max(1, Number(days) || 7)} days`);
+  let found = 0;
+  for (const p of rows) {
+    if (!parse(p.ocr_text).looksLike) continue;
+    db.prepare('DELETE FROM payment_proofs WHERE id=?').run(p.id);
+    try {
+      const id = await processMessage(p.chat_jid, { id: p.msg_id, media_type: p.media_type === 'pdf' ? 'document' : 'image', filename: p.media_type === 'pdf' ? 'x.pdf' : '', timestamp: p.received_at ? new Date(String(p.received_at).replace(' ', 'T') + '-03:00').toISOString() : null });
+      if (id && get(id) && get(id).status === 'pendiente') found++;
+    } catch (e) { logger.warn('[Comprobantes] reintento #' + p.id + ': ' + e.message); }
+  }
+  return { revisados: rows.length, nuevos: found };
+}
+
 /** Revisa los chats con mensajes nuevos desde la última vez. */
 let _busy = false;
 async function scan({ sinceHours = null } = {}) {
@@ -304,4 +325,4 @@ function reparse(id) {
   return get(id);
 }
 
-module.exports = { reparse, ensureSchema, scan, processMessage, parse, destinations, checks, pending, get, filePath, assign, markApplied, reject, debtOf };
+module.exports = { retryIgnored, reparse, ensureSchema, scan, processMessage, parse, destinations, checks, pending, get, filePath, assign, markApplied, reject, debtOf };

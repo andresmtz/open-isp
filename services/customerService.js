@@ -306,7 +306,7 @@ function createCustomer(data) {
 function updateCustomer(id, data) {
   assertCustomerUnique(data, id);
   require('./odpService').validateOdpPort(data.odp_id, data.pon_port, id);
-  const prev = db.prepare('SELECT package_id, expired_at, install_date, nik FROM customers WHERE id=?').get(id);
+  const prev = db.prepare('SELECT package_id, expired_at, install_date, nik, pppoe_remote_address FROM customers WHERE id=?').get(id);
   const newPkgId = data.package_id ? parseInt(data.package_id, 10) : null;
   const pkgChanged = prev && Number(prev.package_id || 0) !== Number(newPkgId || 0);
 
@@ -335,7 +335,8 @@ function updateCustomer(id, data) {
     data.lng || '',
     data.genieacs_tag || '', data.pppoe_username || '',
     data.pppoe_password || '',
-    data.pppoe_remote_address || '',
+    // El formulario de edición no trae la IP: si no viene, se conserva la registrada
+    data.pppoe_remote_address !== undefined ? String(data.pppoe_remote_address || '').trim() : ((prev && prev.pppoe_remote_address) || ''),
     data.isolir_profile || 'isolir',
     data.status || 'active',
     data.install_date || null,

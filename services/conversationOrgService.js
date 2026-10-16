@@ -327,13 +327,21 @@ function linkCustomer(convId, customerId) {
   const regional = require('../config/regional');
   const already = cp.findByPhone(c.phone);
   if (already && already.id !== cust.id) throw new Error(`Ese número ya es de otro cliente: ${already.name}.`);
+  let asMain = false;
   if (!already) {
-    const list = cp.parse(cp.list(cust).concat([regional.toLocalPhone(c.phone)]).join(','), { exceptId: cust.id, main: cust.phone });
-    cp.save(cust.id, list);
+    const local = regional.toLocalPhone(c.phone.startsWith('595') ? c.phone : '+' + c.phone);
+    if (!String(cust.phone || '').trim()) {
+      // la ficha no tenía teléfono: este pasa a ser el principal (a ese número van los avisos)
+      db.prepare('UPDATE customers SET phone=? WHERE id=?').run(local, cust.id);
+      asMain = true;
+    } else {
+      const list = cp.parse(cp.list(cust).concat([local]).join(','), { exceptId: cust.id, main: cust.phone });
+      cp.save(cust.id, list);
+    }
   }
   db.prepare('UPDATE wa_conversations SET customer_id=? WHERE id=?').run(cust.id, c.id);
   _cache.clear(); _cust.at = 0;
-  return { ok: true, name: cust.name };
+  return { ok: true, name: cust.name, asMain };
 }
 
 async function createRequest(convId, data, actor) {

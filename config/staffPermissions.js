@@ -57,12 +57,13 @@ const CATALOG = [
   { key: 'enviar_facturas', label: 'Enviar facturas y comprobantes por WhatsApp', help: 'Botones de enviar factura o comprobante a un cliente.', def: true, needs: ['ver_facturas'], rules: [
     ['POST', `^/billing/${ID}/(whatsapp|send-pdf-wa)$`],
   ] },
-  { key: 'conversaciones', label: 'Conversaciones de WhatsApp', help: 'Ver y responder las conversaciones de WhatsApp de clientes e interesados, y recibir el aviso cuando Meta AI deriva a una persona.', def: false, rules: [
+  { key: 'conversaciones', label: 'Conversaciones de WhatsApp', help: 'Ver y responder las conversaciones de WhatsApp de clientes e interesados, y recibir el aviso cuando Meta AI deriva a una persona.', def: false, needs: ['ver_clientes'], rules: [
     ['GET', '^/conversations$'],
     ['GET', '^/conversations/(list|counts)$'],
     ['GET', `^/conversations/${ID}/messages$`],
     ['GET', `^/conversations/media/${ID}$`],
-    ['POST', `^/conversations/${ID}/(reply|state|update|read)$`],
+    ['POST', `^/conversations/${ID}/(reply|state|update|read|org|link|create-request)$`],
+    ['GET', '^/conversations/(customer-search|quick-replies)$'],
     ['POST', '^/conversations/sync$'],
   ] },
   { key: 'promesas', label: 'Dar promesas de pago', help: 'Respeta el máximo de días y de promesas por mes de Automatización.', def: true, needs: ['ver_clientes', 'ver_facturas'], rules: [

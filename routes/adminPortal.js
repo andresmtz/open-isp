@@ -2894,21 +2894,28 @@ router.post('/gowa/update', requireAdminSession, express.json(), async (req, res
 // Cobros por cuenta o billetera (para conciliar con los extractos): detalle y totales por destino, en un rango de fechas
 // ─── CONVERSACIONES DE WHATSAPP (CRM, fase 0: bandeja) ───────────────────────
 const convSvc = require('../services/conversationService');
+const convOrg = require('../services/conversationOrgService');
 const convActor = (req) => req.session.isAdmin ? (req.session.adminUser || 'Administrador') : (req.session.cashierName || 'Oficina');
 router.get('/conversations', requireAdminSession, (req, res) => {
   try {
-    convSvc.ensureSchema();
+    convOrg.ensureSchema();
     res.render('admin/conversations', {
       title: 'Conversaciones', company: company(), activePage: 'conversations', msg: flashMsg(req),
       selected: Number(req.query.c) || 0, isAdmin: !!req.session.isAdmin,
       senders: convSvc.SENDERS, states: convSvc.STATES,
+      inboxes: convOrg.INBOXES, motives: convOrg.MOTIVES, stages: convOrg.STAGES, lost: convOrg.LOST,
+      packages: db.prepare('SELECT id, name FROM packages ORDER BY price').all(),
+      canCreate: staffPerms.has(req.session, 'clientes_alta'),
       inHours: convSvc.inBusinessHours(), hours: getSetting('crm_business_hours', '1-5 08:00-17:00'),
       alertMinutes: Number(getSetting('crm_handoff_alert_minutes', 2)) || 2,
     });
   } catch (e) { logger.error('[Conversaciones] ' + e.message); res.status(500).send('Error: ' + e.message); }
 });
 router.get('/conversations/list', requireAdminSession, (req, res) => {
-  try { res.json({ ok: true, items: convSvc.list({ filter: req.query.f || 'open', q: req.query.q || '' }), counts: convSvc.counts() }); }
+  try {
+    const r = convOrg.list({ inbox: String(req.query.f || 'por_atender'), q: req.query.q || '', motive: String(req.query.m || '') });
+    res.json({ ok: true, items: r.items, counts: r.counts });
+  }
   catch (e) { res.json({ ok: false, message: e.message }); }
 });
 router.get('/conversations/counts', requireAdminSession, (req, res) => {
@@ -2918,7 +2925,8 @@ router.get('/conversations/:id/messages', requireAdminSession, (req, res) => {
   try {
     const conv = convSvc.get(Number(req.params.id));
     if (!conv) return res.json({ ok: false, message: 'Conversación no encontrada' });
-    res.json({ ok: true, conv, messages: convSvc.messages(conv.id, { afterId: req.query.after }) });
+    const money = staffPerms.has(req.session, 'ver_facturas');
+    res.json({ ok: true, conv, info: convOrg.info(conv.id, { money }), messages: convSvc.messages(conv.id, { afterId: req.query.after }) });
   } catch (e) { res.json({ ok: false, message: e.message }); }
 });
 router.post('/conversations/:id/read', requireAdminSession, (req, res) => {
@@ -2947,6 +2955,32 @@ router.get('/conversations/media/:id', requireAdminSession, async (req, res) => 
     res.setHeader('Cache-Control', 'private, max-age=86400');
     res.send(Buffer.from(await r.arrayBuffer()));
   } catch (e) { res.status(404).send('Archivo no disponible: ' + e.message); }
+});
+router.post('/conversations/:id/org', requireAdminSession, express.json(), express.urlencoded({ extended: true }), (req, res) => {
+  try { convOrg.setOrg(Number(req.params.id), req.body || {}); res.json({ ok: true }); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.get('/conversations/customer-search', requireAdminSession, (req, res) => {
+  try { res.json({ ok: true, items: convOrg.searchCustomers(req.query.q) }); } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/conversations/:id/link', requireAdminSession, express.json(), express.urlencoded({ extended: true }), (req, res) => {
+  try { const r = convOrg.linkCustomer(Number(req.params.id), Number((req.body || {}).customer_id)); res.json({ ok: true, message: 'Vinculado a ' + r.name + '. El número quedó como teléfono adicional del cliente.' }); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/conversations/:id/create-request', requireAdminSession, express.json(), express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    if (!staffPerms.has(req.session, 'clientes_alta')) throw new Error('No tenés permiso para cargar solicitudes de instalación.');
+    const r = await convOrg.createRequest(Number(req.params.id), req.body || {}, convActor(req));
+    res.json({ ok: true, message: `Solicitud creada: ${r.customer.name} (${r.customer.code || 'ID ' + r.customer.id}). Está en Clientes → Inscriptos.` + (r.attached.length ? ' Fotos adjuntas: ' + r.attached.join(', ') + '.' : ''), customer: r.customer });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.get('/conversations/quick-replies', requireAdminSession, (req, res) => {
+  try { res.json({ ok: true, items: convOrg.quickReplies(), raw: req.session.isAdmin ? convOrg.quickReplies({ raw: true }) : undefined }); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/conversations/quick-replies', requireAdminSession, restrictToAdmin, express.json({ limit: '200kb' }), (req, res) => {
+  try { const n = convOrg.saveQuickReplies((req.body || {}).items); res.json({ ok: true, message: n + ' respuestas rápidas guardadas.' }); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
 });
 router.post('/conversations/sync', requireAdminSession, async (req, res) => {
   try {

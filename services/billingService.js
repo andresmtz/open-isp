@@ -842,6 +842,7 @@ function updatePaymentInfo(invoiceId, data) {
 }
 
 module.exports = {
+  computeInvoiceAmountAndMeta, // solo cálculo (sin guardar), para simular la próxima factura
   setPaymentMethod,
   autoLunasUnpaidForCustomer,
   getInvoicesByAny,

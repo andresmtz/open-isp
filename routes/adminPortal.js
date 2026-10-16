@@ -2965,7 +2965,7 @@ router.get('/conversations/customer-search', requireAdminSession, (req, res) => 
   try { res.json({ ok: true, items: convOrg.searchCustomers(req.query.q) }); } catch (e) { res.json({ ok: false, message: e.message }); }
 });
 router.post('/conversations/:id/link', requireAdminSession, express.json(), express.urlencoded({ extended: true }), (req, res) => {
-  try { const r = convOrg.linkCustomer(Number(req.params.id), Number((req.body || {}).customer_id)); res.json({ ok: true, message: 'Vinculado a ' + r.name + (r.asMain ? '. La ficha no tenía teléfono: este número quedó como principal.' : '. El número quedó como teléfono adicional del cliente.') }); }
+  try { const r = convOrg.linkCustomer(Number(req.params.id), Number((req.body || {}).customer_id)); res.json({ ok: true, message: 'Vinculado a ' + r.name + (r.noPhone ? '. Este chat no muestra el número (WhatsApp lo oculta), así que no se agregó ningún teléfono a la ficha.' : r.asMain ? '. La ficha no tenía teléfono: este número quedó como principal.' : '. El número quedó como teléfono adicional del cliente.') }); }
   catch (e) { res.json({ ok: false, message: e.message }); }
 });
 router.post('/conversations/:id/create-request', requireAdminSession, express.json(), express.urlencoded({ extended: true }), async (req, res) => {

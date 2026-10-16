@@ -355,9 +355,14 @@ function linkCustomer(convId, customerId) {
   ensureSchema();
   const c = db.prepare('SELECT * FROM wa_conversations WHERE id=?').get(Number(convId));
   if (!c) throw new Error('Conversación no encontrada');
-  if (!c.phone) throw new Error('Este chat no tiene un número de teléfono visible; no se puede vincular.');
   const cust = db.prepare('SELECT id, name, phone, alt_phones FROM customers WHERE id=?').get(Number(customerId));
   if (!cust) throw new Error('Cliente no encontrado');
+  if (!c.phone) {
+    // chat sin número visible (identificador @lid de WhatsApp): solo se vincula la conversación
+    db.prepare('UPDATE wa_conversations SET customer_id=? WHERE id=?').run(cust.id, c.id);
+    _cache.clear(); _cust.at = 0;
+    return { ok: true, name: cust.name, noPhone: true };
+  }
   const cp = require('../config/customerPhones');
   const regional = require('../config/regional');
   const already = cp.findByPhone(c.phone);

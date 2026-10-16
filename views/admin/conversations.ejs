@@ -362,13 +362,13 @@
     if (c.state === 'human' || c.state === 'waiting_human') a += '<button class="btn btn-g btn-sm" onclick="cvState(\'open\')" title="Deja de figurar como atendida por una persona. Meta AI responde según su propia configuración en WhatsApp Business."><i class="bi bi-robot"></i> Devolver a Meta AI</button>';
     a += c.state === 'closed' ? '<button class="btn btn-g btn-sm" onclick="cvState(\'open\')"><i class="bi bi-arrow-counterclockwise"></i> Reabrir</button>'
                               : '<button class="btn btn-g btn-sm" onclick="cvState(\'closed\')" title="Pasa al Archivo; vuelve sola si el contacto escribe"><i class="bi bi-archive"></i> Archivar</button>';
-    if (c.ignored === 1) a += '<button class="btn btn-g btn-sm" onclick="bulkDo(\'unignore\', [conv.id])"><i class="bi bi-eye"></i> Restaurar (oculta: ' + esc(IGN[c.ignored_reason] || '') + ')</button>';
+    if (c.ignored === 1) a += '<button class="btn btn-g btn-sm" onclick="bulkDo(\'unignore\', [' + c.id + '])"><i class="bi bi-eye"></i> Restaurar (oculta: ' + esc(IGN[c.ignored_reason] || '') + ')</button>';
     else a += '<div class="cv-dd" id="hideDd"><button class="btn btn-g btn-sm" onclick="event.stopPropagation();document.getElementById(\'hideDd\').classList.toggle(\'open\')"><i class="bi bi-three-dots"></i> Ocultar / borrar</button><div class="menu">' +
-      Object.keys(IGN).map(function(k){ return '<button onclick="bulkDo(\'ignore\', [conv.id], \'' + k + '\')">Ocultar: ' + esc(IGN[k]) + '</button>'; }).join('') +
-      (IS_ADMIN ? '<button class="danger" onclick="bulkDo(\'clear\', [conv.id])"><i class="bi bi-eraser"></i> Vaciar mensajes…</button>' +
-                  '<button class="danger" style="border-top:0" onclick="bulkDo(\'purge\', [conv.id], \'personal\')"><i class="bi bi-eye-slash"></i> Vaciar y ocultar…</button>' +
-                  '<button class="danger" style="border-top:0" onclick="bulkDo(\'remove\', [conv.id])"><i class="bi bi-trash"></i> Borrar chat…</button>' : '') + '</div></div>';
-    if (c.ignored === 1 && IS_ADMIN) a += '<button class="btn btn-sm" style="background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.4)" onclick="bulkDo(\'purge\', [conv.id], \'' + (c.ignored_reason || 'otro') + '\')"><i class="bi bi-trash"></i> Vaciar</button>';
+      Object.keys(IGN).map(function(k){ return '<button onclick="bulkDo(\'ignore\', [' + c.id + '], \'' + k + '\')">Ocultar: ' + esc(IGN[k]) + '</button>'; }).join('') +
+      (IS_ADMIN ? '<button class="danger" onclick="bulkDo(\'clear\', [' + c.id + '])"><i class="bi bi-eraser"></i> Vaciar mensajes…</button>' +
+                  '<button class="danger" style="border-top:0" onclick="bulkDo(\'purge\', [' + c.id + '], \'personal\')"><i class="bi bi-eye-slash"></i> Vaciar y ocultar…</button>' +
+                  '<button class="danger" style="border-top:0" onclick="bulkDo(\'remove\', [' + c.id + '])"><i class="bi bi-trash"></i> Borrar chat…</button>' : '') + '</div></div>';
+    if (c.ignored === 1 && IS_ADMIN) a += '<button class="btn btn-sm" style="background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.4)" onclick="bulkDo(\'purge\', [' + c.id + '], \'' + (c.ignored_reason || 'otro') + '\')"><i class="bi bi-trash"></i> Vaciar</button>';
     a += '<button class="btn btn-g btn-sm cv-infobtn" onclick="document.getElementById(\'cvWrap\').classList.toggle(\'info\')"><i class="bi bi-layout-sidebar-reverse"></i> Datos</button>';
     var dd = document.getElementById('hideDd');
     if (!(dd && dd.classList.contains('open'))) document.getElementById('cvActs').innerHTML = a; // no cerrar el menú mientras se usa

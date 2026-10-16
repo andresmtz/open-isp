@@ -376,7 +376,8 @@
           var extra = '';
           if (k === 'nombre') extra = ' <input class="fc" id="inName" style="padding:3px 7px;font-size:12px" value="' + esc(c.lead_name || (o.check.nombre.value || '')) + '" placeholder="Nombre y apellido" onchange="orgSet({lead_name:this.value})">';
           if (k === 'ubicacion' && x.ok) extra = ' <a target="_blank" href="https://maps.google.com/?q=' + x.lat + ',' + x.lng + '">ver mapa</a>';
-          if ((k === 'cedula' || k === 'fachada') && !x.ok) extra = ' <span class="text-muted" style="font-size:11px">' + (x.probable ? 'hay fotos: marcá cuál es' : 'falta') + '</span>';
+          if ((k === 'cedula' || k === 'fachada') && !x.ok) extra = ' <span class="text-muted" style="font-size:11px">' + (x.confirmed ? 'Meta AI confirmó que llegó · marcá la foto para adjuntarla' : (x.probable ? 'hay fotos: marcá cuál es' : 'falta')) + '</span>';
+          if (k === 'nombre' && !x.ok && x.probable) extra += ' <span class="text-muted" style="font-size:11px">detectado del chat, confirmalo</span>';
           if (k === 'ubicacion' && !x.ok) extra = ' <button class="btn btn-g btn-sm" style="padding:1px 8px;width:auto;margin:0" onclick="qrInsert(\'Pedir ubicación\')">Pedir</button>';
           return '<div>' + t + ' <b style="min-width:70px">' + CHK[k] + '</b>' + extra + '</div>';
         }).join('') + '</div>' +

@@ -35,7 +35,7 @@ const LOST = { sin_cobertura: 'Sin cobertura', precio: 'Precio', no_responde: 'N
 const KW = [
   ['baja', /\b(retir(o|ar|en)|dar de baja|darme de baja|cancelar el servicio|ya no (quiero|voy|necesito))\b/i],
   ['pago', /(comprobante|transfer|transf\b|pagu[eé]|ya pag|pago|giro|dep[oó]sit|alias|nro de cuenta|n[uú]mero de cuenta|cu[aá]nto debo|deuda)/i],
-  ['soporte', /(sin internet|no (anda|funciona|tengo internet|hay internet|me anda|carga|conecta)|luz roja|\blos\b|lent[oa]|se (corta|cae)|cort[oó]|wifi|wi-fi|contraseñ|clave|router|m[oó]dem|se[ñn]al|desconect)/i],
+  ['soporte', /(sin internet|no (anda|funciona|tengo internet|hay internet|me anda|carga|conecta|navega)|luz roja|luz (del )?los|los (en )?rojo|lent[oa]|se (corta|cae)|se cort[oó]|cambiar (la )?(clave|contraseñ)|router|m[oó]dem|se[ñn]al|desconect)/i],
   ['adicionales', /(c[aá]mara|seguridad|\btv\b|televis|notebook|computador|\bpc\b|impresora|celular|reparaci[oó]n|equipo inform)/i],
   ['instalacion', /(instal|precio|planes?\b|cobertura|llega (hasta|a)|contratar|cu[aá]nto (sale|cuesta|es)|megas|servicio nuevo|quiero (internet|el servicio|conectar)|fibra)/i],
 ];
@@ -109,6 +109,11 @@ function analyze(c) {
     if (hitKw) { motiveAuto = hitKw[0]; break; }
   }
   const isCustomer = !!c.customer_id && !['inactive', 'cancelled'].includes(c.customer_status);
+  const REQ_RE = /requisitos|c[eé]dula|fachada|ubicaci[oó]n/i;
+  const reqMsg = ours.slice().reverse().find(m => ['meta_ai', 'persona', 'auto'].includes(m.sender) && REQ_RE.test(m.body || ''));
+  // Quien no es cliente y habló de instalar (o ya le pidieron requisitos) es una venta, aunque mencione el wifi
+  if (!isCustomer && !['pago', 'baja', 'adicionales'].includes(motiveAuto) &&
+      (reqMsg || fromClient.some(m => KW[KW.length - 1][1].test(m.body || '')))) motiveAuto = 'instalacion';
   if (isCustomer && notice && COBRANZA_NOTICES.has(notice.type) && fromClient[0] && fromClient[0].ts > notice.ts &&
       new Date(fromClient[0].ts) - new Date(notice.ts) < 10 * 86400000 && ['otro', 'pago'].includes(motiveAuto)) {
     motiveAuto = motiveAuto === 'pago' ? 'pago' : 'cobranza';
@@ -119,14 +124,23 @@ function analyze(c) {
   // embudo de ventas
   const loc = fromClient.find(m => m.lat != null);
   const images = fromClient.filter(m => m.media_type === 'image').map(m => m.id);
-  const askedReq = ours.find(m => /requisitos|foto (del frente )?de (su |tu |la )?c[eé]dula|fachada|ubicaci[oó]n (actual|gps)/i.test(m.body || ''));
+  const askedReq = reqMsg;
   const informed = ours.find(m => /(\d{2,3}\.000|megas|\bplan(es)?\b|precio)/i.test(m.body || ''));
   const imgsAfterReq = askedReq ? fromClient.filter(m => m.media_type === 'image' && m.ts >= askedReq.ts).length : images.length;
+  // Lo que Meta AI (o una persona) ya confirmó haber recibido
+  const confirms = ours.filter(m => m.sender !== 'sistema' && (!askedReq || m.ts >= askedReq.ts)).map(m => m.body || '').join('\n');
+  const gotCedula = /(recib|tengo|lleg|ten[ée]s|enviaste)[^.\n]{0,60}c[eé]dula/i.test(confirms);
+  const gotFachada = /(recib|tengo|lleg|ten[ée]s|enviaste)[^.\n]{0,80}fachada/i.test(confirms);
+  // Nombre: el que se cargó, el del cliente, o un mensaje que parece "nombre y apellido" después de pedir los requisitos
+  const STOP = /\b(hola|buenas?|gracias|ok|okey|listo|dale|s[ií]|no|que|qu[eé]|tal|d[ií]as|tardes|noches|como|internet|wifi|pregunta|ma[ñn]ana|ahora|datos|porfa|favor)\b/i;
+  const nameMsg = fromClient.find(m => (!askedReq || m.ts >= askedReq.ts) && m.body && !STOP.test(m.body) &&
+    /^[A-Za-zÁÉÍÓÚÑáéíóúñü'´. ]{5,60}$/.test(m.body.trim()) && m.body.trim().split(/\s+/).length >= 2 && m.body.trim().split(/\s+/).length <= 5);
   const name = String(c.lead_name || c.customer_name || '').trim();
+  const nameGuess = nameMsg ? nameMsg.body.trim().replace(/\s+/g, ' ').replace(/\b\w/g, x => x.toUpperCase()) : '';
   const check = {
-    nombre: { ok: !!name, value: name || c.name || '' },
-    cedula: { ok: !!c.cedula_msg, probable: !c.cedula_msg && imgsAfterReq >= 1 },
-    fachada: { ok: !!c.fachada_msg, probable: !c.fachada_msg && imgsAfterReq >= 2 },
+    nombre: { ok: !!name, probable: !name && !!nameGuess, value: name || nameGuess || c.name || '' },
+    cedula: { ok: !!c.cedula_msg, probable: !c.cedula_msg && (gotCedula || imgsAfterReq >= 1), confirmed: gotCedula },
+    fachada: { ok: !!c.fachada_msg, probable: !c.fachada_msg && (gotFachada || imgsAfterReq >= 2), confirmed: gotFachada },
     ubicacion: { ok: !!loc, lat: loc ? loc.lat : null, lng: loc ? loc.lng : null },
   };
   const missing = Object.keys(check).filter(k => !check[k].ok);
@@ -136,7 +150,7 @@ function analyze(c) {
   if (c.customer_id && c.customer_status === 'inactive') stageAuto = 'solicitud';
   else if (isCustomer) stageAuto = 'instalado';
   else if (!missing.length) stageAuto = 'listo';
-  else if (c.cedula_msg || c.fachada_msg || loc || imgsAfterReq > 0) stageAuto = 'parciales';
+  else if (c.cedula_msg || c.fachada_msg || loc || imgsAfterReq > 0 || gotCedula || gotFachada) stageAuto = 'parciales';
   else if (askedReq) stageAuto = 'requisitos';
   else if (informed) stageAuto = 'informado';
   const stage = c.lost_reason ? 'perdido' : (c.lead_stage || stageAuto);

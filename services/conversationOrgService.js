@@ -19,7 +19,7 @@ const { getSetting } = require('../config/settingsManager');
 const conv = require('./conversationService');
 
 const INBOXES = {
-  por_atender: 'Por atender', ventas: 'Ventas', clientes: 'Clientes', cobranza: 'Cobranza',
+  por_atender: 'Por atender', ventas: 'Ventas', soporte: 'Soporte técnico', pagos: 'Pagos y cobranza', clientes: 'Clientes',
   internas: 'Internas', avisos: 'Avisos enviados', archivo: 'Archivo', ocultas: 'Ocultas',
 };
 const IGNORE_REASONS = { personal: 'Personal', promocion: 'Promoción / publicidad', spam: 'Spam / desconocido', otro: 'Otro' };
@@ -40,6 +40,14 @@ const KW = [
   ['adicionales', /(c[aá]mara|seguridad|\btv\b|televis|notebook|computador|\bpc\b|impresora|celular|reparaci[oó]n|equipo inform)/i],
   ['instalacion', /(instal|precio|planes?\b|cobertura|llega (hasta|a)|contratar|cu[aá]nto (sale|cuesta|es)|megas|servicio nuevo|quiero (internet|el servicio|conectar)|fibra)/i],
 ];
+// Temas por puntaje: cuenta lo que escribe el cliente (x2) y lo que respondemos nosotros (Meta AI / persona)
+const TOPIC = {
+  pago: /(comprobante|pago recibido|pagu[eé]|ya pag|\bpag(o|ar|ue)\b|transfer|\bgiro|dep[oó]sit|alias|cu[aá]nto debo|deuda|factura|monto|abon(ar|[eé]|o)|mango|tigo money|billetera)/i,
+  soporte: /(wi-?fi|sin internet|no (anda|funciona|tengo internet|hay internet|carga|conecta|navega|me anda)|funcionando|conexi[oó]n|se[ñn]al|\bluz|luces|roja|reinici|contraseñ|cotrace|clave|t[eé]cnico|dispositivo|lent[oa]|se (corta|cae)|cable|router|m[oó]dem|\bonu\b|velocidad|megas? no)/i,
+  baja: /(retir(ar|o|en|amos)|dar de baja|baja del servicio|ya no (quiero|voy|vamos|lo uso|usamos)|cancelar el servicio|devolver el equipo)/i,
+  instalacion: /(instal|cobertura|requisitos|\bplan(es)?\b|precio|contratar|fachada|c[eé]dula|ubicaci[oó]n)/i,
+  adicionales: /(c[aá]mara|seguridad|\btv\b|televis|notebook|computador|impresora|reparaci)/i,
+};
 const NOTICE = [
   ['Aviso final', /aviso final/i], ['Suspensión', /suspendid|suspensi[oó]n/i], ['Aviso de deuda', /aviso importante|aviso de deuda|registra.*sin pagar/i],
   ['Recordatorio de pago', /recordatorio|le recordamos|te recordamos|est[aá] por vencer/i], ['Confirmación de pago', /pago recibido|comprobante de pago|factura saldada/i],
@@ -67,6 +75,7 @@ function ensureSchema() {
   add('ignored_reason', "TEXT DEFAULT ''");
   add('ignored_by', "TEXT DEFAULT ''");
   add('ignored_at', 'TEXT');
+  add('purged_before', 'TEXT');
   _schema = true;
 }
 
@@ -133,22 +142,30 @@ function analyze(c) {
     if (k) { notice = { type: k[0], ts: m.ts }; break; }
   }
 
-  // motivo
-  let motiveAuto = 'otro';
-  for (const m of fromClient.slice(0, 15)) {
-    const hitKw = KW.find(([, re]) => re.test(m.body || ''));
-    if (hitKw) { motiveAuto = hitKw[0]; break; }
+  // motivo: solo el "episodio" actual (desde la última pausa de más de 3 días), lo más nuevo pesa el doble
+  const episode = [];
+  for (let i = 0; i < msgs.length; i++) {
+    if (i > 0 && (new Date(msgs[i - 1].ts) - new Date(msgs[i].ts)) > 3 * 86400000) break;
+    episode.push(msgs[i]);
   }
+  const score = {};
+  episode.forEach((m, i) => {
+    if (m.sender === 'sistema' || m.sender === 'auto') return; // plantillas automáticas no definen el tema
+    const w = (m.sender === 'cliente' ? 2 : 1) * (i < 6 ? 2 : 1);
+    for (const [k, re] of Object.entries(TOPIC)) if (re.test(m.body || '')) score[k] = (score[k] || 0) + w;
+  });
+  // fotos del cliente que nosotros tratamos como comprobante
+  if (episode.some(m => m.sender === 'cliente' && m.media_type === 'image') && episode.some(m => m.sender !== 'cliente' && /comprobante|pago recibido/i.test(m.body || ''))) score.pago = (score.pago || 0) + 3;
+  let motiveAuto = 'otro', best = 0;
+  for (const k of ['soporte', 'pago', 'baja', 'instalacion', 'adicionales']) if ((score[k] || 0) > best) { best = score[k]; motiveAuto = k; }
   const isCustomer = !!c.customer_id && !['inactive', 'cancelled'].includes(c.customer_status);
   const REQ_RE = /requisitos|c[eé]dula|fachada|ubicaci[oó]n/i;
   const reqMsg = ours.slice().reverse().find(m => ['meta_ai', 'persona', 'auto'].includes(m.sender) && REQ_RE.test(m.body || ''));
   // Quien no es cliente y habló de instalar (o ya le pidieron requisitos) es una venta, aunque mencione el wifi
   if (!isCustomer && !['pago', 'baja', 'adicionales'].includes(motiveAuto) &&
-      (reqMsg || fromClient.some(m => KW[KW.length - 1][1].test(m.body || '')))) motiveAuto = 'instalacion';
-  if (isCustomer && notice && COBRANZA_NOTICES.has(notice.type) && fromClient[0] && fromClient[0].ts > notice.ts &&
-      new Date(fromClient[0].ts) - new Date(notice.ts) < 10 * 86400000 && ['otro', 'pago'].includes(motiveAuto)) {
-    motiveAuto = motiveAuto === 'pago' ? 'pago' : 'cobranza';
-  }
+      (reqMsg || fromClient.some(m => TOPIC.instalacion.test(m.body || '')))) motiveAuto = 'instalacion';
+  // respondió a un aviso de cobranza sin otro tema claro → cobranza
+  if (isCustomer && motiveAuto === 'otro' && notice && COBRANZA_NOTICES.has(notice.type) && episode.some(m => m.ts === notice.ts)) motiveAuto = 'cobranza';
   if (!isCustomer && motiveAuto === 'otro' && clientCount) motiveAuto = 'instalacion';
   const motive = c.motive || motiveAuto;
 
@@ -205,7 +222,8 @@ function analyze(c) {
   else if (!clientCount) inbox = 'avisos';
   else if (c.state === 'waiting_human' || (c.last_sender === 'cliente' && !onlyAck && !(c.dismissed_at && c.dismissed_at >= (c.last_inbound_at || '')))) inbox = 'por_atender';
   else if (!isCustomer) inbox = 'ventas';
-  else if (motive === 'cobranza') inbox = 'cobranza';
+  else if (['pago', 'cobranza', 'baja'].includes(motive)) inbox = 'pagos';
+  else if (motive === 'soporte') inbox = 'soporte';
   else inbox = 'clientes';
 
   const suggest = !c.customer_id && !internal && clientCount ? suggestCustomers([c.name, c.lead_name].filter(Boolean).join(' ')) : [];
@@ -401,24 +419,45 @@ function unignore(ids) {
   _cache.clear();
   return list.length;
 }
-/** Borra los mensajes guardados en el sistema (no toca el WhatsApp del celular) y deja el chat oculto. */
+/**
+ * Borrar del sistema (nunca del WhatsApp del celular). Lo borrado no se vuelve a importar de GoWA (purged_before).
+ *   clear  : vacía los mensajes; el chat queda en su bandeja
+ *   purge  : vacía y oculta (lo nuevo de ese número tampoco se guarda)
+ *   remove : borra el chat entero (mensajes y organización); reaparece solo si el contacto vuelve a escribir
+ */
+function clearMessages(list) {
+  let n = 0;
+  const now = new Date().toISOString();
+  db.transaction(() => {
+    for (const id of list) {
+      n += db.prepare('DELETE FROM wa_messages WHERE conv_id=?').run(id).changes;
+      db.prepare("UPDATE wa_conversations SET purged_before=?, last_preview='(vaciado)', unread=0, cedula_msg=NULL, fachada_msg=NULL, state=CASE WHEN state='waiting_human' THEN 'open' ELSE state END WHERE id=?").run(now, id);
+    }
+  })();
+  _cache.clear();
+  return n;
+}
+function clear(ids) { ensureSchema(); const list = [].concat(ids).map(Number).filter(Boolean); return { convs: list.length, msgs: clearMessages(list) }; }
 function purge(ids, reason, actor) {
   ensureSchema();
   const list = [].concat(ids).map(Number).filter(Boolean);
-  let n = 0;
-  const tx = db.transaction(() => {
-    for (const id of list) {
-      n += db.prepare('DELETE FROM wa_messages WHERE conv_id=?').run(id).changes;
-      db.prepare("UPDATE wa_conversations SET last_preview='(vaciado)', note='', labels='', cedula_msg=NULL, fachada_msg=NULL WHERE id=?").run(id);
-    }
-  });
-  tx();
+  const n = clearMessages(list);
   ignore(list, IGNORE_REASONS[reason] ? reason : 'otro', actor);
+  return { convs: list.length, msgs: n };
+}
+function remove(ids) {
+  ensureSchema();
+  const list = [].concat(ids).map(Number).filter(Boolean);
+  const n = clearMessages(list);
+  db.prepare(`UPDATE wa_conversations SET last_message_at=NULL, last_inbound_at=NULL, last_preview='', last_sender='', state='open',
+    handoff_at=NULL, handoff_alerted_at=NULL, attended_at=NULL, attended_by=NULL, assigned_to='', labels='', note='', motive='', lead_stage='',
+    lost_reason='', lead_name='', dismissed_at=NULL, internal=NULL WHERE id IN (${list.map(() => '?').join(',') || 'NULL'})`).run(...list);
+  _cache.clear();
   return { convs: list.length, msgs: n };
 }
 
 module.exports = {
-  IGNORE_REASONS, ignore, unignore, purge,
+  IGNORE_REASONS, ignore, unignore, purge, clear, remove,
   INBOXES, MOTIVES, STAGES, LOST, ensureSchema, analyze, list, info, setOrg, quickReplies, saveQuickReplies,
   searchCustomers, linkCustomer, createRequest,
 };

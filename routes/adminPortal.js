@@ -2981,7 +2981,9 @@ router.post('/conversations/bulk', requireAdminSession, express.json(), (req, re
     const ids = (Array.isArray(b.ids) ? b.ids : [b.ids]).map(Number).filter(Boolean).slice(0, 500);
     if (!ids.length) throw new Error('No elegiste ninguna conversación');
     const action = String(b.action || '');
-    if ((action === 'purge' || action === 'unignore') && !req.session.isAdmin) throw new Error('Solo el administrador puede hacer esto.');
+    if (['purge', 'unignore', 'clear', 'remove'].includes(action) && !req.session.isAdmin) throw new Error('Solo el administrador puede hacer esto.');
+    if (action === 'clear') { const r = convOrg.clear(ids); return res.json({ ok: true, message: `Se vaciaron ${r.msgs} mensajes de ${r.convs} conversación(es). El chat sigue en su bandeja. En el celular no se borró nada.` }); }
+    if (action === 'remove') { const r = convOrg.remove(ids); return res.json({ ok: true, message: `${r.convs} conversación(es) borrada(s) del sistema (${r.msgs} mensajes). Si el contacto vuelve a escribir, aparece como chat nuevo. En el celular no se borró nada.`, removed: true }); }
     if (action === 'ignore') { const n = convOrg.ignore(ids, String(b.reason || 'otro'), convActor(req)); return res.json({ ok: true, message: n + (n === 1 ? ' conversación oculta.' : ' conversaciones ocultas.') + ' Lo que manden esos números ya no se guarda.' }); }
     if (action === 'unignore') { const n = convOrg.unignore(ids); return res.json({ ok: true, message: n + ' restaurada(s). Desde ahora sus mensajes se guardan de nuevo.' }); }
     if (action === 'purge') { const r = convOrg.purge(ids, String(b.reason || 'otro'), convActor(req)); return res.json({ ok: true, message: `${r.convs} conversación(es) vaciada(s): se borraron ${r.msgs} mensajes del sistema. En el celular no se borró nada.` }); }

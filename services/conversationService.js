@@ -75,6 +75,9 @@ function ensureSchema() {
       created_at TEXT DEFAULT (datetime('now'))
     );
   `);
+  const cols = db.prepare('PRAGMA table_info(wa_conversations)').all().map(c => c.name);
+  if (!cols.includes('ignored')) db.exec('ALTER TABLE wa_conversations ADD COLUMN ignored INTEGER DEFAULT 0');
+  if (!cols.includes('purged_before')) db.exec('ALTER TABLE wa_conversations ADD COLUMN purged_before TEXT');
   _schema = true;
   try { reclassifyWeb(); } catch (e) { logger.warn('[Conversaciones] reclasificar: ' + e.message); }
 }
@@ -173,6 +176,7 @@ function upsertMessage(m) {
   const conv = convFor(m.jid, m.fromMe ? '' : m.name);
   if (conv.ignored === 1) return { conv, ignored: true }; // chat oculto (personal, promoción…): no se guarda
   const ts = iso(m.ts);
+  if (conv.purged_before && ts <= conv.purged_before) return { conv, purged: true }; // ya se borró: no se vuelve a importar
   const sender = m.sender || senderOf(m.waId, m.fromMe, m.body);
   if (!m.byName && sender === 'persona' && /^3EB0/i.test(String(m.waId || ''))) m.byName = 'WhatsApp Web';
   const body = String(m.body || '');
@@ -325,8 +329,9 @@ async function sync() {
     let n = 0;
     for (const c of chats) {
       if (!isPersonal(c.jid)) continue;
-      const conv = db.prepare('SELECT last_message_at FROM wa_conversations WHERE jid=?').get(c.jid);
-      if (conv && conv.last_message_at && iso(c.last_message_time) <= conv.last_message_at) continue;
+      const conv = db.prepare('SELECT last_message_at, purged_before FROM wa_conversations WHERE jid=?').get(c.jid);
+      const seen = conv ? [conv.last_message_at, conv.purged_before].filter(Boolean).sort().pop() : null;
+      if (seen && iso(c.last_message_time) <= seen) continue;
       const list = (await chatMessages(c.jid, conv ? 30 : 300)).sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
       for (const x of list) if (fromStore(c.jid, c.name, x, false).isNew) n++;
     }

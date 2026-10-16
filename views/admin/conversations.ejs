@@ -251,6 +251,7 @@
     if (o.nearClose) h += '<span class="cv-chip hot">🔥 A punto de cerrar</span>';
     if (o.lead && o.stage) h += '<span class="cv-chip lead">' + esc(STAGES[o.stage] || o.stage) + '</span>';
     else if (c.customer_id) h += '<span class="cv-chip cust">Cliente' + (c.customer_status && c.customer_status !== 'active' ? ' · ' + esc(CUST_ST[c.customer_status] || c.customer_status) : '') + '</span>';
+    if (o.suggest && o.suggest.length) h += '<span class="cv-chip cust" title="El nombre coincide con un cliente registrado">¿Cliente? ' + esc(o.suggest[0].name) + '</span>';
     if (o.motive && o.motive !== 'otro') h += '<span class="cv-chip mot">' + esc(MOTIVES[o.motive] || o.motive) + '</span>';
     if (c.unread > 0) h += '<span class="cv-chip unread">' + c.unread + '</span>';
     String(c.labels || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean).slice(0, 2).forEach(function(l){ h += '<span class="cv-chip">' + esc(l) + '</span>'; });
@@ -364,7 +365,10 @@
         (cu.debt ? '<div class="row1"><span>Facturas pendientes</span><span>' + cu.debt.n + (cu.debt.n ? ' · Gs. ' + Number(cu.debt.t).toLocaleString('es-PY') : '') + '</span></div>' : '') +
         (o.notice ? '<div class="row1"><span>Último aviso</span><span>' + esc(o.notice.type) + ' · ' + esc(new Date(o.notice.ts).toLocaleDateString('es-PY')) + '</span></div>' : '') +
         (cu.status === 'inactive' ? '<div class="row1"><span>Solicitud</span><span>' + esc(cu.reg_status === 'approved' ? 'Instalación asignada' : 'Pendiente de aprobar') + '</span></div>' : '') +
-        '<a class="btn btn-g btn-sm" target="_blank" href="/admin/customers?search=' + encodeURIComponent(cu.customer_code || cu.name) + '"><i class="bi bi-person-vcard"></i> Abrir ficha</a></div>';
+        '<a class="btn btn-g btn-sm" target="_blank" href="/admin/customers?search=' + encodeURIComponent(cu.customer_code || cu.name) + '"><i class="bi bi-person-vcard"></i> Abrir ficha</a>' +
+        ((cu.others || []).length ? '<div style="margin-top:8px"><h6>Otras conversaciones de este cliente</h6>' + cu.others.map(function(x){
+          return '<a href="?c=' + x.id + '" onclick="event.preventDefault();openConvExt(' + x.id + ')" style="display:block;font-size:12.5px;padding:3px 0"><i class="bi bi-chat-dots"></i> +' + esc(x.phone || '?') + ' · ' + esc(ago(x.last_message_at)) + (o.newerConv === x.id ? ' · <b>más reciente</b>' : '') + '</a>';
+        }).join('') + '</div>' : '') + '</div>';
     }
     if (o.lead) {
       var so = '<option value="">Automática: ' + esc(STAGES[o.stageAuto] || o.stageAuto) + '</option>' + Object.keys(STAGES).filter(function(k){ return k !== 'perdido'; }).map(function(k){ return '<option value="' + k + '"' + (c.lead_stage === k ? ' selected' : '') + '>' + esc(STAGES[k]) + '</option>'; }).join('');
@@ -385,6 +389,8 @@
         '<div style="margin-top:8px"><label class="fl">Venta perdida</label>' +
         sel_('inLost', '<option value="">— No —</option>' + Object.keys(LOST).map(function(k){ return '<option value="' + k + '"' + (c.lost_reason === k ? ' selected' : '') + '>' + esc(LOST[k]) + '</option>'; }).join(''), '', 'onchange="orgSet({lost_reason:this.value})"') + '</div>' +
         '</div>';
+      if (o.suggest && o.suggest.length) h += '<div style="border:1px solid rgba(34,197,94,.45);border-radius:8px;padding:8px"><h6 style="color:#4ade80">¿Es cliente?</h6><div style="font-size:12.5px;margin-bottom:6px">El nombre de WhatsApp coincide con:</div>' +
+        o.suggest.map(function(x){ return '<div style="display:flex;justify-content:space-between;gap:6px;align-items:center;padding:3px 0"><span><b>' + esc(x.name) + '</b> <span class="text-muted">' + esc(x.customer_code || '') + ' · ' + esc(CUST_ST[x.status] || x.status) + '</span></span><button class="btn btn-p btn-sm" style="width:auto;margin:0" onclick="lkQuick(' + x.id + ',\'' + esc(x.name).replace(/'/g, '') + '\')">Vincular</button></div>'; }).join('') + '</div>';
       h += '<div><button class="btn btn-g btn-sm" onclick="lkOpen()"><i class="bi bi-link-45deg"></i> Es cliente: vincular</button></div>';
     }
     h += '<div><h6>Organización</h6>' +
@@ -538,6 +544,14 @@
     document.querySelectorAll('#lkRes [data-id]').forEach(function(x){ x.classList.toggle('on', x === it); });
     document.getElementById('lkBtn').disabled = false;
   });
+  window.openConvExt = function(id){ openConv(id); loadList(); };
+  window.lkQuick = function(id, name){
+    if (!conv || !confirm('¿Este chat es de ' + name + '? El número +' + (conv.phone || '') + ' queda como teléfono adicional del cliente.')) return;
+    api('/admin/conversations/' + conv.id + '/link', { customer_id: id }).then(function(d){
+      if (!d.ok) return toast(d.message, true);
+      toast(d.message); poll(true); loadList();
+    });
+  };
   window.lkSave = function(){
     if (!lkSel || !conv) return;
     var b = document.getElementById('lkBtn'); b.disabled = true;

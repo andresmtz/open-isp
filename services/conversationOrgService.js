@@ -80,6 +80,28 @@ function staffPhones() {
   return set;
 }
 
+// Posibles clientes por nombre (para chats desde un número que no está en su ficha)
+const NAME_STOP = new Set(['km', 'de', 'del', 'la', 'el', 'los', 'las', 'y', 'new', 'nuevo', 'pon', 'pon1', 'pon2', 'sra', 'sr', 'don', 'doña']);
+const norm = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const words = (t) => norm(t).split(/[^a-zñ]+/).filter(w => w.length >= 3 && !NAME_STOP.has(w));
+let _cust = { at: 0, list: [] };
+function customersForMatch() {
+  if (Date.now() - _cust.at < 120000) return _cust.list;
+  const list = db.prepare("SELECT id, name, customer_code, status FROM customers WHERE status != 'cancelled'").all()
+    .map(c => Object.assign(c, { w: new Set(words(c.name)) }));
+  _cust = { at: Date.now(), list };
+  return list;
+}
+function suggestCustomers(name) {
+  const w = words(name);
+  if (w.length < 2) return [];
+  return customersForMatch()
+    .map(c => ({ c, n: w.filter(x => c.w.has(x)).length }))
+    .filter(x => x.n >= 2)
+    .sort((a, b) => b.n - a.n).slice(0, 3)
+    .map(x => ({ id: x.c.id, name: x.c.name, customer_code: x.c.customer_code, status: x.c.status }));
+}
+
 // ── análisis de una conversación ────────────────────────────────────────────
 const _cache = new Map();
 function analyze(c) {
@@ -160,17 +182,20 @@ function analyze(c) {
   const archiveDays = Math.max(1, Number(getSetting('crm_archive_days', 30)) || 30);
   const internal = c.internal === 1 || (c.internal !== 0 && staffPhones().has(intl(c.phone)));
   const old = !c.last_message_at || (Date.now() - new Date(c.last_message_at)) > archiveDays * 86400000;
+  // el mismo cliente tiene una conversación más reciente desde otro número: esta queda en el archivo
+  const newer = c.customer_id ? db.prepare('SELECT id FROM wa_conversations WHERE customer_id=? AND id!=? AND last_message_at > ? LIMIT 1').get(c.customer_id, c.id, c.last_message_at || '') : null;
   let inbox;
   if (internal) inbox = 'internas';
-  else if (c.state === 'closed' || (old && c.state !== 'waiting_human')) inbox = 'archivo';
+  else if (c.state === 'closed' || old || newer) inbox = 'archivo';
   else if (!clientCount) inbox = 'avisos';
   else if (c.state === 'waiting_human' || c.last_sender === 'cliente') inbox = 'por_atender';
   else if (!isCustomer) inbox = 'ventas';
   else if (motive === 'cobranza') inbox = 'cobranza';
   else inbox = 'clientes';
 
+  const suggest = !c.customer_id && !internal && clientCount ? suggestCustomers([c.name, c.lead_name].filter(Boolean).join(' ')) : [];
   const data = {
-    inbox, motive, motiveAuto, stage, stageAuto, check, missing, nearClose, notice, internal,
+    inbox, motive, motiveAuto, stage, stageAuto, check, missing, nearClose, notice, internal, suggest, newerConv: newer ? newer.id : null,
     images, lead: !isCustomer, waitingSince: c.state === 'waiting_human' ? c.handoff_at : (c.last_sender === 'cliente' ? c.last_inbound_at : null),
   };
   _cache.set(c.id, { key, data });
@@ -217,7 +242,8 @@ function info(convId, { money = false } = {}) {
       let onu = null;
       try { onu = db.prepare('SELECT status, onu_ref, seen_at FROM onu_inventory WHERE customer_id=? ORDER BY id DESC LIMIT 1').get(cu.id) || null; } catch (_) {}
       const debt = money ? db.prepare("SELECT COUNT(*) n, COALESCE(SUM(amount - COALESCE(amount_paid,0)),0) t FROM invoices WHERE customer_id=? AND status='unpaid'").get(cu.id) : null;
-      out.customer = Object.assign(cu, { tickets, onu, debt });
+      const others = db.prepare('SELECT id, phone, name, last_message_at FROM wa_conversations WHERE customer_id=? AND id!=? ORDER BY last_message_at DESC').all(cu.id, c.id);
+      out.customer = Object.assign(cu, { tickets, onu, debt, others });
     }
   }
   return out;
@@ -296,6 +322,7 @@ function linkCustomer(convId, customerId) {
     cp.save(cust.id, list);
   }
   db.prepare('UPDATE wa_conversations SET customer_id=? WHERE id=?').run(cust.id, c.id);
+  _cache.clear(); _cust.at = 0;
   return { ok: true, name: cust.name };
 }
 
@@ -313,6 +340,7 @@ async function createRequest(convId, data, actor) {
     lat, lng, notes: ['Solicitud cargada desde Conversaciones de WhatsApp', String(data.notes || '').trim()].filter(Boolean).join(' — '),
   }, { source: 'WhatsApp', actor });
   db.prepare("UPDATE wa_conversations SET customer_id=?, lead_name=?, lead_stage='' WHERE id=?").run(cust.id, String(data.name || '').trim(), c.id);
+  _cache.clear(); _cust.at = 0;
   // fotos marcadas → documentos del cliente
   const docs = require('./customerDocumentService');
   const attached = [];

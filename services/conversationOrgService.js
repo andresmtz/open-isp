@@ -43,7 +43,7 @@ const KW = [
 // Temas por puntaje: cuenta lo que escribe el cliente (x2) y lo que respondemos nosotros (Meta AI / persona)
 const TOPIC = {
   pago: /(comprobante|pago recibido|pagu[eé]|ya pag|\bpag(o|ar|ue)\b|transfer|\bgiro|dep[oó]sit|alias|cu[aá]nto debo|deuda|factura|monto|abon(ar|[eé]|o)|mango|tigo money|billetera)/i,
-  soporte: /(wi-?fi|sin internet|no (anda|funciona|tengo internet|hay internet|carga|conecta|navega|me anda)|funcionando|conexi[oó]n|se[ñn]al|\bluz|luces|roja|reinici|contraseñ|cotrace|clave|t[eé]cnico|dispositivo|lent[oa]|se (corta|cae)|cable|router|m[oó]dem|\bonu\b|velocidad|megas? no)/i,
+  soporte: /(sin (servicio|internet|wi-?fi|wfi|se[ñn]al|conexi|luz|energ)|no (anda|funciona|tengo (internet|wi-?fi|se[ñn]al)|hay (internet|se[ñn]al)|carga|conecta|navega|me anda|est[aá] funcionando|funcion)|est[aá] funcionando|luz roja|luces|\broja\b|qu[eé] pas[oó]|volver(á)? (el|la) (wi-?fi|internet|servicio|se[ñn]al)|reactiv|reinici|contraseñ|cotrace|clave|dispositivo|lent[oa]|se (corta|cae|cort[oó])|cable|router|m[oó]dem|\bonu\b|velocidad|conexi[oó]n|se[ñn]al)/i,
   baja: /(retir(ar|o|en|amos)|dar de baja|baja del servicio|ya no (quiero|voy|vamos|lo uso|usamos)|cancelar el servicio|devolver el equipo)/i,
   instalacion: /(instal|cobertura|requisitos|\bplan(es)?\b|precio|contratar|fachada|c[eé]dula|ubicaci[oó]n)/i,
   adicionales: /(c[aá]mara|seguridad|\btv\b|televis|notebook|computador|impresora|reparaci)/i,
@@ -158,7 +158,13 @@ function analyze(c) {
   const recent = episode.slice(0, 6);
   if (recent.some(m => m.sender === 'cliente' && m.media_type === 'image') && recent.some(m => m.sender !== 'cliente' && /comprobante|pago recibido/i.test(m.body || ''))) score.pago = (score.pago || 0) + 4;
   let motiveAuto = 'otro', best = 0;
-  for (const k of ['soporte', 'pago', 'baja', 'instalacion', 'adicionales']) if ((score[k] || 0) > best) { best = score[k]; motiveAuto = k; }
+  // 1) lo que escribió el cliente en sus últimos mensajes de texto manda
+  const clientTexts = episode.filter(m => m.sender === 'cliente' && m.body && !ACK_RE.test(String(m.body).trim())).slice(0, 3);
+  const cscore = {};
+  clientTexts.forEach((m, i) => { for (const [k, re] of Object.entries(TOPIC)) if (re.test(m.body)) cscore[k] = (cscore[k] || 0) + (3 - i); });
+  for (const k of ['soporte', 'baja', 'pago', 'instalacion', 'adicionales']) if ((cscore[k] || 0) > best) { best = cscore[k]; motiveAuto = k; }
+  // 2) si el cliente no escribió nada que indique el tema (audios, fotos, "gracias"), se usa toda la conversación reciente
+  if (!best) for (const k of ['soporte', 'pago', 'baja', 'instalacion', 'adicionales']) if ((score[k] || 0) > best) { best = score[k]; motiveAuto = k; }
   const isCustomer = !!c.customer_id && !['inactive', 'cancelled'].includes(c.customer_status);
   const REQ_RE = /requisitos|c[eé]dula|fachada|ubicaci[oó]n/i;
   const reqMsg = ours.slice().reverse().find(m => ['meta_ai', 'persona', 'auto'].includes(m.sender) && REQ_RE.test(m.body || ''));

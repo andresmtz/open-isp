@@ -2892,6 +2892,71 @@ router.post('/gowa/update', requireAdminSession, express.json(), async (req, res
 });
 
 // Cobros por cuenta o billetera (para conciliar con los extractos): detalle y totales por destino, en un rango de fechas
+// ─── CONVERSACIONES DE WHATSAPP (CRM, fase 0: bandeja) ───────────────────────
+const convSvc = require('../services/conversationService');
+const convActor = (req) => req.session.isAdmin ? (req.session.adminUser || 'Administrador') : (req.session.cashierName || 'Oficina');
+router.get('/conversations', requireAdminSession, (req, res) => {
+  try {
+    convSvc.ensureSchema();
+    res.render('admin/conversations', {
+      title: 'Conversaciones', company: company(), activePage: 'conversations', msg: flashMsg(req),
+      selected: Number(req.query.c) || 0, isAdmin: !!req.session.isAdmin,
+      senders: convSvc.SENDERS, states: convSvc.STATES,
+      inHours: convSvc.inBusinessHours(), hours: getSetting('crm_business_hours', '1-5 08:00-17:00'),
+      alertMinutes: Number(getSetting('crm_handoff_alert_minutes', 2)) || 2,
+    });
+  } catch (e) { logger.error('[Conversaciones] ' + e.message); res.status(500).send('Error: ' + e.message); }
+});
+router.get('/conversations/list', requireAdminSession, (req, res) => {
+  try { res.json({ ok: true, items: convSvc.list({ filter: req.query.f || 'open', q: req.query.q || '' }), counts: convSvc.counts() }); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.get('/conversations/counts', requireAdminSession, (req, res) => {
+  try { res.json({ ok: true, counts: convSvc.counts() }); } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.get('/conversations/:id/messages', requireAdminSession, (req, res) => {
+  try {
+    const conv = convSvc.get(Number(req.params.id));
+    if (!conv) return res.json({ ok: false, message: 'Conversación no encontrada' });
+    res.json({ ok: true, conv, messages: convSvc.messages(conv.id, { afterId: req.query.after }) });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/conversations/:id/read', requireAdminSession, (req, res) => {
+  try { convSvc.markRead(Number(req.params.id)); res.json({ ok: true }); } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/conversations/:id/reply', requireAdminSession, express.json(), express.urlencoded({ extended: true }), async (req, res) => {
+  try { await convSvc.reply(Number(req.params.id), (req.body || {}).text, convActor(req)); res.json({ ok: true }); }
+  catch (e) { res.json({ ok: false, message: 'No se pudo enviar: ' + e.message }); }
+});
+router.post('/conversations/:id/state', requireAdminSession, express.json(), express.urlencoded({ extended: true }), (req, res) => {
+  try { convSvc.setState(Number(req.params.id), String((req.body || {}).state || ''), convActor(req)); res.json({ ok: true }); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/conversations/:id/update', requireAdminSession, express.json(), express.urlencoded({ extended: true }), (req, res) => {
+  try { convSvc.update(Number(req.params.id), req.body || {}); res.json({ ok: true }); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.get('/conversations/media/:id', requireAdminSession, async (req, res) => {
+  try {
+    const m = convSvc.message(Number(req.params.id));
+    if (!m || !m.media_type || m.media_type === 'location') return res.status(404).send('Sin archivo');
+    const rel = await convSvc.mediaPathFor(m, m.jid);
+    if (!rel) return res.status(404).send('Archivo no disponible');
+    const r = await convSvc.fetchMedia(rel);
+    res.setHeader('Content-Type', r.headers.get('content-type') || 'application/octet-stream');
+    res.setHeader('Cache-Control', 'private, max-age=86400');
+    res.send(Buffer.from(await r.arrayBuffer()));
+  } catch (e) { res.status(404).send('Archivo no disponible: ' + e.message); }
+});
+router.post('/conversations/sync', requireAdminSession, async (req, res) => {
+  try {
+    const full = !!(req.session.isAdmin && (req.body && req.body.full || req.query.full));
+    const r = full ? await convSvc.importHistory() : await convSvc.sync();
+    convSvc.relink();
+    res.json({ ok: true, ...r });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+
 router.get('/finance/by-account', requireAdminSession, restrictToAdmin, (req, res) => {
   require('../services/paymentReversalService').ensureSchema();
   const today = require('../config/billingCycle').nowStamp().slice(0, 10);

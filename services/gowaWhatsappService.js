@@ -110,6 +110,13 @@ async function sendGowaMessage(toPhone, messageText, options = {}) {
   const json = await postJson('/send/message', { phone: normalizePhoneJid(toPhone), message: String(messageText || '') });
   return { success: true, gateway: 'gowa', id: (json && json.results && json.results.message_id) || null, raw: json };
 }
+/** Envía texto a un chat por su JID tal cual (sirve también para números extranjeros y chats @lid). */
+async function sendGowaText(jid, messageText) {
+  const to = String(jid || '').trim();
+  if (!/@(s\.whatsapp\.net|lid)$/.test(to)) throw new Error('Chat de WhatsApp inválido');
+  const json = await postJson('/send/message', { phone: to, message: String(messageText || '') });
+  return { success: true, gateway: 'gowa', id: (json && json.results && json.results.message_id) || null, raw: json };
+}
 async function sendGowaImage(toPhone, imageBuffer, caption = '', options = {}) {
   const buf = Buffer.isBuffer(imageBuffer) ? imageBuffer : Buffer.from(imageBuffer || []);
   if (!buf.length) throw new Error('La imagen está vacía');
@@ -185,4 +192,4 @@ async function getLastQrImage() {
   } catch (e) { return null; }
 }
 
-module.exports = { sendGowaMessage, sendGowaImage, sendGowaDocument, testGowaConnection, gowaStatus, listDevices, ensureDevice, getLoginQr, getLastQrImage, normalizePhoneJid, baseUrl, resolveDeviceId, invalidateDeviceCache };
+module.exports = { sendGowaMessage, sendGowaText, sendGowaImage, sendGowaDocument, testGowaConnection, gowaStatus, listDevices, ensureDevice, getLoginQr, getLastQrImage, normalizePhoneJid, baseUrl, resolveDeviceId, invalidateDeviceCache };

@@ -409,6 +409,15 @@ function startCronJobs() {
   cron.schedule('30 3 * * 0', async () => {
     try { const eq = require('./customerEquipmentService'); eq.backfill(); await eq.snapshotWifi(); } catch (e) { logger.warn('[Equipo] ' + e.message); }
   }, { timezone: getSetting('timezone', 'America/Asuncion') || 'America/Asuncion' });
+  // Conversaciones de WhatsApp (services/conversationService.js): respaldo del webhook y avisos de derivación de Meta AI
+  let _convErrAt = 0;
+  cron.schedule('*/20 * * * * *', async () => {
+    if (String(getSetting('crm_enabled', true)) === 'false') return;
+    if (String(getSetting('wa_gateway_type', 'gowa') || '').toLowerCase() !== 'gowa') return;
+    const conv = require('./conversationService');
+    try { await conv.sync(); await conv.checkHandoffs(); }
+    catch (e) { if (Date.now() - _convErrAt > 600000) { _convErrAt = Date.now(); logger.warn('[Conversaciones] ' + e.message); } }
+  });
   cron.schedule('*/2 * * * *', async () => {
     // Comprobantes de pago recibidos por WhatsApp (services/paymentProofService.js): se leen y quedan para revisar
     try { await require('./paymentProofService').scan(); } catch (e) { logger.warn('[Comprobantes] ' + e.message); }

@@ -31,6 +31,7 @@ const MENU_DEFINITIONS = [
     { key: 'monitoring', section: 'main', href: '/admin/monitoring', icon: 'bi bi-activity', labelKey: 'admin.nav.monitoring', labelDefault: 'Monitoreo del sistema', roles: ['admin'], activePages: ['monitoring'] }
   ] },
   { key: 'map', section: 'main', href: '/admin/map', icon: 'bi bi-map', labelKey: 'admin.nav.network_map', labelDefault: 'Mapa de red', roles: ['admin', 'cashier'], bottomNav: true, bottomNavOrder: 4, activePages: ['map'] },
+  { key: 'conversations', section: 'main', href: '/admin/conversations', icon: 'bi bi-chat-dots', labelKey: 'admin.nav.conversations', labelDefault: 'Conversaciones', roles: ['admin', 'cashier'], activePages: ['conversations'] },
   { key: 'whatsapp', section: 'main', href: '/admin/whatsapp', icon: 'bi bi-whatsapp', labelKey: 'admin.nav.whatsapp', labelDefault: 'WhatsApp', roles: ['admin', 'cashier'], cashierHref: '/admin/whatsapp/live-chat', activePages: ['whatsapp','broadcast','whatsapp_live_chat','whatsapp_templates'] },
   { key: 'automation', section: 'main', href: '/admin/automation', icon: 'bi bi-robot', labelKey: 'admin.nav.automation', labelDefault: 'Automatización', roles: ['admin'], activePages: ['automation'] },
 
@@ -118,6 +119,7 @@ const DEFAULT_MENU_STATES = {
   reports: STATE_VISIBLE,
   cashiers_reports: STATE_VISIBLE,
   account_collections: STATE_VISIBLE,
+  conversations: STATE_VISIBLE,
   collector_payments: STATE_VISIBLE,
   tickets: STATE_VISIBLE,
   inventory: STATE_VISIBLE,

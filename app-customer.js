@@ -1683,6 +1683,8 @@ app.post('/api/webhook/gowa', async (req, res) => {
 
     let data = {};
     try { data = JSON.parse(raw); } catch (e) { data = (req.body && typeof req.body === 'object') ? req.body : {}; }
+    // Bandeja de Conversaciones (CRM): todo lo que entra y sale, incluidos Meta AI, ubicaciones y archivos
+    try { require('./services/conversationService').ingestWebhook(data); } catch (e) { logger.warn('[GOWA webhook] conversaciones: ' + e.message); }
     if (String(data.event || '') !== 'message') return res.status(200).send('OK');
 
     const p = data.payload || {};

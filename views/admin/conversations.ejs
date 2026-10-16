@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="<%= typeof lang !== 'undefined' && lang ? lang : 'es' %>">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Conversaciones | <%= company %></title>
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .cv-wrap{display:grid;grid-template-columns:340px 1fr;gap:12px;height:calc(100vh - 150px);min-height:480px}
+    .cv-pane{display:flex;flex-direction:column;min-height:0;margin:0;padding:0;overflow:hidden}
+    .cv-tools{padding:10px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+    .cv-tabs{display:flex;gap:6px;flex-wrap:wrap}
+    .cv-tab{font-size:12px;padding:4px 9px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer}
+    .cv-tab.on{background:var(--primary);color:#0b0f14;border-color:var(--primary);font-weight:700}
+    .cv-tab .n{font-weight:800;margin-left:3px}
+    .cv-list{overflow-y:auto;flex:1}
+    .cv-item{padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;flex-direction:column;gap:3px}
+    .cv-item:hover{background:rgba(255,255,255,.03)}
+    .cv-item.on{background:rgba(173,255,47,.08);border-left:3px solid var(--primary)}
+    .cv-item .t{display:flex;justify-content:space-between;gap:6px;font-weight:700;font-size:13.5px}
+    .cv-item .t span:last-child{font-weight:400;font-size:11px;color:var(--muted);white-space:nowrap}
+    .cv-item .p{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cv-item .b{display:flex;gap:4px;flex-wrap:wrap}
+    .cv-chip{font-size:10.5px;padding:1px 7px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+    .cv-chip.wait{border-color:#f59e0b;color:#f59e0b;font-weight:700}
+    .cv-chip.cust{border-color:#22c55e;color:#22c55e}
+    .cv-chip.lead{border-color:#38bdf8;color:#38bdf8}
+    .cv-chip.unread{background:#22c55e;color:#04110a;border-color:#22c55e;font-weight:800}
+    .cv-chip.closed{opacity:.7}
+    .cv-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .cv-head .who{flex:1;min-width:180px}
+    .cv-head .who b{font-size:15px}
+    .cv-head .who div{font-size:12px;color:var(--muted)}
+    .cv-acts{display:flex;gap:6px;flex-wrap:wrap}
+    .cv-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:rgba(0,0,0,.12)}
+    .cv-day{align-self:center;font-size:11px;color:var(--muted);padding:2px 10px;border:1px solid var(--border);border-radius:999px;margin:6px 0}
+    .cv-m{max-width:78%;padding:7px 10px 5px;border-radius:10px;font-size:13.5px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word;border:1px solid transparent}
+    .cv-m .who{font-size:10.5px;font-weight:800;margin-bottom:2px;letter-spacing:.2px}
+    .cv-m .tm{font-size:10px;color:var(--muted);text-align:right;margin-top:3px}
+    .cv-m.cliente{align-self:flex-start;background:var(--bg2,#1b2230);border-color:var(--border)}
+    .cv-m.meta_ai{align-self:flex-end;background:rgba(124,58,237,.16);border-color:rgba(124,58,237,.45)}
+    .cv-m.meta_ai .who{color:#a78bfa}
+    .cv-m.persona{align-self:flex-end;background:rgba(34,197,94,.14);border-color:rgba(34,197,94,.45)}
+    .cv-m.persona .who{color:#4ade80}
+    .cv-m.sistema,.cv-m.auto{align-self:flex-end;background:rgba(56,189,248,.10);border-color:rgba(56,189,248,.35)}
+    .cv-m.sistema .who,.cv-m.auto .who{color:#38bdf8}
+    .cv-m.handoff{border-color:#f59e0b;box-shadow:0 0 0 1px rgba(245,158,11,.4)}
+    .cv-m img.media{max-width:260px;max-height:260px;border-radius:8px;display:block;margin:4px 0;cursor:zoom-in}
+    .cv-m img.sticker{max-width:110px}
+    .cv-m audio,.cv-m video{max-width:260px;display:block;margin:4px 0}
+    .cv-box{border-top:1px solid var(--border);padding:10px;display:flex;gap:8px;align-items:flex-end}
+    .cv-box textarea{flex:1;resize:none;min-height:42px;max-height:160px}
+    .cv-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:30px;font-size:14px}
+    .cv-side{padding:8px 14px;border-bottom:1px solid var(--border);display:none;gap:8px;flex-wrap:wrap;align-items:flex-end;font-size:12px}
+    .cv-side.open{display:flex}
+    .cv-side .fg{margin:0;min-width:180px;flex:1}
+    .cv-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
+    .cv-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+    .cv-back{display:none}
+    @media (max-width: 900px){
+      .cv-wrap{grid-template-columns:1fr;height:calc(100vh - 130px)}
+      .cv-wrap.chat .cv-left{display:none}
+      .cv-wrap:not(.chat) .cv-right{display:none}
+      .cv-back{display:inline-flex}
+      .cv-m{max-width:90%}
+    }
+  </style>
+</head>
+<body>
+<%- include('partials/sidebar', { activePage: 'conversations', company }) %>
+<div class="mw">
+  <div class="topbar">
+    <div class="tb-title">
+      <button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+      <i class="bi bi-chat-dots"></i><span>Conversaciones</span>
+    </div>
+  </div>
+  <div class="page">
+    <% if (msg) { %><div class="alert alert-<%= msg.type==='error'?'d':'s' %>" data-flash="1"><%= msg.text %></div><% } %>
+    <div class="cv-legend" style="margin-bottom:8px">
+      <span><i style="background:#334155"></i>Cliente</span>
+      <span><i style="background:#7c3aed"></i>Meta AI</span>
+      <span><i style="background:#22c55e"></i>Persona (oficina)</span>
+      <span><i style="background:#38bdf8"></i>Sistema / automático</span>
+      <span style="margin-left:auto"><i class="bi bi-clock"></i> Atención humana: <b><%= hours %></b> · aviso a la oficina a los <b><%= alertMinutes %> min</b> de una derivación<%= inHours ? '' : ' · ahora fuera de horario' %></span>
+    </div>
+    <div class="cv-wrap" id="cvWrap">
+      <div class="card cv-pane cv-left">
+        <div class="cv-tools">
+          <input class="fc" id="cvQ" placeholder="Buscar nombre, teléfono, etiqueta o texto…" autocomplete="off">
+          <div class="cv-tabs" id="cvTabs">
+            <button class="cv-tab on" data-f="open">Abiertas <span class="n" id="nOpen"></span></button>
+            <button class="cv-tab" data-f="waiting">Esperando persona <span class="n" id="nWait"></span></button>
+            <button class="cv-tab" data-f="unread">Sin leer <span class="n" id="nUnread"></span></button>
+            <button class="cv-tab" data-f="customers">Clientes</button>
+            <button class="cv-tab" data-f="leads">No clientes</button>
+            <button class="cv-tab" data-f="closed">Cerradas</button>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-g btn-sm" onclick="cvSync(false, this)"><i class="bi bi-arrow-repeat"></i> Buscar nuevos</button>
+            <% if (isAdmin) { %><button class="btn btn-g btn-sm" onclick="cvSync(true, this)" title="Trae todo el historial guardado en GoWA. Se puede repetir: no duplica."><i class="bi bi-cloud-download"></i> Importar historial</button><% } %>
+          </div>
+        </div>
+        <div class="cv-list" id="cvList"><div class="cv-empty">Cargando…</div></div>
+      </div>
+      <div class="card cv-pane cv-right" id="cvRight">
+        <div class="cv-empty" id="cvNone">Elegí una conversación de la lista.</div>
+        <div id="cvChat" style="display:none;flex-direction:column;flex:1;min-height:0">
+          <div class="cv-head">
+            <button class="btn btn-g btn-sm cv-back" onclick="cvBack()"><i class="bi bi-arrow-left"></i></button>
+            <div class="who"><b id="cvName"></b><div id="cvSub"></div></div>
+            <div class="cv-acts" id="cvActs"></div>
+          </div>
+          <div class="cv-side" id="cvSide">
+            <div class="fg"><label class="fl">Asignada a</label><input class="fc" id="cvAssigned" maxlength="80" placeholder="Nombre de quien la atiende"></div>
+            <div class="fg"><label class="fl">Etiquetas (separadas por coma)</label><input class="fc" id="cvLabels" maxlength="300" placeholder="interesado, instalación, cámaras…"></div>
+            <div class="fg" style="flex-basis:100%"><label class="fl">Nota interna (el cliente no la ve)</label><textarea class="fc" id="cvNote" rows="2" maxlength="2000"></textarea></div>
+            <button class="btn btn-p btn-sm" onclick="cvSaveSide(this)"><i class="bi bi-check2"></i> Guardar</button>
+          </div>
+          <div class="cv-msgs" id="cvMsgs"></div>
+          <div class="cv-box">
+            <textarea class="fc" id="cvText" rows="1" placeholder="Escribí una respuesta… (Ctrl+Enter para enviar)"></textarea>
+            <button class="btn btn-p" id="cvSend" onclick="cvSend()"><i class="bi bi-send"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var SENDERS = <%- JSON.stringify(senders) %>;
+  var STATES = <%- JSON.stringify(states) %>;
+  var CUST_ST = { active: 'Activo', suspended: 'Suspendido', inactive: 'Inscripto', cancelled: 'Cancelado', ditangguhkan: 'Con promesa' };
+  var filter = 'open', q = '', sel = <%= Number(selected) || 0 %>, lastId = 0, conv = null, items = [];
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  var fmtT = function(iso){ var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' }); };
+  var fmtD = function(iso){ var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('es-PY', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }); };
+  var ago = function(iso){
+    var d = new Date(iso); if (isNaN(d)) return '';
+    var m = Math.round((Date.now() - d) / 60000);
+    if (m < 1) return 'ahora'; if (m < 60) return 'hace ' + m + ' min';
+    var h = Math.round(m / 60); if (h < 24) return 'hace ' + h + ' h';
+    return d.toLocaleDateString('es-PY', { day: '2-digit', month: '2-digit' });
+  };
+  var api = function(url, body){
+    return fetch(url, body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) })
+      .then(function(r){ return r.json(); });
+  };
+  var toast = function(t, err){ if (window.notify) window.notify(err ? 'error' : 'success', err ? 'Error' : 'Listo', t); else if (err) alert(t); };
+
+  function chips(c){
+    var h = '';
+    if (c.state === 'waiting_human') h += '<span class="cv-chip wait"><i class="bi bi-person-raised-hand"></i> Esperando persona · ' + esc(ago(c.handoff_at)) + '</span>';
+    if (c.state === 'closed') h += '<span class="cv-chip closed">Cerrada</span>';
+    if (c.customer_id) h += '<span class="cv-chip cust">Cliente' + (c.customer_status && c.customer_status !== 'active' ? ' · ' + esc(CUST_ST[c.customer_status] || c.customer_status) : '') + '</span>';
+    else h += '<span class="cv-chip lead">No cliente</span>';
+    if (c.unread > 0) h += '<span class="cv-chip unread">' + c.unread + '</span>';
+    String(c.labels || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean).slice(0, 3).forEach(function(l){ h += '<span class="cv-chip">' + esc(l) + '</span>'; });
+    if (c.assigned_to) h += '<span class="cv-chip"><i class="bi bi-person"></i> ' + esc(c.assigned_to) + '</span>';
+    return h;
+  }
+  function title(c){ return c.customer_name || c.name || ('+' + (c.phone || '?')); }
+
+  function loadList(){
+    return api('/admin/conversations/list?f=' + encodeURIComponent(filter) + '&q=' + encodeURIComponent(q)).then(function(d){
+      if (!d.ok) return;
+      items = d.items || [];
+      var n = d.counts || {};
+      document.getElementById('nOpen').textContent = n.open || '';
+      document.getElementById('nWait').textContent = n.waiting || '';
+      document.getElementById('nUnread').textContent = n.unread || '';
+      var el = document.getElementById('cvList');
+      if (!items.length) { el.innerHTML = '<div class="cv-empty">No hay conversaciones en esta vista.</div>'; return; }
+      el.innerHTML = items.map(function(c){
+        var pre = (c.last_sender && c.last_sender !== 'cliente' ? (SENDERS[c.last_sender] || '') + ': ' : '') + (c.last_preview || '');
+        return '<div class="cv-item' + (c.id === sel ? ' on' : '') + '" data-id="' + c.id + '">' +
+          '<div class="t"><span>' + esc(title(c)) + '</span><span>' + esc(ago(c.last_message_at)) + '</span></div>' +
+          '<div class="p">' + esc(pre) + '</div><div class="b">' + chips(c) + '</div></div>';
+      }).join('');
+    });
+  }
+
+  function bubble(m){
+    var cls = m.sender || 'cliente';
+    var who = cls === 'cliente' ? '' : (SENDERS[cls] || cls) + (m.by_name ? ' · ' + m.by_name : '');
+    var body = '';
+    var src = '/admin/conversations/media/' + m.id;
+    if (m.media_type === 'image') body += '<a href="' + src + '" target="_blank"><img class="media" loading="lazy" src="' + src + '" alt="Imagen"></a>';
+    else if (m.media_type === 'sticker') body += '<img class="media sticker" loading="lazy" src="' + src + '" alt="Sticker">';
+    else if (m.media_type === 'audio' || m.media_type === 'ptt') body += '<audio controls preload="none" src="' + src + '"></audio>';
+    else if (m.media_type === 'video') body += '<video controls preload="none" src="' + src + '"></video>';
+    else if (m.media_type === 'document') body += '<a href="' + src + '" target="_blank"><i class="bi bi-file-earmark"></i> ' + esc(m.filename || 'Documento') + '</a>';
+    else if (m.media_type === 'call') body += '<i class="bi bi-telephone"></i> Llamada';
+    if (m.lat != null && m.lng != null) body += '<a href="https://maps.google.com/?q=' + m.lat + ',' + m.lng + '" target="_blank"><i class="bi bi-geo-alt-fill"></i> Ubicación (' + Number(m.lat).toFixed(5) + ', ' + Number(m.lng).toFixed(5) + ')</a>';
+    if (m.body) body += (body ? '\n' : '') + esc(m.body);
+    if (!body) body = '<span class="text-muted">(sin texto)</span>';
+    var handoff = cls === 'meta_ai' && /pasado la conversaci[oó]n a un miembro del equipo/i.test(m.body || '');
+    return '<div class="cv-m ' + cls + (handoff ? ' handoff' : '') + '" data-id="' + m.id + '">' +
+      (who ? '<div class="who">' + esc(who) + (handoff ? ' · <i class="bi bi-person-raised-hand"></i> derivó a una persona' : '') + '</div>' : '') +
+      body + '<div class="tm">' + esc(fmtT(m.ts)) + '</div></div>';
+  }
+  var lastDay = '';
+  function appendMsgs(list, reset){
+    var box = document.getElementById('cvMsgs');
+    var atBottom = reset || box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+    if (reset) { box.innerHTML = ''; lastDay = ''; }
+    var h = '';
+    list.forEach(function(m){
+      var day = fmtD(m.ts);
+      if (day !== lastDay) { h += '<div class="cv-day">' + esc(day) + '</div>'; lastDay = day; }
+      h += bubble(m);
+      if (m.id > lastId) lastId = m.id;
+    });
+    box.insertAdjacentHTML('beforeend', h);
+    if (atBottom) box.scrollTop = box.scrollHeight;
+  }
+
+  function renderHead(c){
+    conv = c;
+    document.getElementById('cvName').textContent = title(c);
+    var sub = (c.phone ? '+' + c.phone : 'Chat ' + c.jid) + (c.customer_id ? ' · Cliente ' + (c.customer_code || '#' + c.customer_id) + ' · ' + (CUST_ST[c.customer_status] || c.customer_status || '') : ' · No es cliente') +
+      (c.name && c.customer_name && c.name !== c.customer_name ? ' · WhatsApp: ' + c.name : '');
+    var st = STATES[c.state] || c.state;
+    document.getElementById('cvSub').innerHTML = esc(sub) + ' · <b>' + esc(st) + '</b>' + (c.state === 'human' && c.attended_by ? ' (' + esc(c.attended_by) + ')' : '') +
+      (c.customer_status === 'cancelled' ? ' · <span style="color:#f59e0b">Servicio cancelado</span>' : '');
+    var a = '';
+    if (c.customer_id) a += '<a class="btn btn-g btn-sm" href="/admin/customers?search=' + encodeURIComponent(c.customer_code || c.phone || '') + '" target="_blank" title="Abrir la ficha del cliente"><i class="bi bi-person-vcard"></i> Ficha</a>';
+    if (c.state !== 'human') a += '<button class="btn btn-g btn-sm" onclick="cvState(\'human\')" title="Marca que una persona está atendiendo"><i class="bi bi-person-check"></i> La atiendo yo</button>';
+    if (c.state === 'human' || c.state === 'waiting_human') a += '<button class="btn btn-g btn-sm" onclick="cvState(\'open\')" title="Deja de figurar como atendida por una persona. Meta AI responde según su propia configuración en WhatsApp Business."><i class="bi bi-robot"></i> Devolver a Meta AI</button>';
+    a += c.state === 'closed' ? '<button class="btn btn-g btn-sm" onclick="cvState(\'open\')"><i class="bi bi-arrow-counterclockwise"></i> Reabrir</button>'
+                              : '<button class="btn btn-g btn-sm" onclick="cvState(\'closed\')"><i class="bi bi-check2-all"></i> Cerrar</button>';
+    a += '<button class="btn btn-g btn-sm" onclick="document.getElementById(\'cvSide\').classList.toggle(\'open\')" title="Asignación, etiquetas y nota"><i class="bi bi-tags"></i></button>';
+    document.getElementById('cvActs').innerHTML = a;
+    document.getElementById('cvAssigned').value = c.assigned_to || '';
+    document.getElementById('cvLabels').value = c.labels || '';
+    document.getElementById('cvNote').value = c.note || '';
+  }
+
+  function openConv(id){
+    sel = id; lastId = 0;
+    document.getElementById('cvWrap').classList.add('chat');
+    document.getElementById('cvNone').style.display = 'none';
+    document.getElementById('cvChat').style.display = 'flex';
+    document.getElementById('cvSide').classList.remove('open');
+    try { history.replaceState(null, '', '?c=' + id); } catch (_) {}
+    document.querySelectorAll('.cv-item').forEach(function(x){ x.classList.toggle('on', Number(x.dataset.id) === id); });
+    return api('/admin/conversations/' + id + '/messages').then(function(d){
+      if (!d.ok) { toast(d.message || 'No se pudo abrir', true); return; }
+      renderHead(d.conv); appendMsgs(d.messages || [], true);
+      if (d.conv.unread > 0) api('/admin/conversations/' + id + '/read', {}).then(loadList);
+    });
+  }
+  function poll(){
+    if (!sel || document.hidden) return;
+    api('/admin/conversations/' + sel + '/messages?after=' + lastId).then(function(d){
+      if (!d.ok) return;
+      renderHead(d.conv);
+      if (d.messages && d.messages.length) { appendMsgs(d.messages, false); if (d.conv.unread > 0) api('/admin/conversations/' + sel + '/read', {}); }
+    });
+  }
+
+  window.cvBack = function(){ document.getElementById('cvWrap').classList.remove('chat'); };
+  window.cvState = function(st){
+    if (!conv) return;
+    if (st === 'closed' && !confirm('¿Cerrar esta conversación? Se reabre sola si el cliente vuelve a escribir.')) return;
+    api('/admin/conversations/' + conv.id + '/state', { state: st }).then(function(d){
+      if (!d.ok) return toast(d.message, true);
+      poll(); loadList();
+    });
+  };
+  window.cvSaveSide = function(btn){
+    if (!conv) return;
+    btn.disabled = true;
+    api('/admin/conversations/' + conv.id + '/update', { assigned_to: document.getElementById('cvAssigned').value, labels: document.getElementById('cvLabels').value, note: document.getElementById('cvNote').value })
+      .then(function(d){ btn.disabled = false; if (!d.ok) return toast(d.message, true); toast('Guardado'); loadList(); });
+  };
+  window.cvSend = function(){
+    var ta = document.getElementById('cvText'), t = ta.value.trim();
+    if (!conv || !t) return;
+    if (conv.customer_status === 'cancelled' && !confirm('Este cliente tiene el servicio cancelado. ¿Enviar igual la respuesta?')) return;
+    var b = document.getElementById('cvSend'); b.disabled = true;
+    api('/admin/conversations/' + conv.id + '/reply', { text: t }).then(function(d){
+      b.disabled = false;
+      if (!d.ok) return toast(d.message, true);
+      ta.value = ''; ta.style.height = ''; poll(); loadList();
+    }).catch(function(){ b.disabled = false; toast('No se pudo enviar', true); });
+  };
+  window.cvSync = function(full, btn){
+    if (full && !confirm('Importar todo el historial guardado en GoWA. Puede tardar un par de minutos. ¿Continuar?')) return;
+    btn.disabled = true; var old = btn.innerHTML; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Buscando…';
+    fetch('/admin/conversations/sync' + (full ? '?full=1' : ''), { method: 'POST' }).then(function(r){ return r.json(); }).then(function(d){
+      btn.disabled = false; btn.innerHTML = old;
+      if (!d.ok) return toast(d.message || 'No se pudo', true);
+      toast(full ? ('Historial: ' + (d.convs || 0) + ' conversaciones, ' + (d.msgs || 0) + ' mensajes nuevos') : ((d.nuevos || 0) + ' mensajes nuevos'));
+      loadList(); if (sel) poll();
+    }).catch(function(){ btn.disabled = false; btn.innerHTML = old; toast('No se pudo', true); });
+  };
+
+  document.getElementById('cvList').addEventListener('click', function(e){
+    var it = e.target.closest('.cv-item'); if (it) openConv(Number(it.dataset.id));
+  });
+  document.getElementById('cvTabs').addEventListener('click', function(e){
+    var b = e.target.closest('.cv-tab'); if (!b) return;
+    filter = b.dataset.f;
+    document.querySelectorAll('.cv-tab').forEach(function(x){ x.classList.toggle('on', x === b); });
+    loadList();
+  });
+  var qt; document.getElementById('cvQ').addEventListener('input', function(e){ clearTimeout(qt); qt = setTimeout(function(){ q = e.target.value; loadList(); }, 300); });
+  var ta = document.getElementById('cvText');
+  ta.addEventListener('keydown', function(e){ if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); cvSend(); } });
+  ta.addEventListener('input', function(){ ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 160) + 'px'; });
+
+  loadList().then(function(){ if (sel) openConv(sel); });
+  setInterval(function(){ if (!document.hidden) loadList(); }, 10000);
+  setInterval(poll, 5000);
+})();
+</script>
+</body>
+</html>

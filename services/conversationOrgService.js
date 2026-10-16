@@ -20,8 +20,9 @@ const conv = require('./conversationService');
 
 const INBOXES = {
   por_atender: 'Por atender', ventas: 'Ventas', clientes: 'Clientes', cobranza: 'Cobranza',
-  internas: 'Internas', avisos: 'Avisos enviados', archivo: 'Archivo',
+  internas: 'Internas', avisos: 'Avisos enviados', archivo: 'Archivo', ocultas: 'Ocultas',
 };
+const IGNORE_REASONS = { personal: 'Personal', promocion: 'Promoción / publicidad', spam: 'Spam / desconocido', otro: 'Otro' };
 const MOTIVES = {
   instalacion: 'Instalación nueva', soporte: 'Soporte técnico', pago: 'Pago / comprobante', cobranza: 'Cobranza',
   baja: 'Baja / retiro', adicionales: 'Servicios adicionales', otro: 'Otro',
@@ -62,6 +63,10 @@ function ensureSchema() {
   add('fachada_msg', 'INTEGER');
   add('lead_name', "TEXT DEFAULT ''");
   add('dismissed_at', 'TEXT');
+  add('ignored', 'INTEGER DEFAULT 0');
+  add('ignored_reason', "TEXT DEFAULT ''");
+  add('ignored_by', "TEXT DEFAULT ''");
+  add('ignored_at', 'TEXT');
   _schema = true;
 }
 
@@ -111,7 +116,7 @@ const _cache = new Map();
 function analyze(c) {
   ensureSchema();
   const hour = Math.floor(Date.now() / 3600000);
-  const key = [c.last_message_at, c.dismissed_at, c.state, c.customer_id, c.customer_status, c.motive, c.lead_stage, c.lost_reason, c.internal, c.cedula_msg, c.fachada_msg, c.lead_name, hour].join('|');
+  const key = [c.last_message_at, c.dismissed_at, c.ignored, c.state, c.customer_id, c.customer_status, c.motive, c.lead_stage, c.lost_reason, c.internal, c.cedula_msg, c.fachada_msg, c.lead_name, hour].join('|');
   const hit = _cache.get(c.id);
   if (hit && hit.key === key) return hit.data;
 
@@ -194,7 +199,8 @@ function analyze(c) {
   // el mismo cliente tiene una conversación más reciente desde otro número: esta queda en el archivo
   const newer = c.customer_id ? db.prepare('SELECT id FROM wa_conversations WHERE customer_id=? AND id!=? AND last_message_at > ? LIMIT 1').get(c.customer_id, c.id, c.last_message_at || '') : null;
   let inbox;
-  if (internal) inbox = 'internas';
+  if (c.ignored === 1) inbox = 'ocultas';
+  else if (internal) inbox = 'internas';
   else if (c.state === 'closed' || old || newer) inbox = 'archivo';
   else if (!clientCount) inbox = 'avisos';
   else if (c.state === 'waiting_human' || (c.last_sender === 'cliente' && !onlyAck && !(c.dismissed_at && c.dismissed_at >= (c.last_inbound_at || '')))) inbox = 'por_atender';
@@ -218,12 +224,14 @@ function allConvs() {
 }
 
 const STAGE_ORDER = { listo: 0, parciales: 1, requisitos: 2, informado: 3, nuevo: 4, solicitud: 5, instalado: 6, perdido: 7 };
-function list({ inbox = 'por_atender', q = '', motive = '' } = {}) {
-  const rows = allConvs().map(c => Object.assign(c, { org: analyze(c) }));
+function list({ inbox = 'por_atender', q = '', motive = '', admin = false } = {}) {
+  let rows = allConvs().map(c => Object.assign(c, { org: analyze(c) }));
+  // los chats ocultos (personales, promociones) solo los ve el administrador
+  if (!admin) { rows = rows.filter(r => r.org.inbox !== 'ocultas'); if (inbox === 'ocultas') inbox = 'por_atender'; }
   const counts = {};
   for (const r of rows) counts[r.org.inbox] = (counts[r.org.inbox] || 0) + 1;
   counts.cerca = rows.filter(r => r.org.inbox === 'ventas' && r.org.nearClose).length;
-  let out = inbox === 'todas' ? rows : rows.filter(r => r.org.inbox === inbox);
+  let out = inbox === 'todas' ? rows.filter(r => r.org.inbox !== 'ocultas') : rows.filter(r => r.org.inbox === inbox);
   if (motive) out = out.filter(r => r.org.motive === motive);
   if (q) {
     const s = String(q).toLowerCase().trim();
@@ -375,7 +383,42 @@ async function createRequest(convId, data, actor) {
   return { ok: true, customer: { id: cust.id, name: cust.name, code: cust.customer_code }, attached };
 }
 
+// ── ocultar / vaciar ────────────────────────────────────────────────────────
+function ignore(ids, reason, actor) {
+  ensureSchema();
+  if (!IGNORE_REASONS[reason]) throw new Error('Motivo inválido');
+  const list = [].concat(ids).map(Number).filter(Boolean);
+  const st = db.prepare("UPDATE wa_conversations SET ignored=1, ignored_reason=?, ignored_by=?, ignored_at=?, unread=0, state=CASE WHEN state='waiting_human' THEN 'open' ELSE state END WHERE id=?");
+  for (const id of list) st.run(reason, String(actor || ''), new Date().toISOString(), id);
+  _cache.clear();
+  return list.length;
+}
+function unignore(ids) {
+  ensureSchema();
+  const list = [].concat(ids).map(Number).filter(Boolean);
+  const st = db.prepare("UPDATE wa_conversations SET ignored=0, ignored_reason='', ignored_by='', ignored_at=NULL WHERE id=?");
+  for (const id of list) st.run(id);
+  _cache.clear();
+  return list.length;
+}
+/** Borra los mensajes guardados en el sistema (no toca el WhatsApp del celular) y deja el chat oculto. */
+function purge(ids, reason, actor) {
+  ensureSchema();
+  const list = [].concat(ids).map(Number).filter(Boolean);
+  let n = 0;
+  const tx = db.transaction(() => {
+    for (const id of list) {
+      n += db.prepare('DELETE FROM wa_messages WHERE conv_id=?').run(id).changes;
+      db.prepare("UPDATE wa_conversations SET last_preview='(vaciado)', note='', labels='', cedula_msg=NULL, fachada_msg=NULL WHERE id=?").run(id);
+    }
+  });
+  tx();
+  ignore(list, IGNORE_REASONS[reason] ? reason : 'otro', actor);
+  return { convs: list.length, msgs: n };
+}
+
 module.exports = {
+  IGNORE_REASONS, ignore, unignore, purge,
   INBOXES, MOTIVES, STAGES, LOST, ensureSchema, analyze, list, info, setOrg, quickReplies, saveQuickReplies,
   searchCustomers, linkCustomer, createRequest,
 };

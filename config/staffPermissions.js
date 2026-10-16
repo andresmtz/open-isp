@@ -64,6 +64,7 @@ const CATALOG = [
     ['GET', `^/conversations/media/${ID}$`],
     ['POST', `^/conversations/${ID}/(reply|state|update|read|org|link|create-request)$`],
     ['GET', '^/conversations/(customer-search|quick-replies)$'],
+    ['POST', '^/conversations/bulk$'],
     ['POST', '^/conversations/sync$'],
   ] },
   { key: 'promesas', label: 'Dar promesas de pago', help: 'Respeta el máximo de días y de promesas por mes de Automatización.', def: true, needs: ['ver_clientes', 'ver_facturas'], rules: [

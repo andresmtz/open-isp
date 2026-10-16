@@ -171,6 +171,7 @@ function upsertMessage(m) {
   ensureSchema();
   if (!m || !m.jid || !isPersonal(m.jid)) return { skipped: true };
   const conv = convFor(m.jid, m.fromMe ? '' : m.name);
+  if (conv.ignored === 1) return { conv, ignored: true }; // chat oculto (personal, promoción…): no se guarda
   const ts = iso(m.ts);
   const sender = m.sender || senderOf(m.waId, m.fromMe, m.body);
   if (!m.byName && sender === 'persona' && /^3EB0/i.test(String(m.waId || ''))) m.byName = 'WhatsApp Web';
@@ -360,7 +361,7 @@ async function checkHandoffs() {
   const mins = Math.max(0, Number(getSetting('crm_handoff_alert_minutes', 2)) || 2);
   const limit = new Date(Date.now() - mins * 60000).toISOString();
   const stale = new Date(Date.now() - 4 * 86400000).toISOString();
-  const rows = db.prepare("SELECT * FROM wa_conversations WHERE state='waiting_human' AND handoff_alerted_at IS NULL AND handoff_at <= ?").all(limit);
+  const rows = db.prepare("SELECT * FROM wa_conversations WHERE state='waiting_human' AND handoff_alerted_at IS NULL AND handoff_at <= ? AND COALESCE(ignored,0)=0").all(limit);
   let sent = 0;
   for (const c of rows) {
     db.prepare('UPDATE wa_conversations SET handoff_alerted_at=? WHERE id=?').run(new Date().toISOString(), c.id);

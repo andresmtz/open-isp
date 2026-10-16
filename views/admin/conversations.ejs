@@ -75,6 +75,16 @@
     .cv-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
     .cv-legend i.sq{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
     .cv-back,.cv-infobtn{display:none}
+    .cv-item .sel{display:none;margin-right:6px}
+    .cv-list.selecting .cv-item .sel{display:inline-block}
+    .cv-bulk{display:none;padding:8px 10px;border-bottom:1px solid var(--border);gap:6px;flex-wrap:wrap;align-items:center;font-size:12.5px;background:rgba(245,158,11,.08)}
+    .cv-bulk.open{display:flex}
+    .cv-dd{position:relative;display:inline-block}
+    .cv-dd .menu{display:none;position:absolute;right:0;top:110%;min-width:220px;background:var(--bg2,#151b26);border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:30}
+    .cv-dd.open .menu{display:block}
+    .cv-dd .menu button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--text);padding:8px 12px;font-size:13px;cursor:pointer}
+    .cv-dd .menu button:hover{background:rgba(255,255,255,.06)}
+    .cv-dd .menu .danger{color:#f87171;border-top:1px solid var(--border)}
     .cv-res{max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:8px;margin-top:6px}
     .cv-res div{padding:7px 10px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px}
     .cv-res div:hover{background:rgba(255,255,255,.05)}
@@ -127,12 +137,20 @@
               <option value="">Todos los motivos</option>
               <% Object.keys(motives).forEach(function(k){ %><option value="<%= k %>"><%= motives[k] %></option><% }) %>
             </select>
+            <button class="btn btn-g btn-sm" id="selBtn" onclick="selToggle()" title="Elegir varias conversaciones para ocultarlas juntas"><i class="bi bi-check2-square"></i></button>
             <button class="btn btn-g btn-sm" onclick="cvSync(false, this)" title="Buscar mensajes nuevos en GoWA"><i class="bi bi-arrow-repeat"></i></button>
             <% if (isAdmin) { %>
               <button class="btn btn-g btn-sm" onclick="cvSync(true, this)" title="Traer todo el historial guardado en GoWA (no duplica)"><i class="bi bi-cloud-download"></i></button>
               <button class="btn btn-g btn-sm" onclick="qeOpen()" title="Editar respuestas rápidas"><i class="bi bi-lightning-charge"></i></button>
             <% } %>
           </div>
+        </div>
+        <div class="cv-bulk" id="cvBulk">
+          <b id="selN">0</b> elegidas ·
+          <select class="fs" id="selReason" style="padding:3px 6px;font-size:12px;max-width:170px"><% Object.keys(ignoreReasons).forEach(function(k){ %><option value="<%= k %>"><%= ignoreReasons[k] %></option><% }) %></select>
+          <button class="btn btn-g btn-sm" data-bulk="ignore"><i class="bi bi-eye-slash"></i> Ocultar</button>
+          <% if (isAdmin) { %><button class="btn btn-g btn-sm" data-bulk="unignore"><i class="bi bi-eye"></i> Restaurar</button>
+          <button class="btn btn-sm" style="background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.4)" data-bulk="purge"><i class="bi bi-trash"></i> Vaciar</button><% } %>
         </div>
         <div class="cv-list" id="cvList"><div class="cv-empty">Cargando…</div></div>
       </div>
@@ -215,6 +233,9 @@
   var STAGES = <%- JSON.stringify(stages) %>;
   var LOST = <%- JSON.stringify(lost) %>;
   var CAN_CREATE = <%- JSON.stringify(!!canCreate) %>;
+  var IS_ADMIN = <%- JSON.stringify(!!isAdmin) %>;
+  var IGN = <%- JSON.stringify(ignoreReasons) %>;
+  var selecting = false, picked = {};
   var CUST_ST = { active: 'Activo', suspended: 'Suspendido', inactive: 'Inscripto', cancelled: 'Cancelado', ditangguhkan: 'Con promesa' };
   var CHK = { nombre: 'Nombre', cedula: 'Cédula', fachada: 'Fachada', ubicacion: 'Ubicación' };
   var filter = 'por_atender', motive = '', q = '', sel = <%= Number(selected) || 0 %>, lastId = 0, conv = null, info = null, qr = [];
@@ -251,6 +272,7 @@
     if (o.nearClose) h += '<span class="cv-chip hot">🔥 A punto de cerrar</span>';
     if (o.lead && o.stage) h += '<span class="cv-chip lead">' + esc(STAGES[o.stage] || o.stage) + '</span>';
     else if (c.customer_id) h += '<span class="cv-chip cust">Cliente' + (c.customer_status && c.customer_status !== 'active' ? ' · ' + esc(CUST_ST[c.customer_status] || c.customer_status) : '') + '</span>';
+    if (c.ignored === 1) h += '<span class="cv-chip">Oculta · ' + esc(IGN[c.ignored_reason] || c.ignored_reason || '') + '</span>';
     if (o.suggest && o.suggest.length) h += '<span class="cv-chip cust" title="El nombre coincide con un cliente registrado">¿Cliente? ' + esc(o.suggest[0].name) + '</span>';
     if (o.motive && o.motive !== 'otro') h += '<span class="cv-chip mot">' + esc(MOTIVES[o.motive] || o.motive) + '</span>';
     if (c.unread > 0) h += '<span class="cv-chip unread">' + c.unread + '</span>';
@@ -273,7 +295,7 @@
       el.innerHTML = items.map(function(c){
         var pre = (c.last_sender && c.last_sender !== 'cliente' ? (SENDERS[c.last_sender] || '') + ': ' : '') + (c.last_preview || '');
         return '<div class="cv-item' + (c.id === sel ? ' on' : '') + '" data-id="' + c.id + '">' +
-          '<div class="t"><span>' + esc(title(c)) + '</span><span>' + esc(ago(c.last_message_at)) + '</span></div>' +
+          '<div class="t"><span><input type="checkbox" class="sel" data-id="' + c.id + '"' + (picked[c.id] ? ' checked' : '') + '>' + esc(title(c)) + '</span><span>' + esc(ago(c.last_message_at)) + '</span></div>' +
           '<div class="p">' + esc(pre) + '</div><div class="b">' + chips(c) + '</div>' +
           (filter === 'ventas' && c.org && ['parciales', 'listo', 'requisitos'].indexOf(c.org.stage) !== -1 ? '<div class="cv-chk">' + checkLine(c.org) + '</div>' : '') + '</div>';
       }).join('');
@@ -339,8 +361,14 @@
     if (c.state === 'human' || c.state === 'waiting_human') a += '<button class="btn btn-g btn-sm" onclick="cvState(\'open\')" title="Deja de figurar como atendida por una persona. Meta AI responde según su propia configuración en WhatsApp Business."><i class="bi bi-robot"></i> Devolver a Meta AI</button>';
     a += c.state === 'closed' ? '<button class="btn btn-g btn-sm" onclick="cvState(\'open\')"><i class="bi bi-arrow-counterclockwise"></i> Reabrir</button>'
                               : '<button class="btn btn-g btn-sm" onclick="cvState(\'closed\')" title="Pasa al Archivo; vuelve sola si el contacto escribe"><i class="bi bi-archive"></i> Archivar</button>';
+    if (c.ignored === 1) a += '<button class="btn btn-g btn-sm" onclick="bulkDo(\'unignore\', [conv.id])"><i class="bi bi-eye"></i> Restaurar (oculta: ' + esc(IGN[c.ignored_reason] || '') + ')</button>';
+    else a += '<div class="cv-dd" id="hideDd"><button class="btn btn-g btn-sm" onclick="event.stopPropagation();document.getElementById(\'hideDd\').classList.toggle(\'open\')"><i class="bi bi-eye-slash"></i> Ocultar</button><div class="menu">' +
+      Object.keys(IGN).map(function(k){ return '<button onclick="bulkDo(\'ignore\', [conv.id], \'' + k + '\')">Ocultar: ' + esc(IGN[k]) + '</button>'; }).join('') +
+      (IS_ADMIN ? '<button class="danger" onclick="bulkDo(\'purge\', [conv.id], \'personal\')"><i class="bi bi-trash"></i> Vaciar y ocultar…</button>' : '') + '</div></div>';
+    if (c.ignored === 1 && IS_ADMIN) a += '<button class="btn btn-sm" style="background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.4)" onclick="bulkDo(\'purge\', [conv.id], \'' + (c.ignored_reason || 'otro') + '\')"><i class="bi bi-trash"></i> Vaciar</button>';
     a += '<button class="btn btn-g btn-sm cv-infobtn" onclick="document.getElementById(\'cvWrap\').classList.toggle(\'info\')"><i class="bi bi-layout-sidebar-reverse"></i> Datos</button>';
-    document.getElementById('cvActs').innerHTML = a;
+    var dd = document.getElementById('hideDd');
+    if (!(dd && dd.classList.contains('open'))) document.getElementById('cvActs').innerHTML = a; // no cerrar el menú mientras se usa
   }
 
   function sel_(name, opts, val, extra){
@@ -431,6 +459,31 @@
       else paintMarks();
     });
   }
+
+  function bulkCount(){ var n = Object.keys(picked).length; document.getElementById('selN').textContent = n; }
+  window.selToggle = function(){
+    selecting = !selecting; picked = {};
+    document.getElementById('cvList').classList.toggle('selecting', selecting);
+    document.getElementById('cvBulk').classList.toggle('open', selecting);
+    document.getElementById('selBtn').classList.toggle('btn-p', selecting);
+    bulkCount(); loadList();
+  };
+  window.bulkDo = function(action, ids, reason){
+    ids = ids || Object.keys(picked).map(Number);
+    if (!ids.length) return toast('Elegí al menos una conversación', true);
+    reason = reason || document.getElementById('selReason').value;
+    if (action === 'purge' && !confirm('Se borran del sistema TODOS los mensajes de ' + ids.length + ' conversación(es) y quedan ocultas. En el celular no se borra nada. Esto no se puede deshacer. ¿Continuar?')) return;
+    if (action === 'ignore' && ids.length > 1 && !confirm('¿Ocultar ' + ids.length + ' conversaciones como "' + (IGN[reason] || reason) + '"? Lo que manden esos números ya no se va a guardar.')) return;
+    api('/admin/conversations/bulk', { ids: ids, action: action, reason: reason }).then(function(d){
+      if (!d.ok) return toast(d.message, true);
+      toast(d.message); picked = {}; bulkCount();
+      var dd = document.getElementById('hideDd'); if (dd) dd.classList.remove('open');
+      if (conv && ids.indexOf(conv.id) !== -1 && action !== 'unignore' && !IS_ADMIN) { sel = 0; conv = null; document.getElementById('cvChat').style.display = 'none'; document.getElementById('cvNone').style.display = ''; }
+      else if (conv && ids.indexOf(conv.id) !== -1) { if (action === 'purge') openConv(conv.id); else poll(true); }
+      loadList();
+    });
+  };
+  document.getElementById('cvBulk').addEventListener('click', function(e){ var b = e.target.closest('[data-bulk]'); if (b) bulkDo(b.dataset.bulk); });
 
   window.orgSet = function(f){
     if (!conv) return;
@@ -601,8 +654,13 @@
     if (mark) mark.remove();
   }, true);
   document.getElementById('cvList').addEventListener('click', function(e){
-    var it = e.target.closest('.cv-item'); if (it) openConv(Number(it.dataset.id));
+    var cb = e.target.closest('input.sel');
+    if (cb) { e.stopPropagation(); var id = Number(cb.dataset.id); if (cb.checked) picked[id] = 1; else delete picked[id]; bulkCount(); return; }
+    var it = e.target.closest('.cv-item'); if (!it) return;
+    if (selecting) { var x = it.querySelector('input.sel'); x.checked = !x.checked; var i2 = Number(x.dataset.id); if (x.checked) picked[i2] = 1; else delete picked[i2]; bulkCount(); return; }
+    openConv(Number(it.dataset.id));
   });
+  document.addEventListener('click', function(e){ var dd = document.getElementById('hideDd'); if (dd && !e.target.closest('#hideDd')) dd.classList.remove('open'); });
   document.getElementById('cvTabs').addEventListener('click', function(e){
     var b = e.target.closest('.cv-tab'); if (!b) return;
     filter = b.dataset.f;

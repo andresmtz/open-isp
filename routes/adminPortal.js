@@ -2903,7 +2903,8 @@ router.get('/conversations', requireAdminSession, (req, res) => {
       title: 'Conversaciones', company: company(), activePage: 'conversations', msg: flashMsg(req),
       selected: Number(req.query.c) || 0, isAdmin: !!req.session.isAdmin,
       senders: convSvc.SENDERS, states: convSvc.STATES,
-      inboxes: convOrg.INBOXES, motives: convOrg.MOTIVES, stages: convOrg.STAGES, lost: convOrg.LOST,
+      inboxes: Object.fromEntries(Object.entries(convOrg.INBOXES).filter(([k]) => k !== 'ocultas' || req.session.isAdmin)),
+      ignoreReasons: convOrg.IGNORE_REASONS, motives: convOrg.MOTIVES, stages: convOrg.STAGES, lost: convOrg.LOST,
       packages: db.prepare('SELECT id, name FROM packages ORDER BY price').all(),
       canCreate: staffPerms.has(req.session, 'clientes_alta'),
       inHours: convSvc.inBusinessHours(), hours: getSetting('crm_business_hours', '1-5 08:00-17:00'),
@@ -2913,7 +2914,7 @@ router.get('/conversations', requireAdminSession, (req, res) => {
 });
 router.get('/conversations/list', requireAdminSession, (req, res) => {
   try {
-    const r = convOrg.list({ inbox: String(req.query.f || 'por_atender'), q: req.query.q || '', motive: String(req.query.m || '') });
+    const r = convOrg.list({ inbox: String(req.query.f || 'por_atender'), q: req.query.q || '', motive: String(req.query.m || ''), admin: !!req.session.isAdmin });
     res.json({ ok: true, items: r.items, counts: r.counts });
   }
   catch (e) { res.json({ ok: false, message: e.message }); }
@@ -2924,7 +2925,7 @@ router.get('/conversations/counts', requireAdminSession, (req, res) => {
 router.get('/conversations/:id/messages', requireAdminSession, (req, res) => {
   try {
     const conv = convSvc.get(Number(req.params.id));
-    if (!conv) return res.json({ ok: false, message: 'Conversación no encontrada' });
+    if (!conv || (conv.ignored === 1 && !req.session.isAdmin)) return res.json({ ok: false, message: 'Conversación no encontrada' });
     const money = staffPerms.has(req.session, 'ver_facturas');
     res.json({ ok: true, conv, info: convOrg.info(conv.id, { money }), messages: convSvc.messages(conv.id, { afterId: req.query.after }) });
   } catch (e) { res.json({ ok: false, message: e.message }); }
@@ -2972,6 +2973,19 @@ router.post('/conversations/:id/create-request', requireAdminSession, express.js
     if (!staffPerms.has(req.session, 'clientes_alta')) throw new Error('No tenés permiso para cargar solicitudes de instalación.');
     const r = await convOrg.createRequest(Number(req.params.id), req.body || {}, convActor(req));
     res.json({ ok: true, message: `Solicitud creada: ${r.customer.name} (${r.customer.code || 'ID ' + r.customer.id}). Está en Clientes → Inscriptos.` + (r.attached.length ? ' Fotos adjuntas: ' + r.attached.join(', ') + '.' : ''), customer: r.customer });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/conversations/bulk', requireAdminSession, express.json(), (req, res) => {
+  try {
+    const b = req.body || {};
+    const ids = (Array.isArray(b.ids) ? b.ids : [b.ids]).map(Number).filter(Boolean).slice(0, 500);
+    if (!ids.length) throw new Error('No elegiste ninguna conversación');
+    const action = String(b.action || '');
+    if ((action === 'purge' || action === 'unignore') && !req.session.isAdmin) throw new Error('Solo el administrador puede hacer esto.');
+    if (action === 'ignore') { const n = convOrg.ignore(ids, String(b.reason || 'otro'), convActor(req)); return res.json({ ok: true, message: n + (n === 1 ? ' conversación oculta.' : ' conversaciones ocultas.') + ' Lo que manden esos números ya no se guarda.' }); }
+    if (action === 'unignore') { const n = convOrg.unignore(ids); return res.json({ ok: true, message: n + ' restaurada(s). Desde ahora sus mensajes se guardan de nuevo.' }); }
+    if (action === 'purge') { const r = convOrg.purge(ids, String(b.reason || 'otro'), convActor(req)); return res.json({ ok: true, message: `${r.convs} conversación(es) vaciada(s): se borraron ${r.msgs} mensajes del sistema. En el celular no se borró nada.` }); }
+    throw new Error('Acción inválida');
   } catch (e) { res.json({ ok: false, message: e.message }); }
 });
 router.get('/conversations/quick-replies', requireAdminSession, (req, res) => {

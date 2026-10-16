@@ -61,6 +61,7 @@ function ensureSchema() {
   add('cedula_msg', 'INTEGER');
   add('fachada_msg', 'INTEGER');
   add('lead_name', "TEXT DEFAULT ''");
+  add('dismissed_at', 'TEXT');
   _schema = true;
 }
 
@@ -110,7 +111,7 @@ const _cache = new Map();
 function analyze(c) {
   ensureSchema();
   const hour = Math.floor(Date.now() / 3600000);
-  const key = [c.last_message_at, c.state, c.customer_id, c.customer_status, c.motive, c.lead_stage, c.lost_reason, c.internal, c.cedula_msg, c.fachada_msg, c.lead_name, hour].join('|');
+  const key = [c.last_message_at, c.dismissed_at, c.state, c.customer_id, c.customer_status, c.motive, c.lead_stage, c.lost_reason, c.internal, c.cedula_msg, c.fachada_msg, c.lead_name, hour].join('|');
   const hit = _cache.get(c.id);
   if (hit && hit.key === key) return hit.data;
 
@@ -196,7 +197,7 @@ function analyze(c) {
   if (internal) inbox = 'internas';
   else if (c.state === 'closed' || old || newer) inbox = 'archivo';
   else if (!clientCount) inbox = 'avisos';
-  else if (c.state === 'waiting_human' || (c.last_sender === 'cliente' && !onlyAck)) inbox = 'por_atender';
+  else if (c.state === 'waiting_human' || (c.last_sender === 'cliente' && !onlyAck && !(c.dismissed_at && c.dismissed_at >= (c.last_inbound_at || '')))) inbox = 'por_atender';
   else if (!isCustomer) inbox = 'ventas';
   else if (motive === 'cobranza') inbox = 'cobranza';
   else inbox = 'clientes';
@@ -267,6 +268,7 @@ function setOrg(convId, f) {
   if (f.lost_reason !== undefined) { if (f.lost_reason && !LOST[f.lost_reason]) throw new Error('Motivo de pérdida inválido'); set.lost_reason = f.lost_reason || ''; }
   if (f.internal !== undefined) set.internal = f.internal === '' || f.internal === null ? null : (Number(f.internal) ? 1 : 0);
   if (f.lead_name !== undefined) set.lead_name = String(f.lead_name || '').trim().slice(0, 120);
+  if (f.dismiss !== undefined) set.dismissed_at = f.dismiss ? new Date().toISOString() : null;
   for (const k of ['cedula_msg', 'fachada_msg']) {
     if (f[k] === undefined) continue;
     const v = f[k] ? Number(f[k]) : null;

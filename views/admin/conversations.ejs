@@ -334,6 +334,7 @@
     document.getElementById('cvSub').innerHTML = esc(sub) + ' · <b>' + esc(st) + '</b>' + (c.state === 'human' && c.attended_by ? ' (' + esc(c.attended_by) + ')' : '') +
       (c.customer_status === 'cancelled' ? ' · <span style="color:#f59e0b">Servicio cancelado</span>' : '');
     var a = '';
+    if (info && info.org && info.org.inbox === 'por_atender' && c.state !== 'waiting_human') a += '<button class="btn btn-g btn-sm" onclick="orgSet({dismiss:1})" title="Sale de Por atender hasta que el contacto vuelva a escribir"><i class="bi bi-check2-circle"></i> No requiere respuesta</button>';
     if (c.state !== 'human') a += '<button class="btn btn-g btn-sm" onclick="cvState(\'human\')" title="Marca que una persona está atendiendo"><i class="bi bi-person-check"></i> La atiendo yo</button>';
     if (c.state === 'human' || c.state === 'waiting_human') a += '<button class="btn btn-g btn-sm" onclick="cvState(\'open\')" title="Deja de figurar como atendida por una persona. Meta AI responde según su propia configuración en WhatsApp Business."><i class="bi bi-robot"></i> Devolver a Meta AI</button>';
     a += c.state === 'closed' ? '<button class="btn btn-g btn-sm" onclick="cvState(\'open\')"><i class="bi bi-arrow-counterclockwise"></i> Reabrir</button>'
@@ -413,7 +414,7 @@
     document.querySelectorAll('.cv-item').forEach(function(x){ x.classList.toggle('on', Number(x.dataset.id) === id); });
     return api('/admin/conversations/' + id + '/messages').then(function(d){
       if (!d.ok) { toast(d.message || 'No se pudo abrir', true); return; }
-      renderHead(d.conv); renderInfo(d.conv, d.info); appendMsgs(d.messages || [], true);
+      info = d.info; renderHead(d.conv); renderInfo(d.conv, d.info); appendMsgs(d.messages || [], true);
       if (d.conv.unread > 0) api('/admin/conversations/' + id + '/read', {}).then(loadList);
     });
   }
@@ -422,7 +423,7 @@
     if (!sel || (document.hidden && !force)) return;
     return api('/admin/conversations/' + sel + '/messages?after=' + lastId).then(function(d){
       if (!d.ok) return;
-      renderHead(d.conv);
+      info = d.info; renderHead(d.conv);
       var k = JSON.stringify([d.info, d.conv.motive, d.conv.lead_stage, d.conv.lost_reason, d.conv.cedula_msg, d.conv.fachada_msg, d.conv.lead_name, d.conv.customer_id]);
       var editing = document.activeElement && document.getElementById('cvInfo').contains(document.activeElement);
       if (force || (k !== infoKey && !editing)) { infoKey = k; renderInfo(d.conv, d.info); }

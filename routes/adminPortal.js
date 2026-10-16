@@ -284,7 +284,10 @@ function restrictToAdmin(req, res, next) {
 
 function company() { return getSetting('company_header', 'ISP Admin'); }
 function finCfg() {
+  // Impuestos desactivados por defecto (finance_taxes_enabled): el reporte muestra solo ingresos, gastos y resultado
+  if (String(getSetting('finance_taxes_enabled', '0')) !== '1') return { ppn: 0, pph: 0, uso: 0, bhp: 0, inclPpn: false, enabled: false };
   return {
+    enabled: true,
     ppn: Number(getSetting('finance_ppn_pct', '11')) || 0,
     pph: Number(getSetting('finance_pph_pct', '22')) || 0,
     uso: Number(getSetting('finance_uso_pct', '1.75')) || 0,
@@ -4711,7 +4714,9 @@ router.get('/reports/export-csv', requireAdminSession, requireSidebarMenuAccess(
     const L = labaRugi(bruto, keluar, fin);
     csvContent += `Estado de resultados ${company()} - Mes ${mStr}/${filterYear}\n\n`;
     csvContent += `Concepto,Valor (${regional.currencySymbol()})\n`;
-    csvContent += `Ingresos (brutos),${num(L.bruto)}\nBase imponible,${num(L.dpp)}\nIVA (${fin.ppn}%),${num(L.ppn)}\nGastos,${num(L.keluar)}\nOtro impuesto 1 (${fin.uso}%),${num(L.uso)}\nOtro impuesto 2 (${fin.bhp}%),${num(L.bhp)}\nGanancia antes de impuesto a la renta,${num(L.sebelumPph)}\nImpuesto a la renta (${fin.pph}%),${num(L.pph)}\nGanancia neta,${num(L.bersih)}\n\n`;
+    csvContent += fin.enabled
+      ? `Ingresos (brutos),${num(L.bruto)}\nBase imponible,${num(L.dpp)}\nIVA (${fin.ppn}%),${num(L.ppn)}\nGastos,${num(L.keluar)}\nOtro impuesto 1 (${fin.uso}%),${num(L.uso)}\nOtro impuesto 2 (${fin.bhp}%),${num(L.bhp)}\nGanancia antes de impuesto a la renta,${num(L.sebelumPph)}\nImpuesto a la renta (${fin.pph}%),${num(L.pph)}\nGanancia neta,${num(L.bersih)}\n\n`
+      : `Ingresos cobrados,${num(L.bruto)}\nGastos,${num(L.keluar)}\nResultado,${num(L.bersih)}\n\n`;
     const invs = db.prepare("SELECT i.paid_at, c.name, i.amount FROM invoices i LEFT JOIN customers c ON c.id=i.customer_id WHERE i.status='paid' AND strftime('%Y', i.paid_at)=? AND strftime('%m', i.paid_at)=? ORDER BY i.paid_at").all(yStr, mStr);
     csvContent += "=== Ingresos (facturas pagadas) ===\nFecha,Cliente,Monto\n";
     invs.forEach(r => { csvContent += `${r.paid_at},"${(r.name || '').replace(/"/g, '""')}",${r.amount}\n`; });
@@ -4728,7 +4733,9 @@ router.get('/reports/export-csv', requireAdminSession, requireSidebarMenuAccess(
     const L = labaRugi(bruto, keluar, fin);
     csvContent += `Reporte financiero ${company()} - Año ${filterYear}\n\n`;
     csvContent += `=== RESUMEN DE RESULTADOS ===\nConcepto,Valor (${regional.currencySymbol()})\n`;
-    csvContent += `Ingresos (brutos),${num(L.bruto)}\nBase imponible,${num(L.dpp)}\nIVA (${fin.ppn}%),${num(L.ppn)}\nGastos,${num(L.keluar)}\nOtro impuesto 1 (${fin.uso}%),${num(L.uso)}\nOtro impuesto 2 (${fin.bhp}%),${num(L.bhp)}\nGanancia antes de impuesto a la renta,${num(L.sebelumPph)}\nImpuesto a la renta (${fin.pph}%),${num(L.pph)}\nGanancia neta,${num(L.bersih)}\n\n`;
+    csvContent += fin.enabled
+      ? `Ingresos (brutos),${num(L.bruto)}\nBase imponible,${num(L.dpp)}\nIVA (${fin.ppn}%),${num(L.ppn)}\nGastos,${num(L.keluar)}\nOtro impuesto 1 (${fin.uso}%),${num(L.uso)}\nOtro impuesto 2 (${fin.bhp}%),${num(L.bhp)}\nGanancia antes de impuesto a la renta,${num(L.sebelumPph)}\nImpuesto a la renta (${fin.pph}%),${num(L.pph)}\nGanancia neta,${num(L.bersih)}\n\n`
+      : `Ingresos cobrados,${num(L.bruto)}\nGastos,${num(L.keluar)}\nResultado,${num(L.bersih)}\n\n`;
     csvContent += "=== GASTOS ===\nFecha,Categoría,Monto,Descripción\n";
     expenses.forEach(e => { csvContent += `${e.date},"${e.category}",${e.amount},"${(e.description || '').replace(/"/g, '""')}"\n`; });
     csvContent += "\n=== OTROS INGRESOS DE CAJA ===\nFecha,Origen/Categoría,Monto,Descripción\n";

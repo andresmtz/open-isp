@@ -25,7 +25,8 @@ function generateFinanceReportPdfBuffer(o) {
       const GREEN = '#16a34a', RED = '#e11d48', AMBER = '#d97706', BLUE = '#0284c7';
       const LIME = '#ADFF2F';
       const LEFT = 40, RIGHT = 555, W = RIGHT - LEFT;
-      const modeLabel = (mode === 'before') ? 'ANTES DE IMPUESTOS' : 'DESPUÉS DE IMPUESTOS';
+      const taxes = !!(finance && finance.enabled);
+      const modeLabel = !taxes ? 'INGRESOS, GASTOS Y RESULTADO' : ((mode === 'before') ? 'ANTES DE IMPUESTOS' : 'DESPUÉS DE IMPUESTOS');
       const periodStr = filterMonth ? `${MNS[filterMonth - 1]} ${filterYear}` : `Año ${filterYear}`;
       const companyPhone = require('../config/regional').publicContactPhone(settings) || '-';
       const companyAddress = settings.company_address || 'Proveedor de servicios de internet';
@@ -61,6 +62,11 @@ function generateFinanceReportPdfBuffer(o) {
       doc.fillColor(INK).fontSize(11).font('Helvetica-Bold').text('A.  ESTADO DE RESULTADOS', LEFT, y);
       doc.moveTo(LEFT, y + 15).lineTo(RIGHT, y + 15).strokeColor(LINE).stroke();
       y += 22;
+      if (!taxes) {
+        y = statRow(y, 'Ingresos cobrados', fmtRp(ply.bruto));
+        y = statRow(y, 'Gastos', '- ' + fmtRp(ply.keluar), { color: RED });
+        y = statRow(y, 'Resultado', fmtRp(ply.bersih), { hi: true });
+      } else {
       y = statRow(y, 'Ingresos (brutos)', fmtRp(ply.bruto));
       y = statRow(y, 'Base imponible', fmtRp(ply.dpp));
       y = statRow(y, `IVA (${finance.ppn}%) — se paga al fisco, no es ingreso`, fmtRp(ply.ppn), { color: BLUE });
@@ -70,11 +76,12 @@ function generateFinanceReportPdfBuffer(o) {
       y = statRow(y, 'Ganancia antes de impuesto a la renta', fmtRp(ply.sebelumPph), { bold: true });
       y = statRow(y, `Impuesto a la renta (${finance.pph}%)`, '- ' + fmtRp(ply.pph), { color: RED });
       y = statRow(y, 'Ganancia neta', fmtRp(ply.bersih), { hi: true });
+      }
 
       // headline box sesuai mode
       y += 8;
-      const headline = (mode === 'before') ? ply.sebelumPph : ply.bersih;
-      const headlineLabel = (mode === 'before') ? 'GANANCIA ANTES DE IMPUESTO A LA RENTA' : 'GANANCIA NETA';
+      const headline = (taxes && mode === 'before') ? ply.sebelumPph : ply.bersih;
+      const headlineLabel = !taxes ? 'RESULTADO' : ((mode === 'before') ? 'GANANCIA ANTES DE IMPUESTO A LA RENTA' : 'GANANCIA NETA');
       doc.roundedRect(LEFT, y, W, 30, 8).fill(INK);
       doc.fillColor('#ffffff').fontSize(10).font('Helvetica-Bold').text(headlineLabel, LEFT + 12, y + 10);
       doc.fillColor(LIME).fontSize(13).font('Helvetica-Bold').text(fmtRp(headline), LEFT, y + 8, { width: W - 14, align: 'right' });
@@ -85,7 +92,12 @@ function generateFinanceReportPdfBuffer(o) {
       doc.moveTo(LEFT, y + 15).lineTo(RIGHT, y + 15).strokeColor(LINE).stroke();
       y += 22;
 
-      const cols = [
+      const cols = !taxes ? [
+        { k: 'month', t: 'Mes', w: 145, a: 'left' },
+        { k: 'bruto', t: 'Ingresos', w: 125, a: 'right' },
+        { k: 'keluar', t: 'Gastos', w: 120, a: 'right' },
+        { k: 'bersih', t: 'Resultado', w: 125, a: 'right' },
+      ] : [
         { k: 'month', t: 'Mes', w: 78, a: 'left' },
         { k: 'bruto', t: 'Ingresos', w: 92, a: 'right' },
         { k: 'keluar', t: 'Gastos', w: 92, a: 'right' },
@@ -116,8 +128,9 @@ function generateFinanceReportPdfBuffer(o) {
       // catatan
       y += 2;
       doc.roundedRect(LEFT, y, W, 34, 6).fillAndStroke('#fefce8', '#fde68a');
-      doc.fillColor('#92400e').fontSize(7.5).font('Helvetica').text(
-        `El impuesto a la renta se calcula como ${finance.pph}% de la ganancia antes de impuestos (estimación automática). El IVA (${finance.ppn}%) se cobra y se paga al fisco: no es ingreso. Los otros impuestos (${finance.uso}% y ${finance.bhp}%) siguen lo configurado.`,
+      doc.fillColor('#92400e').fontSize(7.5).font('Helvetica').text(!taxes
+        ? 'Ingresos = dinero cobrado en cada mes. Gastos = los cargados en Finanzas → Gastos. Resultado de gestión, sin impuestos: no es una liquidación tributaria.'
+        : `El impuesto a la renta se calcula como ${finance.pph}% de la ganancia antes de impuestos (estimación automática). El IVA (${finance.ppn}%) se cobra y se paga al fisco: no es ingreso. Los otros impuestos (${finance.uso}% y ${finance.bhp}%) siguen lo configurado.`,
         LEFT + 10, y + 7, { width: W - 20 });
 
       // ── Footer ──

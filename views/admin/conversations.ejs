@@ -188,7 +188,7 @@
     var src = '/admin/conversations/media/' + m.id;
     if (m.media_type === 'image') body += '<a href="' + src + '" target="_blank"><img class="media" loading="lazy" src="' + src + '" alt="Imagen"></a>';
     else if (m.media_type === 'sticker') body += '<img class="media sticker" loading="lazy" src="' + src + '" alt="Sticker">';
-    else if (m.media_type === 'audio' || m.media_type === 'ptt') body += '<audio controls preload="none" src="' + src + '"></audio>';
+    else if (m.media_type === 'audio' || m.media_type === 'ptt') body += '<audio controls preload="metadata" src="' + src + '"></audio>';
     else if (m.media_type === 'video') body += '<video controls preload="none" src="' + src + '"></video>';
     else if (m.media_type === 'document') body += '<a href="' + src + '" target="_blank"><i class="bi bi-file-earmark"></i> ' + esc(m.filename || 'Documento') + '</a>';
     else if (m.media_type === 'call') body += '<i class="bi bi-telephone"></i> Llamada';
@@ -297,6 +297,15 @@
     }).catch(function(){ btn.disabled = false; btn.innerHTML = old; toast('No se pudo', true); });
   };
 
+  // Archivos viejos que WhatsApp ya no guarda: aviso en lugar de imagen o audio roto
+  document.getElementById('cvMsgs').addEventListener('error', function(e){
+    var el = e.target;
+    if (!el || !/^(IMG|AUDIO|VIDEO)$/.test(el.tagName)) return;
+    var n = document.createElement('div'); n.className = 'text-muted'; n.style.fontSize = '12px';
+    n.innerHTML = '<i class="bi bi-file-earmark-x"></i> Archivo no disponible (ya no está en WhatsApp)';
+    var host = el.parentNode && el.parentNode.tagName === 'A' ? el.parentNode : el;
+    host.replaceWith(n);
+  }, true);
   document.getElementById('cvList').addEventListener('click', function(e){
     var it = e.target.closest('.cv-item'); if (it) openConv(Number(it.dataset.id));
   });

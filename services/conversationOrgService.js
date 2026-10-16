@@ -43,6 +43,9 @@ const NOTICE = [
   ['Aviso final', /aviso final/i], ['Suspensión', /suspendid|suspensi[oó]n/i], ['Aviso de deuda', /aviso importante|aviso de deuda|registra.*sin pagar/i],
   ['Recordatorio de pago', /recordatorio|le recordamos|te recordamos|est[aá] por vencer/i], ['Confirmación de pago', /pago recibido|comprobante de pago|factura saldada/i],
 ];
+// "Gracias", "Dale ok", "Perfecto muchas gracias", "Bueno estaremos atentos gracias", emojis…
+const ACK_WORDS = 'ok+|okey|oki|okis|dale|listo|lista|gracias|grasias|graciass*|muchas|much[ií]simas|mil|perfecto|perfecta|genial|bueno|buen[ií]simo|excelente|de nada|igualmente|amable|muy|ya|si|s[ií]|entendido|entiendo|estaremos|estamos|quedo|atent[oa]s?|un|saludo|saludos|bendiciones|bendecido|d[ií]a|noche|tarde|buen|buena|buenas|joya|super|s[uú]per|obrigad[oa]|vale|correcto|correto|claro|exacto|seguro|tranqui|tranquilo|nomas|nom[aá]s|a|usted|vos|ustedes|tambi[eé]n|todo|bien|chau|hasta|luego';
+const ACK_RE = new RegExp('^(?:(?:' + ACK_WORDS + ')|[\\s!¡.,;:¿?…\\-]|\\p{Extended_Pictographic}|\\uFE0F|\\u200D)+$', 'iu');
 const COBRANZA_NOTICES = new Set(['Aviso final', 'Suspensión', 'Aviso de deuda', 'Recordatorio de pago']);
 
 let _schema = false;
@@ -178,6 +181,11 @@ function analyze(c) {
   const stage = c.lost_reason ? 'perdido' : (c.lead_stage || stageAuto);
   const nearClose = ['parciales', 'listo'].includes(stage) && missingProbable.length <= 1;
 
+  // ¿Lo último del contacto es solo un agradecimiento o un sticker? Entonces no espera respuesta
+  const tail = [];
+  for (const m of msgs) { if (m.sender !== 'cliente') break; tail.push(m); }
+  const onlyAck = tail.length > 0 && tail.every(m => m.media_type === 'sticker' || (!m.media_type && ACK_RE.test(String(m.body || '').trim())));
+
   // bandeja
   const archiveDays = Math.max(1, Number(getSetting('crm_archive_days', 30)) || 30);
   const internal = c.internal === 1 || (c.internal !== 0 && staffPhones().has(intl(c.phone)));
@@ -188,7 +196,7 @@ function analyze(c) {
   if (internal) inbox = 'internas';
   else if (c.state === 'closed' || old || newer) inbox = 'archivo';
   else if (!clientCount) inbox = 'avisos';
-  else if (c.state === 'waiting_human' || c.last_sender === 'cliente') inbox = 'por_atender';
+  else if (c.state === 'waiting_human' || (c.last_sender === 'cliente' && !onlyAck)) inbox = 'por_atender';
   else if (!isCustomer) inbox = 'ventas';
   else if (motive === 'cobranza') inbox = 'cobranza';
   else inbox = 'clientes';

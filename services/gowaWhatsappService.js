@@ -106,8 +106,20 @@ async function postForm(path, fields) {
   return json;
 }
 
+/** Registra el id de cada mensaje que envía el sistema (para distinguirlo de lo escrito en WhatsApp Web). */
+function logSent(json, kind) {
+  const id = json && json.results && json.results.message_id;
+  if (!id) return;
+  try {
+    const db = require('../config/database');
+    db.exec("CREATE TABLE IF NOT EXISTS wa_sent_log (wa_id TEXT PRIMARY KEY, kind TEXT, at TEXT DEFAULT (datetime('now')))");
+    db.prepare('INSERT OR IGNORE INTO wa_sent_log (wa_id, kind) VALUES (?, ?)').run(String(id), kind || 'sistema');
+  } catch (_) {}
+}
+
 async function sendGowaMessage(toPhone, messageText, options = {}) {
   const json = await postJson('/send/message', { phone: normalizePhoneJid(toPhone), message: String(messageText || '') });
+  logSent(json, options.kind || 'sistema');
   return { success: true, gateway: 'gowa', id: (json && json.results && json.results.message_id) || null, raw: json };
 }
 /** Envía texto a un chat por su JID tal cual (sirve también para números extranjeros y chats @lid). */
@@ -115,6 +127,7 @@ async function sendGowaText(jid, messageText) {
   const to = String(jid || '').trim();
   if (!/@(s\.whatsapp\.net|lid)$/.test(to)) throw new Error('Chat de WhatsApp inválido');
   const json = await postJson('/send/message', { phone: to, message: String(messageText || '') });
+  logSent(json, 'bandeja');
   return { success: true, gateway: 'gowa', id: (json && json.results && json.results.message_id) || null, raw: json };
 }
 async function sendGowaImage(toPhone, imageBuffer, caption = '', options = {}) {
@@ -125,6 +138,7 @@ async function sendGowaImage(toPhone, imageBuffer, caption = '', options = {}) {
     caption: String(caption || ''),
     image: { __file: true, buffer: buf, mimetype: options.mimetype || 'image/jpeg', filename: options.filename || 'image.jpg' }
   });
+  logSent(json, 'sistema');
   return { success: true, gateway: 'gowa', raw: json };
 }
 async function sendGowaDocument(toPhone, documentBuffer, filename = 'file.pdf', caption = '', mimetype = 'application/pdf', options = {}) {
@@ -136,6 +150,7 @@ async function sendGowaDocument(toPhone, documentBuffer, filename = 'file.pdf', 
     filename: filename || 'file.pdf',
     file: { __file: true, buffer: buf, mimetype: mimetype || 'application/pdf', filename: filename || 'file.pdf' }
   });
+  logSent(json, 'sistema');
   return { success: true, gateway: 'gowa', raw: json };
 }
 async function testGowaConnection(phone, message) {

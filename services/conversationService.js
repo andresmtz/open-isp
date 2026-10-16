@@ -76,6 +76,24 @@ function ensureSchema() {
     );
   `);
   _schema = true;
+  try { reclassifyWeb(); } catch (e) { logger.warn('[Conversaciones] reclasificar: ' + e.message); }
+}
+
+/** Una vez: los 3EB0 que no son plantillas pasan a "Persona (WhatsApp Web)". */
+function reclassifyWeb() {
+  if (db.getAppSetting && db.getAppSetting('wa_reclass_web_v1', '') === '1') return;
+  const rows = db.prepare("SELECT id, conv_id, body FROM wa_messages WHERE wa_id LIKE '3EB0%' AND sender='sistema'").all();
+  const convs = new Set();
+  for (const r of rows) if (!TEMPLATE_RE.test(String(r.body || ''))) {
+    db.prepare("UPDATE wa_messages SET sender='persona', by_name=CASE WHEN by_name='' THEN 'WhatsApp Web' ELSE by_name END WHERE id=?").run(r.id);
+    convs.add(r.conv_id);
+  }
+  for (const id of convs) {
+    const last = db.prepare('SELECT sender FROM wa_messages WHERE conv_id=? ORDER BY ts DESC, id DESC LIMIT 1').get(id);
+    if (last) db.prepare('UPDATE wa_conversations SET last_sender=? WHERE id=?').run(last.sender, id);
+  }
+  if (db.saveAppSetting) db.saveAppSetting('wa_reclass_web_v1', '1');
+  if (convs.size) logger.info(`[Conversaciones] ${convs.size} conversaciones con mensajes de WhatsApp Web reclasificados`);
 }
 
 // ── utilidades ──────────────────────────────────────────────────────────────
@@ -89,10 +107,20 @@ function handoffRe() {
   return new RegExp(['pasado la conversaci[oó]n a un miembro del equipo', ...extra].join('|'), 'i');
 }
 
-function senderOf(waId, fromMe) {
+// Textos que solo manda el sistema (plantillas). Lo demás con id 3EB0 lo escribió una persona en WhatsApp Web/Desktop.
+const TEMPLATE_RE = /(Estimado\/a|Estimado\(a\)|\*Faster\*|COMPROBANTE DE PAGO|PAGO RECIBIDO|Pago recibido con [ée]xito|RECORDATORIO|Recordatorio de pago|Aviso final|AVISO FINAL|suspendid|Bienvenido\/a|INSTALACI[OÓ]N ASIGNADA|NUEVA SOLICITUD|ID de cliente|Le informamos|Le recordamos|Le enviamos|^\s*(🧾|📢|🔔|🎉|🛠️|⚠️|🔴|📋|🙋|🧪))/;
+function sentBySystem(id) {
+  try { const r = db.prepare('SELECT kind FROM wa_sent_log WHERE wa_id=?').get(String(id)); return r ? r.kind : null; } catch (_) { return null; }
+}
+function senderOf(waId, fromMe, body) {
   if (!fromMe) return 'cliente';
   const id = String(waId || '');
-  if (/^3EB0/i.test(id)) return 'sistema';
+  if (/^3EB0/i.test(id)) {
+    const k = sentBySystem(id);
+    if (k === 'bandeja') return 'persona';
+    if (k) return 'sistema';
+    return TEMPLATE_RE.test(String(body || '')) ? 'sistema' : 'persona';
+  }
   if (/^CE/i.test(id)) return 'meta_ai';
   if (/^6A/i.test(id)) return 'auto';
   return 'persona';
@@ -144,7 +172,8 @@ function upsertMessage(m) {
   if (!m || !m.jid || !isPersonal(m.jid)) return { skipped: true };
   const conv = convFor(m.jid, m.fromMe ? '' : m.name);
   const ts = iso(m.ts);
-  const sender = m.sender || senderOf(m.waId, m.fromMe);
+  const sender = m.sender || senderOf(m.waId, m.fromMe, m.body);
+  if (!m.byName && sender === 'persona' && /^3EB0/i.test(String(m.waId || ''))) m.byName = 'WhatsApp Web';
   const body = String(m.body || '');
   if (m.waId) {
     const prev = db.prepare('SELECT id, media_path, lat FROM wa_messages WHERE wa_id=?').get(String(m.waId));
@@ -283,7 +312,7 @@ async function importHistory() {
   return { convs, msgs };
 }
 
-let _syncing = false;
+let _syncing = false, _relinkAt = 0;
 /** Trae lo nuevo de los chats con actividad reciente (respaldo del webhook: mensajes del celular y de Meta AI). */
 async function sync() {
   ensureSchema();
@@ -300,6 +329,7 @@ async function sync() {
       const list = (await chatMessages(c.jid, conv ? 30 : 300)).sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
       for (const x of list) if (fromStore(c.jid, c.name, x, false).isNew) n++;
     }
+    if (Date.now() - _relinkAt > 600000) { _relinkAt = Date.now(); relink(); }
     return { nuevos: n };
   } finally { _syncing = false; }
 }

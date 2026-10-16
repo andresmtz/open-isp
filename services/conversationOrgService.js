@@ -143,9 +143,11 @@ function analyze(c) {
   }
 
   // motivo: solo el "episodio" actual (desde la última pausa de más de 3 días), lo más nuevo pesa el doble
+  // se mide desde el último mensaje del cliente (lo nuestro posterior también cuenta)
   const episode = [];
+  const anchor = Math.max(0, msgs.findIndex(m => m.sender === 'cliente'));
   for (let i = 0; i < msgs.length; i++) {
-    if (i > 0 && (new Date(msgs[i - 1].ts) - new Date(msgs[i].ts)) > 3 * 86400000) break;
+    if (i > anchor && (new Date(msgs[i - 1].ts) - new Date(msgs[i].ts)) > 3 * 86400000) break;
     episode.push(msgs[i]);
   }
   const score = {};

@@ -111,7 +111,8 @@ function getAllCustomers(search = '', routerId = null, filterStatus = '', filter
 
   const rId = routerId ? Number(routerId) : null;
   if (rId && rId > 0) {
-    whereClauses.push(`c.router_id = ?`);
+    // los que todavía no tienen router (inscriptos sin instalar, cancelados) se ven con cualquier router elegido
+    whereClauses.push(`(c.router_id = ? OR c.router_id IS NULL)`);
     params.push(rId);
   }
 

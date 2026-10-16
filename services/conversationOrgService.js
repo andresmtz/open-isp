@@ -151,11 +151,12 @@ function analyze(c) {
   const score = {};
   episode.forEach((m, i) => {
     if (m.sender === 'sistema' || m.sender === 'auto') return; // plantillas automáticas no definen el tema
-    const w = (m.sender === 'cliente' ? 2 : 1) * (i < 6 ? 2 : 1);
+    const w = (m.sender === 'cliente' ? 2 : 1) * (i < 3 ? 4 : (i < 8 ? 2 : 1));
     for (const [k, re] of Object.entries(TOPIC)) if (re.test(m.body || '')) score[k] = (score[k] || 0) + w;
   });
   // fotos del cliente que nosotros tratamos como comprobante
-  if (episode.some(m => m.sender === 'cliente' && m.media_type === 'image') && episode.some(m => m.sender !== 'cliente' && /comprobante|pago recibido/i.test(m.body || ''))) score.pago = (score.pago || 0) + 3;
+  const recent = episode.slice(0, 6);
+  if (recent.some(m => m.sender === 'cliente' && m.media_type === 'image') && recent.some(m => m.sender !== 'cliente' && /comprobante|pago recibido/i.test(m.body || ''))) score.pago = (score.pago || 0) + 4;
   let motiveAuto = 'otro', best = 0;
   for (const k of ['soporte', 'pago', 'baja', 'instalacion', 'adicionales']) if ((score[k] || 0) > best) { best = score[k]; motiveAuto = k; }
   const isCustomer = !!c.customer_id && !['inactive', 'cancelled'].includes(c.customer_status);

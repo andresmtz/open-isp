@@ -116,7 +116,10 @@ function getAllCustomers(search = '', routerId = null, filterStatus = '', filter
     params.push(rId);
   }
 
-  if (filterStatus) {
+  if (filterStatus === 'clientes') {
+    // Clientes = servicio instalado (activo, suspendido o con promesa). Inscriptos y cancelados no cuentan.
+    whereClauses.push(`c.status IN ('active','suspended','ditangguhkan')`);
+  } else if (filterStatus && filterStatus !== 'all') {
     if (filterStatus === 'inactive') {
       whereClauses.push(`c.status = ? AND COALESCE(c.reg_status,'') != 'rejected'`);
     } else {
@@ -450,7 +453,9 @@ async function bulkDeleteCustomers(ids) {
 
 function getCustomerStats() {
   return {
-    total:        db.prepare('SELECT COUNT(*) as c FROM customers').get().c,
+    // Clientes = servicio instalado (activo, suspendido o con promesa); inscriptos y cancelados no son clientes
+    total:        db.prepare("SELECT COUNT(*) as c FROM customers WHERE status IN ('active','suspended','ditangguhkan')").get().c,
+    cancelled:    db.prepare("SELECT COUNT(*) as c FROM customers WHERE status='cancelled'").get().c,
     active:       db.prepare("SELECT COUNT(*) as c FROM customers WHERE status IN ('active', 'ditangguhkan')").get().c,
     ditangguhkan: db.prepare("SELECT COUNT(*) as c FROM customers WHERE status='ditangguhkan'").get().c,
     suspended:    db.prepare("SELECT COUNT(*) as c FROM customers WHERE status='suspended'").get().c,

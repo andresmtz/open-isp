@@ -96,7 +96,7 @@
     <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
       <div class="sc p sc-clickable <%= (!filterStatus) ? 'stat-card-active' : '' %>" onclick="filterByStatus('')" title="<%= t('admin.cust.tt_all','Klik untuk tampilkan semua pelanggan') %>">
         <i class="bi bi-people sc-icon"></i>
-        <div class="sc-label"><%= t('admin.customers.stats.total', 'Total') %></div>
+        <div class="sc-label">Clientes</div>
         <div class="sc-val"><%= stats.total %></div>
         <% if (!filterStatus) { %>
           <div style="font-size:10px;font-weight:800;color:var(--primary);margin-top:4px"><i class="bi bi-funnel-fill"></i> <%= t('admin.cust.filter_active','Filter Aktif') %></div>
@@ -167,12 +167,13 @@
             <input class="fc" name="search" placeholder="<%= t('admin.customers.search_placeholder', 'Cari nama, telepon, tag...') %>" value="<%= search %>">
           </div>
           <select class="fs" name="status" style="width:140px" onchange="this.form.submit()">
-            <option value=""><%= t('admin.customers.filter.all_status', 'Semua Status') %></option>
+            <option value="">Clientes (activos y suspendidos)</option>
             <option value="active" <%= filterStatus==='active' ? 'selected':'' %>><%= t('admin.customers.filter.active', 'Aktif') %></option>
             <option value="suspended" <%= filterStatus==='suspended' ? 'selected':'' %>><%= t('admin.customers.filter.suspended', 'Suspend') %></option>
             <option value="inactive" <%= filterStatus==='inactive' ? 'selected':'' %>><%= t('admin.customers.filter.inactive', 'Pendaftar Baru / Nonaktif') %></option>
             <option value="ditangguhkan" <%= filterStatus==='ditangguhkan' ? 'selected':'' %>>Promesa / habilitado con deuda</option>
             <option value="cancelled" <%= filterStatus==='cancelled' ? 'selected':'' %>>Cancelados</option>
+            <option value="all" <%= filterStatus==='all' ? 'selected':'' %>>Todos los registros</option>
           </select>
           <select class="fs" name="area" style="width:160px" onchange="this.form.submit()">
             <option value=""><%= t('admin.cust.all_area','Todas las zonas') %></option>

@@ -1858,7 +1858,7 @@ router.get('/customers', requireAdminSession, requireSidebarMenuAccess('customer
     package_id: filterPackage = '', collector_id: filterCollector = '', olt_id: filterOlt = '',
     connection_type: filterConn = '', billing: filterBilling = '', auto_isolate: filterAuto = '' } = req.query;
   const selectedRouterId = req.selectedRouterId || (req.query.router_id ? Number(req.query.router_id) : null);
-  const customers = customerSvc.getAllCustomers(search, selectedRouterId, filterStatus, filterArea, {
+  const customers = customerSvc.getAllCustomers(search, selectedRouterId, filterStatus || 'clientes', filterArea, {
     packageId: filterPackage, collectorId: filterCollector, oltId: filterOlt,
     connectionType: filterConn, billing: filterBilling, autoIsolate: filterAuto
   });

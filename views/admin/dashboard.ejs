@@ -90,9 +90,9 @@
       <div class="stat-grid">
         <div class="sc p" style="cursor:pointer" onclick="location.href='/admin/customers'">
           <i class="bi bi-people-fill sc-icon"></i>
-          <div class="sc-label"><%= t('admin.dashboard.total_customers','Total Pelanggan') %></div>
+          <div class="sc-label">Clientes</div>
           <div class="sc-val"><%= custStats ? custStats.total : 0 %></div>
-          <div class="sc-sub"><%= t('admin.dashboard.registered','Terdaftar') %></div>
+          <div class="sc-sub">Con servicio instalado (activos y suspendidos)</div>
         </div>
         <div class="sc s" style="cursor:pointer" onclick="location.href='/admin/customers?status=active'">
           <i class="bi bi-check-circle-fill sc-icon"></i>
@@ -103,7 +103,7 @@
         <div class="sc w" style="cursor:pointer" onclick="location.href='/admin/customers?status=suspended'">
           <i class="bi bi-slash-circle-fill sc-icon"></i>
           <div class="sc-label"><%= t('admin.dashboard.isolated','Isolir / Suspend') %></div>
-          <div class="sc-val"><%= custStats ? (custStats.suspended + custStats.ditangguhkan) : 0 %></div>
+          <div class="sc-val"><%= custStats ? custStats.suspended : 0 %></div>
           <div class="sc-sub"><%= t('admin.dashboard.needs_followup','Perlu tindak lanjut') %></div>
         </div>
         <div class="sc d" style="cursor:pointer" onclick="location.href='/admin/customers?status=inactive'">

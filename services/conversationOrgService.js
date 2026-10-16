@@ -324,6 +324,7 @@ const DEFAULT_REPLIES = [
   { title: 'Requisitos de instalación', text: '📋 *Requisitos para la instalación*\n\n✅ Foto del frente de tu cédula de identidad.\n✅ Foto de la fachada de la vivienda.\n✅ Tu *ubicación actual* por WhatsApp.\n\n💳 El primer mes se abona al finalizar la instalación; después los pagos son por adelantado.\nSi en algún momento das de baja el servicio, solo tenés que devolver los equipos entregados en comodato.' },
   { title: 'Planes', text: '📦 *Nuestros planes de internet por fibra óptica*\n\n{{planes}}\n\nSin contrato de permanencia. ¿Cuál te interesa?' },
   { title: 'Formas de pago', text: '{{formas_pago}}' },
+  { title: 'Cambiar WiFi desde el portal', text: '💡 Podés cambiar el *nombre y la contraseña de tu WiFi* vos mismo/a, cuando quieras, desde tu portal de cliente:\n\n1️⃣ Entrá a {{portal}}\n2️⃣ Ingresá tu número de WhatsApp o tu código de cliente\n3️⃣ Te llega un código por WhatsApp: escribilo para entrar\n4️⃣ Tocá *WiFi* → cambiá el nombre o la contraseña → *Guardar*\n\nLa contraseña debe tener al menos 8 caracteres. Después volvé a conectar tus equipos con la clave nueva. ¡Cualquier duda, escribinos!' },
   { title: 'Horario de atención', text: '🕗 Nuestro horario de atención es de *lunes a viernes de 08:00 a 17:00 hs*. Fuera de ese horario te respondemos en cuanto retomemos la actividad.' },
 ];
 function quickReplies({ raw = false } = {}) {
@@ -334,7 +335,9 @@ function quickReplies({ raw = false } = {}) {
   const planes = db.prepare('SELECT name, price, speed_down FROM packages ORDER BY price').all()
     .map(p => `• ${p.speed_down ? Math.round(p.speed_down / 1000) + ' megas' : p.name}: ${regional.currencySymbol()} ${Number(p.price || 0).toLocaleString(regional.locale())} por mes`).join('\n');
   const pago = String(getSetting('corte_payment_info', '') || '').trim() || 'Consultanos las formas de pago disponibles.';
-  return list.map(r => ({ title: String(r.title || ''), text: String(r.text || '').replace(/{{planes}}/g, planes).replace(/{{formas_pago}}/g, pago) }));
+  const base = String(getSetting('public_base_url', '') || getSetting('app_url', '') || '').replace(/\/+$/, '');
+  const portal = base ? base + '/customer/login' : '(link del portal)';
+  return list.map(r => ({ title: String(r.title || ''), text: String(r.text || '').replace(/{{planes}}/g, planes).replace(/{{formas_pago}}/g, pago).replace(/{{portal}}/g, portal) }));
 }
 function saveQuickReplies(arr) {
   if (!Array.isArray(arr)) throw new Error('Formato inválido');

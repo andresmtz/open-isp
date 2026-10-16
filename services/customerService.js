@@ -1049,6 +1049,8 @@ async function cancelCustomer(id, { reason, actor } = {}) {
       .run(`Cancelación del servicio: ${why}`, id);
     // El saldo trasladado a una próxima factura que no se va a emitir se descarta (queda en la auditoría)
     db.prepare("UPDATE customers SET status = 'cancelled', cancelled_at = NOW_LOCAL(), cancel_reason = ?, cancelled_by = ?, auto_isolate = 0, carry_over = 0 WHERE id = ?").run(why, by, id);
+    // Servicios adicionales (IPTV…): se dan de baja junto con el servicio
+    try { require('./extraServicesService').endAllFor(id, 'Cancelación del servicio', (actor && (actor.name || actor)) || ''); } catch (_) {}
     // La IP queda libre para otro cliente (el usuario PPPoE ya se borró del MikroTik)
     db.prepare("UPDATE customers SET pppoe_remote_address = NULL, static_ip = '' WHERE id = ?").run(id);
     try {

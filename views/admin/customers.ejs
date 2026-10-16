@@ -1226,6 +1226,23 @@
 
       <!-- Trafik -->
       <div class="vd-sec">
+        <div class="vd-sec-title" style="display:flex;justify-content:space-between;align-items:center"><span><i class="bi bi-tv"></i> Servicios adicionales</span><span id="vxTotal" style="font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0"></span></div>
+        <div id="vxList" style="font-size:13px"><span class="text-muted">Cargando…</span></div>
+        <div id="vxAdd" style="display:none;margin-top:8px;padding:10px;border:1px dashed var(--border);border-radius:10px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;align-items:end">
+            <div class="fg" style="margin:0"><label class="fl">Servicio</label><select class="fs" id="vxCat"></select></div>
+            <div class="fg" style="margin:0"><label class="fl">Precio mensual acordado</label><input class="fc" id="vxPrice" inputmode="numeric" placeholder="ej. 40000"></div>
+            <div class="fg" style="margin:0" id="vxSerialWrap"><label class="fl" id="vxSerialLbl">N.º de serie del equipo</label><input class="fc" id="vxSerial" maxlength="60" placeholder="opcional"></div>
+            <div class="fg" style="margin:0"><label class="fl">Nota</label><input class="fc" id="vxNote" maxlength="300" placeholder="opcional"></div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            <button type="button" class="btn btn-p btn-sm" onclick="vxAdd()"><i class="bi bi-plus-lg"></i> Agregar al cliente</button>
+            <button type="button" class="btn btn-g btn-sm" id="vxCatBtn" style="display:none" onclick="vxNewCat()"><i class="bi bi-journal-plus"></i> Nuevo servicio en el catálogo</button>
+          </div>
+          <div class="text-muted" style="font-size:11px;margin-top:6px">Se suma a la factura mensual junto con el plan, desde la próxima factura que se genere.</div>
+        </div>
+      </div>
+      <div class="vd-sec">
         <div class="vd-sec-title"><i class="bi bi-arrow-down-up"></i> <%= t('admin.cust.traffic_stats','Statistik Trafik Data') %></div>
         <div class="vd-panel" style="padding:12px">
           <div class="vd-grid2">
@@ -1617,11 +1634,11 @@ function viewCustDetail(idx) {
         const isExp = c.expired_at ? (new Date(c.expired_at) < new Date()) : false;
         document.getElementById('v_expired_at').innerHTML = `
           <span class="badge ${isExp ? 'bd' : 'bs'}" style="font-weight:700;">
-            <i class="bi bi-clock-history"></i> ${expStr} ${isExp ? '(Expired / Terisolir)' : '(Activo)'}
+            <i class="bi bi-clock-history"></i> ${expStr} ${isExp ? '(vencido / suspendido)' : '(Activo)'}
           </span>
         `;
       } else {
-        document.getElementById('v_expired_at').textContent = 'Pascabayar (Bulanan Kalender)';
+        document.getElementById('v_expired_at').textContent = 'Pospago (mes calendario)';
       }
     }
     if (document.getElementById('v_genieacs')) document.getElementById('v_genieacs').textContent = c.genieacs_tag || '-';
@@ -1634,6 +1651,7 @@ function viewCustDetail(idx) {
     currentDetailIdx = idx;
     openModal('viewDetailModal');
     vdPower(c.id);
+    vxLoad(c.id);
     fetchLiveSessions();
   } catch (err) {
     console.error('Error in viewCustDetail:', err);
@@ -2006,6 +2024,67 @@ async function eqPower(){
   var j = await fetchPower(id);
   if (id === _eqId && document.getElementById('eq_power')) document.getElementById('eq_power').innerHTML = pwHtml(j);
 }
+// ── Servicios adicionales (IPTV, cámaras…) ──
+var _vx = { cid: 0, cat: [] };
+function vxMoney(n){ return n == null ? '—' : (APP_CUR + ' ' + Number(n).toLocaleString(APP_LOCALE)); }
+function vxEsc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(ch){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]; }); }
+function vxLoad(cid){
+  _vx.cid = cid;
+  var box = document.getElementById('vxList'); if (!box) return;
+  fetch('/admin/customers/' + cid + '/extras').then(function(r){ return r.json(); }).then(function(d){
+    if (!d.ok) { box.innerHTML = '<span class="text-muted">' + vxEsc(d.message || 'No disponible') + '</span>'; return; }
+    _vx.cat = d.catalog || [];
+    var act = (d.items || []).filter(function(x){ return x.active; }), old = (d.items || []).filter(function(x){ return !x.active; });
+    var tot = act.reduce(function(a, x){ return a + (Number(x.price) || 0); }, 0);
+    document.getElementById('vxTotal').textContent = act.length && d.money ? ('Suman ' + vxMoney(tot) + ' por mes a la factura') : '';
+    box.innerHTML = (act.length ? act.map(function(x){
+      return '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">' +
+        '<div><b>' + vxEsc(x.name) + '</b> · ' + vxMoney(x.price) + '/mes' +
+        (x.equipment ? '<div style="font-size:11.5px;color:var(--muted)"><i class="bi bi-box-seam"></i> ' + vxEsc(x.equipment) + ' en comodato' + (x.serial ? ' · serie ' + vxEsc(x.serial) : '') + '</div>' : '') +
+        (x.note ? '<div style="font-size:11.5px;color:var(--muted)">' + vxEsc(x.note) + '</div>' : '') +
+        '<div style="font-size:11px;color:var(--muted)">Desde ' + vxEsc(String(x.start_date || '').split('-').reverse().join('/')) + '</div></div>' +
+        (d.canEdit ? '<div style="display:flex;gap:4px;flex-shrink:0">' +
+          (d.money ? '<button type="button" class="btn btn-g btn-sm" title="Cambiar precio o serie" onclick="vxEdit(' + x.id + ',' + (x.price || 0) + ',\'' + vxEsc(x.serial || '').replace(/'/g, '') + '\')"><i class="bi bi-pencil"></i></button>' : '') +
+          '<button type="button" class="btn btn-g btn-sm" style="color:#f87171" title="Dar de baja" onclick="vxEnd(' + x.id + ',\'' + vxEsc(x.name).replace(/'/g, '') + '\',\'' + vxEsc(x.equipment || '').replace(/'/g, '') + '\')"><i class="bi bi-x-lg"></i></button></div>' : '') +
+        '</div>';
+    }).join('') : '<div class="text-muted">Sin servicios adicionales.</div>') +
+    (old.length ? '<details style="margin-top:6px"><summary style="font-size:11.5px;color:var(--muted);cursor:pointer">Dados de baja (' + old.length + ')</summary>' + old.map(function(x){ return '<div style="font-size:12px;color:var(--muted);padding:3px 0">' + vxEsc(x.name) + ' · ' + vxMoney(x.price) + ' · baja ' + vxEsc(String(x.ended_at || '').slice(0, 10).split('-').reverse().join('/')) + (x.ended_reason ? ' (' + vxEsc(x.ended_reason) + ')' : '') + '</div>'; }).join('') + '</details>' : '');
+    var add = document.getElementById('vxAdd');
+    add.style.display = d.canEdit && d.money ? '' : 'none';
+    document.getElementById('vxCatBtn').style.display = d.isAdmin ? '' : 'none';
+    var sel = document.getElementById('vxCat');
+    sel.innerHTML = _vx.cat.map(function(c){ return '<option value="' + c.id + '">' + vxEsc(c.name) + '</option>'; }).join('');
+    sel.onchange = vxCatChange; vxCatChange();
+  }).catch(function(){ box.innerHTML = '<span class="text-muted">No se pudo cargar.</span>'; });
+}
+function vxCatChange(){
+  var id = Number(document.getElementById('vxCat').value), c = _vx.cat.filter(function(x){ return x.id === id; })[0];
+  document.getElementById('vxPrice').value = c && c.default_price ? c.default_price : '';
+  document.getElementById('vxSerialWrap').style.display = c && c.equipment ? '' : 'none';
+  document.getElementById('vxSerialLbl').textContent = 'N.º de serie: ' + (c && c.equipment ? c.equipment : 'equipo');
+}
+function vxPost(url, body){ return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then(function(r){ return r.json(); }); }
+function vxMsg(d){ if (window.notify) window.notify(d.ok ? 'success' : 'error', d.ok ? 'Listo' : 'Error', d.message); else alert(d.message); }
+function vxAdd(){
+  vxPost('/admin/customers/' + _vx.cid + '/extras', { catalog_id: document.getElementById('vxCat').value, price: document.getElementById('vxPrice').value, serial: document.getElementById('vxSerial').value, note: document.getElementById('vxNote').value })
+    .then(function(d){ vxMsg(d); if (d.ok) { document.getElementById('vxSerial').value = ''; document.getElementById('vxNote').value = ''; vxLoad(_vx.cid); } });
+}
+function vxEdit(id, price, serial){
+  var p = prompt('Precio mensual acordado:', price); if (p === null) return;
+  var sr = prompt('N.º de serie del equipo (vacío si no tiene):', serial || ''); if (sr === null) return;
+  vxPost('/admin/customers/extras/' + id + '/update', { price: p, serial: sr }).then(function(d){ vxMsg(d); if (d.ok) vxLoad(_vx.cid); });
+}
+function vxEnd(id, name, eq){
+  var r = prompt('¿Dar de baja ' + name + '? Deja de sumarse a la factura.' + (eq ? ' Recordá retirar el ' + eq + '.' : '') + '\n\nMotivo (opcional):', ''); if (r === null) return;
+  vxPost('/admin/customers/extras/' + id + '/end', { reason: r }).then(function(d){ vxMsg(d); if (d.ok) vxLoad(_vx.cid); });
+}
+function vxNewCat(){
+  var n = prompt('Nombre del servicio (ej. Cámaras de seguridad):'); if (!n) return;
+  var p = prompt('Precio sugerido por mes (se puede cambiar en cada cliente):', '0'); if (p === null) return;
+  var e = prompt('¿Lleva un equipo en comodato? Escribí cuál (ej. Decodificador) o dejalo vacío:', ''); if (e === null) return;
+  vxPost('/admin/extras/catalog', { name: n, default_price: p, equipment: e }).then(function(d){ vxMsg(d); if (d.ok) vxLoad(_vx.cid); });
+}
+
 async function vdPower(id){
   var s = document.getElementById('v_onu_power'); if (!s || !id) return;
   s.innerHTML = '<span class="text-muted">Midiendo en la OLT…</span>';

@@ -87,7 +87,18 @@ function computeInvoiceAmountAndMeta(customer, pkg, periodMonth, periodYear) {
     metaParts.push(`USO ${usoPct}% (${regional.currencySymbol()} ${usoVal.toLocaleString(regional.locale())})`);
   }
 
-  const finalAmount = baseAmount + taxAmount;
+  // Servicios adicionales del cliente (IPTV, cámaras…): se suman al plan; en la primera factura prorrateada, también se prorratean
+  let extrasAmount = 0;
+  try {
+    const ex = require('./extraServicesService').forInvoice(customer.id);
+    if (ex.total > 0) {
+      extrasAmount = prorated && billableDays != null && dim ? Math.round(ex.total * (billableDays / dim)) : ex.total;
+      metaParts.push(`Internet ${pkg.name} ${regional.currencySymbol()} ${Number(baseAmount).toLocaleString(regional.locale())}`);
+      metaParts.push(...ex.parts.map(x => x + (prorated ? ' (prorrateado)' : '')));
+    }
+  } catch (_) { /* sin servicios adicionales */ }
+
+  const finalAmount = baseAmount + taxAmount + extrasAmount;
   const notesAuto = metaParts.length ? `AUTO: ${metaParts.join(' | ')}` : '';
 
   return {

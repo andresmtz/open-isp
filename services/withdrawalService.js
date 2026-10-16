@@ -47,7 +47,9 @@ function equipmentOf(id) {
   try { eq = require('./customerEquipmentService').current(id); } catch (_) {}
   try { inv = require('./onuManageService').forCustomer(id); } catch (_) {}
   const mac = String((eq && eq.mac) || (inv && inv.mac) || '').toUpperCase();
-  return { type: (eq && eq.type) || (inv && inv.type) || '', mac, onu_ref: (eq && eq.onu_ref) || (inv && inv.onu_ref) || '', labelDocId: eq && eq.label_doc_id };
+  let extras = [];
+  try { extras = require('./extraServicesService').equipmentFor(id); } catch (_) {}
+  return { type: (eq && eq.type) || (inv && inv.type) || '', mac, onu_ref: (eq && eq.onu_ref) || (inv && inv.onu_ref) || '', labelDocId: eq && eq.label_doc_id, extras };
 }
 
 function message(id, ticketId) {
@@ -57,6 +59,7 @@ function message(id, ticketId) {
   return `📦 *RETIRO DE EQUIPO*\n\n👤 *Cliente:* ${c.name}\n📞 *Teléfono:* ${c.phone || '-'}\n📍 *Dirección:* ${c.address || '-'}` +
     (loc ? `\n🗺️ *Ubicación:* ${loc}` : '') +
     `\n\n🔌 *Equipo a retirar:* ${e.type || 'ONU'}${e.mac ? `\n🏷️ *MAC:* ${e.mac}` : ''}` +
+    (e.extras && e.extras.length ? e.extras.map(x => `\n📺 *También retirar:* ${x.equipment} (${x.name})${x.serial ? ` · serie ${x.serial}` : ''}`).join('') : '') +
     `\n_(Revisá que la MAC de la etiqueta coincida: así te llevás el equipo correcto.)_` +
     `\n\nCuando lo tengas en tu poder, en tu orden N.º ${ticketId} tocá *"Equipo retirado"* y subí la foto de la etiqueta. Si no se pudo, tocá *"No se pudo retirar"* e indicá el motivo.`;
 }

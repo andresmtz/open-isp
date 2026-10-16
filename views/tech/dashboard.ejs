@@ -85,6 +85,7 @@
             <div style="font-weight:800;font-size:13px;margin-bottom:6px"><i class="bi bi-box-arrow-in-down"></i> Equipo a retirar</div>
             <div style="font-size:13px;line-height:1.6"><b><%= wd.type %></b><% if (wd.mac) { %><br>MAC: <span style="font-family:monospace;font-weight:700"><%= wd.mac %></span><% } %></div>
             <div class="muted" style="font-size:11px;margin-top:2px">Revisá que la MAC de la etiqueta coincida antes de llevártelo.</div>
+            <% (wd.extras || []).forEach(function(x){ %><div style="font-size:13px;margin-top:6px;padding:6px 8px;border-radius:8px;background:rgba(245,158,11,.12)"><i class="bi bi-tv"></i> <b>También retirar:</b> <%= x.equipment %> (<%= x.name %>)<% if (x.serial) { %> · serie <span style="font-family:monospace;font-weight:700"><%= x.serial %></span><% } %></div><% }) %>
             <% if (wd.label) { %><a href="<%= wd.label %>" target="_blank" rel="noopener"><img src="<%= wd.label %>" class="p-img" alt="Etiqueta del equipo" style="margin-top:8px;max-width:220px"></a><% } %>
             <form method="POST" action="/tech/orders/<%= ticket.id %>/retiro" enctype="multipart/form-data" style="margin-top:10px" onsubmit="return confirm('¿Confirmás que ya tenés el equipo en tu poder?')">
               <label style="font-size:12px;display:block;margin:4px 0 2px">Foto de la etiqueta del equipo retirado *</label>

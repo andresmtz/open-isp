@@ -2895,6 +2895,39 @@ router.post('/gowa/update', requireAdminSession, express.json(), async (req, res
 });
 
 // Cobros por cuenta o billetera (para conciliar con los extractos): detalle y totales por destino, en un rango de fechas
+// ─── SERVICIOS ADICIONALES (IPTV, cámaras…) por cliente ─────────────────────
+const extraSvc = require('../services/extraServicesService');
+const extraActor = (req) => req.session.isAdmin ? (req.session.adminUser || 'Administrador') : (req.session.cashierName || 'Oficina');
+router.get('/customers/:id/extras', requireAdminSession, (req, res) => {
+  try {
+    const money = staffPerms.has(req.session, 'ver_facturas');
+    const strip = (o) => money ? o : Object.assign({}, o, { price: null, default_price: null });
+    res.json({ ok: true, items: extraSvc.forCustomer(req.params.id, { all: true }).map(strip), catalog: extraSvc.catalog().map(strip),
+      canEdit: staffPerms.has(req.session, 'clientes_alta'), money, isAdmin: !!req.session.isAdmin });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/customers/:id/extras', requireAdminSession, express.json(), (req, res) => {
+  try {
+    if (!staffPerms.has(req.session, 'clientes_alta')) throw new Error('No tenés permiso para agregar servicios.');
+    if (!staffPerms.has(req.session, 'ver_facturas')) throw new Error('Necesitás permiso para ver montos para fijar el precio.');
+    extraSvc.add(req.params.id, req.body || {}, extraActor(req));
+    res.json({ ok: true, message: 'Servicio agregado. Se suma a la factura mensual desde la próxima que se genere.' });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/customers/extras/:sid/:action(update|end)', requireAdminSession, express.json(), (req, res) => {
+  try {
+    if (!staffPerms.has(req.session, 'clientes_alta')) throw new Error('No tenés permiso para modificar servicios.');
+    if (req.params.action === 'end') { extraSvc.end(req.params.sid, (req.body || {}).reason, extraActor(req)); return res.json({ ok: true, message: 'Servicio dado de baja. Deja de sumarse a la factura.' }); }
+    if (!staffPerms.has(req.session, 'ver_facturas')) throw new Error('Necesitás permiso para ver montos para cambiar el precio.');
+    extraSvc.update(req.params.sid, req.body || {}, extraActor(req));
+    res.json({ ok: true, message: 'Servicio actualizado.' });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/extras/catalog', requireAdminSession, restrictToAdmin, express.json(), (req, res) => {
+  try { extraSvc.saveCatalog(req.body || {}); res.json({ ok: true, message: 'Catálogo actualizado.' }); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
+});
+
 // ─── CONVERSACIONES DE WHATSAPP (CRM, fase 0: bandeja) ───────────────────────
 const convSvc = require('../services/conversationService');
 const convOrg = require('../services/conversationOrgService');
@@ -4520,23 +4553,8 @@ router.get('/reports', requireAdminSession, requireSidebarMenuAccess('reports'),
   expensesByCategory.sort((a, b) => b.total - a.total);
 
   // ── Pajak & Retribusi (lazy finance) ──
-  const fin = {
-    ppn: Number(getSetting('finance_ppn_pct', '11')) || 0,
-    pph: Number(getSetting('finance_pph_pct', '22')) || 0,
-    uso: Number(getSetting('finance_uso_pct', '1.75')) || 0,
-    bhp: Number(getSetting('finance_bhp_pct', '0.5')) || 0,
-    inclPpn: String(getSetting('finance_revenue_includes_ppn', '0')) === '1'
-  };
-  const lab = (bruto, keluar) => {
-    const dpp = (fin.inclPpn && fin.ppn > 0) ? (bruto / (1 + fin.ppn / 100)) : bruto;
-    const ppn = fin.inclPpn ? (bruto - dpp) : (bruto * fin.ppn / 100);
-    const uso = dpp * fin.uso / 100;
-    const bhp = dpp * fin.bhp / 100;
-    const sebelumPph = dpp - keluar - uso - bhp;
-    const pph = Math.max(0, sebelumPph) * fin.pph / 100;
-    const bersih = sebelumPph - pph;
-    return { bruto, dpp, ppn: Math.max(0, ppn), uso, bhp, keluar, sebelumPph, pph, bersih };
-  };
+  const fin = finCfg();
+  const lab = (bruto, keluar) => labaRugi(bruto, keluar, fin);
   const ply = lab(cashInYear, expensesYear);
   const pm = lab(cashInThisMonth, expensesMonth);
   const _revM = db.prepare("SELECT CAST(strftime('%m', paid_at) AS INTEGER) m, COALESCE(SUM(amount),0) t FROM invoices WHERE status='paid' AND strftime('%Y', paid_at)=? AND (paid_by_name IS NULL OR paid_by_name NOT LIKE 'Agent %') GROUP BY m").all(yStr);

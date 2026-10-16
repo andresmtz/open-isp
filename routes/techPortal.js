@@ -181,7 +181,7 @@ router.get('/', requireTechSession, (req, res) => {
         const ws = require('../services/withdrawalService');
         const e = ws.equipmentOf(t.customer_id);
         const lab = e.labelDocId ? docs.get(e.labelDocId) : docs.list(t.customer_id, { kinds: ['etiqueta'] })[0];
-        t.withdraw = { type: e.type || 'ONU', mac: e.mac, onu: e.onu_ref, label: lab ? `/tech/customers/${t.customer_id}/label/${lab.id}` : '', fails: ws.FAIL_REASONS };
+        t.withdraw = { type: e.type || 'ONU', mac: e.mac, onu: e.onu_ref, extras: e.extras || [], label: lab ? `/tech/customers/${t.customer_id}/label/${lab.id}` : '', fails: ws.FAIL_REASONS };
       }
       if (!/^(install|retiro)/.test(String(t.kind || '')) && t.customer_id && ['open', 'in_progress'].includes(t.status)) {
         const c = db.prepare("SELECT status, wifi_ssid, package_id FROM customers WHERE id=?").get(t.customer_id) || {};

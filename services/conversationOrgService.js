@@ -136,7 +136,7 @@ function analyze(c) {
   const nameMsg = fromClient.find(m => (!askedReq || m.ts >= askedReq.ts) && m.body && !STOP.test(m.body) &&
     /^[A-Za-zÁÉÍÓÚÑáéíóúñü'´. ]{5,60}$/.test(m.body.trim()) && m.body.trim().split(/\s+/).length >= 2 && m.body.trim().split(/\s+/).length <= 5);
   const name = String(c.lead_name || c.customer_name || '').trim();
-  const nameGuess = nameMsg ? nameMsg.body.trim().replace(/\s+/g, ' ').replace(/\b\w/g, x => x.toUpperCase()) : '';
+  const nameGuess = nameMsg ? nameMsg.body.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : '';
   const check = {
     nombre: { ok: !!name, probable: !name && !!nameGuess, value: name || nameGuess || c.name || '' },
     cedula: { ok: !!c.cedula_msg, probable: !c.cedula_msg && (gotCedula || imgsAfterReq >= 1), confirmed: gotCedula },

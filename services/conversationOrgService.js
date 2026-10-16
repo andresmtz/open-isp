@@ -189,9 +189,12 @@ function analyze(c) {
   const gotCedula = /(recib|tengo|lleg|ten[ée]s|enviaste)[^.\n]{0,60}c[eé]dula/i.test(confirms);
   const gotFachada = /(recib|tengo|lleg|ten[ée]s|enviaste)[^.\n]{0,80}fachada/i.test(confirms);
   // Nombre: el que se cargó, el del cliente, o un mensaje que parece "nombre y apellido" después de pedir los requisitos
-  const STOP = /\b(hola|buenas?|gracias|ok|okey|listo|dale|s[ií]|no|que|qu[eé]|tal|d[ií]as|tardes|noches|como|internet|wifi|pregunta|ma[ñn]ana|ahora|datos|porfa|favor)\b/i;
-  const nameMsg = fromClient.find(m => (!askedReq || m.ts >= askedReq.ts) && m.body && !STOP.test(m.body) &&
-    /^[A-Za-zÁÉÍÓÚÑáéíóúñü'´. ]{5,60}$/.test(m.body.trim()) && m.body.trim().split(/\s+/).length >= 2 && m.body.trim().split(/\s+/).length <= 5);
+  const STOP = /\b(hola|buenas?|gracias|ok|okey|listo|dale|s[ií]|no|que|qu[eé]|tal|d[ií]as|tardes|noches|como|internet|wifi|pregunta|ma[ñn]ana|ahora|datos|porfa|favor|este|esta|es|mi|mis|ubicaci[oó]n|casa|foto|fotos|espero|aguard\w*|visita|hoy|pueden|puedo|quiero|necesito|bien|instal\w*|pago|abon\w*)\b/i;
+  const looksName = (b) => b && !STOP.test(b) && /^[A-Za-zÁÉÍÓÚÑáéíóúñü'´. ]{5,60}$/.test(b.trim()) && b.trim().split(/\s+/).length >= 2 && b.trim().split(/\s+/).length <= 5;
+  const nameCands = fromClient.filter(m => (!askedReq || m.ts >= askedReq.ts) && looksName(m.body)).map(m => m.body.trim().replace(/\s+/g, ' '));
+  // el que más repitió; si empatan, el primero que escribió
+  const freq = {}; nameCands.forEach(n => { const k = n.toLowerCase(); freq[k] = (freq[k] || 0) + 1; });
+  const nameMsg = nameCands.length ? { body: nameCands.slice().reverse().sort((a, b) => freq[b.toLowerCase()] - freq[a.toLowerCase()])[0] } : null;
   const name = String(c.lead_name || c.customer_name || '').trim();
   const nameGuess = nameMsg ? nameMsg.body.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : '';
   const check = {

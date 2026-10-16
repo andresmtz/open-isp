@@ -98,7 +98,7 @@ function parse(text) {
   else if (/giro|tigo\s*money|billetera|mango|wally|zimple|eko|personal\s*pay/i.test(t)) r.kind = 'Giro';
   // Quién pagó (informativo): bloque "Origen" → "Nombre …", o Remitente / Ordenante / De
   const oi = lines.findIndex(l => /\b(origen|remitente|ordenante|depositante|enviado por|de:)/i.test(l));
-  const ep = lines.findIndex(l => /^(enviado por|remitente|ordenante|depositante|de parte de)\s*:?\s*$/i.test(l));
+  const ep = lines.findIndex(l => /^(enviado por|remitente|ordenante|depositante|de parte de|de)\s*:?\s*$/i.test(l));
   if (ep >= 0 && /^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{6,}$/.test(lines[ep + 1] || '')) r.origin = lines[ep + 1].trim();
   if (!r.origin && oi >= 0) for (const l of lines.slice(oi, oi + 4)) { const n = /(?:[Nn]ombre|[Rr]emitente|[Oo]rdenante|[Dd]epositante|[Tt]itular)\s*:?\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{5,})/.exec(l); if (n) { r.origin = n[1].trim(); break; } }
   // Destino: una cuenta o billetera de la empresa

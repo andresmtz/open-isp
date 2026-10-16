@@ -697,6 +697,7 @@ async function loadDevices() {
           ? `TR-069: ${new Date(latestSyncRaw).toLocaleString(APP_LOCALE, { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })} | UI: ${uiTime}`
           : `${I18N.updatePrefix} ${uiTime}`;
       }
+      window.__onuRows = devicesData;
       tbody.innerHTML = devicesData.map((d, i) => {
         const isOn = d.status === 'online';
         const tagStr = (d.pppoeUsername && d.pppoeUsername !== 'N/A' && d.pppoeUsername !== '-') ? d.pppoeUsername : (d.tags.join(', ') || '-');
@@ -736,11 +737,12 @@ async function loadDevices() {
             ${syncBadge}
           </td>
           <td style="white-space:nowrap">
-            ${d.source === 'olt' ? `<a class="btn btn-g btn-sm" href="/admin/olts" title="Datos leídos de la OLT (sin GenieACS)"><i class="bi bi-hdd-fill"></i> Ver en OLT</a>` : `
+            ${d.source === 'olt' ? `<a class="btn btn-g btn-sm" href="/admin/olts" title="Datos leídos de la OLT (sin GenieACS)"><i class="bi bi-hdd-fill"></i> Ver en OLT</a> <button type="button" class="btn btn-g btn-sm btn-dev-ticket" data-i="${i}" title="Crear asistencia técnica"><i class="bi bi-tools"></i></button>` : `
             <div class="act">
               <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
               <div class="act-menu">
                 <button type="button" class="act-item btn-dev-detail" data-tag="${(d.tags && d.tags[0]) || d.id}"><i class="bi bi-eye"></i> ${I18N.titleDetail}</button>
+                <button type="button" class="act-item primary btn-dev-ticket" data-i="${i}"><i class="bi bi-tools"></i> Crear asistencia técnica</button>
                 <button type="button" class="act-item primary btn-dev-summon" data-id="${d.id}" data-acs="${d.acs_server_id || 'legacy'}"><i class="bi bi-arrow-repeat"></i> ${I18N.syncNow}</button>
                 <button type="button" class="act-item primary btn-dev-wifi" data-tag="${(d.tags && d.tags[0]) || d.id}" data-ssid="${escHtml(d.ssid)}"><i class="bi bi-wifi"></i> ${I18N.titleEditSsid}</button>
                 <button type="button" class="act-item btn-dev-pass" data-tag="${(d.tags && d.tags[0]) || d.id}"><i class="bi bi-key"></i> ${I18N.titleEditPassword}</button>
@@ -753,6 +755,19 @@ async function loadDevices() {
         </tr>`;
       }).join('');
 
+      // Asistencia técnica con el motivo propuesto según el estado de la ONU
+      tbody.querySelectorAll('.btn-dev-ticket').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const d = (window.__onuRows || [])[Number(this.getAttribute('data-i'))]; if (!d) return;
+          const on = String(d.status || '').toLowerCase() === 'online';
+          const motivo = !on ? 'Sin internet' : (d.weak ? 'Revisar señal óptica (potencia)' : '');
+          const extra = d.weak && d.rxPower ? '(' + d.rxPower + ')' : '';
+          const det = ['Equipo: ' + (d.model || d.productClass || d.deviceModel || '-'), 'SN: ' + (d.serialNumber || '-'), d.oltRef ? 'OLT: ' + d.oltRef : '',
+            'Estado: ' + (on ? 'en línea' : 'desconectada') + (d.note && !on ? ' — ' + d.note : ''), 'Potencia RX: ' + (d.rxPower || '-') + (d.weak ? ' (fuera de rango)' : ''),
+            'Encendida: ' + (d.uptime || '-'), 'PPPoE: ' + (d.pppoeUsername || '-') + ' · IP ' + (d.pppoeIP || '-')].filter(Boolean).join('\n');
+          quickTicket({ pppoe: d.pppoeUsername, tag: (d.tags && d.tags[0]) || '', motivo, extra, detail: det });
+        });
+      });
       // Bind event listeners for actions to prevent quote escaping HTML issues
       tbody.querySelectorAll('.btn-dev-detail').forEach(btn => {
         btn.addEventListener('click', function() { showDetail(this.getAttribute('data-tag')); });
@@ -1256,5 +1271,6 @@ async function deleteMonDevice(deviceId, acsId) {
   });
 })();
 </script>
+<script src="/js/quick-ticket.js?v=1"></script>
 </body>
 </html>

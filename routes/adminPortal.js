@@ -4382,6 +4382,57 @@ router.post('/tickets/create', requireAdminSession, express.urlencoded({ extende
   res.redirect('/admin/tickets');
 });
 
+// ─── ASISTENCIA RÁPIDA (desde el monitoreo de ONU o la lista de clientes) ────
+function quickTicketCustomer(q) {
+  if (q.customer_id) return customerSvc.getCustomerById(Number(q.customer_id));
+  const u = String(q.pppoe || '').trim();
+  if (u && u !== '-' && u !== 'N/A') { const c = db.prepare('SELECT id FROM customers WHERE pppoe_username=? ORDER BY (status=\'cancelled\') LIMIT 1').get(u); if (c) return customerSvc.getCustomerById(c.id); }
+  const tag = String(q.tag || '').trim();
+  if (tag) { const c = db.prepare('SELECT id FROM customers WHERE genieacs_tag=? OR pppoe_username=? LIMIT 1').get(tag, tag); if (c) return customerSvc.getCustomerById(c.id); }
+  return null;
+}
+router.get('/tickets/quick-info', requireAdminSession, (req, res) => {
+  try {
+    const c = quickTicketCustomer(req.query);
+    if (!c) return res.json({ ok: false, message: 'No se encontró el cliente de este equipo. Creá el ticket desde Servicio → Reclamos.' });
+    const open = db.prepare("SELECT id, subject, status, created_at FROM tickets WHERE customer_id=? AND status IN ('open','in_progress') ORDER BY id DESC").all(c.id);
+    const techs = require('../services/techService').getAllTechnicians().filter(t => t.is_active !== 0).map(t => ({ id: t.id, name: t.name || t.username, area: t.area || '' }));
+    res.json({ ok: true, customer: { id: c.id, name: c.name, code: c.customer_code, phone: c.phone, address: c.address, status: c.status }, open, techs });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/tickets/quick', requireAdminSession, express.json(), async (req, res) => {
+  try {
+    const b = req.body || {};
+    const c = quickTicketCustomer(b);
+    if (!c) throw new Error('No se encontró el cliente');
+    const subject = String(b.subject || '').trim().slice(0, 150), message = String(b.message || '').trim().slice(0, 2000);
+    if (!subject || !message) throw new Error('El motivo y el detalle son obligatorios.');
+    const techId = b.technician_id ? Number(b.technician_id) : null;
+    const result = ticketSvc.createTicket(c.id, subject, message, { technicianId: techId, status: techId ? 'in_progress' : 'open' });
+    const ticketId = result.lastInsertRowid;
+    let notified = '';
+    try {
+      if (getSettings().whatsapp_enabled) {
+        const waNotify = require('../services/waNotifyService');
+        const tech = techId ? require('../services/techService').getTechById(techId) : null;
+        const _waDigits = regional.normalizePhone(c.phone || '');
+        const _mapQ = (c.lat && c.lng) ? (c.lat + ',' + c.lng) : String(c.address || '');
+        const waMsg = `📌 *NUEVA TAREA PARA TÉCNICOS*\n\n🎫 *Ticket:* #${ticketId}\n👤 *Cliente:* ${c.name}\n📞 *Contacto:* ${c.phone || '-'}\n📍 *Dirección:* ${c.address || '-'}\n` +
+          `📝 *Problema/tarea:* ${subject}\n💬 *Detalle:* ${message}\n\nRevisalo en tu panel de técnico para darle seguimiento.` +
+          `\n🔗 *Accesos rápidos:*\n` + (_waDigits ? `• 💬 Chat con el cliente: https://wa.me/${_waDigits}\n` : '') +
+          (_mapQ ? `• 📍 Ubicación: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(_mapQ)}` : '');
+        if (tech && tech.phone) { await waNotify.sendText(regional.normalizePhone(String(tech.phone).replace(/\D/g, '')), waMsg); notified = ' Se avisó por WhatsApp a ' + (tech.name || tech.username) + '.'; }
+        else if (!techId) {
+          const list = require('../config/techPermissions').broadcastRecipients();
+          for (const t of list) await waNotify.sendText(regional.normalizePhone(String(t.phone).replace(/\D/g, '')), waMsg);
+          if (list.length) notified = ' Sin técnico asignado: se avisó a ' + list.length + ' técnico(s).';
+        }
+      }
+    } catch (e) { logger.warn('[Asistencia rápida] aviso: ' + e.message); }
+    res.json({ ok: true, id: ticketId, message: `Asistencia #${ticketId} creada para ${c.name}.` + notified });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+
 router.post('/tickets/:id/update', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
   try {
     const { status, technician_id } = req.body;

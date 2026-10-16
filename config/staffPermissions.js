@@ -95,6 +95,8 @@ const CATALOG = [
   { key: 'reclamos', label: 'Reclamos de clientes', help: 'Ver, crear y actualizar reclamos (no borrarlos).', def: true, rules: [
     ['GET', '^/tickets$'],
     ['POST', '^/tickets/create$'],
+    ['GET', '^/tickets/quick-info$'],
+    ['POST', '^/tickets/quick$'],
     ['POST', `^/tickets/${ID}/update$`],
   ] },
   { key: 'mapa', label: 'Ver mapa de red', help: 'Solo consulta.', def: true, rules: [

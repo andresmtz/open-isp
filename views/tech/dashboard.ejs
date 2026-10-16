@@ -54,6 +54,12 @@
           <% _msg = _msg.slice(_rm[0].length); %>
         <% } %>
         <div style="white-space:pre-wrap"><%= _msg %></div>
+        <% if (ticket.officeNotes && ticket.officeNotes.length) { %>
+          <div style="margin-top:8px;padding:8px 10px;border-radius:10px;border:1px solid rgba(56,189,248,.45);background:rgba(56,189,248,.08)">
+            <div style="font-weight:800;font-size:12px;color:#38bdf8;margin-bottom:4px"><i class="bi bi-info-circle-fill"></i> Información de la oficina</div>
+            <% ticket.officeNotes.forEach(function(n){ %><div style="font-size:13px;white-space:pre-wrap;margin-top:4px"><%= n.text %> <span class="muted" style="font-size:11px">— <%= String(n.created_at || '').slice(8,10) %>/<%= String(n.created_at || '').slice(5,7) %> <%= String(n.created_at || '').slice(11,16) %></span></div><% }) %>
+          </div>
+        <% } %>
         <% if (ticket.customer_id && ['open','in_progress'].indexOf(ticket.status) !== -1) { %>
           <div style="margin-top:10px">
             <div style="display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:13px"><span><i class="bi bi-reception-4"></i> Potencia de la ONU</span><button type="button" class="btn btn-sm" style="border:1px solid var(--border)" onclick="measurePower(<%= ticket.id %>, this)"><i class="bi bi-arrow-clockwise"></i> Actualizar</button></div>

@@ -101,7 +101,37 @@ function getTicketStats() {
   return { open, inProgress, resolved, total: open + inProgress + resolved };
 }
 
+// ── Notas / información agregada a un ticket (historial) ──
+let _notesOk = false;
+function ensureNotes() {
+  if (_notesOk) return;
+  db.exec(`CREATE TABLE IF NOT EXISTS ticket_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, ticket_id INTEGER NOT NULL, author TEXT DEFAULT '', author_type TEXT DEFAULT 'oficina',
+    text TEXT NOT NULL, notified INTEGER DEFAULT 0, created_at TEXT DEFAULT (NOW_LOCAL()))`);
+  db.exec('CREATE INDEX IF NOT EXISTS idx_ticket_notes ON ticket_notes(ticket_id)');
+  _notesOk = true;
+}
+function addNote(ticketId, text, author, authorType = 'oficina', notified = false) {
+  ensureNotes();
+  const t = String(text || '').trim().slice(0, 2000);
+  if (!t) throw new Error('Escribí la información a agregar');
+  const r = db.prepare('INSERT INTO ticket_notes (ticket_id, author, author_type, text, notified) VALUES (?,?,?,?,?)')
+    .run(Number(ticketId), String(author || '').slice(0, 80), authorType, t, notified ? 1 : 0);
+  db.prepare('UPDATE tickets SET updated_at = NOW_LOCAL() WHERE id = ?').run(Number(ticketId));
+  return Number(r.lastInsertRowid);
+}
+function notesFor(ticketId) { ensureNotes(); return db.prepare('SELECT * FROM ticket_notes WHERE ticket_id=? ORDER BY id').all(Number(ticketId)); }
+function notesForMany(ids) {
+  ensureNotes();
+  const list = [].concat(ids).map(Number).filter(Boolean);
+  if (!list.length) return {};
+  const out = {};
+  for (const n of db.prepare(`SELECT * FROM ticket_notes WHERE ticket_id IN (${list.map(() => '?').join(',')}) ORDER BY id`).all(...list)) (out[n.ticket_id] = out[n.ticket_id] || []).push(n);
+  return out;
+}
+
 module.exports = {
+  addNote, notesFor, notesForMany,
   getAllTickets,
   getTicketsByCustomerId,
   getTicketById,

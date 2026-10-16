@@ -4433,6 +4433,42 @@ router.post('/tickets/quick', requireAdminSession, express.json(), async (req, r
   } catch (e) { res.json({ ok: false, message: e.message }); }
 });
 
+// ─── Detalle de un ticket e información agregada (historial de notas) ────────
+router.get('/tickets/:id/detail', requireAdminSession, (req, res) => {
+  try {
+    const t = ticketSvc.getTicketById(Number(req.params.id));
+    if (!t) return res.json({ ok: false, message: 'Ticket no encontrado' });
+    const c = t.customer_id ? db.prepare('SELECT id, name, customer_code, phone, address, lat, lng, status FROM customers WHERE id=?').get(t.customer_id) : null;
+    const tech = t.technician_id ? db.prepare('SELECT id, name, phone FROM technicians WHERE id=?').get(t.technician_id) : null;
+    const arr = (v) => { try { const a = JSON.parse(v || '[]'); return Array.isArray(a) ? a : []; } catch (_) { return String(v || '').split(',').filter(Boolean); } };
+    res.json({ ok: true, ticket: { id: t.id, subject: t.subject, message: t.message, status: t.status, kind: t.kind || '', created_at: t.created_at, updated_at: t.updated_at,
+      technician_notes: t.technician_notes || '', photos: arr(t.photos), customer_photos: arr(t.customer_photos) },
+      customer: c, technician: tech ? { id: tech.id, name: tech.name } : null, notes: ticketSvc.notesFor(t.id) });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/tickets/:id/note', requireAdminSession, express.json(), async (req, res) => {
+  try {
+    const t = ticketSvc.getTicketById(Number(req.params.id));
+    if (!t) throw new Error('Ticket no encontrado');
+    if (!['open', 'in_progress'].includes(t.status)) throw new Error('El ticket ya está resuelto; solo se agrega información a tickets abiertos o en curso.');
+    const text = String((req.body || {}).text || '').trim();
+    const author = req.session.isAdmin ? (req.session.adminUser || 'Administrador') : (req.session.cashierName || 'Oficina');
+    let notified = false, info = '';
+    if ((req.body || {}).notify && t.technician_id) {
+      const tech = db.prepare('SELECT name, phone FROM technicians WHERE id=?').get(t.technician_id);
+      if (tech && tech.phone) {
+        try {
+          const msg = `📝 *INFORMACIÓN NUEVA — TICKET #${t.id}*\n\n👤 *Cliente:* ${t.customer_name}\n📌 *Tarea:* ${t.subject}\n\n💬 ${text}\n\n_(${author}, oficina)_`;
+          notified = !!(await require('../services/waNotifyService').sendText(regional.normalizePhone(String(tech.phone).replace(/\D/g, '')), msg));
+          info = notified ? ' Se avisó a ' + tech.name + ' por WhatsApp.' : ' No se pudo avisar por WhatsApp.';
+        } catch (_) { info = ' No se pudo avisar por WhatsApp.'; }
+      }
+    }
+    ticketSvc.addNote(t.id, text, author, 'oficina', notified);
+    res.json({ ok: true, message: 'Información agregada al ticket #' + t.id + '.' + info });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+
 router.post('/tickets/:id/update', requireAdminSession, express.urlencoded({ extended: true }), async (req, res) => {
   try {
     const { status, technician_id } = req.body;

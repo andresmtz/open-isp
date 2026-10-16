@@ -104,7 +104,7 @@
                 <div class="fw6"><%= ticket.customer_name %></div>
                 <div style="font-size:11px;color:var(--muted)"><%= ticket.customer_phone || '-' %></div>
               </td>
-              <td style="color:var(--primary)"><%= ticket.subject %></td>
+              <td><a href="javascript:void(0)" style="color:var(--primary);text-decoration:none" onclick="tkDetail(<%= ticket.id %>)" title="Ver detalle"><%= ticket.subject %></a></td>
               <td>
                 <% if (ticket.technician_name) { %>
                   <div class="fw6" style="font-size:12px"><i class="bi bi-person-badge me-1"></i><%= ticket.technician_name %></div>
@@ -122,6 +122,7 @@
                 <div class="act">
                   <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
                   <div class="act-menu">
+                    <button type="button" class="btn act-item primary" onclick="tkDetail(<%= ticket.id %>)"><i class="bi bi-card-text"></i> Ver detalle<%= ['open','in_progress'].indexOf(ticket.status) !== -1 ? ' / agregar información' : '' %></button>
                     <button class="btn act-item update-btn" title="<%= t('admin.tickets.actions.update_status', 'Actualizar estado') %>"
                       data-id="<%= ticket.id %>" data-status="<%= ticket.status %>" data-message="<%= ticket.message %>"
                       data-subject="<%= ticket.subject %>" data-customer="<%= ticket.customer_name %>"
@@ -245,6 +246,67 @@
 </div>
 
 <!-- Modal Photo Gallery -->
+<div class="mo" id="tkDetailModal">
+  <div class="mb" style="max-width:640px">
+    <div class="mh"><span class="mt" id="tkdTitle"><i class="bi bi-card-text"></i> Ticket</span><button type="button" class="mc" onclick="closeModal('tkDetailModal')">&times;</button></div>
+    <div class="mbody" id="tkdBody" style="max-height:72vh;overflow-y:auto">Cargando…</div>
+  </div>
+</div>
+<script>
+(function(){
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  var mp = function(p){ return String(p || '').replace('/uploads/tickets/', '/admin/media/ticket/').replace('/uploads/payment_proofs/', '/admin/media/payment-proof/'); };
+  var ST = { open: '<span class="badge bd">Abierto</span>', in_progress: '<span class="badge bw">En curso</span>', resolved: '<span class="badge bs">Resuelto</span>' };
+  var fdt = function(v){ var d = new Date(String(v || '').replace(' ', 'T')); return isNaN(d) ? (v || '-') : d.toLocaleString(APP_LOCALE, { dateStyle: 'short', timeStyle: 'short' }); };
+  var cur = 0;
+  window.tkDetail = function(id){
+    cur = id;
+    document.getElementById('tkdTitle').innerHTML = '<i class="bi bi-card-text"></i> Ticket #' + id;
+    document.getElementById('tkdBody').innerHTML = 'Cargando…';
+    openModal('tkDetailModal');
+    fetch('/admin/tickets/' + id + '/detail').then(function(r){ return r.json(); }).then(function(d){
+      if (!d.ok) { document.getElementById('tkdBody').textContent = d.message || 'No disponible'; return; }
+      var t = d.ticket, c = d.customer, h = '';
+      h += '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:10px"><div style="font-size:15px;font-weight:800;color:var(--primary)">' + esc(t.subject) + '</div><div>' + (ST[t.status] || esc(t.status)) + '</div></div>';
+      h += '<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;margin-bottom:12px">' +
+        '<span class="text-muted">Cliente</span><span>' + (c ? '<b>' + esc(c.name) + '</b> <span class="text-muted">' + esc(c.customer_code || '') + '</span>' : 'Tarea general') + '</span>' +
+        (c ? '<span class="text-muted">Teléfono</span><span>' + esc(c.phone || '-') + (c.phone ? ' · <a target="_blank" href="https://wa.me/' + esc(String(c.phone).replace(/\D/g, '').replace(/^0/, '595')) + '">WhatsApp</a>' : '') + '</span>' : '') +
+        (c ? '<span class="text-muted">Dirección</span><span>' + esc(c.address || '-') + (c.lat && c.lng ? ' · <a target="_blank" href="https://www.google.com/maps?q=' + esc(c.lat + ',' + c.lng) + '"><i class="bi bi-geo-alt-fill"></i> mapa</a>' : '') + '</span>' : '') +
+        '<span class="text-muted">Técnico</span><span>' + (d.technician ? esc(d.technician.name) : '<span class="text-muted">Sin asignar</span>') + '</span>' +
+        '<span class="text-muted">Creado</span><span>' + esc(fdt(t.created_at)) + '</span>' +
+        '<span class="text-muted">Última actualización</span><span>' + esc(fdt(t.updated_at)) + '</span></div>';
+      h += '<div class="vd-sec-title" style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;margin:6px 0">Problema / tarea</div><div style="white-space:pre-wrap;font-size:13px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg3)">' + esc(t.message) + '</div>';
+      if (t.technician_notes) h += '<div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;margin:12px 0 6px">Notas del técnico</div><div style="white-space:pre-wrap;font-size:13px;padding:10px;border:1px solid var(--border);border-radius:8px">' + esc(t.technician_notes) + '</div>';
+      var ph = (t.photos || []).map(mp), cph = (t.customer_photos || []).map(mp);
+      if (ph.length || cph.length) h += '<div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;margin:12px 0 6px">Fotos</div><div style="display:flex;gap:6px;flex-wrap:wrap">' +
+        ph.concat(cph).map(function(u){ return '<a href="' + esc(u) + '" target="_blank"><img src="' + esc(u) + '" style="width:110px;height:110px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"></a>'; }).join('') + '</div>';
+      h += '<div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;margin:14px 0 6px">Información agregada</div>';
+      h += (d.notes || []).length ? d.notes.map(function(n){
+        return '<div style="padding:8px 10px;border-left:3px solid var(--primary);background:rgba(173,255,47,.05);border-radius:6px;margin-bottom:6px;font-size:13px"><div style="white-space:pre-wrap">' + esc(n.text) + '</div>' +
+          '<div class="text-muted" style="font-size:11px;margin-top:3px">' + esc(n.author || '') + ' · ' + esc(fdt(n.created_at)) + (n.notified ? ' · <i class="bi bi-whatsapp"></i> avisado al técnico' : '') + '</div></div>';
+      }).join('') : '<div class="text-muted" style="font-size:12.5px">Todavía no se agregó información.</div>';
+      if (t.status === 'open' || t.status === 'in_progress') {
+        h += '<div style="margin-top:10px"><textarea class="fc" id="tkdNote" rows="3" maxlength="2000" placeholder="Ej.: el cliente pide que vayan después de las 14 h; llevar conector extra; la caja NAP está en el poste de la esquina…"></textarea>' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">' +
+          (d.technician ? '<label style="font-size:12.5px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="tkdNotify" checked> Avisar a ' + esc(d.technician.name) + ' por WhatsApp</label>' : '<span class="text-muted" style="font-size:12px">Sin técnico asignado: queda solo en el ticket.</span>') +
+          '<button type="button" class="btn btn-p btn-sm" id="tkdSave" onclick="tkAddNote()"><i class="bi bi-plus-lg"></i> Agregar información</button></div></div>';
+      }
+      document.getElementById('tkdBody').innerHTML = h;
+    }).catch(function(){ document.getElementById('tkdBody').textContent = 'No se pudo cargar el ticket.'; });
+  };
+  window.tkAddNote = function(){
+    var ta = document.getElementById('tkdNote'), b = document.getElementById('tkdSave'), n = document.getElementById('tkdNotify');
+    if (!ta.value.trim()) return;
+    b.disabled = true;
+    fetch('/admin/tickets/' + cur + '/note', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: ta.value, notify: !!(n && n.checked) }) })
+      .then(function(r){ return r.json(); }).then(function(d){
+        b.disabled = false;
+        if (window.notify) window.notify(d.ok ? 'success' : 'error', d.ok ? 'Listo' : 'Error', d.message); else alert(d.message);
+        if (d.ok) tkDetail(cur);
+      }).catch(function(){ b.disabled = false; });
+  };
+})();
+</script>
 <div class="mo" id="photoModal">
   <div class="mb" style="max-width:900px">
     <div class="mh">

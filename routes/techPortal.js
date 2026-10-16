@@ -171,6 +171,8 @@ router.get('/', requireTechSession, (req, res) => {
   const stats = techSvc.getTechStats(techId);
   if (!techPerms.has(req.session, 'reclamos_libres')) stats.open = null; // no ve cuántos reclamos hay sin asignar
   const myTickets = techSvc.getAssignedTickets(techId);
+  // Información que la oficina agregó a cada orden
+  try { const nm = require('../services/ticketService').notesForMany(myTickets.map(t => t.id)); for (const t of myTickets) t.officeNotes = nm[t.id] || []; } catch (_) {}
   // Fotos de la casa del cliente (solo en órdenes abiertas o en curso; la cédula nunca se muestra al técnico)
   try {
     const docs = require('../services/customerDocumentService');
@@ -256,8 +258,8 @@ router.post('/orders/:ticketId/equipment', requireTechSession, equipUpload.array
 // Firma de la lista de órdenes del técnico: si cambia (orden cerrada sola, nueva orden, reasignación), el panel se recarga
 const STARTED = Date.now(); // cambia con cada actualización del sistema: el panel abierto se recarga solo
 function ordersSig(techId) {
-  const rows = db.prepare("SELECT id, status, kind FROM tickets WHERE technician_id = ? AND (status != 'resolved' OR date(updated_at) = date(NOW_LOCAL())) ORDER BY id").all(techId);
-  return rows.map(r => `${r.id}:${r.status}:${r.kind || ''}`).join('|');
+  const rows = db.prepare("SELECT id, status, kind, updated_at FROM tickets WHERE technician_id = ? AND (status != 'resolved' OR date(updated_at) = date(NOW_LOCAL())) ORDER BY id").all(techId);
+  return rows.map(r => `${r.id}:${r.status}:${r.kind || ''}:${r.updated_at || ''}`).join('|');
 }
 router.get('/state', requireTechSession, (req, res) => {
   res.set('Cache-Control', 'no-store');

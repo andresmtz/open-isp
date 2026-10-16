@@ -98,6 +98,8 @@ const CATALOG = [
     ['GET', '^/tickets/quick-info$'],
     ['POST', '^/tickets/quick$'],
     ['POST', `^/tickets/${ID}/update$`],
+    ['GET', `^/tickets/${ID}/detail$`],
+    ['POST', `^/tickets/${ID}/note$`],
   ] },
   { key: 'mapa', label: 'Ver mapa de red', help: 'Solo consulta.', def: true, rules: [
     ['GET', '^/map$'],

@@ -179,6 +179,9 @@ router.get('/', requireTechSession, (req, res) => {
     for (const t of myTickets) {
       t.housePhotos = (t.customer_id && ['open', 'in_progress'].includes(t.status))
         ? docs.list(t.customer_id, { kinds: ['casa'] }).map(d => `/tech/customers/${t.customer_id}/house/${d.id}`) : [];
+      // Datos que faltan en la ficha (foto de la casa, ubicación): se piden en la visita, salvo en retiros
+      t.gaps = (t.customer_id && t.kind !== 'retiro' && ['open', 'in_progress'].includes(t.status))
+        ? require('../services/customerGapsService').gapsFor(t.customer_id) : null;
       if (t.kind === 'retiro' && t.customer_id && ['open', 'in_progress'].includes(t.status)) {
         const ws = require('../services/withdrawalService');
         const e = ws.equipmentOf(t.customer_id);
@@ -253,6 +256,31 @@ router.post('/orders/:ticketId/equipment', requireTechSession, equipUpload.array
     req.session._msg = { type: 'error', text: e.message };
   }
   res.redirect('/tech');
+});
+
+// Ficha incompleta: el técnico completa en la visita la foto de la casa y la ubicación (no en retiros)
+function gapOrder(req) {
+  const t = db.prepare('SELECT * FROM tickets WHERE id=?').get(Number(req.params.ticketId));
+  if (!t || !t.customer_id || Number(t.technician_id) !== Number(req.session.techId) || t.kind === 'retiro' || !['open', 'in_progress'].includes(t.status)) throw new Error('Orden no disponible.');
+  return t;
+}
+router.post('/orders/:ticketId/house', requireTechSession, equipUpload.array('photo', 3), async (req, res) => {
+  try {
+    const t = gapOrder(req);
+    if (!(req.files || []).length) throw new Error('Sacá o elegí una foto de la casa.');
+    const by = `técnico ${req.session.techName || ''}`.trim();
+    const docs = require('../services/customerDocumentService');
+    for (const f of req.files) await docs.add(t.customer_id, 'casa', f.buffer, by);
+    res.json({ ok: true, message: 'Foto de la casa guardada en la ficha. ¡Gracias!' });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+router.post('/orders/:ticketId/location', requireTechSession, express.json(), (req, res) => {
+  try {
+    const t = gapOrder(req);
+    const b = req.body || {};
+    const v = require('../services/customerGapsService').saveLocation(t.customer_id, b.lat, b.lng, b.accuracy, req.session.techName || '');
+    res.json({ ok: true, message: `Ubicación guardada (${v}). ¡Gracias!` });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 
 // Firma de la lista de órdenes del técnico: si cambia (orden cerrada sola, nueva orden, reasignación), el panel se recarga

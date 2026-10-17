@@ -154,6 +154,25 @@
             </div>
           </div>
         <% } %>
+        <% if (ticket.gaps) { var gp = ticket.gaps; %>
+          <div style="margin-top:10px;padding:10px 12px;border-radius:12px;border:1px solid rgba(245,158,11,.55);background:rgba(245,158,11,.10)">
+            <div style="font-weight:800;font-size:13px;color:#f59e0b;margin-bottom:6px"><i class="bi bi-clipboard-check"></i> Completá la ficha del cliente</div>
+            <% if (gp.house) { %>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:13px">
+                <span><i class="bi bi-house-door"></i> Falta la foto de la casa (frente)</span>
+                <label class="btn btn-sm" style="border:1px solid var(--border);margin:0;cursor:pointer"><i class="bi bi-camera"></i> Sacar foto
+                  <input type="file" accept="image/*" capture="environment" style="display:none" onchange="gapHouse(<%= ticket.id %>, this)"></label>
+              </div>
+            <% } %>
+            <% if (gp.geo) { %>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:13px">
+                <span><i class="bi bi-geo-alt"></i> <%= gp.geo === 'aprox' ? 'La ubicación es aproximada: confirmala' : 'Falta la ubicación' %></span>
+                <button type="button" class="btn btn-sm" style="border:1px solid var(--border)" onclick="gapGeo(<%= ticket.id %>, this)"><i class="bi bi-crosshair"></i> Guardar GPS</button>
+              </div>
+              <div class="muted" style="font-size:11px;margin-top:4px">Tocá "Guardar GPS" parado frente a la casa del cliente.</div>
+            <% } %>
+          </div>
+        <% } %>
         <% if (ticket.customer_photos && ticket.customer_photos !== '' && ticket.customer_photos !== '[]') { %>
           <% var customerPhotos = JSON.parse(ticket.customer_photos || '[]'); %>
           <% if (customerPhotos.length > 0) { %>
@@ -265,6 +284,33 @@
   <% }); %>
 </div>
 
+<script>
+function gapMsg(ok, t) { if (window.notify) window.notify(ok ? 'success' : 'error', ok ? 'Listo' : 'Error', t); else alert(t); }
+function gapHouse(id, inp) {
+  if (!inp.files || !inp.files.length) return;
+  var fd = new FormData(); fd.append('photo', inp.files[0]);
+  var lb = inp.parentNode; lb.style.opacity = .5;
+  fetch('/tech/orders/' + id + '/house', { method: 'POST', body: fd, headers: { Accept: 'application/json' } })
+    .then(function (r) { return r.json(); })
+    .then(function (d) { gapMsg(d.ok, d.message); if (d.ok) setTimeout(function () { location.reload(); }, 900); else lb.style.opacity = 1; })
+    .catch(function () { lb.style.opacity = 1; gapMsg(false, 'No se pudo subir la foto. Revisá la conexión.'); });
+}
+function gapGeo(id, b) {
+  if (!navigator.geolocation) return gapMsg(false, 'Este celular no permite leer el GPS.');
+  if (!confirm('¿Estás frente a la casa del cliente? Se guarda tu ubicación actual como la del cliente.')) return;
+  b.disabled = true; var old = b.innerHTML; b.innerHTML = '<i class="bi bi-hourglass-split"></i> Leyendo GPS…';
+  navigator.geolocation.getCurrentPosition(function (p) {
+    fetch('/tech/orders/' + id + '/location', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { gapMsg(d.ok, d.message); if (d.ok) setTimeout(function () { location.reload(); }, 900); else { b.disabled = false; b.innerHTML = old; } })
+      .catch(function () { b.disabled = false; b.innerHTML = old; gapMsg(false, 'No se pudo guardar. Revisá la conexión.'); });
+  }, function (e) {
+    b.disabled = false; b.innerHTML = old;
+    gapMsg(false, e.code === 1 ? 'Permití el acceso a la ubicación en el navegador y volvé a intentar.' : 'No se pudo leer el GPS. Salí al exterior y volvé a intentar.');
+  }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+}
+</script>
 <%- include('partials/bottom_nav') %><script>
 async function measurePower(id, btn){
   var box = document.getElementById('pw-' + id);

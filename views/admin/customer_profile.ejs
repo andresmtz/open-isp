@@ -105,7 +105,7 @@
           <% if (geo.geo_request_at) { %><div class="fp-warn" style="border-color:rgba(56,189,248,.5);background:rgba(56,189,248,.08)"><i class="bi bi-whatsapp"></i> Se le pidió la ubicación por WhatsApp el <%= fdt(new Date(geo.geo_request_at).toLocaleString('sv-SE', { timeZone: 'America/Asuncion' })) %>. Cuando la mande, se guarda sola.</div><% } %>
           <% if (perms.edit && c.status !== 'cancelled') { %>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-              <button type="button" class="btn btn-g btn-sm" onclick="fpGeo('request')"><i class="bi bi-whatsapp"></i> Pedir ubicación al cliente</button>
+              <button type="button" class="btn btn-g btn-sm" onclick="fpGeo('request')"><i class="bi bi-whatsapp"></i> Pedir datos que faltan</button>
               <% if (hasGeo && Number(geo.geo_approx) !== 1) { %><button type="button" class="btn btn-g btn-sm" onclick="fpGeo('confirm')"><i class="bi bi-flag"></i> Marcar como incorrecta</button><% } %>
               <button type="button" class="btn btn-g btn-sm" onclick="fpGeo('set')"><i class="bi bi-pin-map"></i> Cargar coordenadas</button>
             </div>
@@ -236,7 +236,7 @@ function fpPower() {
 }
 function fpGeo(action) {
   var body = { action: action };
-  if (action === 'request' && !confirm('¿Pedirle la ubicación de su casa por WhatsApp? Cuando la mande, se guarda sola en la ficha.')) return;
+  if (action === 'request' && !confirm('¿Pedirle por WhatsApp los datos que le faltan a la ficha (foto de la casa, cédula y/o ubicación)?')) return;
   if (action === 'confirm') { var r = prompt('¿Por qué la ubicación está mal o hay que confirmarla? (opcional)', ''); if (r === null) return; body.reason = r; }
   if (action === 'set') { var v = prompt('Pegá las coordenadas o el enlace de Google Maps (ej. -25.4930, -54.8943):', ''); if (!v) return; body.coords = v; body.approx = confirm('¿Es una ubicación APROXIMADA (p. ej. la de un vecino)?\n\nAceptar = aproximada (el técnico la confirma)\nCancelar = es la ubicación exacta'); }
   fetch('/admin/customers/' + FP_ID + '/geo', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) })

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Actualizar datos | <%= company %></title>
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .du-chip{display:inline-block;font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid rgba(245,158,11,.55);color:#f59e0b;margin:1px 2px;white-space:nowrap}
+    .du-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .du-msg{width:100%;min-height:150px;font-family:inherit}
+    .du-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+  </style>
+</head>
+<body>
+<%- include('partials/sidebar', { activePage: 'data-update', company }) %>
+<div class="mw">
+  <div class="topbar">
+    <div class="tb-title"><button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><i class="bi bi-person-check"></i> Actualizar datos de clientes</div>
+    <div class="tb-right"><a href="/admin/logout" class="btn btn-g btn-sm"><i class="bi bi-box-arrow-left"></i></a></div>
+  </div>
+  <div class="page">
+    <% const fdt = (v) => { if (!v) return ''; const d = new Date(v); return isNaN(d) ? v : d.toLocaleString('es-PY', { timeZone: 'America/Asuncion', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }; %>
+    <div class="alert alert-s" style="font-size:13px">
+      <i class="bi bi-info-circle"></i> A cada cliente se le pide por WhatsApp <b>solo lo que le falta</b> a su ficha. La <b>ubicación</b> que mande se guarda sola;
+      las <b>fotos</b> se guardan desde Conversaciones con "Guardar como cédula / fachada". Los envíos salen de a <%= cfg.data_request_per_run %> por minuto, en el horario <%= cfg.data_request_hours %>
+      <%= inHours ? '(ahora está dentro del horario)' : '(ahora está fuera del horario: los pedidos en cola salen cuando empiece)' %>.
+    </div>
+
+    <div class="card">
+      <div class="card-hd du-bar" style="justify-content:space-between">
+        <span class="fw6"><i class="bi bi-list-check"></i> Clientes con datos faltantes: <%= rows.length %></span>
+        <div class="du-bar">
+          <select class="fs" id="duFilter" style="width:auto" onchange="duFilter()">
+            <option value="">Todos</option>
+            <% Object.keys(items).forEach(k => { %><option value="<%= k %>">Falta: <%= items[k].label %></option><% }) %>
+            <option value="nopedido">Sin pedir todavía</option>
+          </select>
+          <button class="btn btn-p btn-sm" onclick="duQueue()"><i class="bi bi-whatsapp"></i> Pedir a seleccionados (<span id="duN">0</span>)</button>
+          <% if (queued) { %><button class="btn btn-g btn-sm" onclick="duCancel()" title="Cancelar los envíos que todavía no salieron"><i class="bi bi-x-circle"></i> Cancelar cola (<%= queued %>)</button><% } %>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="dtbl">
+          <thead><tr><th style="width:30px"><input type="checkbox" id="duAll" onchange="duToggleAll(this.checked)"></th><th>Cliente</th><th>Falta</th><th>Último pedido</th></tr></thead>
+          <tbody id="duBody">
+          <% if (!rows.length) { %><tr><td colspan="4" class="text-center text-muted">Todas las fichas están completas. 🎉</td></tr><% } %>
+          <% rows.forEach(r => { %>
+            <tr data-miss="<%= r.missing.join(',') %>" data-asked="<%= r.data_request_at ? 1 : 0 %>">
+              <td><input type="checkbox" class="du-sel" value="<%= r.id %>" onchange="duCount()" <%= r.queued ? 'disabled' : '' %>></td>
+              <td><a href="/admin/customers/<%= r.id %>/ficha" style="font-weight:700;text-decoration:none"><%= r.name %></a><div class="text-muted small"><%= r.customer_code || '' %> · <%= r.phone || 'sin teléfono' %><%= r.status !== 'active' ? ' · suspendido' : '' %></div></td>
+              <td><% r.missing.forEach(k => { %><span class="du-chip"><%= items[k].label %></span><% }) %></td>
+              <td style="font-size:12px"><%= r.queued ? '⏳ En cola' : (r.data_request_at ? fdt(r.data_request_at) : '-') %></td>
+            </tr>
+          <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <% if (isAdmin) { %>
+    <div class="card" style="margin-top:16px">
+      <div class="card-hd"><span class="fw6"><i class="bi bi-gear"></i> Mensaje y envío</span></div>
+      <div class="card-bd">
+        <div class="fg"><label class="fl">Mensaje</label><textarea class="fc du-msg" id="duMsg"><%= cfg.data_request_msg %></textarea>
+          <div class="text-muted small">Variables: {{nombre}} (primer nombre), {{empresa}}, {{lista}} (obligatoria: los datos que faltan, uno por línea).</div></div>
+        <div class="du-grid">
+          <div class="fg"><label class="fl">Horario de envío</label><input class="fc" id="duHours" value="<%= cfg.data_request_hours %>"><div class="text-muted small">1=lun … 7=dom. Ej.: 1-6 08:00-19:00</div></div>
+          <div class="fg"><label class="fl">Envíos por minuto</label><input class="fc" type="number" min="1" max="20" id="duPer" value="<%= cfg.data_request_per_run %>"></div>
+          <div class="fg"><label class="fl">No volver a pedir antes de (días)</label><input class="fc" type="number" min="1" max="365" id="duDays" value="<%= cfg.data_request_days %>"></div>
+        </div>
+        <button class="btn btn-p" onclick="duSave(this)"><i class="bi bi-save"></i> Guardar</button>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
+<script>
+function duToast(ok, t) { if (window.notify) window.notify(ok ? 'success' : 'error', ok ? 'Listo' : 'Error', t); else alert(t); }
+function duVisible() { return Array.prototype.filter.call(document.querySelectorAll('#duBody tr[data-miss]'), function (tr) { return tr.style.display !== 'none'; }); }
+function duCount() { document.getElementById('duN').textContent = document.querySelectorAll('.du-sel:checked').length; }
+function duToggleAll(on) { duVisible().forEach(function (tr) { var c = tr.querySelector('.du-sel'); if (c && !c.disabled) c.checked = on; }); duCount(); }
+function duFilter() {
+  var f = document.getElementById('duFilter').value;
+  document.querySelectorAll('#duBody tr[data-miss]').forEach(function (tr) {
+    var show = !f || (f === 'nopedido' ? tr.dataset.asked === '0' : tr.dataset.miss.split(',').indexOf(f) !== -1);
+    tr.style.display = show ? '' : 'none';
+    if (!show) { var c = tr.querySelector('.du-sel'); if (c) c.checked = false; }
+  });
+  document.getElementById('duAll').checked = false; duCount();
+}
+function duQueue() {
+  var ids = Array.prototype.map.call(document.querySelectorAll('.du-sel:checked'), function (c) { return Number(c.value); });
+  if (!ids.length) return duToast(false, 'Elegí al menos un cliente.');
+  if (!confirm('¿Pedirles por WhatsApp los datos que les faltan a ' + ids.length + ' cliente(s)? Se envían de a pocos, en horario hábil.')) return;
+  fetch('/admin/data-update/queue', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: ids }) })
+    .then(function (r) { return r.json(); }).then(function (d) { duToast(d.ok, d.message); if (d.ok) setTimeout(function () { location.reload(); }, 1500); });
+}
+function duCancel() {
+  if (!confirm('¿Cancelar los envíos que todavía no salieron?')) return;
+  fetch('/admin/data-update/cancel', { method: 'POST' }).then(function (r) { return r.json(); }).then(function (d) { duToast(d.ok, d.message); if (d.ok) setTimeout(function () { location.reload(); }, 1000); });
+}
+function duSave(b) {
+  var body = { data_request_msg: document.getElementById('duMsg').value, data_request_hours: document.getElementById('duHours').value,
+    data_request_per_run: document.getElementById('duPer').value, data_request_days: document.getElementById('duDays').value };
+  b.disabled = true;
+  fetch('/admin/data-update/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(function (r) { return r.json(); }).then(function (d) { b.disabled = false; duToast(d.ok, d.message); })
+    .catch(function () { b.disabled = false; duToast(false, 'No se pudo guardar'); });
+}
+</script>
+</body>
+</html>

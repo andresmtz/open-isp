@@ -33,6 +33,7 @@ const MENU_DEFINITIONS = [
   { key: 'map', section: 'main', href: '/admin/map', icon: 'bi bi-map', labelKey: 'admin.nav.network_map', labelDefault: 'Mapa de red', roles: ['admin', 'cashier'], bottomNav: true, bottomNavOrder: 4, activePages: ['map'] },
   { key: 'conversations', section: 'main', href: '/admin/conversations', icon: 'bi bi-chat-dots', labelKey: 'admin.nav.conversations', labelDefault: 'Conversaciones', roles: ['admin', 'cashier'], activePages: ['conversations'] },
   { key: 'outages', section: 'main', href: '/admin/outages', icon: 'bi bi-wifi-off', labelKey: 'admin.nav.outages', labelDefault: 'Equipos caídos', roles: ['admin', 'cashier'], activePages: ['outages'] },
+  { key: 'data-update', section: 'main', href: '/admin/data-update', icon: 'bi bi-person-check', labelKey: 'admin.nav.data_update', labelDefault: 'Actualizar datos', roles: ['admin', 'cashier'], activePages: ['data-update'] },
   { key: 'whatsapp', section: 'main', href: '/admin/whatsapp', icon: 'bi bi-whatsapp', labelKey: 'admin.nav.whatsapp', labelDefault: 'WhatsApp', roles: ['admin', 'cashier'], cashierHref: '/admin/whatsapp/live-chat', activePages: ['whatsapp','broadcast','whatsapp_live_chat','whatsapp_templates'] },
   { key: 'automation', section: 'main', href: '/admin/automation', icon: 'bi bi-robot', labelKey: 'admin.nav.automation', labelDefault: 'Automatización', roles: ['admin'], activePages: ['automation'] },
 

@@ -2579,6 +2579,39 @@ router.get('/customers/export', requireAdminSession, (req, res) => {
 // ─── Cancelar servicio (manual) ───
 // Cobro de monto libre (pagos parciales / saldo a favor)
 // Historial del cliente (línea de tiempo). Sin permiso de ver montos, los importes se ocultan.
+// ─── Actualizar datos de clientes registrados: pedir por WhatsApp lo que falta en la ficha (services/dataRequestService.js) ───
+router.get('/data-update', requireAdminSession, (req, res) => {
+  const dr = require('../services/dataRequestService');
+  res.render('admin/data_update', { title: 'Actualizar datos', company: company(), activePage: 'data-update', isAdmin: !!req.session.isAdmin,
+    rows: dr.list(), items: dr.ITEMS, cfg: dr.settings(), queued: dr.queueCount(), inHours: dr.inHours(), msg: flashMsg(req) });
+});
+router.post('/data-update/queue', requireAdminSession, express.json(), (req, res) => {
+  try {
+    const by = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    const r = require('../services/dataRequestService').enqueue((req.body || {}).ids, by);
+    res.json({ ok: true, message: `${r.added} cliente(s) en cola: se envían de a pocos en horario hábil.` + (r.skipped ? ` ${r.skipped} salteado(s) (ya se les pidió en los últimos ${r.days} días, ya están en cola o no les falta nada).` : '') });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/data-update/cancel', requireAdminSession, (req, res) => {
+  try { const n = require('../services/dataRequestService').cancelQueue(); res.json({ ok: true, message: `${n} envío(s) pendiente(s) cancelado(s).` }); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/data-update/settings', requireAdminSession, express.json(), (req, res) => {
+  try {
+    if (!req.session.isAdmin) throw new Error('Solo el administrador puede cambiar esta configuración.');
+    const b = req.body || {};
+    const msg = String(b.data_request_msg || '').slice(0, 2000);
+    if (!/\{\{lista\}\}/.test(msg)) throw new Error('El mensaje tiene que incluir {{lista}} (ahí van los datos que faltan).');
+    const hours = String(b.data_request_hours || '').trim().slice(0, 100);
+    if (!/^\s*\d(-\d)?\s+\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}(\s*;\s*\d(-\d)?\s+\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})*\s*$/.test(hours)) throw new Error('Horario inválido. Ejemplo: 1-6 08:00-19:00');
+    const per = Number(b.data_request_per_run), days = Number(b.data_request_days);
+    if (!(per >= 1 && per <= 20)) throw new Error('Envíos por minuto: entre 1 y 20.');
+    if (!(days >= 1 && days <= 365)) throw new Error('Días entre pedidos: entre 1 y 365.');
+    require('../config/settingsManager').saveSettings({ data_request_msg: msg, data_request_hours: hours, data_request_per_run: per, data_request_days: days });
+    res.json({ ok: true, message: 'Configuración guardada.' });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+
 // ─── Ficha del cliente: todo en una pantalla (datos, conexión, equipo, facturas, asistencias, fotos, historial) ───
 router.get('/customers/:id/ficha', requireAdminSession, async (req, res) => {
   try {
@@ -2627,7 +2660,11 @@ router.post('/customers/:id/geo', requireAdminSession, express.json(), async (re
     const by = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
     if (b.action === 'confirm') { g.markToConfirm(id, b.reason, by); return res.json({ ok: true, message: 'Marcada como "a confirmar": el técnico la va a confirmar con el GPS en la próxima visita.' }); }
     if (b.action === 'set') { const v = g.setManual(id, b.coords, { approx: !!b.approx, by }); return res.json({ ok: true, message: `Ubicación guardada (${v}).` }); }
-    if (b.action === 'request') { await g.requestFromCustomer(id, by); return res.json({ ok: true, message: 'Se le pidió la ubicación por WhatsApp. Cuando la mande, se guarda sola en la ficha y te llega un aviso.' }); }
+    if (b.action === 'request') {
+      const r = await require('../services/dataRequestService').sendNow(id, by);
+      const ITEMS = require('../services/dataRequestService').ITEMS;
+      return res.json({ ok: true, message: 'Se le pidió por WhatsApp: ' + r.items.map(k => ITEMS[k].label.toLowerCase()).join(', ') + '.' + (r.items.includes('ubicacion') ? ' La ubicación se guarda sola cuando la mande;' : '') + ' las fotos se guardan desde Conversaciones con "Guardar como cédula / fachada".' });
+    }
     throw new Error('Acción inválida');
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
@@ -3021,7 +3058,8 @@ router.get('/conversations/:id/messages', requireAdminSession, (req, res) => {
     const conv = convSvc.get(Number(req.params.id));
     if (!conv || (conv.ignored === 1 && !req.session.isAdmin)) return res.json({ ok: false, message: 'Conversación no encontrada' });
     const money = staffPerms.has(req.session, 'ver_facturas');
-    res.json({ ok: true, conv, info: convOrg.info(conv.id, { money }), messages: convSvc.messages(conv.id, { afterId: req.query.after }) });
+    let saved = []; try { saved = require('../services/dataRequestService').savedFor(conv.id); } catch (_) {}
+    res.json({ ok: true, conv, info: convOrg.info(conv.id, { money }), messages: convSvc.messages(conv.id, { afterId: req.query.after }), saved });
   } catch (e) { res.json({ ok: false, message: e.message }); }
 });
 router.post('/conversations/:id/read', requireAdminSession, (req, res) => {
@@ -3053,6 +3091,15 @@ router.get('/conversations/media/:id', requireAdminSession, async (req, res) => 
 });
 router.post('/conversations/:id/org', requireAdminSession, express.json(), express.urlencoded({ extended: true }), (req, res) => {
   try { convOrg.setOrg(Number(req.params.id), req.body || {}); res.json({ ok: true }); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
+});
+// Cliente ya registrado: guardar en su ficha la foto (cédula / casa) o la ubicación que mandó por el chat
+router.post('/conversations/:id/save-doc', requireAdminSession, express.json(), async (req, res) => {
+  try { const b = req.body || {}; const r = await require('../services/dataRequestService').saveChatPhoto(Number(req.params.id), Number(b.mid), String(b.kind || ''), convActor(req)); res.json({ ok: true, message: `${r.label} guardada en la ficha del cliente.` }); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/conversations/:id/save-geo', requireAdminSession, express.json(), (req, res) => {
+  try { const r = require('../services/dataRequestService').saveChatLocation(Number(req.params.id), Number((req.body || {}).mid), convActor(req)); res.json({ ok: true, message: `Ubicación guardada en la ficha (${r.value}).` }); }
   catch (e) { res.json({ ok: false, message: e.message }); }
 });
 router.get('/conversations/customer-search', requireAdminSession, (req, res) => {

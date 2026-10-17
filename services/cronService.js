@@ -418,6 +418,10 @@ function startCronJobs() {
     try { await conv.sync(); await conv.checkHandoffs(); }
     catch (e) { if (Date.now() - _convErrAt > 600000) { _convErrAt = Date.now(); logger.warn('[Conversaciones] ' + e.message); } }
   });
+  cron.schedule('* * * * *', async () => {
+    // Pedidos de actualización de datos en cola: de a pocos y en horario hábil (services/dataRequestService.js)
+    try { await require('./dataRequestService').processQueue(); } catch (e) { logger.warn('[Actualizar datos] ' + e.message); }
+  });
   cron.schedule('*/15 * * * *', async () => {
     // Equipos caídos: consulta automática al cliente (services/outageService.js)
     try { await require('./outageService').scan(); } catch (e) { logger.warn('[Caídas] ' + e.message); }

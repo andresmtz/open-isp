@@ -68,6 +68,7 @@ const CATALOG = [
     ['POST', `^/conversations/${ID}/(reply|state|update|read|org|link|create-request)$`],
     ['GET', '^/conversations/(customer-search|quick-replies)$'],
     ['POST', '^/conversations/bulk$'],
+    ['POST', `^/conversations/${ID}/(save-doc|save-geo)$`],
     ['POST', '^/conversations/sync$'],
   ] },
   { key: 'promesas', label: 'Dar promesas de pago', help: 'Respeta el máximo de días y de promesas por mes de Automatización.', def: true, needs: ['ver_clientes', 'ver_facturas'], rules: [
@@ -76,6 +77,8 @@ const CATALOG = [
   ] },
   { key: 'clientes_alta', label: 'Agregar y editar clientes', help: 'Alta de clientes nuevos (crea el usuario PPPoE en el MikroTik), edición de datos y aprobación de solicitudes.', def: true, needs: ['ver_clientes'], rules: [
     ['POST', `^/customers/${ID}/geo$`],
+    ['GET', '^/data-update$'],
+    ['POST', '^/data-update/(queue|cancel)$'],
     ['POST', `^/customers/${ID}/extras$`],
     ['POST', `^/customers/extras/${ID}/(update|end)$`],
     ['POST', '^/customers$'],

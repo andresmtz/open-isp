@@ -317,7 +317,9 @@
     if (m.lat != null && m.lng != null) body += '<a href="https://maps.google.com/?q=' + m.lat + ',' + m.lng + '" target="_blank"><i class="bi bi-geo-alt-fill"></i> Ubicación (' + Number(m.lat).toFixed(5) + ', ' + Number(m.lng).toFixed(5) + ')</a>';
     if (m.body) body += (body ? '\n' : '') + esc(m.body);
     if (!body) body = '<span class="text-muted">(sin texto)</span>';
-    if (cls === 'cliente' && m.media_type === 'image') body += '<div class="cv-mark" data-mid="' + m.id + '"><button data-k="cedula_msg">Es la cédula</button><button data-k="fachada_msg">Es la fachada</button></div>';
+    if (cls === 'cliente' && m.media_type === 'image') body += '<div class="cv-mark" data-mid="' + m.id + '"><button data-k="cedula_msg">Es la cédula</button><button data-k="fachada_msg">Es la fachada</button></div>' +
+      '<div class="cv-mark cv-save" data-mid="' + m.id + '" style="display:none"><button data-kind="cedula">Guardar como cédula</button><button data-kind="casa">Guardar como fachada</button></div>';
+    if (cls === 'cliente' && m.lat != null && m.lng != null) body += '<div class="cv-mark cv-save" data-mid="' + m.id + '" style="display:none"><button data-kind="geo">Guardar como ubicación del cliente</button></div>';
     var handoff = cls === 'meta_ai' && /pasado la conversaci[oó]n a un miembro del equipo/i.test(m.body || '');
     return '<div class="cv-m ' + cls + (handoff ? ' handoff' : '') + '" data-id="' + m.id + '">' +
       (who ? '<div class="who">' + esc(who) + (handoff ? ' · <i class="bi bi-person-raised-hand"></i> derivó a una persona' : '') + '</div>' : '') +
@@ -342,7 +344,19 @@
   function paintMarks(){
     if (!conv) return;
     var lead = info && info.org && info.org.lead;
-    document.querySelectorAll('.cv-mark').forEach(function(x){
+    // Cliente ya registrado: guardar la foto o la ubicación directo en su ficha
+    var reg = !lead && conv.customer_id;
+    document.querySelectorAll('.cv-save').forEach(function(x){
+      x.style.display = reg ? '' : 'none';
+      var sv = savedDocs[Number(x.dataset.mid)];
+      x.querySelectorAll('button').forEach(function(b){
+        var on = sv && sv === b.dataset.kind;
+        b.classList.toggle('on', !!on);
+        if (on) b.textContent = '✓ Guardada en la ficha';
+        b.disabled = !!sv;
+      });
+    });
+    document.querySelectorAll('.cv-mark:not(.cv-save)').forEach(function(x){
       x.style.display = lead ? '' : 'none';
       var mid = Number(x.dataset.mid);
       x.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', Number(conv[b.dataset.k]) === mid); });
@@ -445,15 +459,18 @@
     document.querySelectorAll('.cv-item').forEach(function(x){ x.classList.toggle('on', Number(x.dataset.id) === id); });
     return api('/admin/conversations/' + id + '/messages').then(function(d){
       if (!d.ok) { toast(d.message || 'No se pudo abrir', true); return; }
+      savedDocs = {}; (d.saved || []).forEach(function(x){ savedDocs[x.msg_id] = x.kind; });
       info = d.info; renderHead(d.conv); renderInfo(d.conv, d.info); appendMsgs(d.messages || [], true);
       if (d.conv.unread > 0) api('/admin/conversations/' + id + '/read', {}).then(loadList);
     });
   }
   var infoKey = '';
+  var savedDocs = {};
   function poll(force){
     if (!sel || (document.hidden && !force)) return;
     return api('/admin/conversations/' + sel + '/messages?after=' + lastId).then(function(d){
       if (!d.ok) return;
+      (d.saved || []).forEach(function(x){ savedDocs[x.msg_id] = x.kind; });
       info = d.info; renderHead(d.conv);
       var k = JSON.stringify([d.info, d.conv.motive, d.conv.lead_stage, d.conv.lost_reason, d.conv.cedula_msg, d.conv.fachada_msg, d.conv.lead_name, d.conv.customer_id]);
       var editing = document.activeElement && document.getElementById('cvInfo').contains(document.activeElement);
@@ -559,6 +576,18 @@
 
   // ── marcar fotos de cédula / fachada ──
   document.getElementById('cvMsgs').addEventListener('click', function(e){
+    var sb = e.target.closest('.cv-save button');
+    if (sb && conv) {
+      var smid = Number(sb.closest('.cv-save').dataset.mid), kind = sb.dataset.kind;
+      var what = kind === 'geo' ? 'la ubicación de la casa' : (kind === 'cedula' ? 'la cédula' : 'la foto del frente de la casa');
+      if (!confirm('¿Guardar esto como ' + what + ' en la ficha del cliente?')) return;
+      sb.disabled = true;
+      api('/admin/conversations/' + conv.id + '/save-' + (kind === 'geo' ? 'geo' : 'doc'), { mid: smid, kind: kind }).then(function(d){
+        toast(d.message || (d.ok ? 'Guardado' : 'Error'), !d.ok);
+        if (d.ok) { savedDocs[smid] = kind; paintMarks(); } else sb.disabled = false;
+      });
+      return;
+    }
     var b = e.target.closest('.cv-mark button'); if (!b || !conv) return;
     var mid = Number(b.closest('.cv-mark').dataset.mid), k = b.dataset.k, f = {};
     f[k] = Number(conv[k]) === mid ? '' : mid;

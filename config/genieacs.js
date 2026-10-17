@@ -911,7 +911,8 @@ async function monitorRXPower(threshold = -27) {
                         rxPower,
                         serialNumber: getDeviceSerialNumber(device),
                         lastInform: device._lastInform,
-                        pppoeUsername: pppoeUsername
+                        pppoeUsername: pppoeUsername,
+                        customer: customerForDevice(device)
                     };
                     
                     criticalDevices.push(deviceInfo);
@@ -929,9 +930,9 @@ async function monitorRXPower(threshold = -27) {
             message += `${criticalDevices.length} equipos tienen una potencia RX peor que ${threshold} dBm (más negativo = peor):\n\n`;
             
             criticalDevices.forEach((device, index) => {
-                message += `${index + 1}. *Device ID:* ${device.id.split('-')[2] || device.id}\n`;
+                message += `${index + 1}. ${device.customer ? '*' + device.customer.name + '*' : '*Equipo sin cliente asociado*'}\n`;
+                message += customerLines(device.customer, device.pppoeUsername);
                 message += `   📱 *S/N:* ${device.serialNumber}\n`;
-                message += `   👤 *PPPoE:* ${device.pppoeUsername}\n`;
                 message += `   📡 *RX Power:* ${device.rxPower} dBm\n`;
                 message += `   🕒 *Last Inform:* ${new Date(device.lastInform).toLocaleString(regional.locale())}\n\n`;
             });
@@ -1038,6 +1039,37 @@ function getDeviceSerialNumber(device) {
     }
 }
 
+// Busca el cliente de un equipo: por etiqueta GenieACS (id del equipo), por usuario PPPoE o por las etiquetas del equipo.
+function customerForDevice(device) {
+    try {
+        const id = String(device._id || '');
+        const ppp = device.InternetGatewayDevice?.WANDevice?.['1']?.WANConnectionDevice?.['1']?.WANPPPConnection?.['1']?.Username?._value ||
+            device.Device?.PPP?.Interface?.['1']?.Username?._value || device.VirtualParameters?.pppoeUsername?._value || '';
+        const tags = (Array.isArray(device._tags) ? device._tags : []).filter(t => t && t !== 'bootstrapped').map(t => String(t).replace(/^pppoe:/, ''));
+        const sel = 'SELECT id, name, customer_code, phone, address, status, pppoe_username FROM customers WHERE ';
+        let c = id ? db.prepare(sel + 'genieacs_tag = ? ORDER BY id DESC LIMIT 1').get(id) : null;
+        if (!c && ppp) c = db.prepare(sel + 'pppoe_username = ? ORDER BY id DESC LIMIT 1').get(ppp);
+        for (const t of tags) {
+            if (c) break;
+            c = db.prepare(sel + '(pppoe_username = ? OR genieacs_tag = ? OR phone = ? OR customer_code = ?) ORDER BY id DESC LIMIT 1').get(t, t, t, t);
+        }
+        return c || null;
+    } catch (e) {
+        logger.warn(`[Offline] No se pudo buscar el cliente de ${device._id}: ${e.message}`);
+        return null;
+    }
+}
+
+const ESTADO_CLIENTE = { active: 'activo', suspended: 'suspendido', ditangguhkan: 'suspendido', inactive: 'inscripto', cancelled: 'cancelado' };
+
+function customerLines(c, fallbackPppoe) {
+    if (!c) return `   👤 *Cliente:* sin identificar${fallbackPppoe && fallbackPppoe !== 'Unknown' ? ` (PPPoE ${fallbackPppoe})` : ''}\n`;
+    let t = `   👤 *Cliente:* ${c.name}${c.customer_code ? ` (${c.customer_code})` : ''}${c.status && c.status !== 'active' ? ` — ${ESTADO_CLIENTE[c.status] || c.status}` : ''}\n`;
+    if (c.phone) t += `   📞 *Teléfono:* ${c.phone}\n`;
+    if (c.address) t += `   📍 *Dirección:* ${c.address}\n`;
+    return t;
+}
+
 // Fungsi untuk memantau perangkat yang tidak aktif (offline)
 async function monitorOfflineDevices(thresholdHours = 24) {
     try {
@@ -1068,8 +1100,11 @@ async function monitorOfflineDevices(thresholdHours = 24) {
                         id: device._id,
                         serialNumber: getDeviceSerialNumber(device),
                         lastInform: device._lastInform,
-                        offlineHours: Math.round(timeDiff / (60 * 60 * 1000) * 10) / 10 // Jam dengan 1 desimal
+                        offlineHours: Math.round(timeDiff / (60 * 60 * 1000) * 10) / 10, // Jam dengan 1 desimal
+                        customer: customerForDevice(device)
                     };
+                    // Cancelados o inscriptos: el equipo ya no está (o todavía no está) en servicio, no se avisa.
+                    if (deviceInfo.customer && ['cancelled', 'inactive'].includes(deviceInfo.customer.status)) continue;
                     
                     offlineDevices.push(deviceInfo);
                     logger.info(`[Offline] Perangkat offline: ${deviceInfo.id}, Offline selama: ${deviceInfo.offlineHours} jam`);
@@ -1086,10 +1121,11 @@ async function monitorOfflineDevices(thresholdHours = 24) {
             message += `${offlineDevices.length} equipos desconectados hace más de ${thresholdHours} horas:\n\n`;
             
             offlineDevices.forEach((device, index) => {
-                message += `${index + 1}. *Device ID:* ${device.id.split('-')[2] || device.id}\n`;
+                message += `${index + 1}. ${device.customer ? '*' + device.customer.name + '*' : '*Equipo sin cliente asociado*'}\n`;
+                message += customerLines(device.customer);
                 message += `   📱 *S/N:* ${device.serialNumber}\n`;
-                message += `   ⏱️ *Offline:* ${device.offlineHours} h\n`;
-                message += `   🕒 *Last Inform:* ${new Date(device.lastInform).toLocaleString(regional.locale())}\n\n`;
+                message += `   ⏱️ *Sin reportar hace:* ${device.offlineHours} h\n`;
+                message += `   🕒 *Último reporte:* ${new Date(device.lastInform).toLocaleString(regional.locale())}\n\n`;
             });
             
             message += `⚠️ *Requiere atención inmediata.*`;

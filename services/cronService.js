@@ -418,6 +418,10 @@ function startCronJobs() {
     try { await conv.sync(); await conv.checkHandoffs(); }
     catch (e) { if (Date.now() - _convErrAt > 600000) { _convErrAt = Date.now(); logger.warn('[Conversaciones] ' + e.message); } }
   });
+  cron.schedule('*/15 * * * *', async () => {
+    // Equipos caídos: consulta automática al cliente (services/outageService.js)
+    try { await require('./outageService').scan(); } catch (e) { logger.warn('[Caídas] ' + e.message); }
+  });
   cron.schedule('*/2 * * * *', async () => {
     // Comprobantes de pago recibidos por WhatsApp (services/paymentProofService.js): se leen y quedan para revisar
     try { await require('./paymentProofService').scan(); } catch (e) { logger.warn('[Comprobantes] ' + e.message); }

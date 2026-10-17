@@ -4433,6 +4433,34 @@ router.post('/tickets/quick', requireAdminSession, express.json(), async (req, r
   } catch (e) { res.json({ ok: false, message: e.message }); }
 });
 
+// ─── Equipos caídos: consulta automática al cliente (services/outageService.js) ───
+router.get('/outages', requireAdminSession, (req, res) => {
+  const outSvc = require('../services/outageService');
+  res.render('admin/outages', {
+    title: 'Equipos caídos', company: company(), activePage: 'outages', isAdmin: !!req.session.isAdmin,
+    rows: outSvc.list({ all: req.query.all === '1' }), all: req.query.all === '1', cfg: outSvc.settings(), msg: flashMsg(req),
+  });
+});
+router.post('/outages/:id/close', requireAdminSession, (req, res) => {
+  try { require('../services/outageService').close(Number(req.params.id), req.session.adminUser || req.session.cashierName || 'oficina'); res.json({ ok: true }); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.post('/outages/settings', requireAdminSession, express.json(), (req, res) => {
+  try {
+    if (!req.session.isAdmin) throw new Error('Solo el administrador puede cambiar esta configuración.');
+    const b = req.body || {}, out = {};
+    out.outage_query_enabled = b.outage_query_enabled === true || b.outage_query_enabled === 'true';
+    for (const k of ['outage_query_hours', 'outage_noreply_hours', 'outage_reask_hours']) {
+      const n = Number(b[k]); if (!Number.isFinite(n) || n < 1 || n > 720) throw new Error('Las horas deben estar entre 1 y 720.'); out[k] = n;
+    }
+    out.outage_send_hours = String(b.outage_send_hours || '').trim().slice(0, 100);
+    if (!/^\s*\d(-\d)?\s+\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}(\s*;\s*\d(-\d)?\s+\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})*\s*$/.test(out.outage_send_hours)) throw new Error('Horario inválido. Ejemplo: 1-6 08:00-19:00');
+    for (const k of ['outage_msg_query', 'outage_msg_1', 'outage_msg_2', 'outage_msg_3', 'outage_msg_4', 'outage_msg_back']) out[k] = String(b[k] || '').slice(0, 2000);
+    require('../config/settingsManager').saveSettings(out);
+    res.json({ ok: true, message: 'Configuración guardada.' });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+
 // ─── Detalle de un ticket e información agregada (historial de notas) ────────
 router.get('/tickets/:id/detail', requireAdminSession, (req, res) => {
   try {

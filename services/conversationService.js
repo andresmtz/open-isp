@@ -220,6 +220,11 @@ function upsertMessage(m) {
   }
   const keys = Object.keys(set);
   if (keys.length) db.prepare(`UPDATE wa_conversations SET ${keys.map(k => k + '=?').join(', ')} WHERE id=?`).run(...keys.map(k => set[k]), conv.id);
+  // respuesta a la consulta por equipo caído (services/outageService.js)
+  if (!m.historical && (sender === 'cliente' || sender === 'meta_ai')) {
+    const msg = { ts, sender, body, media_type: String(m.mediaType || '') };
+    setImmediate(() => { require('./outageService').onMessage(conv.id, msg).catch(() => {}); });
+  }
   return { conv, isNew: true, sender };
 }
 

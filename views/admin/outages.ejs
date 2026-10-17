@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Equipos caídos | <%= company %></title>
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .og-msg{width:100%;min-height:90px;font-family:inherit}
+    .og-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+    .og-ans{font-size:12px;color:var(--muted,#888);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  </style>
+</head>
+<body>
+<%- include('partials/sidebar', { activePage: 'outages', company }) %>
+<div class="mw">
+  <div class="topbar">
+    <div class="tb-title"><button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><i class="bi bi-wifi-off"></i> Equipos caídos</div>
+    <div class="tb-right">
+      <a href="/admin/logout" class="btn btn-g btn-sm"><i class="bi bi-box-arrow-left"></i></a>
+    </div>
+  </div>
+  <div class="page">
+    <% const fmt = (v) => { if (!v) return '-'; const d = new Date(v); return isNaN(d) ? v : d.toLocaleString('es-PY', { timeZone: 'America/Asuncion', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }; %>
+    <% const badge = { consultado: 'bw', sin_energia: 'bw', asistencia: 'bd', ausente: 'bs', foto: 'bw', sin_respuesta: 'bd', restablecido: 'bs', cerrado: 'bs' }; %>
+    <div class="alert alert-s" style="font-size:13px">
+      <i class="bi bi-info-circle"></i>
+      Cuando la ONU de un cliente <b>activo y al día</b> está apagada más de <b><%= cfg.outage_query_hours %> h</b> y no tiene asistencia abierta, se le pregunta por WhatsApp qué ve en el equipo.
+      Luz roja o luces normales crean la asistencia automáticamente. <%= cfg.outage_query_enabled ? '' : '⚠️ La consulta automática está desactivada.' %>
+    </div>
+
+    <div class="card">
+      <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <span class="fw6"><i class="bi bi-list-check"></i> <%= all ? 'Todos los casos' : 'Casos abiertos y de los últimos 7 días' %></span>
+        <a class="btn btn-g btn-sm" href="/admin/outages<%= all ? '' : '?all=1' %>"><%= all ? 'Ver recientes' : 'Ver todos' %></a>
+      </div>
+      <div class="tbl-wrap">
+        <table class="dtbl">
+          <thead><tr><th>Cliente</th><th>Apagado desde</th><th>Consultado</th><th>Estado</th><th>Respuesta</th><th>Asistencia</th><th></th></tr></thead>
+          <tbody>
+          <% if (!rows.length) { %><tr><td colspan="7" class="text-center text-muted">Sin equipos caídos.</td></tr><% } %>
+          <% rows.forEach(r => { %>
+            <tr>
+              <td><b><%= r.name || ('#' + r.customer_id) %></b><div class="text-muted small"><%= r.customer_code || '' %> · <%= r.phone || '' %><%= r.onu_id ? ' · ' + r.onu_id : '' %></div></td>
+              <td><%= fmt(r.down_since) %></td>
+              <td><%= fmt(r.asked_at) %><%= r.asked_count > 1 ? ' (' + r.asked_count + '×)' : '' %><% if (r.meta_ai) { %><div class="text-muted small" title="Meta AI también contestó en el chat">🤖 Meta AI intervino</div><% } %></td>
+              <td><span class="badge <%= badge[r.state] || 'bw' %>"><%= r.stateLabel %></span><% if (r.resolved_at) { %><div class="text-muted small"><%= fmt(r.resolved_at) %></div><% } %></td>
+              <td><div class="og-ans" title="<%= r.answer %>"><%= r.answer || '-' %></div><% if (r.notes) { %><div class="text-muted small"><%= r.notes %></div><% } %></td>
+              <td><%- r.ticket_id ? '<a href="/admin/tickets?search=' + encodeURIComponent(r.name || '') + '">#' + r.ticket_id + '</a>' : '-' %></td>
+              <td style="white-space:nowrap">
+                <% if (r.conv_id) { %><a class="btn btn-g btn-sm" href="/admin/conversations#<%= r.conv_id %>" title="Ver chat"><i class="bi bi-chat-dots"></i></a><% } %>
+                <% if (r.open) { %><button class="btn btn-g btn-sm" onclick="ogClose(<%= r.id %>)" title="Cerrar caso"><i class="bi bi-check2"></i></button><% } %>
+              </td>
+            </tr>
+          <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <% if (isAdmin) { %>
+    <div class="card" style="margin-top:16px">
+      <div class="card-hd"><span class="fw6"><i class="bi bi-gear"></i> Configuración</span></div>
+      <div class="card-bd">
+        <div class="og-grid">
+          <div class="fg"><label class="fl">Consulta automática</label><select class="fs" id="og_enabled"><option value="true" <%= cfg.outage_query_enabled ? 'selected' : '' %>>Activada</option><option value="false" <%= cfg.outage_query_enabled ? '' : 'selected' %>>Desactivada</option></select></div>
+          <div class="fg"><label class="fl">Preguntar después de (horas apagado)</label><input class="fc" type="number" min="1" id="og_hours" value="<%= cfg.outage_query_hours %>"></div>
+          <div class="fg"><label class="fl">Avisar a la oficina si no responde en (h)</label><input class="fc" type="number" min="1" id="og_noreply" value="<%= cfg.outage_noreply_hours %>"></div>
+          <div class="fg"><label class="fl">"Sin energía": volver a preguntar a las (h)</label><input class="fc" type="number" min="1" id="og_reask" value="<%= cfg.outage_reask_hours %>"></div>
+          <div class="fg"><label class="fl">Horario de envío</label><input class="fc" id="og_send" value="<%= cfg.outage_send_hours %>"><div class="text-muted small">Días 1=lun … 7=dom. Ej.: 1-6 08:00-19:00</div></div>
+        </div>
+        <div class="text-muted small" style="margin:6px 0 10px">Variables: {{nombre}} (primer nombre), {{empresa}}, {{fecha}} (solo en la consulta).</div>
+        <% [['outage_msg_query', 'Mensaje de consulta'], ['outage_msg_1', 'Respuesta a 1 (sin energía)'], ['outage_msg_2', 'Respuesta a 2 (luz roja → asistencia)'], ['outage_msg_3', 'Respuesta a 3 (luces normales → asistencia)'], ['outage_msg_4', 'Respuesta a 4 (de viaje)'], ['outage_msg_back', 'Cuando el equipo vuelve (vacío = no enviar)']].forEach(([k, l]) => { %>
+          <div class="fg"><label class="fl"><%= l %></label><textarea class="fc og-msg" data-k="<%= k %>"><%= cfg[k] %></textarea></div>
+        <% }) %>
+        <button class="btn btn-p" onclick="ogSave(this)"><i class="bi bi-save"></i> Guardar</button>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
+<script>
+function ogToast(ok, t) { if (window.notify) window.notify(ok ? 'success' : 'error', ok ? 'Listo' : 'Error', t); else alert(t); }
+function ogClose(id) {
+  if (!confirm('¿Cerrar este caso? No se le vuelve a preguntar al cliente por esta caída.')) return;
+  fetch('/admin/outages/' + id + '/close', { method: 'POST' }).then(r => r.json()).then(d => { if (d.ok) location.reload(); else ogToast(false, d.message); });
+}
+function ogSave(b) {
+  const body = {
+    outage_query_enabled: document.getElementById('og_enabled').value === 'true',
+    outage_query_hours: document.getElementById('og_hours').value,
+    outage_noreply_hours: document.getElementById('og_noreply').value,
+    outage_reask_hours: document.getElementById('og_reask').value,
+    outage_send_hours: document.getElementById('og_send').value,
+  };
+  document.querySelectorAll('.og-msg').forEach(t => { body[t.dataset.k] = t.value; });
+  b.disabled = true;
+  fetch('/admin/outages/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(r => r.json()).then(d => { b.disabled = false; ogToast(d.ok, d.message); })
+    .catch(() => { b.disabled = false; ogToast(false, 'No se pudo guardar'); });
+}
+</script>
+</body>
+</html>

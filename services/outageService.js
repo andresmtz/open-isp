@@ -315,7 +315,11 @@ async function onMessage(convId, msg) {
       const tid = await createTicket(c, o, ans);
       set('asistencia', 'ticket_id=' + Number(tid || 0));
     }
-    try { await sendTo(convId, fill(S('outage_msg_' + ans), c)); } catch (e) { logger.warn('[Caídas] respuesta: ' + e.message); }
+    // Si la respuesta se procesa tarde (sistema caído) o la oficina ya le contestó, no se manda el texto automático
+    const late = Date.now() - Date.parse(msg.ts) > 30 * 60e3;
+    const answered = db.prepare("SELECT 1 FROM wa_messages WHERE conv_id=? AND from_me=1 AND ts>? LIMIT 1").get(convId, String(msg.ts));
+    if (late || answered) db.prepare("UPDATE onu_outages SET notes=TRIM(notes || ' ' || ?) WHERE id=?").run('Respuesta automática no enviada (' + (answered ? 'la oficina ya le contestó' : 'se procesó tarde') + ').', o.id);
+    else { try { await sendTo(convId, fill(S('outage_msg_' + ans), c)); } catch (e) { logger.warn('[Caídas] respuesta: ' + e.message); } }
     try { require('./conversationOrgService').setOrg?.(convId, { dismiss: true }); } catch (_) {}
     logger.info(`[Caídas] ${c.name} respondió ${ans}`);
   } catch (e) { logger.warn('[Caídas] onMessage: ' + e.message); }

@@ -225,6 +225,10 @@ function upsertMessage(m) {
     const msg = { ts, sender, body, media_type: String(m.mediaType || '') };
     setImmediate(() => { require('./outageService').onMessage(conv.id, msg).catch(() => {}); });
   }
+  // ubicación que el cliente manda después de que se la pedimos (services/customerGapsService.js)
+  if (!m.historical && sender === 'cliente' && m.lat != null && m.lng != null) {
+    setImmediate(() => require('./customerGapsService').onLocationMessage(conv.id, m.lat, m.lng, ts));
+  }
   return { conv, isNew: true, sender };
 }
 

@@ -41,14 +41,14 @@
           <% if (!rows.length) { %><tr><td colspan="7" class="text-center text-muted">Sin equipos caídos.</td></tr><% } %>
           <% rows.forEach(r => { %>
             <tr>
-              <td><b><%= r.name || ('#' + r.customer_id) %></b><div class="text-muted small"><%= r.customer_code || '' %> · <%= r.phone || '' %><%= r.onu_id ? ' · ' + r.onu_id : '' %></div></td>
+              <td><a href="/admin/customers/<%= r.customer_id %>/ficha" style="font-weight:700;text-decoration:none"><%= r.name || ('#' + r.customer_id) %></a><div class="text-muted small"><%= r.customer_code || '' %> · <%= r.phone || '' %><%= r.onu_id ? ' · ' + r.onu_id : '' %></div></td>
               <td><%= fmt(r.down_since) %></td>
               <td><%= fmt(r.asked_at) %><%= r.asked_count > 1 ? ' (' + r.asked_count + '×)' : '' %><% if (r.meta_ai) { %><div class="text-muted small" title="Meta AI también contestó en el chat">🤖 Meta AI intervino</div><% } %></td>
               <td><span class="badge <%= badge[r.state] || 'bw' %>"><%= r.stateLabel %></span><% if (r.resolved_at) { %><div class="text-muted small"><%= fmt(r.resolved_at) %></div><% } %></td>
               <td><div class="og-ans" title="<%= r.answer %>"><%= r.answer || '-' %></div><% if (r.notes) { %><div class="text-muted small"><%= r.notes %></div><% } %></td>
               <td><%- r.ticket_id ? '<a href="/admin/tickets?search=' + encodeURIComponent(r.name || '') + '">#' + r.ticket_id + '</a>' : '-' %></td>
               <td style="white-space:nowrap">
-                <% if (r.conv_id) { %><a class="btn btn-g btn-sm" href="/admin/conversations#<%= r.conv_id %>" title="Ver chat"><i class="bi bi-chat-dots"></i></a><% } %>
+                <% if (r.conv_id) { %><a class="btn btn-g btn-sm" href="/admin/conversations?c=<%= r.conv_id %>" title="Ver chat"><i class="bi bi-chat-dots"></i></a><% } %>
                 <% if (r.open) { %><button class="btn btn-g btn-sm" onclick="ogClose(<%= r.id %>)" title="Cerrar caso"><i class="bi bi-check2"></i></button><% } %>
               </td>
             </tr>

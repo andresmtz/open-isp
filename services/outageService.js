@@ -376,4 +376,4 @@ function settings() {
   return out;
 }
 
-module.exports = { STATES, OPEN_STATES, DEFAULTS, ensureSchema, scan, onMessage, parseAnswer, list, close, settings, inSendHours, isUpToDate };
+module.exports = { STATES, OPEN_STATES, DEFAULTS, ensureSchema, chatFor, scan, onMessage, parseAnswer, list, close, settings, inSendHours, isUpToDate };

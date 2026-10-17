@@ -2579,6 +2579,59 @@ router.get('/customers/export', requireAdminSession, (req, res) => {
 // ─── Cancelar servicio (manual) ───
 // Cobro de monto libre (pagos parciales / saldo a favor)
 // Historial del cliente (línea de tiempo). Sin permiso de ver montos, los importes se ocultan.
+// ─── Ficha del cliente: todo en una pantalla (datos, conexión, equipo, facturas, asistencias, fotos, historial) ───
+router.get('/customers/:id/ficha', requireAdminSession, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const c = customerSvc.getCustomerById(id);
+    if (!c) { req.session._msg = { type: 'error', text: 'Cliente no encontrado' }; return res.redirect('/admin/customers'); }
+    const can = (k) => staffPerms.has(req.session, k);
+    const money = can('ver_facturas');
+    const isAdmin = !!req.session.isAdmin;
+    const safe = (fn, d) => { try { return fn(); } catch (_) { return d; } };
+    const gaps = require('../services/customerGapsService'); gaps.ensureSchema();
+    const geo = db.prepare('SELECT geo_approx, geo_request_at FROM customers WHERE id=?').get(id) || {};
+    const user = String(c.pppoe_username || c.hotspot_username || '').trim().toLowerCase();
+    let session = null;
+    try { const m = await mikrotikService.getAllActiveSessionsMap(); session = user && m && m.get ? (m.get(user) || null) : null; } catch (_) {}
+    const docs = require('../services/customerDocumentService');
+    const docList = safe(() => docs.list(id).map(d => ({ id: d.id, kind: d.kind, label: docs.KINDS[d.kind] || d.kind, at: d.created_at, by: d.uploaded_by, url: `/admin/customers/${id}/documents/${d.id}` })), []);
+    const extras = safe(() => require('../services/extraServicesService').forCustomer(id), []).map(x => money ? x : Object.assign({}, x, { price: null }));
+    const tickets = safe(() => ticketSvc.getTicketsByCustomerId(id), []).slice(0, 15);
+    const pay = require('../services/paymentReversalService');
+    const fin = money ? {
+      debt: safe(() => pay.debtOf(id), null),
+      invoices: safe(() => db.prepare('SELECT id, period_month, period_year, amount, COALESCE(amount_paid,0) amount_paid, status, paid_at, notes FROM invoices WHERE customer_id=? AND voided_at IS NULL ORDER BY period_year DESC, period_month DESC, id DESC LIMIT 12').all(id), []),
+    } : null;
+    const convs = (isAdmin || can('conversaciones')) ? safe(() => db.prepare("SELECT id, phone, name, last_message_at, last_preview, last_sender, state FROM wa_conversations WHERE customer_id=? AND COALESCE(ignored,0)=0 ORDER BY COALESCE(last_message_at,'') DESC").all(id), []) : null;
+    const outages = safe(() => { require('../services/outageService').ensureSchema(); return db.prepare('SELECT * FROM onu_outages WHERE customer_id=? ORDER BY id DESC LIMIT 5').all(id); }, []);
+    const equipment = safe(() => require('../services/customerEquipmentService').current(id), null);
+    const onu = safe(() => require('../services/onuManageService').forCustomer(id), null);
+    const events = safe(() => require('../services/customerHistoryService').timeline(id, { money }), []);
+    const phones = [c.phone, ...safe(() => require('../config/customerPhones').list(c), [])].filter(Boolean);
+    const cust = money ? c : Object.assign({}, c, { package_price: null });
+    delete cust.pppoe_password; delete cust.hotspot_password; delete cust.wifi_key;
+    res.render('admin/customer_profile', {
+      title: c.name, company: company(), activePage: 'customers', c: cust, phones, session, geo, gapInfo: safe(() => gaps.gapsFor(id), null),
+      docs: docList, extras, tickets, fin, convs, outages, equipment, onu, events, money, isAdmin,
+      perms: { edit: isAdmin || can('clientes_alta'), wifi: isAdmin || can('wifi_clientes'), cobrar: isAdmin || can('cobrar'), reclamos: isAdmin || can('reclamos'), conv: isAdmin || can('conversaciones') },
+      msg: flashMsg(req),
+    });
+  } catch (e) { logger.error('[Ficha] ' + e.message); req.session._msg = { type: 'error', text: 'No se pudo abrir la ficha: ' + e.message }; res.redirect('/admin/customers'); }
+});
+// Ubicación del cliente desde la ficha: marcar a confirmar, cargar a mano o pedírsela al cliente por WhatsApp
+router.post('/customers/:id/geo', requireAdminSession, express.json(), async (req, res) => {
+  try {
+    const g = require('../services/customerGapsService');
+    const id = Number(req.params.id), b = req.body || {};
+    const by = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    if (b.action === 'confirm') { g.markToConfirm(id, b.reason, by); return res.json({ ok: true, message: 'Marcada como "a confirmar": el técnico la va a confirmar con el GPS en la próxima visita.' }); }
+    if (b.action === 'set') { const v = g.setManual(id, b.coords, { approx: !!b.approx, by }); return res.json({ ok: true, message: `Ubicación guardada (${v}).` }); }
+    if (b.action === 'request') { await g.requestFromCustomer(id, by); return res.json({ ok: true, message: 'Se le pidió la ubicación por WhatsApp. Cuando la mande, se guarda sola en la ficha y te llega un aviso.' }); }
+    throw new Error('Acción inválida');
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+
 router.get('/customers/:id/history', requireAdminSession, (req, res) => {
   try {
     const money = staffPerms.has(req.session, 'ver_facturas');

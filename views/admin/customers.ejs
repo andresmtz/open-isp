@@ -251,7 +251,7 @@
               </td>
               <td class="text-muted"><%= i+1 %></td>
               <td class="fw6">
-                <a href="javascript:void(0)" onclick="viewCustDetail(<%= i %>)" style="color:var(--primary);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="<%= t('admin.cust.tt_detail','Klik untuk lihat detail pelanggan & MikroTik') %>">
+                <a href="/admin/customers/<%= c.id %>/ficha" style="color:var(--primary);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Abrir la ficha del cliente">
                   <%= c.name %><% var _miss=[]; if(!c.phone)_miss.push('teléfono'); if(!c.lat||!c.lng)_miss.push('ubicación'); if(!c.genieacs_tag)_miss.push('ACS'); %><% if(_miss.length===0){ %><i class="bi bi-check-circle-fill" style="font-size:12px;color:#22c55e;vertical-align:middle;" title="<%= t('admin.customers.data_ok','Data lengkap') %>"></i><% } else { %><i class="bi bi-x-circle-fill" style="font-size:12px;color:#ef4444;vertical-align:middle;" title="<%= t('admin.customers.data_incomplete','Belum lengkap') %>: <%- _miss.join(', ') %>"></i><% } %>
                   <i class="bi bi-info-circle-fill" style="font-size:12px;opacity:0.75;"></i>
                 </a>
@@ -359,7 +359,7 @@
               </td>
               <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
                 <div title="<%= c.address || '' %>" style="overflow:hidden;text-overflow:ellipsis"><%= c.address || '-' %></div>
-                <% if (c.lat && c.lng && !isNaN(parseFloat(c.lat)) && !isNaN(parseFloat(c.lng))) { %><a href="https://www.google.com/maps?q=<%= encodeURIComponent(String(c.lat).trim() + ',' + String(c.lng).trim()) %>" target="_blank" rel="noopener" style="font-size:11.5px;color:#4ade80;text-decoration:none" title="<%= c.lat %>, <%= c.lng %>"><i class="bi bi-geo-alt-fill"></i> Ver ubicación</a><% if (Number(c.geo_approx) === 1) { %> <span style="font-size:11px;color:#f59e0b" title="Ubicación aproximada: el técnico la confirma en la próxima visita">(aprox.)</span><% } %><% } else { %><div style="font-size:11px;color:var(--muted)"><i class="bi bi-geo-alt"></i> sin ubicación</div><% } %>
+                <% if (c.lat && c.lng && !isNaN(parseFloat(c.lat)) && !isNaN(parseFloat(c.lng))) { %><a href="https://www.google.com/maps?q=<%= encodeURIComponent(String(c.lat).trim() + ',' + String(c.lng).trim()) %>" target="_blank" rel="noopener" style="font-size:11.5px;color:#4ade80;text-decoration:none" title="<%= c.lat %>, <%= c.lng %>"><i class="bi bi-geo-alt-fill"></i> Ver ubicación</a><% if (Number(c.geo_approx) === 1) { %> <span style="font-size:11px;color:#f59e0b" title="Ubicación aproximada o a confirmar: el técnico la confirma en la próxima visita">(a confirmar)</span><% } %><% } else { %><div style="font-size:11px;color:var(--muted)"><i class="bi bi-geo-alt"></i> sin ubicación</div><% } %>
                 <% if (c.area) { %><div style="font-size:11px;color:#818cf8"><i class="bi bi-geo-alt"></i> <%= c.area %></div><% } %>
               </td>
               <td>
@@ -429,6 +429,7 @@
                       <div class="act-sep"></div>
                     <% } %>
                     <% if (c.status !== 'inactive') { %>
+                    <a class="act-item" href="/admin/customers/<%= c.id %>/ficha" style="text-decoration:none"><i class="bi bi-person-vcard"></i> Ficha del cliente</a>
                     <button type="button" class="act-item" onclick="viewCustDetail(<%= i %>)"><i class="bi bi-eye"></i> <%- t('admin.cust.view_detail','Lihat Detail &amp; MikroTik') %></button>
                     <% } %>
                     <button type="button" class="act-item" data-id="<%= c.id %>" onclick="openHistory(+this.dataset.id)"><i class="bi bi-clock-history"></i> Historial</button>
@@ -467,7 +468,7 @@
                     <div class="act-sep"></div>
                     <% } %>
                     <% if ((_adm || _can('reclamos')) && (c.status === 'active' || c.status === 'suspended' || c.status === 'ditangguhkan')) { %><button type="button" class="act-item primary" data-id="<%= c.id %>" onclick="quickTicket({ customerId: +this.dataset.id })"><i class="bi bi-tools"></i> Crear asistencia técnica</button><% } %>
-                    <% if (_can('clientes_alta')) { %><button type="button" class="act-item" data-idx="<%= i %>" onclick="editCust(+this.dataset.idx)"><i class="bi bi-pencil"></i> <%= t('admin.cust.btn_edit','Edit Pelanggan') %></button><% } %>
+                    <% if (_can('clientes_alta')) { %><button type="button" class="act-item" data-idx="<%= i %>" data-id="<%= c.id %>" onclick="editCust(+this.dataset.idx)"><i class="bi bi-pencil"></i> <%= t('admin.cust.btn_edit','Edit Pelanggan') %></button><% } %>
                     <% if (_can('clientes_alta') && c.status !== 'cancelled' && c.status !== 'inactive' && c.withdraw_status !== 'pendiente' && c.withdraw_status !== 'retirado') { %>
                     <button type="button" class="act-item" data-id="<%= c.id %>" data-name="<%= c.name %>" data-st="<%= c.status %>" onclick="openWithdraw(this)"><i class="bi bi-box-arrow-in-down"></i> Orden de retiro de equipo</button>
                     <% } %>
@@ -2801,5 +2802,18 @@ async function cancelCustService(id) {
 </script>
 <script src="/js/receive-payment.js?v=3"></script>
 <script src="/js/quick-ticket.js?v=1"></script>
+<script>
+// Acciones pedidas desde la ficha del cliente (?open=edit|onu|receive|docs&id=N): se abre el mismo modal de siempre
+(function () {
+  try {
+    var q = new URLSearchParams(location.search), op = q.get('open'), id = q.get('id');
+    if (!op || !/^\d+$/.test(id || '')) return;
+    var fn = { edit: 'editCust', onu: 'openOnu', receive: 'openReceive', docs: 'openDocs', equip: 'openEquip', history: 'openHistory' }[op];
+    if (!fn) return;
+    var b = document.querySelector('[data-id="' + id + '"][onclick^="' + fn + '("]');
+    if (b) setTimeout(function () { b.click(); }, 150);
+  } catch (_) {}
+})();
+</script>
 </body>
 </html>

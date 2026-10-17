@@ -166,7 +166,7 @@
             <% } %>
             <% if (gp.geo) { %>
               <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:13px">
-                <span><i class="bi bi-geo-alt"></i> <%= gp.geo === 'aprox' ? 'La ubicación es aproximada: confirmala' : 'Falta la ubicación' %></span>
+                <span><i class="bi bi-geo-alt"></i> <%= gp.geo === 'aprox' ? 'La ubicación es aproximada o puede estar mal: confirmala' : 'Falta la ubicación' %></span>
                 <button type="button" class="btn btn-sm" style="border:1px solid var(--border)" onclick="gapGeo(<%= ticket.id %>, this)"><i class="bi bi-crosshair"></i> Guardar GPS</button>
               </div>
               <div class="muted" style="font-size:11px;margin-top:4px">Tocá "Guardar GPS" parado frente a la casa del cliente.</div>

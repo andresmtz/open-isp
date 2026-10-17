@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title><%= c.name %> | <%= company %></title>
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .fp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+    .fp-name{font-size:22px;font-weight:800;line-height:1.2}
+    .fp-sub{color:var(--muted);font-size:13px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .fp-acts{display:flex;gap:6px;flex-wrap:wrap}
+    .fp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px;align-items:start}
+    .fp-grid .card{margin:0}
+    .fp-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+    .fp-row:last-child{border-bottom:0}
+    .fp-row .k{color:var(--muted);white-space:nowrap}
+    .fp-row .v{text-align:right;word-break:break-word}
+    .fp-map{width:100%;height:220px;border:0;border-radius:10px;margin-top:8px;background:var(--border)}
+    .fp-docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+    .fp-docs a{display:block;text-decoration:none;color:var(--muted);font-size:11px;text-align:center}
+    .fp-docs img{width:100%;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block;margin-bottom:3px}
+    .fp-tl{max-height:420px;overflow:auto}
+    .fp-ev{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+    .fp-ev i{color:var(--primary);margin-top:2px}
+    .fp-ev .at{color:var(--muted);font-size:11px}
+    .fp-warn{padding:8px 10px;border-radius:10px;border:1px solid rgba(245,158,11,.55);background:rgba(245,158,11,.10);font-size:13px;margin-top:8px}
+    .fp-full{grid-column:1/-1}
+    @media(max-width:520px){.fp-grid{grid-template-columns:1fr}.fp-name{font-size:19px}}
+  </style>
+</head>
+<body>
+<%- include('partials/sidebar', { activePage: 'customers', company }) %>
+<div class="mw">
+  <div class="topbar">
+    <div class="tb-title"><button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><a href="/admin/customers" class="btn btn-g btn-sm" title="Volver a la lista"><i class="bi bi-arrow-left"></i></a> <i class="bi bi-person-vcard"></i> Ficha del cliente</div>
+    <div class="tb-right"><a href="/admin/logout" class="btn btn-g btn-sm"><i class="bi bi-box-arrow-left"></i></a></div>
+  </div>
+  <div class="page">
+    <% if (msg) { %><div class="alert alert-<%= msg.type==='success'?'s':'d' %>"><%= msg.text %></div><% } %>
+    <%
+      const ST = { active: ['Activo', 'bs'], suspended: ['Suspendido', 'bd'], ditangguhkan: ['Suspendido', 'bd'], inactive: ['Inscripto (pendiente de instalación)', 'bw'], cancelled: ['Cancelado', 'bd'] };
+      const st = ST[c.status] || [c.status, 'bw'];
+      const fdt = (v) => { if (!v) return '-'; const s = String(v); const m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/.exec(s); return m ? `${m[3]}/${m[2]}/${m[1]}${m[4] ? ' ' + m[4] + ':' + m[5] : ''}` : s; };
+      const hasGeo = c.lat !== null && c.lat !== '' && c.lng !== null && c.lng !== '' && !isNaN(parseFloat(c.lat)) && !isNaN(parseFloat(c.lng)) && parseFloat(c.lat) !== 0;
+      const lat = hasGeo ? parseFloat(c.lat) : null, lng = hasGeo ? parseFloat(c.lng) : null;
+      const listUrl = (open) => '/admin/customers?status=all&search=' + encodeURIComponent(c.customer_code || c.name) + '&open=' + open + '&id=' + c.id;
+      const waDigits = String(c.phone || '').replace(/\D/g, '').replace(/^0/, '595');
+      const TST = { open: ['Abierta', 'bw'], in_progress: ['En curso', 'bw'], resolved: ['Resuelta', 'bs'], closed: ['Cerrada', 'bs'] };
+    %>
+
+    <div class="fp-head">
+      <div>
+        <div class="fp-name"><%= c.name %></div>
+        <div class="fp-sub">
+          <span class="badge <%= st[1] %>"><%= st[0] %></span>
+          <% if (c.customer_code) { %><span><i class="bi bi-hash"></i><%= c.customer_code %></span><% } %>
+          <% if (c.package_name) { %><span><i class="bi bi-box-seam"></i> <%= c.package_name %><%= money && c.package_price ? ' · ' + fmtMoney(c.package_price) : '' %></span><% } %>
+          <% if (c.status !== 'inactive' && c.status !== 'cancelled') { %>
+            <% if (session) { %><span style="color:#10b981;font-weight:700"><i class="bi bi-circle-fill" style="font-size:8px"></i> Conectado <%= session.uptime ? '· ' + session.uptime : '' %></span>
+            <% } else { %><span style="color:#94a3b8;font-weight:700"><i class="bi bi-circle-fill" style="font-size:8px"></i> Desconectado</span><% } %>
+          <% } %>
+        </div>
+      </div>
+      <div class="fp-acts">
+        <% if (perms.edit) { %><a class="btn btn-g btn-sm" href="<%= listUrl('edit') %>"><i class="bi bi-pencil"></i> Editar</a><% } %>
+        <% if (perms.wifi && c.status !== 'inactive' && c.status !== 'cancelled') { %><a class="btn btn-g btn-sm" href="<%= listUrl('onu') %>"><i class="bi bi-router"></i> Equipo y WiFi</a><% } %>
+        <% if (perms.cobrar && c.status !== 'cancelled' && c.status !== 'inactive') { %><a class="btn btn-p btn-sm" href="<%= listUrl('receive') %>"><i class="bi bi-cash-coin"></i> Registrar pago</a><% } %>
+        <% if (perms.reclamos && c.status !== 'cancelled') { %><button type="button" class="btn btn-g btn-sm" onclick="quickTicket({ customerId: <%= c.id %> })"><i class="bi bi-tools"></i> Crear asistencia</button><% } %>
+        <% if (perms.conv && convs && convs.length) { %><a class="btn btn-g btn-sm" href="/admin/conversations?c=<%= convs[0].id %>"><i class="bi bi-chat-dots"></i> Ver chat</a>
+        <% } else if (waDigits.length >= 9 && c.status !== 'cancelled') { %><a class="btn btn-g btn-sm" href="https://wa.me/<%= waDigits %>" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> WhatsApp</a><% } %>
+      </div>
+    </div>
+
+    <div class="fp-grid">
+      <!-- Datos personales -->
+      <div class="card">
+        <div class="card-hd"><span class="fw6"><i class="bi bi-person-vcard"></i> Datos del cliente</span></div>
+        <div class="card-bd">
+          <div class="fp-row"><span class="k">Cédula</span><span class="v"><%= c.nik || '-' %></span></div>
+          <div class="fp-row"><span class="k">Teléfono<%= phones.length > 1 ? 's' : '' %></span><span class="v"><%- phones.length ? phones.map(p => '<span style="white-space:nowrap">' + String(p).replace(/[<>&"]/g, '') + '</span>').join('<br>') : '-' %></span></div>
+          <div class="fp-row"><span class="k">Dirección</span><span class="v"><%= c.address || '-' %></span></div>
+          <% if (c.area) { %><div class="fp-row"><span class="k">Zona</span><span class="v"><%= c.area %></span></div><% } %>
+          <% if (c.email) { %><div class="fp-row"><span class="k">Email</span><span class="v"><%= c.email %></span></div><% } %>
+          <div class="fp-row"><span class="k">Alta</span><span class="v"><%= fdt(c.created_at) %></span></div>
+          <% if (c.install_date) { %><div class="fp-row"><span class="k">Instalación</span><span class="v"><%= fdt(c.install_date) %></span></div><% } %>
+          <% if (c.notes) { %><div class="fp-row"><span class="k">Notas</span><span class="v" style="white-space:pre-wrap"><%= c.notes %></span></div><% } %>
+        </div>
+      </div>
+
+      <!-- Ubicación -->
+      <div class="card">
+        <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="fw6"><i class="bi bi-geo-alt"></i> Ubicación</span>
+          <% if (hasGeo) { %><a class="btn btn-g btn-sm" target="_blank" rel="noopener" href="https://www.google.com/maps?q=<%= lat %>,<%= lng %>"><i class="bi bi-map"></i> Google Maps</a><% } %>
+        </div>
+        <div class="card-bd">
+          <% if (hasGeo) { %>
+            <div style="font-size:12px;color:var(--muted)"><%= lat %>, <%= lng %></div>
+            <iframe class="fp-map" loading="lazy" referrerpolicy="no-referrer" src="https://www.openstreetmap.org/export/embed.html?bbox=<%= lng - 0.004 %>%2C<%= lat - 0.003 %>%2C<%= lng + 0.004 %>%2C<%= lat + 0.003 %>&layer=mapnik&marker=<%= lat %>%2C<%= lng %>"></iframe>
+          <% } else { %>
+            <div class="fp-warn"><i class="bi bi-exclamation-triangle"></i> Este cliente <b>no tiene ubicación</b>.</div>
+          <% } %>
+          <% if (Number(geo.geo_approx) === 1) { %><div class="fp-warn"><i class="bi bi-question-circle"></i> Ubicación <b>a confirmar</b> (aproximada o posiblemente incorrecta). El técnico la confirma con el GPS en la próxima visita.</div><% } %>
+          <% if (geo.geo_request_at) { %><div class="fp-warn" style="border-color:rgba(56,189,248,.5);background:rgba(56,189,248,.08)"><i class="bi bi-whatsapp"></i> Se le pidió la ubicación por WhatsApp el <%= fdt(new Date(geo.geo_request_at).toLocaleString('sv-SE', { timeZone: 'America/Asuncion' })) %>. Cuando la mande, se guarda sola.</div><% } %>
+          <% if (perms.edit && c.status !== 'cancelled') { %>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+              <button type="button" class="btn btn-g btn-sm" onclick="fpGeo('request')"><i class="bi bi-whatsapp"></i> Pedir ubicación al cliente</button>
+              <% if (hasGeo && Number(geo.geo_approx) !== 1) { %><button type="button" class="btn btn-g btn-sm" onclick="fpGeo('confirm')"><i class="bi bi-flag"></i> Marcar como incorrecta</button><% } %>
+              <button type="button" class="btn btn-g btn-sm" onclick="fpGeo('set')"><i class="bi bi-pin-map"></i> Cargar coordenadas</button>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Conexión -->
+      <% if (c.status !== 'inactive') { %>
+      <div class="card">
+        <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center"><span class="fw6"><i class="bi bi-router"></i> Conexión y equipo</span><button type="button" class="btn btn-g btn-sm" onclick="fpPower()" title="Medir potencia"><i class="bi bi-arrow-clockwise"></i></button></div>
+        <div class="card-bd">
+          <div class="fp-row"><span class="k">Estado</span><span class="v"><%- session ? '<b style="color:#10b981">Conectado</b>' + (session.uptime ? ' · ' + session.uptime : '') : '<b style="color:#94a3b8">Desconectado</b>' %></span></div>
+          <div class="fp-row"><span class="k">Usuario PPPoE</span><span class="v"><code><%= c.pppoe_username || c.hotspot_username || '-' %></code></span></div>
+          <div class="fp-row"><span class="k">IP</span><span class="v"><code><%= (session && session.ip) || c.pppoe_remote_address || c.static_ip || '-' %></code></span></div>
+          <% if (c.router_name) { %><div class="fp-row"><span class="k">Router</span><span class="v"><%= c.router_name %></span></div><% } %>
+          <div class="fp-row"><span class="k">ONU</span><span class="v"><%= onu ? onu.onu_ref : '-' %><%= equipment && equipment.mac ? ' · ' + String(equipment.mac).toUpperCase() : (onu && onu.mac ? ' · ' + String(onu.mac).toUpperCase() : '') %><%= equipment && equipment.type ? ' · ' + equipment.type : '' %></span></div>
+          <div class="fp-row"><span class="k">Potencia</span><span class="v" id="fpPower"><span class="text-muted">Midiendo…</span></span></div>
+          <% if (c.wifi_ssid) { %><div class="fp-row"><span class="k">WiFi</span><span class="v"><%= c.wifi_ssid %></span></div><% } %>
+          <% if (equipment && equipment.installed_at) { %><div class="fp-row"><span class="k">Equipo instalado</span><span class="v"><%= fdt(equipment.installed_at) %></span></div><% } %>
+          <% if (outages.length) { const o = outages[0]; %>
+            <div class="fp-warn"><i class="bi bi-wifi-off"></i> Última caída: <%= fdt(o.down_since ? new Date(o.down_since).toLocaleString('sv-SE', { timeZone: 'America/Asuncion' }) : o.created_at) %> — <%= ({ consultado: 'consultado', sin_energia: 'sin energía', asistencia: 'asistencia creada', ausente: 'de viaje', foto: 'revisar respuesta', sin_respuesta: 'sin respuesta', restablecido: 'se restableció', cerrado: 'cerrado' })[o.state] || o.state %>. <a href="/admin/outages">Ver</a></div>
+          <% } %>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Facturación -->
+      <% if (fin) { %>
+      <div class="card">
+        <div class="card-hd"><span class="fw6"><i class="bi bi-receipt"></i> Facturación</span></div>
+        <div class="card-bd">
+          <% const d = fin.debt || { total: 0, count: 0 }; %>
+          <div class="fp-row"><span class="k">Deuda</span><span class="v"><b style="color:<%= d.total > 0 ? 'var(--danger)' : 'var(--success)' %>"><%= d.total > 0 ? fmtMoney(d.total) + ' (' + d.count + ' factura' + (d.count === 1 ? '' : 's') + ')' : 'Al día' %></b></span></div>
+          <% if (d.credit) { %><div class="fp-row"><span class="k">Saldo a favor</span><span class="v"><%= fmtMoney(d.credit) %></span></div><% } %>
+          <% if (c.promise_until) { %><div class="fp-row"><span class="k">Promesa de pago</span><span class="v">hasta <%= fdt(c.promise_until) %></span></div><% } %>
+          <div style="margin-top:8px;max-height:240px;overflow:auto">
+            <table class="dtbl" style="font-size:12.5px">
+              <thead><tr><th>Período</th><th style="text-align:right">Monto</th><th>Estado</th></tr></thead>
+              <tbody>
+                <% if (!fin.invoices.length) { %><tr><td colspan="3" class="text-muted">Sin facturas.</td></tr><% } %>
+                <% fin.invoices.forEach(i => { %>
+                  <tr><td><%= String(i.period_month).padStart(2, '0') %>/<%= i.period_year %></td><td style="text-align:right"><%= fmtMoney(i.amount) %></td>
+                  <td><%- i.status === 'paid' ? '<span class="badge bs">Pagada</span>' + (i.paid_at ? ' <span class="text-muted" style="font-size:11px">' + fdt(i.paid_at).slice(0, 10) + '</span>' : '') : (i.amount_paid > 0 ? '<span class="badge bw">Pago parcial</span>' : '<span class="badge bd">Pendiente</span>') %></td></tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Servicios adicionales -->
+      <% if (extras.length) { %>
+      <div class="card">
+        <div class="card-hd"><span class="fw6"><i class="bi bi-tv"></i> Servicios adicionales</span></div>
+        <div class="card-bd">
+          <% extras.forEach(x => { %>
+            <div class="fp-row"><span class="k"><%= x.name %><%= x.serial ? ' · S/N ' + x.serial : '' %></span><span class="v"><%= x.price != null ? fmtMoney(x.price) + '/mes' : '' %></span></div>
+          <% }) %>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Asistencias -->
+      <div class="card">
+        <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center"><span class="fw6"><i class="bi bi-tools"></i> Asistencias y órdenes</span><% if (perms.reclamos) { %><a class="btn btn-g btn-sm" href="/admin/tickets?search=<%= encodeURIComponent(c.name) %>">Ver todas</a><% } %></div>
+        <div class="card-bd">
+          <% if (!tickets.length) { %><div class="text-muted" style="font-size:13px">Sin asistencias.</div><% } %>
+          <% tickets.forEach(t => { const ts = TST[t.status] || [t.status, 'bw']; %>
+            <div class="fp-row"><span class="k" style="white-space:normal;color:var(--text)">#<%= t.id %> <%= t.subject %><div class="text-muted" style="font-size:11px"><%= fdt(t.created_at) %><%= t.technician_name ? ' · ' + t.technician_name : '' %></div></span><span class="v"><span class="badge <%= ts[1] %>"><%= ts[0] %></span></span></div>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- Fotos y documentos -->
+      <div class="card">
+        <div class="card-hd" style="display:flex;justify-content:space-between;align-items:center"><span class="fw6"><i class="bi bi-images"></i> Fotos y documentos</span><% if (perms.edit) { %><a class="btn btn-g btn-sm" href="<%= listUrl('docs') %>"><i class="bi bi-upload"></i> Agregar</a><% } %></div>
+        <div class="card-bd">
+          <% if (!docs.length) { %><div class="text-muted" style="font-size:13px">Sin fotos.</div><% } %>
+          <div class="fp-docs">
+            <% docs.forEach(d => { %><a href="<%= d.url %>" target="_blank" rel="noopener"><img src="<%= d.url %>" alt="<%= d.label %>" loading="lazy"><%= d.label %></a><% }) %>
+          </div>
+          <% if (gapInfo && c.status !== 'cancelled') { %>
+            <div class="fp-warn"><i class="bi bi-clipboard-check"></i> Falta: <%= [gapInfo.house ? 'foto de la casa' : '', gapInfo.geo === 'falta' ? 'ubicación' : (gapInfo.geo === 'aprox' ? 'confirmar la ubicación' : '')].filter(Boolean).join(' y ') %>. El técnico lo puede completar en la próxima visita.</div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Conversaciones -->
+      <% if (convs) { %>
+      <div class="card">
+        <div class="card-hd"><span class="fw6"><i class="bi bi-chat-dots"></i> Conversaciones de WhatsApp</span></div>
+        <div class="card-bd">
+          <% if (!convs.length) { %><div class="text-muted" style="font-size:13px">Sin conversaciones vinculadas.</div><% } %>
+          <% convs.forEach(v => { %>
+            <a href="/admin/conversations?c=<%= v.id %>" style="text-decoration:none;color:inherit"><div class="fp-row"><span class="k" style="white-space:normal;color:var(--text)"><i class="bi bi-whatsapp"></i> <%= v.phone %><div class="text-muted" style="font-size:11.5px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= v.last_preview || '' %></div></span><span class="v text-muted" style="font-size:11px"><%= v.last_message_at ? fdt(new Date(v.last_message_at).toLocaleString('sv-SE', { timeZone: 'America/Asuncion' })) : '' %></span></div></a>
+          <% }) %>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Historial -->
+      <div class="card fp-full">
+        <div class="card-hd"><span class="fw6"><i class="bi bi-clock-history"></i> Historial</span></div>
+        <div class="card-bd fp-tl">
+          <% if (!events.length) { %><div class="text-muted" style="font-size:13px">Sin movimientos.</div><% } %>
+          <% events.slice(0, 120).forEach(e => { %>
+            <div class="fp-ev"><i class="bi bi-<%= e.icon || 'dot' %>"></i><div><div><%= e.title %></div><% if (e.detail) { %><div class="text-muted" style="font-size:12px"><%= e.detail %></div><% } %><div class="at"><%= fdt(e.at) %><%= e.by ? ' · ' + e.by : '' %></div></div></div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/quick-ticket.js"></script>
+<script>
+var FP_ID = <%= c.id %>;
+function fpToast(ok, t) { if (window.notify) window.notify(ok ? 'success' : 'error', ok ? 'Listo' : 'Error', t); else alert(t); }
+function fpPower() {
+  var el = document.getElementById('fpPower'); if (!el) return;
+  el.innerHTML = '<span class="text-muted">Midiendo…</span>';
+  fetch('/admin/customers/' + FP_ID + '/onu-power', { headers: { Accept: 'application/json' } }).then(function (r) { return r.json(); }).then(function (p) {
+    if (!p || !p.ok) { el.innerHTML = '<span class="text-muted">' + String((p && p.message) || 'Sin datos').replace(/[<>&]/g, '') + '</span>'; return; }
+    var col = ({ green: '#10b981', orange: '#f59e0b', red: '#ef4444', gray: '#94a3b8' })[p.color] || '#94a3b8';
+    el.innerHTML = '<b style="color:' + col + '">' + p.rx + ' dBm</b> <span class="text-muted">(' + (p.level || '') + (p.distance && p.distance !== '-' ? ' · ' + p.distance + ' m' : '') + ')</span>' + (/online/i.test(p.status || '') ? '' : ' <span class="badge bd">' + String(p.status || 'offline') + '</span>');
+  }).catch(function () { el.innerHTML = '<span class="text-muted">No se pudo medir</span>'; });
+}
+function fpGeo(action) {
+  var body = { action: action };
+  if (action === 'request' && !confirm('¿Pedirle la ubicación de su casa por WhatsApp? Cuando la mande, se guarda sola en la ficha.')) return;
+  if (action === 'confirm') { var r = prompt('¿Por qué la ubicación está mal o hay que confirmarla? (opcional)', ''); if (r === null) return; body.reason = r; }
+  if (action === 'set') { var v = prompt('Pegá las coordenadas o el enlace de Google Maps (ej. -25.4930, -54.8943):', ''); if (!v) return; body.coords = v; body.approx = confirm('¿Es una ubicación APROXIMADA (p. ej. la de un vecino)?\n\nAceptar = aproximada (el técnico la confirma)\nCancelar = es la ubicación exacta'); }
+  fetch('/admin/customers/' + FP_ID + '/geo', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) })
+    .then(function (r) { return r.json(); }).then(function (d) { fpToast(d.ok, d.message); if (d.ok) setTimeout(function () { location.reload(); }, 1200); })
+    .catch(function () { fpToast(false, 'No se pudo guardar'); });
+}
+<% if (c.status !== 'inactive') { %>fpPower();<% } %>
+</script>
+</body>
+</html>

@@ -580,8 +580,44 @@ function stats({ days = 30, admin = false } = {}) {
   };
 }
 
+/**
+ * Tarjetas del Resumen: hasta `limit` chats para mirar ahora, cada uno con el motivo por el que aparece,
+ * los últimos mensajes y los datos clave (equipo y reclamos del cliente, o requisitos del interesado).
+ * Orden: por atender (primero los que derivó Meta AI) → ventas a punto de cerrar → soporte.
+ */
+function hot({ admin = false, money = false, limit = 4, msgs = 8 } = {}) {
+  ensureSchema();
+  let rows = allConvs().map(c => Object.assign(c, { org: analyze(c) })).filter(r => !['ocultas', 'internas'].includes(r.org.inbox));
+  const byLast = (a, b) => String(b.last_message_at).localeCompare(String(a.last_message_at));
+  const pend = rows.filter(r => r.org.inbox === 'por_atender')
+    .sort((a, b) => (a.state === 'waiting_human' ? 0 : 1) - (b.state === 'waiting_human' ? 0 : 1) || String(a.org.waitingSince || '').localeCompare(String(b.org.waitingSince || '')));
+  const sales = rows.filter(r => r.org.inbox === 'ventas' && r.org.nearClose).sort(byLast);
+  const supp = rows.filter(r => r.org.inbox === 'soporte').sort(byLast);
+  const pick = [];
+  pend.forEach(c => pick.push([c, c.state === 'waiting_human' ? 'derivado' : 'espera']));
+  sales.forEach(c => pick.push([c, 'venta']));
+  supp.forEach(c => pick.push([c, 'soporte']));
+  const good = -Math.abs(Number(getSetting('onu_rx_good', -25)) || 25), bad = -Math.abs(Number(getSetting('onu_rx_bad', -27)) || 27);
+  const qMsgs = db.prepare('SELECT id, ts, sender, by_name, body, media_type, lat, lng FROM wa_messages WHERE conv_id=? ORDER BY ts DESC, id DESC LIMIT ?');
+  const items = pick.slice(0, limit).map(([c, why]) => {
+    const out = Object.assign({}, c, { why, note: undefined, messages: qMsgs.all(c.id, msgs).reverse().map(m => Object.assign(m, { body: String(m.body || '').slice(0, 400) })) });
+    if (c.customer_id) {
+      const x = { tickets: 0, onu: null, invoices: null };
+      try { x.tickets = db.prepare("SELECT COUNT(*) n FROM tickets WHERE customer_id=? AND status IN ('open','in_progress')").get(c.customer_id).n; } catch (_) {}
+      try {
+        const p = db.prepare('SELECT ts, online, rx FROM onu_power_history WHERE customer_id=? ORDER BY ts DESC LIMIT 1').get(c.customer_id);
+        if (p) x.onu = { online: !!p.online, rx: p.rx, ts: p.ts, level: p.rx == null ? null : (p.rx >= good ? 'ok' : (p.rx >= bad ? 'warn' : 'bad')) };
+      } catch (_) {}
+      if (money) { try { x.invoices = db.prepare("SELECT COUNT(*) n FROM invoices WHERE customer_id=? AND status='unpaid'").get(c.customer_id).n; } catch (_) {} }
+      out.cust = x;
+    }
+    return out;
+  });
+  return { items, pending: pend.length, near: sales.length };
+}
+
 module.exports = {
-  board, stats,
+  board, stats, hot,
   IGNORE_REASONS, ignore, unignore, purge, clear, remove,
   INBOXES, MOTIVES, STAGES, LOST, ensureSchema, analyze, list, info, setOrg, quickReplies, saveQuickReplies,
   searchCustomers, linkCustomer, createRequest,

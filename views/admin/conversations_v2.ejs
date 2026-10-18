@@ -260,7 +260,7 @@
     .c-mix{grid-column:span 4}
     .c-who,.c-funnel,.c-act{grid-column:span 4}
     .c-hours{grid-column:span 7}.c-new{grid-column:span 5}
-    .hotg{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:12px}
+    .hotg{flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:1fr;gap:12px}
     .tile{border-radius:var(--r-tile);padding:14px 16px;display:flex;flex-direction:column;cursor:pointer;min-height:150px;transition:transform .2s var(--ease),box-shadow .2s;position:relative;overflow:hidden;text-align:left;border:0;font:inherit}
     .tile:hover{transform:translateY(-2px);box-shadow:0 18px 30px -18px rgba(0,0,0,.45)}
     .tile .tt{font-size:11.5px;opacity:.75;display:flex;justify-content:space-between;gap:6px;align-items:center}
@@ -315,6 +315,41 @@
     .lost{margin-top:10px;font-size:12px;color:var(--muted)}
     .empty2{color:var(--muted);font-size:13px;padding:18px 0;text-align:center}
 
+
+    /* Tarjetas de "Esperan respuesta" */
+    .tile .av{background:rgba(255,255,255,.2)!important;color:inherit!important}
+    .t-butter .av,.t-glass .av{background:rgba(23,25,26,.12)!important}
+    .hc{cursor:pointer;min-height:340px;gap:0}
+    .hc .tt{gap:8px}
+    .hc .why{font-weight:700;opacity:1;font-size:11.5px;background:rgba(255,255,255,.16);padding:3px 9px;border-radius:999px}
+    .t-butter .hc .why,.hc.t-butter .why{background:rgba(23,25,26,.1)}
+    .wp{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.14)}
+    .hc.t-butter .wp{background:rgba(23,25,26,.1)}
+    .wp.g{background:#2f7a52;color:#fff}.wp.y{background:#f2c94c;color:#17191a}.wp.r{background:#fbf8f2;color:#c8431f}
+    .hc.t-tomato .wp.r{background:#fbf8f2;color:#c8431f}.hc.t-butter .wp.y{background:#17191a;color:#f2c94c}
+    .hc .hh{display:flex;gap:10px;align-items:center;margin-top:10px}
+    .hc .hh .nm{margin-top:0;-webkit-line-clamp:1}
+    .hc .hh .av{width:38px;height:38px;font-size:13px;flex:none}
+    .kds{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+    .kd{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.13);white-space:nowrap}
+    .hc.t-butter .kd{background:rgba(23,25,26,.08)}
+    .kd.ok{background:#2f7a52;color:#fff}.kd.warn{background:#f2c94c;color:#17191a}.kd.bad{background:#fbf8f2;color:#c8431f}
+    .hc.t-butter .kd.warn{background:#17191a;color:#f2c94c}
+    .mini{flex:1;min-height:120px;max-height:190px;overflow-y:auto;margin-top:10px;display:flex;flex-direction:column;gap:5px;padding:8px;border-radius:14px;background:rgba(0,0,0,.14);cursor:default;scrollbar-width:thin}
+    .hc.t-butter .mini{background:rgba(23,25,26,.07)}
+    .mm{max-width:88%;font-size:12px;line-height:1.35;padding:6px 9px 4px;border-radius:12px;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere}
+    .mm.in{align-self:flex-start;background:rgba(255,255,255,.16);border-bottom-left-radius:4px}
+    .mm.out{align-self:flex-end;background:rgba(255,255,255,.3);border-bottom-right-radius:4px}
+    .hc.t-butter .mm.in{background:rgba(255,255,255,.55)}.hc.t-butter .mm.out{background:rgba(23,25,26,.12)}
+    .mm b{display:block;font-size:10px;opacity:.75;margin-bottom:1px}
+    .mm small{display:block;text-align:right;font-size:9.5px;opacity:.6;margin-top:1px}
+    .hacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+    .hacts button{border:1px solid rgba(255,255,255,.35);background:transparent;color:inherit;border-radius:999px;padding:6px 11px;font-size:11.5px;font-weight:700;cursor:pointer}
+    .hacts button:hover{background:rgba(255,255,255,.14)}
+    .hacts button.pri{margin-left:auto;background:#fbf8f2;color:#17191a;border-color:transparent}
+    .hc.t-butter .hacts button{border-color:rgba(23,25,26,.3)}.hc.t-butter .hacts button.pri{background:#17191a;color:#fbf8f2}
+    .hacts .by{font-size:11.5px;opacity:.8}
+
     /* Tablero */
     .bfil{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
     .bfil .search{width:min(300px,100%);height:40px}
@@ -345,11 +380,10 @@
       .c-reply{grid-column:span 5}.c-mix{grid-column:span 7}
       .c-who,.c-funnel{grid-column:span 6}.c-act{grid-column:span 12}
       .c-hours,.c-new{grid-column:span 12}
-      .hotg{grid-template-columns:repeat(4,1fr)}
     }
     @media (max-width:860px){
       .ov{grid-template-columns:1fr}.ov .card{grid-column:1/-1!important}
-      .hotg{grid-template-columns:1fr 1fr}
+      .hotg{grid-template-columns:1fr;grid-auto-rows:auto}
       .board{grid-template-columns:repeat(5,82vw) 110px;scroll-snap-type:x mandatory}.bcol{scroll-snap-align:start;max-height:72vh}
       .hright{margin-left:0;width:100%}.seg{flex:1}.seg button{flex:1;justify-content:center;padding:8px 6px}
       #vResumen,#vTablero{overflow:visible}
@@ -417,7 +451,7 @@
         <div class="chart" id="chMsgs" style="height:230px"></div>
       </div>
       <div class="card c-hot rise d1">
-        <div class="ch"><h3>Esperan respuesta</h3><span class="hint" id="hotHint"></span><button class="cbtn" title="Ver el tablero" onclick="setView('tablero')"><i class="bi bi-arrow-up-right"></i></button></div>
+        <div class="ch"><h3 id="hotTitle">Esperan respuesta</h3><span class="hint" id="hotHint"></span><button class="cbtn" title="Ver el tablero" onclick="setView('tablero')"><i class="bi bi-arrow-up-right"></i></button></div>
         <div class="hotg" id="ovHot"><div class="hot-empty">Cargando…</div></div>
       </div>
       <div class="card c-reply rise d1">
@@ -1196,17 +1230,79 @@
   });
 
   // ── Resumen ──
-  function renderHot(){
-    if (!boardData) return;
-    var el = document.getElementById('ovHot'), pick = [];
-    (boardData.cols.por_atender || []).forEach(function(c){ pick.push({ c: c, cls: c.state === 'waiting_human' ? 't-tomato' : 't-ink', k: 'por_atender' }); });
-    (boardData.cols.ventas || []).filter(function(c){ return c.org && c.org.nearClose; }).forEach(function(c){ pick.push({ c: c, cls: 't-butter', k: 'ventas' }); });
-    (boardData.cols.soporte || []).forEach(function(c){ pick.push({ c: c, cls: 't-pine', k: 'soporte' }); });
-    pick = pick.slice(0, 4);
-    var n = boardData.counts || {};
-    document.getElementById('hotHint').textContent = (n.por_atender || 0) + ' por atender' + (n.cerca ? ' · 🔥 ' + n.cerca : '');
-    el.innerHTML = pick.length ? pick.map(function(p){ return tile(p.c, p.cls, p.k); }).join('') : '<div class="hot-empty"><i class="bi bi-emoji-smile" style="font-size:30px"></i>Todo respondido.<small>No hay chats esperando.</small></div>';
+  // ── "Esperan respuesta": tarjetas con motivo, datos clave, mini chat y acciones ──
+  var hotKey = '', hotScroll = {};
+  var WHY = {
+    derivado: { t: '<i class="bi bi-person-raised-hand"></i> Meta AI derivó', cls: 't-tomato' },
+    espera: { t: '<i class="bi bi-hourglass-split"></i> Espera respuesta', cls: 't-ink' },
+    venta: { t: '🔥 Venta por cerrar', cls: 't-butter' },
+    soporte: { t: '<i class="bi bi-tools"></i> Soporte abierto', cls: 't-pine' }
+  };
+  function waitPill(c){
+    var since = c.state === 'waiting_human' ? c.handoff_at : (c.org && c.org.waitingSince);
+    if (!since || ['derivado', 'espera'].indexOf(c.why) === -1) return '<span class="wp">' + esc(ago(c.last_message_at)) + '</span>';
+    var m = (Date.now() - new Date(since)) / 60000;
+    return '<span class="wp ' + (m < 15 ? 'g' : (m < 60 ? 'y' : 'r')) + '" title="Tiempo esperando respuesta">' + esc(ago(since)) + '</span>';
   }
+  function keyData(c){
+    var o = c.org || {}, h = '';
+    if (c.cust) {
+      var x = c.cust;
+      if (x.onu) h += '<span class="kd ' + (!x.onu.online ? 'bad' : (x.onu.level || '')) + '" title="Última lectura ' + esc(ago(x.onu.ts)) + '">' + (x.onu.online ? '● En línea' + (x.onu.rx != null ? ' · ' + String(Number(x.onu.rx).toFixed(1)).replace('.', ',') + ' dBm' : '') : '● Equipo caído') + '</span>';
+      else h += '<span class="kd">Sin lectura del equipo</span>';
+      h += '<span class="kd' + (x.tickets ? ' warn' : '') + '"><i class="bi bi-ticket-perforated"></i> ' + (x.tickets ? x.tickets + ' reclamo' + (x.tickets > 1 ? 's' : '') + ' abierto' + (x.tickets > 1 ? 's' : '') : 'Sin reclamos') + '</span>';
+      if (x.invoices != null) h += '<span class="kd' + (x.invoices ? ' warn' : '') + '"><i class="bi bi-receipt"></i> ' + (x.invoices ? x.invoices + ' factura' + (x.invoices > 1 ? 's' : '') + ' pendiente' + (x.invoices > 1 ? 's' : '') : 'Al día') + '</span>';
+    } else if (o.lead && o.check) {
+      h += Object.keys(CHK).map(function(k){ var v = o.check[k] || {}; return '<span class="kd ' + (v.ok ? 'ok' : (v.probable ? 'warn' : 'bad')) + '">' + (v.ok ? '✓' : (v.probable ? '≈' : '✗')) + ' ' + CHK[k] + '</span>'; }).join('');
+    }
+    return h;
+  }
+  function miniMsg(m){
+    var t = m.body || '';
+    var media = { image: '📷 Foto', sticker: 'Sticker', audio: '🎤 Audio', ptt: '🎤 Audio', video: '🎬 Video', document: '📄 ' + (m.filename || 'Documento'), call: '📞 Llamada' }[m.media_type] || '';
+    if (m.lat != null) media = '📍 Ubicación';
+    var body = media && t ? media + ' · ' + t : (media || t || '(sin texto)');
+    var out = m.sender !== 'cliente';
+    return '<div class="mm ' + (out ? 'out' : 'in') + '">' + (out ? '<b>' + esc(SENDERS[m.sender] || m.sender) + '</b>' : '') + esc(body) + '<small>' + esc(fmtT(m.ts)) + '</small></div>';
+  }
+  function hotCard(c){
+    var o = c.org || {}, w = WHY[c.why] || WHY.soporte;
+    var sub = c.customer_id ? ('Cliente' + (c.customer_status && c.customer_status !== 'active' ? ' · ' + (CUST_ST[c.customer_status] || c.customer_status) : '') + (c.customer_code ? ' · ' + c.customer_code : '')) : (STAGES[o.stage] || 'Interesado');
+    if (o.motive && o.motive !== 'otro') sub += ' · ' + (MOTIVES[o.motive] || o.motive);
+    var acts = '';
+    if (c.state !== 'human') acts += '<button data-act="human" title="Marca que una persona está atendiendo">La atiendo yo</button>';
+    else acts += '<span class="by"><i class="bi bi-person-check"></i> ' + esc(c.attended_by || 'Atendida') + '</span>';
+    if (o.inbox === 'por_atender' && c.state !== 'waiting_human') acts += '<button data-act="dismiss" title="Sale de Por atender hasta que vuelva a escribir">No requiere respuesta</button>';
+    acts += '<button data-act="open" class="pri">Abrir chat <i class="bi bi-arrow-up-right"></i></button>';
+    return '<div class="tile hc ' + w.cls + '" data-id="' + c.id + '" data-inbox="' + esc(o.inbox || '') + '">' +
+      '<div class="tt"><span class="why">' + w.t + '</span>' + waitPill(c) + '</div>' +
+      '<div class="hh">' + avHtml(c) + '<div style="min-width:0"><div class="nm">' + esc(title(c)) + '</div><div class="sb">' + esc(sub) + '</div></div></div>' +
+      '<div class="kds">' + keyData(c) + '</div>' +
+      '<div class="mini" data-id="' + c.id + '">' + (c.messages || []).map(miniMsg).join('') + '</div>' +
+      '<div class="hacts">' + acts + '</div></div>';
+  }
+  function loadHot(){
+    return api('/admin/conversations/hot').then(function(d){
+      if (!d.ok || view !== 'resumen') return;
+      var el = document.getElementById('ovHot');
+      var k = Math.floor(Date.now() / 60000) + JSON.stringify(d); if (k === hotKey) return; hotKey = k;
+      el.querySelectorAll('.mini').forEach(function(m){ hotScroll[m.dataset.id] = { top: m.scrollTop, bottom: m.scrollHeight - m.scrollTop - m.clientHeight < 8 }; });
+      var hasPend = d.pending > 0;
+      document.getElementById('hotTitle').textContent = hasPend ? 'Esperan respuesta' : 'Todo respondido ✓ · Seguimiento';
+      document.getElementById('hotHint').textContent = hasPend ? d.pending + ' por atender' + (d.near ? ' · 🔥 ' + d.near : '') : (d.near ? '🔥 ' + d.near + ' venta' + (d.near > 1 ? 's' : '') + ' por cerrar' : '');
+      el.innerHTML = d.items.length ? d.items.map(hotCard).join('') : '<div class="hot-empty"><i class="bi bi-emoji-smile" style="font-size:30px"></i>Todo respondido.<small>No hay chats esperando.</small></div>';
+      el.querySelectorAll('.mini').forEach(function(m){ var p = hotScroll[m.dataset.id]; m.scrollTop = (!p || p.bottom) ? m.scrollHeight : p.top; });
+    });
+  }
+  function renderHot(){ loadHot(); }
+  document.getElementById('ovHot').addEventListener('click', function(e){
+    var card = e.target.closest('.hc'); if (!card) return;
+    var id = Number(card.dataset.id), b = e.target.closest('button[data-act]');
+    if (b && b.dataset.act === 'human') { b.disabled = true; api('/admin/conversations/' + id + '/state', { state: 'human' }).then(function(d){ toast(d.ok ? 'Marcada como atendida por vos' : d.message, !d.ok); hotKey = ''; loadHot(); loadBoard(); }); return; }
+    if (b && b.dataset.act === 'dismiss') { b.disabled = true; api('/admin/conversations/' + id + '/org', { dismiss: 1 }).then(function(d){ toast(d.ok ? 'Sale de Por atender hasta que vuelva a escribir' : d.message, !d.ok); hotKey = ''; loadHot(); loadBoard(); }); return; }
+    if (e.target.closest('.mini') && !b) return; // el mini chat se puede leer y desplazar sin abrir el chat
+    goConv(id, card.dataset.inbox);
+  });
   function loadStats(){
     return api('/admin/conversations/stats?d=' + range).then(function(d){
       if (!d.ok) { document.getElementById('ovIn').textContent = '–'; toast(d.message || 'No se pudo cargar el resumen', true); return; }

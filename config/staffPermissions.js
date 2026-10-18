@@ -65,7 +65,7 @@ const CATALOG = [
   ] },
   { key: 'conversaciones', label: 'Conversaciones de WhatsApp', help: 'Ver y responder las conversaciones de WhatsApp de clientes e interesados, y recibir el aviso cuando Meta AI deriva a una persona.', def: false, needs: ['ver_clientes'], rules: [
     ['GET', '^/conversations(/nuevo|/clasico)?$'],
-    ['GET', '^/conversations/(list|counts|board|stats)$'],
+    ['GET', '^/conversations/(list|counts|board|stats|hot)$'],
     ['GET', `^/conversations/${ID}/messages$`],
     ['GET', `^/conversations/media/${ID}$`],
     ['GET', `^/conversations/${ID}/avatar$`],

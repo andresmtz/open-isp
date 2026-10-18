@@ -4,7 +4,7 @@
    ========================================================================== */
 @import url('/vendor/fonts/urbanist/urbanist.css');
 
-html[data-ui="v2"]{
+html[data-ui="v2"],html[data-ui="v2"] body{
   --v2-font:"Urbanist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --v2-bg:#ebe8e1;--v2-text:#17191a;--v2-muted:#676a66;--v2-faint:#8e918c;
   --v2-glass:rgba(255,255,255,.46);--v2-glass-2:rgba(255,255,255,.64);--v2-glass-3:rgba(255,255,255,.86);
@@ -20,7 +20,7 @@ html[data-ui="v2"]{
   --v2-dock-w:60px;--v2-gutter:clamp(14px,1.6vw,28px);
   color-scheme:light;
 }
-html[data-ui="v2"][data-theme="dark"]{
+html[data-ui="v2"][data-theme="dark"],html[data-ui="v2"][data-theme="dark"] body{
   --v2-bg:#111412;--v2-text:#f1eee8;--v2-muted:#a3a6a0;--v2-faint:#7d807b;
   --v2-glass:rgba(255,255,255,.05);--v2-glass-2:rgba(255,255,255,.085);--v2-glass-3:#222624;
   --v2-rim:rgba(255,255,255,.07);--v2-line:rgba(255,255,255,.08);--v2-line-2:rgba(255,255,255,.16);--v2-well:rgba(255,255,255,.06);

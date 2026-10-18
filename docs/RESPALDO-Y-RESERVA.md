@@ -36,7 +36,7 @@ Esta guía explica cómo están armadas las copias de seguridad de Faster y qué
 3. WhatsApp vuelve a conectarse con la sesión copiada. Si pide vincular de nuevo, escaneá el QR desde Sistema → WhatsApp.
 4. Alcance de la reserva desde Genesis:
    - **llega** al MikroTik (10.255.0.1) y al Proxmox de Faster por la WireGuard, si el sitio de Faster sigue en pie;
-   - **no llega a la OLT** (192.168.8.100): no hay ruta desde Genesis. Mientras tanto no funcionan el monitoreo de ONU ni los cambios de WiFi;
+   - **llega a la OLT** (192.168.8.100) por el router de casa, que tiene una ruta /32 hacia el NOC (la red 192.168.8.x de casa es de otra OLT, la 192.168.8.200);
    - si el sitio de Faster está caído, no llega a ninguno de los dos. Igual funcionan:
    - cobros;
    - portal de clientes;

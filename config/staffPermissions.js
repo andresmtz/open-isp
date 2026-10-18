@@ -112,6 +112,7 @@ const CATALOG = [
     ['POST', `^/tickets/${ID}/note$`],
     ['GET', '^/outages$'],
     ['POST', `^/outages/${ID}/close$`],
+    ['POST', `^/outages/mass/${ID}/(notice|ticket|close)$`],
   ] },
   { key: 'mapa', label: 'Ver mapa de red', help: 'Solo consulta.', def: true, rules: [
     ['GET', '^/map$'],

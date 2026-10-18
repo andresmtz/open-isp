@@ -23,6 +23,40 @@
   <div class="page">
     <% const fmt = (v) => { if (!v) return '-'; const d = new Date(v); return isNaN(d) ? v : d.toLocaleString('es-PY', { timeZone: 'America/Asuncion', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }; %>
     <% const badge = { consultado: 'bw', sin_energia: 'bw', asistencia: 'bd', ausente: 'bs', foto: 'bw', sin_respuesta: 'bd', restablecido: 'bs', cerrado: 'bs' }; %>
+    <% if (msg) { %><div class="alert alert-<%= msg.type === 'success' ? 's' : 'd' %>" data-flash="1"><i class="bi bi-<%= msg.type === 'success' ? 'check-circle' : 'exclamation-circle' %>"></i> <%= msg.text %></div><% } %>
+
+    <%# Caídas masivas: varias ONU del mismo puerto PON apagadas a la vez (services/massOutageService.js) %>
+    <% const openMass = (mass || []).filter(e => e.state === 'abierta'), pastMass = (mass || []).filter(e => e.state !== 'abierta').slice(0, 5); %>
+    <div class="card mb16">
+      <div class="card-hd"><h6><i class="bi bi-broadcast"></i> Caídas masivas <% if (openMass.length) { %><span class="badge bd" style="margin-left:6px"><%= openMass.length %> abierta<%= openMass.length > 1 ? 's' : '' %></span><% } %></h6></div>
+      <div class="card-bd">
+        <% if (!openMass.length) { %>
+          <div class="text-muted" style="font-size:13px"><i class="bi bi-check-circle" style="color:var(--success)"></i> No hay caídas masivas en este momento. Se detectan solas cuando varios equipos del mismo puerto de la OLT se apagan casi a la vez (por ejemplo, un corte de luz o de fibra en una zona), y se avisa por WhatsApp a la administración.</div>
+        <% } %>
+        <% openMass.forEach(ev => { %>
+          <div style="border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start">
+              <div>
+                <div style="font-weight:800;font-size:15px"><i class="bi bi-exclamation-triangle-fill" style="color:var(--danger)"></i> Puerto <%= ev.port.replace('EPON', 'EPON ') %> · <%= ev.members.length %> de <%= ev.port_total %> equipos caídos</div>
+                <div class="text-muted" style="font-size:12.5px;margin-top:3px">Desde <%= fmt(ev.started_at) %> · motivo probable: <b><%= ev.reasonText %></b> · volvieron <%= ev.restored_count || 0 %></div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <% if (!ev.notice_published) { %><form method="POST" action="/admin/outages/mass/<%= ev.id %>/notice" onsubmit="return confirm('¿Publicar el aviso de CAÍDA GENERAL? Lo ven todos los clientes en el portal. Se quita solo cuando vuelve el servicio.')"><button class="btn btn-sm btn-p"><i class="bi bi-megaphone"></i> Publicar aviso de caída</button></form><% } else { %><span class="badge bs" style="align-self:center"><i class="bi bi-megaphone"></i> Aviso publicado</span><% } %>
+                <% if (!ev.ticket_id) { %><form method="POST" action="/admin/outages/mass/<%= ev.id %>/ticket"><button class="btn btn-sm btn-g"><i class="bi bi-tools"></i> Crear reclamo para el técnico</button></form><% } else { %><a class="btn btn-sm btn-g" href="/admin/tickets"><i class="bi bi-ticket-perforated"></i> Reclamo #<%= ev.ticket_id %></a><% } %>
+                <form method="POST" action="/admin/outages/mass/<%= ev.id %>/close" onsubmit="return confirm('¿Cerrar esta caída masiva? Sus clientes vuelven a recibir la consulta automática si siguen apagados.')"><button class="btn btn-sm btn-g"><i class="bi bi-check2"></i> Cerrar</button></form>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+              <% ev.members.forEach(m => { %><span class="badge bm" title="<%= m.onu %> · <%= m.reason || '' %>"><% if (m.customer_id) { %><a href="/admin/customers/<%= m.customer_id %>/ficha" style="color:inherit;text-decoration:none"><%= m.name || m.onu %></a><% } else { %><%= m.name || m.onu %><% } %></span><% }) %>
+            </div>
+          </div>
+        <% }) %>
+        <% if (pastMass.length) { %>
+          <div class="text-muted" style="font-size:12px;margin-top:6px"><b>Anteriores:</b> <%- pastMass.map(e => (e.port.replace('EPON', 'EPON ') + ' · ' + e.members.length + ' equipos · ' + fmt(e.started_at) + ' → ' + fmt(e.closed_at)).replace(/[<>&]/g, '')).join(' &nbsp;|&nbsp; ') %></div>
+        <% } %>
+      </div>
+    </div>
+
     <div class="alert alert-s" style="font-size:13px">
       <i class="bi bi-info-circle"></i>
       Cuando la ONU de un cliente <b>activo y al día</b> está apagada más de <b><%= cfg.outage_query_hours %> h</b> y no tiene asistencia abierta, se le pregunta por WhatsApp qué ve en el equipo.

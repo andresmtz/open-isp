@@ -223,6 +223,8 @@ async function scan({ dryRun = false } = {}) {
         continue;
       }
       if (!canSend) continue;
+      // dentro de una caída masiva (corte de luz o fibra en la zona): no se pregunta uno por uno
+      try { if (require('./massOutageService').isInMass(cid)) continue; } catch (_) {}
       const acs = acsInfo(c);
       const seen = db.prepare('SELECT first_seen FROM onu_offline_seen WHERE customer_id=?').get(cid);
       const since = acs.lastInform && (!seen || acs.lastInform < seen.first_seen) ? acs.lastInform : (seen && seen.first_seen);

@@ -4582,10 +4582,25 @@ router.post('/tickets/quick', requireAdminSession, express.json(), async (req, r
 // ─── Equipos caídos: consulta automática al cliente (services/outageService.js) ───
 router.get('/outages', requireAdminSession, (req, res) => {
   const outSvc = require('../services/outageService');
-  res.render('admin/outages', {
+  let mass = []; try { mass = require('../services/massOutageService').list({ limit: 10 }); } catch (_) {}
+  res.render('admin/outages', { mass,
     title: 'Equipos caídos', company: company(), activePage: 'outages', isAdmin: !!req.session.isAdmin,
     rows: outSvc.list({ all: req.query.all === '1' }), all: req.query.all === '1', cfg: outSvc.settings(), msg: flashMsg(req),
   });
+});
+// Caídas masivas (services/massOutageService.js)
+router.post('/outages/mass/:id/:action', requireAdminSession, async (req, res) => {
+  const ms = require('../services/massOutageService');
+  try {
+    const id = Number(req.params.id), a = req.params.action;
+    let text = '';
+    if (a === 'notice') { ms.publishNotice(id); text = 'Aviso general de caída publicado. Se quita solo cuando vuelve el servicio.'; }
+    else if (a === 'ticket') { const t = ms.createTicket(id, convActor(req)); text = 'Reclamo #' + t + ' creado para el técnico.'; }
+    else if (a === 'close') { await ms.closeEvent(id, convActor(req)); text = 'Caída masiva cerrada.'; }
+    else throw new Error('Acción inválida');
+    req.session._msg = { type: 'success', text };
+  } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
+  res.redirect('/admin/outages');
 });
 router.post('/outages/:id/close', requireAdminSession, (req, res) => {
   try { require('../services/outageService').close(Number(req.params.id), req.session.adminUser || req.session.cashierName || 'oficina'); res.json({ ok: true }); }

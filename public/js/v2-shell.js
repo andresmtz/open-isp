@@ -54,6 +54,24 @@
     if (r) { var k = r[1] + ',' + r[2] + ',' + r[3]; if (RGB[k]) { var base = pal[RGB[k]]; return r[4] != null ? hexA(base.indexOf('#') === 0 ? base : '#17191a', Math.max(.18, Number(r[4]))) : base; } }
     return c;
   };
+  var applyColors = function (chart) {
+    try {
+      if (!chart || !chart.data) return;
+      var pal = PAL();
+      (chart.data.datasets || []).forEach(function (ds) {
+        ['backgroundColor', 'borderColor', 'pointBackgroundColor', 'hoverBackgroundColor'].forEach(function (k) {
+          if (Array.isArray(ds[k])) ds[k] = ds[k].map(function (c) { return swap(c, pal); }); else if (ds[k]) ds[k] = swap(ds[k], pal);
+        });
+      });
+    } catch (e) {}
+  };
+  // Se engancha a Chart.js: cada gráfico se recolorea justo antes de dibujarse (aunque se cree después de cargar la página)
+  var hooked = false;
+  var hookCharts = function () {
+    if (hooked || !window.Chart || typeof window.Chart.register !== 'function') return;
+    try { window.Chart.register({ id: 'v2recolor', beforeUpdate: function (ch) { applyColors(ch); } }); hooked = true; } catch (e) {}
+  };
+  hookCharts(); doc.addEventListener('DOMContentLoaded', hookCharts);
   var recolor = function (chart) {
     try {
       var pal = PAL();
@@ -68,6 +86,7 @@
   };
   var styleCharts = function () {
     if (!window.Chart) return;
+    hookCharts();
     try {
       var C = window.Chart, txt = v2css('--v2-muted') || '#676a66', line = v2css('--v2-line') || 'rgba(0,0,0,.08)';
       C.defaults.font = Object.assign({}, C.defaults.font, { family: 'Urbanist, ui-sans-serif, system-ui, sans-serif', size: 12, weight: '600' });

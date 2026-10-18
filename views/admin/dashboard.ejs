@@ -40,6 +40,8 @@
     .donut-lbl{font-size:11px;color:var(--muted);margin-top:2px}
     .dash-sec-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:0 0 10px;display:flex;align-items:center;gap:6px}
     .dash-sec-title i{color:var(--primary)}
+    .sc-move{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+    .sc-move span{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(127,127,127,.2)}
     .dash-2col{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;margin-bottom:18px}
     @media(max-width:900px){.dash-2col{grid-template-columns:1fr}}
   </style>
@@ -58,6 +60,7 @@
       <span id="page-title"><%= t('admin.nav.dashboard', 'Dashboard') %></span>
     </div>
     <div class="tb-right">
+      <% if (typeof buildLabel !== 'undefined' && buildLabel) { %><a href="/admin/novedades" class="adm-badge" style="text-decoration:none" title="Versión del sistema: ver novedades"><i class="bi bi-stars"></i> <%= buildLabel %></a><% } %>
       <div class="realtime-bar"><span class="live-dot"></span> <%= t('admin.dashboard.live_update', 'Live Update') %></div>
       <span class="adm-badge">
         <i class="bi bi-person-fill"></i> 
@@ -93,6 +96,13 @@
           <div class="sc-label">Clientes</div>
           <div class="sc-val"><%= custStats ? custStats.total : 0 %></div>
           <div class="sc-sub">Con servicio instalado (activos y suspendidos)</div>
+          <% if (custStats) { const _net = (custStats.newMonth || 0) - (custStats.retiredMonth || 0); %>
+          <div class="sc-move">
+            <span title="Instalaciones realizadas este mes"><i class="bi bi-arrow-up-right"></i> <b><%= custStats.newMonth || 0 %></b> nuevos</span>
+            <span title="Clientes dados de baja este mes"><i class="bi bi-arrow-down-right"></i> <b><%= custStats.retiredMonth || 0 %></b> retirados</span>
+            <span title="Nuevos menos retirados"><%= _net > 0 ? '+' : '' %><%= _net %> en <%= ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][new Date().getMonth()] %></span>
+          </div>
+          <% } %>
         </div>
         <div class="sc s" style="cursor:pointer" onclick="location.href='/admin/customers?status=active'">
           <i class="bi bi-check-circle-fill sc-icon"></i>
@@ -586,6 +596,8 @@ async function loadStats() {
   } catch(e) { console.error('Stats error:', e); }
 }
 
+// Colores: los del diseño nuevo (variables --v2-*) si está activo; si no, los de siempre
+function v2col(name, fallback) { try { if (document.documentElement.getAttribute('data-ui') !== 'v2') return fallback; var v = getComputedStyle(document.body).getPropertyValue(name).trim(); return v || fallback; } catch (e) { return fallback; } }
 // ── DONUT CHART ────────────────────────────────────────────────
 function updateDonut(online, offline) {
   const ctx = document.getElementById('donutChart');
@@ -595,7 +607,7 @@ function updateDonut(online, offline) {
     data: {
       datasets: [{
         data: [online, offline],
-        backgroundColor: ['#3fb950', '#f85149'],
+        backgroundColor: [v2col('--v2-good', '#3fb950'), v2col('--v2-tomato', '#f85149')],
         borderWidth: 0,
         hoverOffset: 4
       }]
@@ -1262,7 +1274,7 @@ async function deleteMonDevice(deviceId, acsId) {
   var grid = light ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.07)';
   new Chart(el, {
     type: 'bar',
-    data: { labels: labels, datasets: [{ label: 'Ingresos', data: vals, backgroundColor: 'rgba(173,255,47,.5)', borderColor: '#ADFF2F', borderWidth: 1, borderRadius: 5, maxBarThickness: 34 }] },
+    data: { labels: labels, datasets: [{ label: 'Ingresos', data: vals, backgroundColor: v2col('--v2-good', 'rgba(173,255,47,.5)'), hoverBackgroundColor: v2col('--v2-tomato', '#ADFF2F'), borderWidth: 0, borderRadius: 10, maxBarThickness: 34 }] },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return APP_CUR + ' ' + Number(c.raw || 0).toLocaleString(APP_LOCALE); } } } },

@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         OPEN-ISP BILLING SYSTEM
       </a>
       <div style="color:#64748b;font-size:10px;margin-top:3px;line-height:1.5">
-        v<%= (typeof appVersion !== 'undefined' ? appVersion : '0.5.1') %> (pickle-lime) · ISC · oxpoe
+        <% if (typeof buildLabel !== 'undefined' && buildLabel) { %><a href="/admin/novedades" style="color:inherit"><%= buildLabel %></a> · <% } %>v<%= (typeof appVersion !== 'undefined' ? appVersion : '0.5.1') %> (pickle-lime) · ISC · oxpoe
       </div>
     </div>
   </nav>

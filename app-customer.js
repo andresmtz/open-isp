@@ -208,6 +208,8 @@ app.use((req, res, next) => {
   res.locals.wifiRules = require('./config/wifiRules'); // reglas y textos únicos del nombre y la clave del WiFi
   // Diseño del panel: v2 (nuevo) o classic (anterior). Se cambia desde el menú del usuario (administrador).
   res.locals.uiDesign = String(getSetting('ui_design', 'v2')) === 'classic' ? 'classic' : 'v2';
+  // Versión del sistema (build-info.json, generado al publicar con scripts/deploy.sh)
+  res.locals.buildLabel = require('./config/buildInfo').label();
   res.locals.fmtNum = regional.formatNumber;
   res.locals.regional = cfg;
 

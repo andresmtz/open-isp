@@ -20,6 +20,7 @@ const BASE = [
   ['GET|POST', '^/logout$'],
   ['GET', '^/set-active-router$'],
   ['GET', '^/areas$'],
+  ['GET', '^/novedades$'],
   ['GET|POST', '^/cashiers/attendance(/checkin|/checkout)?$'],
 ];
 

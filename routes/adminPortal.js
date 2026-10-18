@@ -3036,6 +3036,11 @@ router.post('/extras/catalog', requireAdminSession, restrictToAdmin, express.jso
 const convSvc = require('../services/conversationService');
 const convOrg = require('../services/conversationOrgService');
 const convActor = (req) => req.session.isAdmin ? (req.session.adminUser || 'Administrador') : (req.session.cashierName || 'Oficina');
+// Novedades: versión actual y últimos cambios publicados
+router.get('/novedades', requireAdminSession, (req, res) => {
+  res.render('admin/changelog', { title: 'Novedades', company: company(), activePage: 'changelog', info: require('../config/buildInfo').get() });
+});
+
 // Diseño del panel: v2 (nuevo) o classic (anterior). Solo el administrador; afecta a todos los usuarios.
 router.get('/ui-design', requireAdminSession, (req, res) => {
   if (!req.session.isAdmin) return res.redirect('/admin');

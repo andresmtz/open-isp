@@ -43,6 +43,7 @@
       <button type="button" class="v2-me" title="<%= _user %>"><%= String(_user).trim().charAt(0).toUpperCase() %></button>
       <div class="v2-menu" role="menu">
         <div class="v2-mh"><i class="bi bi-person-circle"></i> <%= _user %><%= _sess.isAdmin ? ' · Administrador' : ' · Oficina' %></div>
+        <a class="v2-mi" href="/admin/novedades"><i class="bi bi-stars"></i><span>Novedades<%= (typeof buildLabel !== 'undefined' && buildLabel) ? ' · ' + buildLabel : '' %></span></a>
         <% if (_sess.isAdmin) { %>
           <a class="v2-mi" href="/admin/account/password"><i class="bi bi-key"></i><span>Cambiar contraseña</span></a>
           <a class="v2-mi" href="/admin/sidebar-settings"><i class="bi bi-layout-sidebar-inset"></i><span>Configurar el menú</span></a>
@@ -74,4 +75,4 @@
     <div class="v2-pal-res" id="v2PalRes"></div>
   </div>
 </div>
-<script src="/js/v2-shell.js?v=3" defer></script>
+<script src="/js/v2-shell.js?v=4" defer></script>

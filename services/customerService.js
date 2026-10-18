@@ -460,6 +460,9 @@ function getCustomerStats() {
     ditangguhkan: db.prepare("SELECT COUNT(*) as c FROM customers WHERE status='ditangguhkan'").get().c,
     suspended:    db.prepare("SELECT COUNT(*) as c FROM customers WHERE status='suspended'").get().c,
     inactive:     db.prepare("SELECT COUNT(*) as c FROM customers WHERE status='inactive' AND COALESCE(reg_status,'')!='rejected'").get().c,
+    // Movimiento del mes en curso. No cuentan las instalaciones que nunca se hicieron (reg_cancel_reason): no fueron clientes.
+    newMonth:     db.prepare("SELECT COUNT(*) as c FROM customers WHERE substr(install_date,1,7)=strftime('%Y-%m','now','localtime') AND status!='inactive' AND COALESCE(reg_cancel_reason,'')=''").get().c,
+    retiredMonth: db.prepare("SELECT COUNT(*) as c FROM customers WHERE status='cancelled' AND substr(cancelled_at,1,7)=strftime('%Y-%m','now','localtime') AND COALESCE(reg_cancel_reason,'')=''").get().c,
   };
 }
 

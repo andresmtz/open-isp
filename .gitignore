@@ -85,3 +85,6 @@ public/downloads/logo-*
 
 # penanda restore tertunda (runtime)
 database/.restore-pending
+
+# Versión generada al publicar (scripts/deploy.sh)
+build-info.json

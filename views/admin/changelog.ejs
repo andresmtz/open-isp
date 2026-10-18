@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Novedades | <%= company %></title>
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .cl-day{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:18px 0 8px}
+    .cl-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+    .cl-item:last-child{border-bottom:0}
+    .cl-dot{flex:none;width:10px;height:10px;border-radius:50%;background:var(--success);margin-top:6px}
+    .cl-sub{font-size:14px;font-weight:600;line-height:1.4}
+    .cl-meta{font-size:12px;color:var(--muted);margin-top:2px}
+    .cl-head{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+    .cl-head .sc{flex:1;min-width:180px}
+  </style>
+</head>
+<body>
+<%- include('partials/sidebar', { activePage: 'changelog', company }) %>
+<div class="mw">
+  <div class="topbar">
+    <div class="tb-title"><button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><i class="bi bi-stars"></i> Novedades del sistema</div>
+  </div>
+  <div class="page">
+    <% const fmt = (v, opt) => { const d = new Date(v); return isNaN(d) ? '' : d.toLocaleString('es-PY', Object.assign({ timeZone: 'America/Asuncion' }, opt)); }; %>
+    <% if (!info.build) { %>
+      <div class="alert alert-w"><i class="bi bi-info-circle"></i> Todavía no hay información de versión: se genera al publicar con <code>scripts/deploy.sh</code>.</div>
+    <% } else { %>
+      <div class="stat-grid cl-head" style="grid-template-columns:repeat(3,1fr)">
+        <div class="sc p"><i class="bi bi-box-seam sc-icon"></i><div class="sc-label">Versión actual</div><div class="sc-val">v<%= info.build %></div><div class="sc-sub">Cambio <%= info.commit %></div></div>
+        <div class="sc"><i class="bi bi-clock-history sc-icon"></i><div class="sc-label">Último cambio</div><div class="sc-val" style="font-size:20px"><%= fmt(info.date, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) %></div></div>
+        <div class="sc"><i class="bi bi-cloud-arrow-up sc-icon"></i><div class="sc-label">Publicado</div><div class="sc-val" style="font-size:20px"><%= fmt(info.deployedAt, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) %></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><h6><i class="bi bi-list-check"></i> Últimos cambios</h6></div>
+        <div class="card-bd">
+          <% let lastDay = ''; let n = info.build; (info.changes || []).forEach((c, i) => { const day = fmt(c.date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); %>
+            <% if (day !== lastDay) { lastDay = day; %><div class="cl-day"><%= day %></div><% } %>
+            <div class="cl-item"><span class="cl-dot" style="<%= i ? 'background:var(--muted);opacity:.5' : '' %>"></span>
+              <div><div class="cl-sub"><%= c.subject %></div><div class="cl-meta">v<%= n - i %> · <%= fmt(c.date, { hour: '2-digit', minute: '2-digit', hour12: false }) %> · <%= c.h %></div></div></div>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+</body>
+</html>

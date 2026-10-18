@@ -254,6 +254,10 @@ app.use((req, res, next) => {
   res.locals.heroVer = getSetting('landing_hero_version', '');
   res.locals.projectUrl = String(getSetting('project_url', '') || '').replace(/\/+$/, ''); // vacío: no se muestran links al repositorio
   res.locals.appVersion = String(getSetting('app_version', '0.5.1') || '0.5.1');
+  // Nombre del producto (para el SaaS: cada empresa ve su nombre; el producto es este) y versión propia
+  res.locals.productName = String(getSetting('product_name', 'AppsTec') || 'AppsTec');
+  res.locals.productTagline = String(getSetting('product_tagline', 'Gestión ISP') || 'Gestión ISP');
+  { const _b = require('./config/buildInfo').get(); res.locals.buildVer = _b && _b.build ? 'v' + _b.build : 'v' + res.locals.appVersion; }
   res.locals.appVersionName = String(getSetting('app_version_name', 'pickle-lime') || 'pickle-lime');
   res.locals.pwaVersion = String(getSetting('pwa_version', '2.0') || '2.0');
   next();

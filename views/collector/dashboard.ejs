@@ -39,7 +39,7 @@
       <div>
         <div style="font-weight:900;letter-spacing:-.02em"><%= t('collector.role','Kolektor') %>: <%= session.collectorName || t('collector.fallback_name','Penagih') %></div>
         <div class="muted" style="font-size:12px">
-          <%= company %> · v<%= appVersion %> (<%= appVersionName %>)
+          <%= company %> · <%= productName %> <%= buildVer %>
           <% if (session.collectorArea) { %>
             <span class="badge bg-indigo ms-1" style="background:rgba(99,102,241,0.2);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3)"><i class="bi bi-geo-alt"></i> <%= t('collector.col_area_short','Area:') %> <%= session.collectorArea %></span>
           <% } else { %>

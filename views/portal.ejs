@@ -1587,7 +1587,7 @@
           </div>
 
           <p class="text-center text-[10px]" style="color:var(--muted-2);padding-bottom:8px;">
-            <%= portal.company %> PWA v<%= pwaVersion %> (<%= appVersionName %>) · Billing v<%= appVersion %> · <span style="color:var(--lime);">Internet Freedom</span>
+            <%= portal.company %> · <%= productName %> <%= buildVer %>
           </p>
         </section>
 
@@ -1757,7 +1757,7 @@
       <h3 class="modal-title"><%= t('pwa.account.about','Tentang Aplikasi') %></h3>
       <p class="modal-sub"><%= t('pwa.title','Portal Pelanggan') %><%= portal.companyInfo.name %></p>
       <div class="info-list">
-        <div class="info-row"><span class="info-k"><%= t('pwa.account.apps','Aplikasi') %></span><span class="info-v"><%= portal.companyInfo.name %> PWA v<%= pwaVersion %> (<%= appVersionName %>) · Billing v<%= appVersion %></span></div>
+        <div class="info-row"><span class="info-k"><%= t('pwa.account.apps','Aplikasi') %></span><span class="info-v"><%= portal.companyInfo.name %> · <%= productName %> <%= buildVer %></span></div>
         <div class="info-row"><span class="info-k"><%= t('pwa.field.company','Perusahaan') %></span><span class="info-v"><%= portal.companyInfo.name %></span></div>
         <div class="info-row"><span class="info-k"><%= t('pwa.field.address','Alamat') %></span><span class="info-v"><%= portal.companyInfo.address %></span></div>
         <div class="info-row"><span class="info-k"><%= t('pwa.field.phone_plain','Telepon') %></span><span class="info-v"><%= portal.companyInfo.phone %></span></div>

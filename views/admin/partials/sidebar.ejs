@@ -132,11 +132,11 @@ document.addEventListener('DOMContentLoaded', () => {
       <i class="bi bi-box-arrow-left"></i><span><%= t('common.logout', 'Logout') %></span>
     </a>
     <div class="mt-4 px-3 py-2 text-center" style="border-top: 1px solid rgba(255,255,255,0.1);">
-      <a href="https://github.com/oxpoe/open-isp" target="_blank" rel="noopener" style="color: #cbd5e1; font-size: 11px; text-decoration: none; font-weight: 700;">
-        OPEN-ISP BILLING SYSTEM
+      <a href="/admin/novedades" style="color: #cbd5e1; font-size: 11px; text-decoration: none; font-weight: 700;" title="Ver novedades">
+        <%= (typeof productName !== 'undefined' ? productName : 'AppsTec') %> · <%= (typeof productTagline !== 'undefined' ? productTagline : 'Gestión ISP') %>
       </a>
       <div style="color:#64748b;font-size:10px;margin-top:3px;line-height:1.5">
-        <% if (typeof buildLabel !== 'undefined' && buildLabel) { %><a href="/admin/novedades" style="color:inherit"><%= buildLabel %></a> · <% } %>v<%= (typeof appVersion !== 'undefined' ? appVersion : '0.5.1') %> (pickle-lime) · ISC · oxpoe
+        <a href="/admin/novedades" style="color:inherit;text-decoration:none"><%= (typeof buildLabel !== 'undefined' && buildLabel) ? buildLabel : (typeof buildVer !== 'undefined' ? buildVer : '') %></a>
       </div>
     </div>
   </nav>
@@ -166,9 +166,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <%= t('admin.lock.code_label','Kode aktivasi menu ini') %> <strong style="color:#86efac">GRATIS</strong> <%= t('admin.lock.wiki_note','— tanpa perlu donasi untuk membukanya.') %>
       </div>
       <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
-        <a href="https://github.com/oxpoe/open-isp/wiki" target="_blank" rel="noopener" class="btn btn-p" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
-          <i class="bi bi-github"></i> <%= t('admin.lock.get_code','Ambil Kode Aktivasi (Gratis)') %>
-        </a>
         <a href="/admin/sidebar-settings" class="btn btn-g" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px" onclick="hideLockedMenuNotice()">
           <i class="bi bi-layout-sidebar-inset"></i> <%= t('admin.lock.open_settings','Buka Pengaturan Sidebar') %>
         </a>

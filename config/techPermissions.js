@@ -25,6 +25,7 @@ const BASE = [
   ['POST', `^/orders/${ID}/(retiro|retiro-fallido)$`], // retiro de equipo: retirado / no se pudo retirar
   ['GET', `^/customers/${ID}/label/${ID}$`],     // foto de la etiqueta del equipo a retirar (orden suya)
   ['GET', '^/state$'],                           // cambios en su lista de órdenes (el panel se recarga solo)
+  ['POST', `^/orders/${ID}/(house|location)$`],  // completar la ficha en la visita: foto de la casa y GPS (orden suya, no retiros)
 ];
 
 const CATALOG = [

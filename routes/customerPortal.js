@@ -1567,7 +1567,7 @@ router.post('/register', async (req, res) => {
 
   // Rate-limit sederhana anti-spam (per IP): maks 3 pendaftaran / 10 menit
   {
-    const _ip = String((req.headers['x-forwarded-for'] || '').split(',')[0] || req.ip || (req.connection && req.connection.remoteAddress) || 'unknown').trim();
+    const _ip = String(req.ip || (req.connection && req.connection.remoteAddress) || 'unknown').trim();
     const now = Date.now(), win = 10 * 60 * 1000, max = 3;
     if (!global.__regHits) global.__regHits = new Map();
     const arr = (global.__regHits.get(_ip) || []).filter(function (t) { return now - t < win; });
@@ -2282,6 +2282,11 @@ router.post('/change-ssid', async (req, res) => {
     req.session._msg = { type: 'danger', text: 'El nombre del WiFi (SSID) no puede quedar vacío.' };
     return wantsJson ? res.json({ ok: false, message: 'El nombre del WiFi (SSID) no puede quedar vacío.' }) : res.redirect('/customer/dashboard');
   }
+  if (!customerDevice.isValidSsid(ssidClean)) {
+    const m = 'El nombre del WiFi debe tener de 1 a 32 caracteres y no puede llevar < > " \' ` \\ ni &.';
+    req.session._msg = { type: 'danger', text: m };
+    return wantsJson ? res.json({ ok: false, message: m }) : res.redirect('/customer/dashboard');
+  }
   const profile = findCustomerProfileByLoginId(loginId);
   const cdKey = profile ? ('c' + profile.id) : ('l' + loginId);
   const COOLDOWN_MS = 5 * 60 * 1000;
@@ -2571,7 +2576,10 @@ router.get('/invoice/:id/pdf', async (req, res) => {
 
     const _sessProf = (req.session && req.session.phone) ? findCustomerProfileByLoginId(req.session.phone) : null;
     const sessionCustId = _sessProf ? Number(_sessProf.id) : 0;
-    if (sessionCustId > 0 && Number(inv.customer_id) !== sessionCustId) {
+    // Solo el cliente dueño de la factura, con sesión iniciada (antes, sin sesión no se controlaba)
+    const _staff = !!(req.session && (req.session.isAdmin || req.session.isCashier || req.session.isCollector));
+    if (!sessionCustId && !_staff) return res.redirect('/customer/login');
+    if (sessionCustId && Number(inv.customer_id) !== sessionCustId && !_staff) {
       return res.status(403).send('Acceso denegado');
     }
 
@@ -2592,7 +2600,7 @@ router.get('/invoice/:id/pdf', async (req, res) => {
     return res.send(pdfBuffer);
   } catch (err) {
     logger.error(`[Customer PDF Download] Error: ${err.message}`);
-    return res.status(500).send('No se pudo generar el PDF de la factura:' + err.message);
+    return res.status(500).send('No se pudo generar el PDF de la factura. Intente de nuevo más tarde.');
   }
 });
 
@@ -2604,14 +2612,17 @@ router.post('/invoice/:id/send-pdf-wa', async (req, res) => {
 
     const _sessProf = (req.session && req.session.phone) ? findCustomerProfileByLoginId(req.session.phone) : null;
     const sessionCustId = _sessProf ? Number(_sessProf.id) : 0;
-    if (sessionCustId > 0 && Number(inv.customer_id) !== sessionCustId) {
+    if (!sessionCustId) return res.status(401).json({ ok: false, message: 'La sesión venció. Vuelva a ingresar.' });
+    if (Number(inv.customer_id) !== sessionCustId) {
       return res.status(403).json({ ok: false, message: 'Acceso denegado.' });
     }
+    if (req.session && req.session.portalPreview) return res.status(403).json({ ok: false, message: 'Vista previa: no se envían mensajes.' });
 
     const customer = customerSvc.getCustomerById(inv.customer_id);
     if (!customer || !customer.phone) {
       return res.status(400).json({ ok: false, message: 'El cliente no tiene número de WhatsApp.' });
     }
+    if (customer.status === 'cancelled') return res.status(403).json({ ok: false, message: 'El servicio está cancelado.' });
 
     const settings = getSettingsWithCache();
     const pdfSvc = require('../services/pdfInvoiceService');
@@ -2630,7 +2641,7 @@ router.post('/invoice/:id/send-pdf-wa', async (req, res) => {
     return res.json({ ok: !!ok, message: ok ? 'Factura enviada a su WhatsApp.' : 'No se pudo enviar la factura. Intente de nuevo.' });
   } catch (err) {
     logger.error(`[Customer Send PDF WA] Error: ${err.message}`);
-    return res.status(500).json({ ok: false, message: 'No se pudo enviar la factura:' + err.message });
+    return res.status(500).json({ ok: false, message: 'No se pudo enviar la factura. Intente de nuevo más tarde.' });
   }
 });
 
@@ -2641,7 +2652,10 @@ router.get('/invoice/:id/print', async (req, res) => {
 
     const _sessProf = (req.session && req.session.phone) ? findCustomerProfileByLoginId(req.session.phone) : null;
     const sessionCustId = _sessProf ? Number(_sessProf.id) : 0;
-    if (sessionCustId > 0 && Number(inv.customer_id) !== sessionCustId) {
+    // Solo el cliente dueño de la factura, con sesión iniciada (antes, sin sesión no se controlaba)
+    const _staff = !!(req.session && (req.session.isAdmin || req.session.isCashier || req.session.isCollector));
+    if (!sessionCustId && !_staff) return res.redirect('/customer/login');
+    if (sessionCustId && Number(inv.customer_id) !== sessionCustId && !_staff) {
       return res.status(403).send('Acceso denegado');
     }
 
@@ -2662,7 +2676,7 @@ router.get('/invoice/:id/print', async (req, res) => {
     });
   } catch (err) {
     logger.error(`[Customer Print Invoice] Error: ${err.message}`);
-    return res.status(500).send('No se pudo cargar la factura:' + err.message);
+    return res.status(500).send('No se pudo cargar la factura. Intente de nuevo más tarde.');
   }
 });
 
@@ -2673,7 +2687,10 @@ router.get('/invoice/:id/print-thermal', async (req, res) => {
 
     const _sessProf = (req.session && req.session.phone) ? findCustomerProfileByLoginId(req.session.phone) : null;
     const sessionCustId = _sessProf ? Number(_sessProf.id) : 0;
-    if (sessionCustId > 0 && Number(inv.customer_id) !== sessionCustId) {
+    // Solo el cliente dueño de la factura, con sesión iniciada (antes, sin sesión no se controlaba)
+    const _staff = !!(req.session && (req.session.isAdmin || req.session.isCashier || req.session.isCollector));
+    if (!sessionCustId && !_staff) return res.redirect('/customer/login');
+    if (sessionCustId && Number(inv.customer_id) !== sessionCustId && !_staff) {
       return res.status(403).send('Acceso denegado');
     }
 

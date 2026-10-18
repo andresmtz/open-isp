@@ -100,7 +100,22 @@ app.use('/speedtest', require('./routes/speedtest'));
 const isProduction = process.env.NODE_ENV === 'production';
 const cookieSecure = getSetting('cookie_secure', isProduction);
 const trustProxySetting = getSetting('trust_proxy', true);
-app.set('trust proxy', trustProxySetting ? 1 : false);
+// Proxies de confianza (trusted_proxies, separados por coma; p. ej. la IP del túnel de Cloudflare).
+// Si están definidos, solo esas IP pueden indicar la IP real del visitante (X-Forwarded-For): así nadie
+// conectado directo puede falsificarla para saltar los límites de intentos.
+const trustedProxies = String(getSetting('trusted_proxies', '') || '').split(/[\s,]+/).filter(Boolean);
+app.set('trust proxy', trustedProxies.length ? ['loopback', ...trustedProxies] : (trustProxySetting ? 1 : false));
+app.disable('x-powered-by');
+
+// Cabeceras de seguridad (sin dependencias): no incrustar las páginas en sitios ajenos, no adivinar tipos,
+// no filtrar la dirección completa al salir a otro sitio y HSTS cuando la conexión es https.
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (req.secure) res.setHeader('Strict-Transport-Security', 'max-age=15552000');
+  next();
+});
 
 // Middleware dasar
 app.use(express.json({
@@ -137,7 +152,8 @@ app.use(session({
   saveUninitialized: false,
   rolling: true,
   cookie: {
-    secure: Boolean(cookieSecure),
+    // 'auto': cookie "secure" cuando la conexión es https (portal por Cloudflare); por LAN (http) sigue funcionando
+    secure: (cookieSecure === true || cookieSecure === 'true') ? true : 'auto',
     httpOnly: true,
     sameSite: 'lax',
     maxAge: 30 * 24 * 60 * 60 * 1000,
@@ -401,7 +417,7 @@ const markInvoicePaidAppendNote = db.prepare(`
 const countUnpaidInvoicesForCustomer = db.prepare(`SELECT COUNT(1) as c FROM invoices WHERE customer_id=? AND status='unpaid'`);
 
 function getIp(req) {
-  return String((req.headers['x-forwarded-for'] || '').toString().split(',')[0].trim() || req.ip || '');
+  return String(req.ip || ''); // req.ip ya respeta los proxies de confianza (trust proxy)
 }
 
 function parseRupiahAmountFromNotification(content) {
@@ -825,12 +841,16 @@ Dukungan Anda sangat berarti bagi pengembangan aplikasi OPEN-ISP. Semoga rezeki 
 
 // Meta WhatsApp Cloud API Public Webhook Endpoints
 const metaWAService = require('./services/metaWhatsappService');
-app.get('/api/meta-webhook', (req, res) => metaWAService.verifyWebhook(req, res));
-app.post('/api/meta-webhook', (req, res) => metaWAService.processWebhookEvent(req, res));
+// Solo si la API oficial de Meta es el gateway de WhatsApp en uso
+const metaOn = () => String(getSetting('wa_gateway_type', 'gowa') || '').toLowerCase() === 'meta';
+app.get('/api/meta-webhook', (req, res) => metaOn() ? metaWAService.verifyWebhook(req, res) : res.status(404).send('No disponible'));
+app.post('/api/meta-webhook', (req, res) => metaOn() ? metaWAService.processWebhookEvent(req, res) : res.status(404).send('No disponible'));
 
 // Fonnte WhatsApp Gateway Public Webhook Endpoint
 const fonnteWAService = require('./services/fonnteWhatsappService');
 app.post(['/api/webhook/fonnte', '/api/fonnte-webhook'], express.json(), express.urlencoded({ extended: true }), async (req, res) => {
+  // Solo si Fonnte es el gateway de WhatsApp en uso (no tiene firma: cualquiera podría inyectar mensajes)
+  if (String(getSetting('wa_gateway_type', 'gowa') || '').toLowerCase() !== 'fonnte') return res.status(404).send('No disponible');
   try {
     const data = req.body || {};
     logger.info(`[Fonnte Webhook Received] From: ${data.sender || data.from || ''} - Message: "${data.message || data.text || ''}"`);
@@ -935,13 +955,14 @@ app.post('/api/webhook/v1/payment-notif', multer().any(), async (req, res) => {
     req.get('x-webhook-key') ??
     bearerToken;
 
-  const serverSecret = getSettingsWithCache().webhook_secret || process.env.MY_WEBHOOK_SECRET || 'billing-rtrw-secret-key';
-  const expectedTrim = typeof serverSecret === 'string' ? serverSecret.trim() : 'billing-rtrw-secret-key';
+  const serverSecret = getSettingsWithCache().webhook_secret || process.env.MY_WEBHOOK_SECRET || '';
+  const expectedTrim = typeof serverSecret === 'string' ? serverSecret.trim() : '';
   let gotTrim = String(secret_key || '').trim();
   gotTrim = gotTrim.replace(/^[\"'\s]+|[\"'\s]+$/g, '');
   if (/^bearer\s+/i.test(gotTrim)) gotTrim = gotTrim.replace(/^bearer\s+/i, '').trim();
 
-  const isSecretValid = (gotTrim === expectedTrim) || (gotTrim === 'billing-rtrw-secret-key');
+  // Sin clave configurada no se acepta nada (antes había una clave de fábrica conocida que siempre servía)
+  const isSecretValid = !!expectedTrim && gotTrim.length === expectedTrim.length && crypto.timingSafeEqual(Buffer.from(gotTrim), Buffer.from(expectedTrim));
 
   if (!isSecretValid) {
     logger.warn(`[WEBHOOK][payment-notif] Forbidden: secret_key mismatch. service=${String(service || '-')} (gotLen=${gotTrim.length}${gotTrim ? ', ***' + gotTrim.slice(-3) : ', empty'}, expectedLen=${expectedTrim.length}, ***${expectedTrim.slice(-3)})`);
@@ -1675,7 +1696,7 @@ app.post('/api/webhook/gowa', async (req, res) => {
     const sig = String(req.headers['x-hub-signature-256'] || '');
     if (secret) {
       const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(raw).digest('hex');
-      if (sig !== expected) {
+      if (sig.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
         logger.warn('[GOWA webhook] signature tidak cocok — ditolak');
         return res.status(401).send('Unauthorized');
       }

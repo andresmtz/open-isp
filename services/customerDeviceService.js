@@ -845,10 +845,15 @@ function fallbackCustomer(tag) {
   };
 }
 
+const SSID_RE = /^[^<>"'`\\&\u0000-\u001f\u007f]{1,32}$/;
+function isValidSsid(v) { return SSID_RE.test(String(v || '')); }
+
 async function updateSSID(tag, newSSID, actor = null) {
   try {
     const ssidClean = String(newSSID ?? '').replace(/[\r\n\t]+/g, '').trim();
     if (!ssidClean) { logger.warn('[updateSSID] SSID kosong, dibatalkan.'); return false; }
+    // Nombre del WiFi: 1 a 32 caracteres visibles, sin < > " ' ` \ & (se muestra en el panel: evita inyectar código)
+    if (!isValidSsid(ssidClean)) { logger.warn('[updateSSID] nombre de WiFi rechazado (caracteres no permitidos o muy largo)'); return false; }
     const device = await resolveDeviceToken(tag);
     if (!device) return false;
     const deviceId = encodeURIComponent(device._id);
@@ -1307,7 +1312,7 @@ async function updateCustomerTag(oldTag, newTag) {
   }
 }
 
-module.exports = {
+module.exports = { isValidSsid,
   findDeviceByTag,
   findDeviceByPppoe,
   fetchFullDevice,

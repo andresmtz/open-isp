@@ -705,35 +705,35 @@ async function loadDevices() {
         const lastSyncStr = d.lastSync ? new Date(d.lastSync).toLocaleString(APP_LOCALE, {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : (d.lastSyncLabel || '-');
         const syncBadge = d.syncInProgress
           ? `<div style="font-size:11px;color:var(--warning);margin-top:4px"><i class="bi bi-arrow-repeat"></i> ${I18N.syncRunning} (${d.syncPendingCount || 0})</div>`
-          : `<div style="font-size:11px;color:var(--muted);margin-top:4px"><i class="bi bi-check2-circle"></i> ${d.syncStatusLabel || '-'}</div>`;
+          : `<div style="font-size:11px;color:var(--muted);margin-top:4px"><i class="bi bi-check2-circle"></i> ${escHtml(d.syncStatusLabel || '-')}</div>`;
         return `<tr>
           <td style="text-align: center;">
-            <input type="checkbox" class="mon-device-checkbox" data-id="${d.id}" data-acs="${d.acs_server_id || 'legacy'}" onchange="updateMonBulkPanel()">
+            <input type="checkbox" class="mon-device-checkbox" data-id="${escHtml(d.id)}" data-acs="${escHtml(d.acs_server_id || 'legacy')}" onchange="updateMonBulkPanel()">
           </td>
           <td class="text-muted">${i + 1}</td>
           <td>
-            <span class="badge bm">${tagStr}</span>
+            <span class="badge bm">${escHtml(tagStr)}</span>
             ${d.tr069 ? '<span class="badge bs" style="margin-left:4px" title="Gestionada por TR-069: SSID y equipos conectados">TR-069</span>' : '<span class="badge bm" style="margin-left:4px;opacity:.7" title="Solo datos de la OLT">OLT</span>'}
             <div style="font-size:11px;color:var(--muted);margin-top:4px" title="${I18N.lastInform}"><i class="bi bi-clock"></i> ${lastInformStr}</div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px" title="${I18N.lastSync}"><i class="bi bi-arrow-repeat"></i> ${lastSyncStr}</div>
           </td>
           <td>
-            <div class="fw6" style="font-size:13px">${d.model !== '-' ? d.model : I18N.onuDevice}</div>
-            <div style="font-size:11px;color:var(--muted)">SN: <code style="color:var(--info);background:transparent;padding:0">${d.serialNumber}</code></div>
-            <div style="font-size:11px;color:var(--muted)">SW: ${d.softwareVersion}</div>
+            <div class="fw6" style="font-size:13px">${escHtml(d.model !== '-' ? d.model : I18N.onuDevice)}</div>
+            <div style="font-size:11px;color:var(--muted)">SN: <code style="color:var(--info);background:transparent;padding:0">${escHtml(d.serialNumber)}</code></div>
+            <div style="font-size:11px;color:var(--muted)">SW: ${escHtml(d.softwareVersion)}</div>
           </td>
           <td>
-            <div style="font-size:12px;margin-bottom:2px" title="IP Address"><i class="bi bi-globe" style="color:var(--primary)"></i> ${d.pppoeIP !== '-' ? d.pppoeIP : I18N.noIp}</div>
-            <div style="font-size:12px;margin-bottom:2px" title="PPPoE Username"><i class="bi bi-person-badge" style="color:var(--warning)"></i> ${d.pppoeUsername && d.pppoeUsername !== 'N/A' ? d.pppoeUsername : '<span class="text-muted">-</span>'}</div>
-            <div style="font-size:12px;margin-bottom:2px" title="SSID"><i class="bi bi-wifi" style="color:var(--success)"></i> ${d.ssid}</div>
-            <div style="font-size:11px;color:var(--muted)"><i class="bi bi-people"></i> ${d.userConnected} ${I18N.connectedSuffix}</div>
+            <div style="font-size:12px;margin-bottom:2px" title="IP Address"><i class="bi bi-globe" style="color:var(--primary)"></i> ${escHtml(d.pppoeIP !== '-' ? d.pppoeIP : I18N.noIp)}</div>
+            <div style="font-size:12px;margin-bottom:2px" title="PPPoE Username"><i class="bi bi-person-badge" style="color:var(--warning)"></i> ${d.pppoeUsername && d.pppoeUsername !== 'N/A' ? escHtml(d.pppoeUsername) : '<span class="text-muted">-</span>'}</div>
+            <div style="font-size:12px;margin-bottom:2px" title="SSID"><i class="bi bi-wifi" style="color:var(--success)"></i> ${escHtml(d.ssid)}</div>
+            <div style="font-size:11px;color:var(--muted)"><i class="bi bi-people"></i> ${escHtml(d.userConnected)} ${I18N.connectedSuffix}</div>
           </td>
           <td>
             <div><span class="badge ${isOn ? 'ds-on' : 'ds-off'}"><span class="dot ${isOn ? 'dot-on' : 'dot-off'}"></span>${isOn ? I18N.online : I18N.offline}</span></div>
-            <div style="font-size:11px;margin-top:4px;color:${d.weak ? 'var(--warning)' : 'var(--muted)'}" title="${d.weak ? 'Señal débil: revisar fibra o conectores' : 'RX Power'}"><i class="bi bi-${d.weak ? 'exclamation-triangle' : 'activity'}"></i> ${d.rxPower}</div>
+            <div style="font-size:11px;margin-top:4px;color:${d.weak ? 'var(--warning)' : 'var(--muted)'}" title="${d.weak ? 'Señal débil: revisar fibra o conectores' : 'RX Power'}"><i class="bi bi-${d.weak ? 'exclamation-triangle' : 'activity'}"></i> ${escHtml(d.rxPower)}</div>
             ${!isOn && d.note && !/sin registro/i.test(d.note) ? `<div style="font-size:11px;color:var(--danger);margin-top:2px;max-width:220px;white-space:normal">${String(d.note).replace(/[<>&]/g, '')}</div>` : ''}
-            <div style="font-size:11px;color:var(--muted)" title="Uptime"><i class="bi bi-clock-history"></i> ${d.uptime}</div>
-            <div style="font-size:11px;color:var(--muted)" title="${I18N.lastSync}"><i class="bi bi-hourglass-split"></i> ${d.lastSyncAgo || '-'}</div>
+            <div style="font-size:11px;color:var(--muted)" title="Uptime"><i class="bi bi-clock-history"></i> ${escHtml(d.uptime)}</div>
+            <div style="font-size:11px;color:var(--muted)" title="${I18N.lastSync}"><i class="bi bi-hourglass-split"></i> ${escHtml(d.lastSyncAgo || '-')}</div>
             ${syncBadge}
           </td>
           <td style="white-space:nowrap">
@@ -741,14 +741,14 @@ async function loadDevices() {
             <div class="act">
               <button type="button" class="act-btn" title="Acciones" onclick="actToggle(event, this)"><i class="bi bi-three-dots-vertical"></i></button>
               <div class="act-menu">
-                <button type="button" class="act-item btn-dev-detail" data-tag="${(d.tags && d.tags[0]) || d.id}"><i class="bi bi-eye"></i> ${I18N.titleDetail}</button>
+                <button type="button" class="act-item btn-dev-detail" data-tag="${escHtml((d.tags && d.tags[0]) || d.id)}"><i class="bi bi-eye"></i> ${I18N.titleDetail}</button>
                 <button type="button" class="act-item primary btn-dev-ticket" data-i="${i}"><i class="bi bi-tools"></i> Crear asistencia técnica</button>
-                <button type="button" class="act-item primary btn-dev-summon" data-id="${d.id}" data-acs="${d.acs_server_id || 'legacy'}"><i class="bi bi-arrow-repeat"></i> ${I18N.syncNow}</button>
-                <button type="button" class="act-item primary btn-dev-wifi" data-tag="${(d.tags && d.tags[0]) || d.id}" data-ssid="${escHtml(d.ssid)}"><i class="bi bi-wifi"></i> ${I18N.titleEditSsid}</button>
-                <button type="button" class="act-item btn-dev-pass" data-tag="${(d.tags && d.tags[0]) || d.id}"><i class="bi bi-key"></i> ${I18N.titleEditPassword}</button>
+                <button type="button" class="act-item primary btn-dev-summon" data-id="${escHtml(d.id)}" data-acs="${escHtml(d.acs_server_id || 'legacy')}"><i class="bi bi-arrow-repeat"></i> ${I18N.syncNow}</button>
+                <button type="button" class="act-item primary btn-dev-wifi" data-tag="${escHtml((d.tags && d.tags[0]) || d.id)}" data-ssid="${escHtml(d.ssid)}"><i class="bi bi-wifi"></i> ${I18N.titleEditSsid}</button>
+                <button type="button" class="act-item btn-dev-pass" data-tag="${escHtml((d.tags && d.tags[0]) || d.id)}"><i class="bi bi-key"></i> ${I18N.titleEditPassword}</button>
                 <div class="act-sep"></div>
-                <button type="button" class="act-item danger btn-dev-reboot" data-tag="${(d.tags && d.tags[0]) || d.id}"><i class="bi bi-power"></i> ${I18N.titleReboot}</button>
-                <button type="button" class="act-item danger btn-dev-delete" data-id="${d.id}" data-acs="${d.acs_server_id || 'legacy'}"><i class="bi bi-trash"></i> <%= t('admin.dash.del_device','Hapus Perangkat') %></button>
+                <button type="button" class="act-item danger btn-dev-reboot" data-tag="${escHtml((d.tags && d.tags[0]) || d.id)}"><i class="bi bi-power"></i> ${I18N.titleReboot}</button>
+                <button type="button" class="act-item danger btn-dev-delete" data-id="${escHtml(d.id)}" data-acs="${escHtml(d.acs_server_id || 'legacy')}"><i class="bi bi-trash"></i> <%= t('admin.dash.del_device','Hapus Perangkat') %></button>
               </div>
             </div>`}
           </td>
@@ -813,8 +813,8 @@ function renderOfflineList(offlineDevices) {
     const ago = d.lastInform ? timeSince(new Date(d.lastInform)) : I18N.never;
     return `<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
       <div>
-        <div style="font-size:13px;font-weight:600">${(d.pppoeUsername && d.pppoeUsername !== 'N/A' && d.pppoeUsername !== '-') ? d.pppoeUsername : (d.tags.join(', ') || '-')}</div>
-        <div style="font-size:11px;color:var(--muted)">${d.serialNumber}${d.note ? ' · ' + d.note : ''}</div>
+        <div style="font-size:13px;font-weight:600">${escHtml((d.pppoeUsername && d.pppoeUsername !== 'N/A' && d.pppoeUsername !== '-') ? d.pppoeUsername : (d.tags.join(', ') || '-'))}</div>
+        <div style="font-size:11px;color:var(--muted)">${escHtml(d.serialNumber)}${d.note ? ' · ' + d.note : ''}</div>
       </div>
       <div style="text-align:right">
         <span class="badge bd">${I18N.offlineBadge}</span>
@@ -854,19 +854,19 @@ async function showDetail(tag) {
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px">
         <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:700;color:var(--muted)"><i class="bi bi-info-circle"></i> Device Info</div>
-          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">Tag</span><span style="font-weight:800">${d.phone || '-'}</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">Model</span><span>${d.model || '-'}</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">Serial</span><code style="color:var(--info)">${d.serialNumber || '-'}</code></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 18px"><span style="color:var(--muted)">SW Version</span><span>${d.softwareVersion || '-'}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">Tag</span><span style="font-weight:800">${escHtml(d.phone || '-')}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">Model</span><span>${escHtml(d.model || '-')}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">Serial</span><code style="color:var(--info)">${escHtml(d.serialNumber || '-')}</code></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 18px"><span style="color:var(--muted)">SW Version</span><span>${escHtml(d.softwareVersion || '-')}</span></div>
         </div>
 
         <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;overflow:hidden">
           <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-weight:700;color:var(--muted)"><i class="bi bi-diagram-3"></i> Network Info</div>
-          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">PPPoE User</span><span>${d.pppoeUsername || '-'}</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">IP</span><code>${d.pppoeIP || '-'}</code></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">RX Power</span><span class="badge" style="background:var(--primary);color:white">${d.rxPower || '-'}</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">SSID</span><span>${d.ssid || '-'}</span></div>
-          <div style="display:flex;justify-content:space-between;padding:8px 18px"><span style="color:var(--muted)">Uptime</span><span>${d.uptime || '-'}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">PPPoE User</span><span>${escHtml(d.pppoeUsername || '-')}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">IP</span><code>${escHtml(d.pppoeIP || '-')}</code></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">RX Power</span><span class="badge" style="background:var(--primary);color:white">${escHtml(d.rxPower || '-')}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(51,65,85,.10)"><span style="color:var(--muted)">SSID</span><span>${escHtml(d.ssid || '-')}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 18px"><span style="color:var(--muted)">Uptime</span><span>${escHtml(d.uptime || '-')}</span></div>
         </div>
       </div>
 
@@ -887,12 +887,12 @@ async function showDetail(tag) {
                     <i class="bi bi-${isWiFi ? 'wifi' : 'ethernet'}"></i>
                   </div>
                   <div style="flex:1">
-                    <div style="font-weight:800">${u.hostname || '-'}</div>
-                    <div style="font-size:11px;color:var(--muted)">${u.ip || '-'} | ${u.mac || '-'}</div>
+                    <div style="font-weight:800">${escHtml(u.hostname || '-')}</div>
+                    <div style="font-size:11px;color:var(--muted)">${escHtml(u.ip || '-')} | ${escHtml(u.mac || '-')}</div>
                   </div>
-                  <span class="badge ${isUon ? 'bs' : 'bm'}">${u.status || '-'}</span>
+                  <span class="badge ${isUon ? 'bs' : 'bm'}">${escHtml(u.status || '-')}</span>
                 </div>
-                <div style="font-size:11px;color:var(--muted)">Interface: ${iface || '-'}</div>
+                <div style="font-size:11px;color:var(--muted)">Interface: ${escHtml(iface || '-')}</div>
               </div>
             `;
           }).join('') : `<div style="text-align:center;color:var(--muted);padding:10px 0"><i class="bi bi-info-circle"></i> ${I18N.noConnectedDevices}</div>`}

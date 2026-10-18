@@ -295,6 +295,7 @@ function renderDevices(devices) {
     return;
   }
 
+  const escT = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   container.innerHTML = devices.map(d => {
     const isOn = d.status === 'online';
     const title = d.customerName ? d.customerName : (d.tags.join(', ') || 'Sin etiqueta');
@@ -303,9 +304,9 @@ function renderDevices(devices) {
       <div class="t-card mb-3 p-3" style="border-left: 4px solid ${isOn ? '#10b981' : '#ef4444'}">
         <div class="d-flex justify-content-between align-items-start mb-2">
           <div>
-            <div class="fw-bold" style="font-size: 15px;">${title}</div>
-            <div class="text-secondary small">${sub}</div>
-            ${d.customerPhone ? `<div class="text-secondary small"><i class="bi bi-telephone-fill"></i> ${d.customerPhone}</div>` : ``}
+            <div class="fw-bold" style="font-size: 15px;">${escT(title)}</div>
+            <div class="text-secondary small">${escT(sub)}</div>
+            ${d.customerPhone ? `<div class="text-secondary small"><i class="bi bi-telephone-fill"></i> ${escT(d.customerPhone)}</div>` : ``}
           </div>
           <span class="badge-status badge-${isOn ? 'resolved' : 'open'}">
             ${isOn ? 'Online' : 'Offline'}
@@ -314,26 +315,26 @@ function renderDevices(devices) {
         
         <div class="mb-2">
           <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" style="font-size: 10px; padding: 3px 8px;">
-            <i class="bi bi-server me-1"></i>${d.acsServerName || 'Default ACS'}
+            <i class="bi bi-server me-1"></i>${escT(d.acsServerName || 'Default ACS')}
           </span>
         </div>
         
         <div class="row g-2 mb-3 mt-1" style="font-size: 12px;">
           <div class="col-6">
             <div class="text-secondary"><i class="bi bi-person-badge me-1"></i> <%= t('tech.mon.pppoe_user','PPPoE User') %></div>
-            <div class="fw-semibold text-truncate">${d.pppoeUsername && d.pppoeUsername !== 'N/A' ? d.pppoeUsername : '-'}</div>
+            <div class="fw-semibold text-truncate">${escT(d.pppoeUsername && d.pppoeUsername !== 'N/A' ? d.pppoeUsername : '-')}</div>
           </div>
           <div class="col-6">
             <div class="text-secondary"><i class="bi bi-activity me-1"></i> <%= t('tech.mon.rx','Redaman (RX)') %></div>
-            <div class="fw-semibold ${d.rxPower && String(d.rxPower).includes('-') ? (parseFloat(d.rxPower) < -27 ? 'text-danger' : 'text-success') : ''}">${d.rxPower || '-'}</div>
+            <div class="fw-semibold ${d.rxPower && String(d.rxPower).includes('-') ? (parseFloat(d.rxPower) < -27 ? 'text-danger' : 'text-success') : ''}">${escT(d.rxPower || '-')}</div>
           </div>
           <div class="col-6">
             <div class="text-secondary"><i class="bi bi-wifi me-1"></i> SSID</div>
-            <div class="fw-semibold text-truncate">${d.ssid || '-'}</div>
+            <div class="fw-semibold text-truncate">${escT(d.ssid || '-')}</div>
           </div>
           <div class="col-6">
             <div class="text-secondary"><i class="bi bi-globe me-1"></i> IP Address</div>
-            <div class="fw-semibold small">${d.pppoeIP || '-'}</div>
+            <div class="fw-semibold small">${escT(d.pppoeIP || '-')}</div>
           </div>
         </div>
 
@@ -344,7 +345,7 @@ function renderDevices(devices) {
           <button class="btn btn-sm btn-outline-primary flex-fill" style="font-size: 11px;" onclick="openActionModal('${d.tags[0]}', 'pass')">
             <i class="bi bi-key"></i> Pass
           </button>
-          <button class="btn btn-sm btn-outline-success flex-fill" style="font-size: 11px;" onclick="openAddWanModal('${d.id}', '${d.acsServerId}', '${d.serialNumber}', '${d.manufacturer || ""}', '${d.model || ""}')">
+          <button class="btn btn-sm btn-outline-success flex-fill" style="font-size: 11px;" onclick="openAddWanModal('${d.id}', '${d.acsServerId}', '${escT(d.serialNumber)}', '${d.manufacturer || ""}', '${d.model || ""}')">
             <i class="bi bi-gear-fill"></i> WAN
           </button>
           <button class="btn btn-sm btn-outline-danger" style="font-size: 11px;" onclick="openActionModal('${d.tags[0]}', 'reboot')">

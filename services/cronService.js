@@ -430,6 +430,10 @@ function startCronJobs() {
     // Historial de potencia de las ONU (services/onuPowerHistoryService.js): toma la muestra cuando pasa el intervalo
     try { await require('./onuPowerHistoryService').sample(); } catch (e) { logger.warn('[Potencia] historial: ' + e.message); }
   });
+  cron.schedule('3 * * * *', async () => {
+    // Exportación diaria de la configuración del MikroTik y de la OLT, solo lectura (services/configExportService.js)
+    try { await require('./configExportService').run(); } catch (e) { logger.warn('[Config] ' + e.message); }
+  });
   cron.schedule('5,35 * * * *', async () => {
     // Copias de seguridad en Genesis: aviso si alguna se atrasa (services/backupWatchService.js)
     try { await require('./backupWatchService').check(); } catch (e) { logger.warn('[Copias] ' + e.message); }

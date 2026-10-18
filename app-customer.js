@@ -259,6 +259,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Diseño nuevo (v2) en las pantallas fuera del panel (ingresos, técnicos, cobradores, portal del cliente).
+// Se aplica sobre el HTML generado; con el diseño anterior no cambia nada (ver config/v2Pages.js).
+app.use((req, res, next) => {
+  if (req.path.startsWith('/admin') || req.path.startsWith('/api/')) return next();
+  const originalSend = res.send.bind(res);
+  res.send = function (body) {
+    try { body = require('./config/v2Pages').transform(body, res.locals); } catch (e) {}
+    return originalSend(body);
+  };
+  next();
+});
+
 // ── Page loader (animasi transisi halaman) — injeksi non-invasif ke semua HTML ──
 app.use((req, res, next) => {
   const _send = res.send.bind(res);

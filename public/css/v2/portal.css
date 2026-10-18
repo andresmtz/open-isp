@@ -1,0 +1,174 @@
+/* ============================================================================
+   Diseño nuevo (v2) para las pantallas fuera del panel: ingreso de clientes, técnicos y cobradores,
+   panel del técnico, registro, consulta de deuda y páginas públicas.
+   Se carga encima de landing.css / auth.css / portal.css / portal-theme.css solo con ui_design = v2
+   (html[data-ui="v2"]). Reutiliza los nombres de variables de esas hojas, así que casi todo cambia
+   de color sin tocar cada pantalla. Tema claro y oscuro.
+   ========================================================================== */
+@import url('/vendor/fonts/urbanist/urbanist.css');
+
+/* ── Tokens: oscuro (por defecto en estas pantallas) ── */
+html[data-ui="v2"]{
+  --font-sans:"Urbanist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-display:"Urbanist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --bg:#111412; --bg2:#1c201e; --bg3:#242927; --panel:#1c201e; --panel2:#242927;
+  --text:#f1eee8; --muted:#a3a6a0; --border:rgba(255,255,255,.09);
+  --primary:#f1eee8; --primary-dark:#ffffff; --on-primary:#17191a;
+  --primary-glow:rgba(241,238,232,.22); --pdim:rgba(241,238,232,.08);
+  --success:#6cc59a; --warning:#f2c94c; --danger:#f08a68; --info:#8ec5e6;
+  --sdim:rgba(108,197,154,.14); --wdim:rgba(242,201,76,.14); --ddim:rgba(240,138,104,.14); --idim:rgba(142,197,230,.14);
+  --success-glow:rgba(108,197,154,.32); --warning-glow:rgba(242,201,76,.32); --danger-glow:rgba(240,138,104,.32);
+  --overlay-bg:rgba(10,12,11,.6);
+  --glass:rgba(24,28,26,.72);
+  --glass-2:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.05));
+  --ghost:rgba(255,255,255,.06); --ghost-h:rgba(255,255,255,.1);
+  --page-1:#111412; --page-2:#111412;
+  --dot:transparent; --vignette:transparent; --sheen:transparent;
+  --glow-lime:rgba(200,67,31,.26); --glow-cyan:rgba(47,92,80,.5); --glow-violet:rgba(242,201,76,.09);
+  --radius:24px; --radius-sm:14px;
+  --shadow-1:0 1px 2px rgba(0,0,0,.3); --shadow-2:0 24px 48px -30px rgba(0,0,0,.7); --shadow-3:0 24px 60px -18px rgba(0,0,0,.7);
+  --ring:0 0 0 3px rgba(241,238,232,.18);
+  --ease:cubic-bezier(.2,.8,.2,1);
+  /* propios del diseño nuevo */
+  --v2p-card:rgba(255,255,255,.05); --v2p-rim:rgba(255,255,255,.07); --v2p-well:rgba(255,255,255,.06);
+  --v2p-ink:#f1eee8; --v2p-on-ink:#17191a; --v2p-dock:rgba(34,38,36,.86); --v2p-on-dock:#f1eee8;
+  --v2p-pine:#2f5c50; --v2p-tomato:#d8532d; --v2p-butter:#f2c94c;
+  --v2p-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 24px 48px -30px rgba(0,0,0,.7);
+  color-scheme:dark;
+}
+/* ── Tokens: claro ── */
+html[data-ui="v2"][data-theme="light"]{
+  --bg:#ebe8e1; --bg2:#fdfcf9; --bg3:#e2ded5; --panel:#fdfcf9; --panel2:#f6f4ef; --panel2b:#f6f4ef;
+  --text:#17191a; --muted:#676a66; --border:rgba(23,25,26,.11);
+  --primary:#17191a; --primary-dark:#000000; --on-primary:#fbf8f2;
+  --primary-glow:rgba(23,25,26,.16); --pdim:rgba(23,25,26,.06);
+  --success:#2f7a52; --warning:#9a6b00; --danger:#c8431f; --info:#2d6a8f;
+  --sdim:rgba(47,122,82,.11); --wdim:rgba(242,201,76,.24); --ddim:rgba(200,67,31,.1); --idim:rgba(45,106,143,.1);
+  --success-glow:rgba(47,122,82,.28); --warning-glow:rgba(154,107,0,.28); --danger-glow:rgba(200,67,31,.28);
+  --overlay-bg:rgba(30,25,20,.32);
+  --glass:rgba(250,248,244,.72);
+  --glass-2:linear-gradient(180deg,rgba(255,255,255,.66),rgba(255,255,255,.52));
+  --ghost:rgba(23,25,26,.05); --ghost-h:rgba(23,25,26,.09);
+  --page-1:#ebe8e1; --page-2:#ebe8e1;
+  --glow-lime:#f2d3bd; --glow-cyan:#cfdfcd; --glow-violet:#f1e4bf;
+  --shadow-1:0 1px 2px rgba(40,30,20,.08); --shadow-2:0 24px 48px -30px rgba(70,50,30,.28); --shadow-3:0 24px 60px -18px rgba(40,30,20,.3);
+  --ring:0 0 0 3px rgba(23,25,26,.12);
+  --v2p-card:rgba(255,255,255,.5); --v2p-rim:rgba(255,255,255,.8); --v2p-well:rgba(23,25,26,.05);
+  --v2p-ink:#17191a; --v2p-on-ink:#fbf8f2; --v2p-dock:#17191a; --v2p-on-dock:#fbf8f2;
+  --v2p-pine:#2f5c50; --v2p-tomato:#c8431f;
+  --v2p-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 24px 48px -30px rgba(70,50,30,.28);
+  color-scheme:light;
+}
+
+/* ── Base ── */
+html[data-ui="v2"] body{
+  font-family:var(--font-sans)!important;font-weight:500;
+  background-color:var(--bg)!important;
+  background-image:
+    radial-gradient(62vw 62vw at -12% -26%,var(--glow-lime),transparent 62%),
+    radial-gradient(58vw 58vw at 112% 116%,var(--glow-cyan),transparent 62%),
+    radial-gradient(40vw 40vw at 58% -18%,var(--glow-violet),transparent 62%)!important;
+  background-size:auto!important;background-attachment:fixed!important;
+}
+html[data-ui="v2"] h1,html[data-ui="v2"] h2,html[data-ui="v2"] h3,html[data-ui="v2"] h4,html[data-ui="v2"] h5,html[data-ui="v2"] h6{font-family:var(--font-display);font-weight:600;letter-spacing:-.02em}
+html[data-ui="v2"] a{color:var(--text)}
+html[data-ui="v2"] ::selection{background:var(--v2p-butter,#f2c94c);color:#17191a}
+
+/* Marca: el mismo cuadrado con la inicial que el panel; se invierte con el tema */
+html[data-ui="v2"] .v2-mark{display:inline-grid!important;place-items:center;background:var(--v2p-ink)!important;color:var(--v2p-on-ink)!important;font:800 18px/1 var(--font-sans);border:0!important;border-radius:13px!important;flex:none}
+html[data-ui="v2"] .brand .v2-mark{width:40px!important;height:40px!important}
+html[data-ui="v2"] .brand .bname{font-family:var(--font-sans);font-weight:700;font-size:17px;letter-spacing:0;color:var(--text)}
+html[data-ui="v2"] .auth-logo.v2-mark{display:grid!important;width:60px!important;height:60px!important;border-radius:20px!important;font-size:26px;margin:0 auto 14px;box-shadow:0 18px 30px -18px rgba(0,0,0,.5)}
+html[data-ui="v2"] .portal-topnav .v2-mark{width:34px;height:34px;border-radius:11px!important;font-size:15px}
+
+/* ── Botones ── */
+html[data-ui="v2"] .lbtn{border-radius:999px;font-weight:700;letter-spacing:0}
+html[data-ui="v2"] .lbtn-primary{background:var(--v2p-ink);color:var(--v2p-on-ink);box-shadow:none}
+html[data-ui="v2"] .lbtn-primary:hover{background:var(--v2p-ink);color:var(--v2p-on-ink);box-shadow:0 14px 26px -16px rgba(0,0,0,.55)}
+html[data-ui="v2"] .lbtn-ghost{background:var(--v2p-card);border-color:var(--border)}
+html[data-ui="v2"] .lbtn-ghost:hover{background:var(--ghost-h);border-color:var(--border)}
+html[data-ui="v2"] .lbtn-sm{border-radius:999px}
+html[data-ui="v2"] .icon-btn{border-radius:50%;background:var(--v2p-card);border-color:var(--border)}
+html[data-ui="v2"] .icon-btn:hover{color:var(--text);border-color:var(--border);background:var(--ghost-h)}
+
+/* ── Encabezado de páginas públicas ── */
+html[data-ui="v2"] .site-header{background:transparent;border-bottom:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+html[data-ui="v2"] .site-header.scrolled{background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+html[data-ui="v2"] .nav a{border-radius:999px;color:var(--text)}
+html[data-ui="v2"] .nav a:hover{background:var(--ghost)}
+html[data-ui="v2"] .eyebrow{background:var(--v2p-card);border-color:var(--border);color:var(--text)}
+html[data-ui="v2"] .hl,html[data-ui="v2"] .hero h1 .hl,html[data-ui="v2"] .auth-copy h1 .hl{color:var(--v2p-tomato)!important}
+
+/* ── Tarjeta de ingreso y formularios ── */
+html[data-ui="v2"] .auth-card,html[data-ui="v2"] .form-card,html[data-ui="v2"] .bill-card{
+  background:var(--v2p-card);border:1px solid var(--v2p-rim);border-radius:28px;box-shadow:var(--v2p-shadow);
+  backdrop-filter:blur(18px) saturate(1.1);-webkit-backdrop-filter:blur(18px) saturate(1.1)}
+html[data-ui="v2"] .auth-card::before{display:none}
+html[data-ui="v2"] .auth-card h2{font-size:22px;font-weight:600}
+html[data-ui="v2"] .field label,html[data-ui="v2"] .p-field label{text-transform:none;letter-spacing:0;font-size:12.5px;font-weight:600}
+html[data-ui="v2"] .inp,html[data-ui="v2"] .p-input,html[data-ui="v2"] .inp-plain{background:var(--v2p-well);border-color:var(--border);border-radius:16px}
+html[data-ui="v2"] .inp:hover{border-color:var(--primary-glow)}
+html[data-ui="v2"] .inp:focus,html[data-ui="v2"] .p-input:focus{background:var(--bg2);border-color:var(--primary-glow);box-shadow:var(--ring)}
+html[data-ui="v2"] .btn-auth{border-radius:999px;padding:14px}
+html[data-ui="v2"] .auth-alert{border-radius:16px}
+html[data-ui="v2"] .qtool{border-radius:20px;background:var(--v2p-card);border-color:var(--v2p-rim)}
+html[data-ui="v2"] .qtool i{color:var(--text)}
+html[data-ui="v2"] .auth-points li i,html[data-ui="v2"] .sec-title i,html[data-ui="v2"] .p-sec i,html[data-ui="v2"] .p-sub i{color:var(--v2p-tomato)}
+html[data-ui="v2"] .mb,html[data-ui="v2"] .modal-content{background:var(--bg2)!important;border-radius:26px!important;border:1px solid var(--border)!important}
+html[data-ui="v2"] .bill-head{background:transparent}
+
+/* ── Panel del técnico / cobrador ── */
+html[data-ui="v2"] .portal-body{padding-top:76px;padding-bottom:104px}
+html[data-ui="v2"] .portal-topnav{top:10px;left:12px;right:12px;height:56px;border-radius:999px;border:1px solid var(--v2p-rim);background:var(--glass);box-shadow:var(--v2p-shadow);padding:0 8px 0 10px}
+html[data-ui="v2"] .portal-topnav .t{font-family:var(--font-sans);font-weight:700;font-size:16px;gap:10px}
+html[data-ui="v2"] .portal-topnav .nav-btn{width:40px;height:40px;justify-content:center;border-radius:50%;font-size:17px}
+html[data-ui="v2"] .portal-topnav .nav-btn:hover{background:var(--ghost-h);color:var(--text)}
+html[data-ui="v2"] .portal-topnav .lang-btn{width:auto;padding:0 10px;border-radius:999px;font-size:12px}
+html[data-ui="v2"] .portal-bottomnav{left:50%;right:auto;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));width:min(560px,calc(100% - 24px));height:64px;padding:6px;gap:4px;border-radius:999px;border:0;background:var(--v2p-dock);color:var(--v2p-on-dock);box-shadow:0 24px 60px -18px rgba(0,0,0,.55)}
+html[data-ui="v2"] .portal-nav-item{color:var(--v2p-on-dock);opacity:.7;height:100%;justify-content:center;border-radius:999px;transition:background .2s,opacity .2s}
+html[data-ui="v2"] .portal-nav-item:hover{opacity:1}
+html[data-ui="v2"] .portal-nav-item.active{color:var(--v2p-on-dock);opacity:1;background:rgba(255,255,255,.16)}
+html[data-ui="v2"] .portal-nav-item i{font-size:19px}
+
+/* Tarjetas */
+html[data-ui="v2"] .p-card,html[data-ui="v2"] .t-card,html[data-ui="v2"] .stat-box,html[data-ui="v2"] .p-stat,
+html[data-ui="v2"] .card,html[data-ui="v2"] .cardx,html[data-ui="v2"] .accordion-item,html[data-ui="v2"] .list-group-item{
+  background:var(--v2p-card)!important;border:1px solid var(--v2p-rim)!important;border-radius:24px!important;box-shadow:var(--v2p-shadow);
+  backdrop-filter:blur(18px) saturate(1.1);-webkit-backdrop-filter:blur(18px) saturate(1.1)}
+html[data-ui="v2"] .list-group-item{border-radius:16px!important;margin-bottom:6px}
+html[data-ui="v2"] .p-card{padding:18px}
+html[data-ui="v2"] .p-stat{border-left-width:1px!important;border-left-color:var(--v2p-rim)!important;transition:background .2s,transform .15s}
+html[data-ui="v2"] .p-stat:hover{transform:translateY(-1px)}
+html[data-ui="v2"] .tech-tab.on{background:var(--v2p-ink)!important;color:var(--v2p-on-ink)!important;border-color:transparent!important}
+html[data-ui="v2"] .tech-tab.on .lbl{color:inherit;opacity:.75}
+html[data-ui="v2"] .tech-tab.on .val{color:inherit!important}
+html[data-ui="v2"] .p-stat .val,html[data-ui="v2"] .stat-box .val{font-weight:700;letter-spacing:-.02em}
+html[data-ui="v2"] .p-sec{text-transform:none;letter-spacing:0;font-size:15px;font-weight:600;color:var(--text)}
+html[data-ui="v2"] .ticket-msg{background:var(--v2p-well);border-color:transparent;border-radius:16px}
+html[data-ui="v2"] .ticket-msg .subj{color:var(--text)}
+html[data-ui="v2"] .p-btn{border-radius:999px}
+html[data-ui="v2"] .p-btn.primary{background:var(--v2p-ink);color:var(--v2p-on-ink)}
+html[data-ui="v2"] .p-btn.ghost{background:var(--v2p-card)}
+html[data-ui="v2"] .badge-status{border:0}
+
+/* Bootstrap dentro del panel del técnico */
+html[data-ui="v2"] .btn{border-radius:999px;font-weight:600}
+html[data-ui="v2"] .btn-primary{--bs-btn-bg:var(--v2p-ink);--bs-btn-border-color:var(--v2p-ink);--bs-btn-color:var(--v2p-on-ink);--bs-btn-hover-bg:var(--v2p-ink);--bs-btn-hover-border-color:var(--v2p-ink);--bs-btn-hover-color:var(--v2p-on-ink);--bs-btn-active-bg:var(--v2p-ink);--bs-btn-active-color:var(--v2p-on-ink)}
+html[data-ui="v2"] .btn-success{--bs-btn-bg:var(--v2p-pine);--bs-btn-border-color:var(--v2p-pine);--bs-btn-color:#fbf8f2;--bs-btn-hover-bg:#264c42;--bs-btn-hover-border-color:#264c42;--bs-btn-hover-color:#fbf8f2}
+html[data-ui="v2"] .form-control,html[data-ui="v2"] .form-select{background:var(--v2p-well)!important;border-radius:16px}
+html[data-ui="v2"] .input-group>.form-control,html[data-ui="v2"] .input-group>.form-select{border-radius:16px}
+html[data-ui="v2"] .badge{border-radius:999px;font-weight:700}
+html[data-ui="v2"] .badge.bg-primary{background:var(--v2p-ink)!important;color:var(--v2p-on-ink)!important}
+html[data-ui="v2"] .alert{border-radius:18px}
+html[data-ui="v2"] .nav-tabs .nav-link.active,html[data-ui="v2"] .accordion-button:not(.collapsed){color:var(--text)!important}
+html[data-ui="v2"] .dropdown-menu{border-radius:18px!important;background:var(--bg2)!important}
+
+/* Cobrador: barras propias */
+html[data-ui="v2"] .bn,html[data-ui="v2"] .bottom-nav{border-radius:999px}
+
+/* Mapas (Leaflet) con el mismo redondeo */
+html[data-ui="v2"] .leaflet-container{border-radius:20px}
+html[data-ui="v2"] .leaflet-popup-content-wrapper{border-radius:16px}
+
+/* Ingreso de técnicos / cobradores / código: tarjeta centrada en la pantalla */
+html[data-ui="v2"] .otp-wrap{min-height:100vh;min-height:100dvh;align-items:center;padding:24px 16px}

@@ -41,7 +41,9 @@
     .dash-sec-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:0 0 10px;display:flex;align-items:center;gap:6px}
     .dash-sec-title i{color:var(--primary)}
     .sc-move{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-    .sc-move span{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(127,127,127,.2)}
+    .sc-move span{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(127,127,127,.22);color:inherit}
+    .sc.p .sc-move{color:var(--v2-on-ink,#fff)}
+    .sc-move b{font-weight:800}
     .dash-2col{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;margin-bottom:18px}
     @media(max-width:900px){.dash-2col{grid-template-columns:1fr}}
   </style>
@@ -98,8 +100,8 @@
           <div class="sc-sub">Con servicio instalado (activos y suspendidos)</div>
           <% if (custStats) { const _net = (custStats.newMonth || 0) - (custStats.retiredMonth || 0); %>
           <div class="sc-move">
-            <span title="Instalaciones realizadas este mes"><i class="bi bi-arrow-up-right"></i> <b><%= custStats.newMonth || 0 %></b> nuevos</span>
-            <span title="Clientes dados de baja este mes"><i class="bi bi-arrow-down-right"></i> <b><%= custStats.retiredMonth || 0 %></b> retirados</span>
+            <span title="Instalaciones realizadas este mes"><i class="bi bi-arrow-up-right"></i> <b><%= custStats.newMonth || 0 %></b> <%= (custStats.newMonth || 0) === 1 ? 'nuevo' : 'nuevos' %></span>
+            <span title="Clientes dados de baja este mes"><i class="bi bi-arrow-down-right"></i> <b><%= custStats.retiredMonth || 0 %></b> <%= (custStats.retiredMonth || 0) === 1 ? 'retirado' : 'retirados' %></span>
             <span title="Nuevos menos retirados"><%= _net > 0 ? '+' : '' %><%= _net %> en <%= ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][new Date().getMonth()] %></span>
           </div>
           <% } %>

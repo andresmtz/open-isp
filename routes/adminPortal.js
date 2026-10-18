@@ -5074,7 +5074,7 @@ router.post('/sidebar-settings', requireAdminSession, restrictToAdmin, express.u
 router.get('/service-notice', requireAdminSession, requireSidebarMenuAccess('service_notice'), (req, res) => {
   res.render('admin/service_notice', {
     title: 'Estado del servicio y avisos', company: company(), activePage: 'service_notice',
-    settings: getSettings(), msg: flashMsg(req)
+    settings: getSettings(), msg: flashMsg(req), noticeDefaults: require('../services/serviceNoticeService').DEFAULT_TEXTS
   });
 });
 
@@ -5086,18 +5086,27 @@ router.post('/service-notice', requireAdminSession, requireSidebarMenuAccess('se
     let interval = parseInt(req.body.notice_interval_hours, 10);
     if (!interval || interval < 1) interval = 5;
     if (interval > 168) interval = 168;
+    let start = String(req.body.notice_start || '').trim();
+    let note = String(req.body.notice_note || '').trim().slice(0, 500);
+    if (mode !== 'NORMAL' && !start) {
+      // sin hora de inicio: se toma la hora actual (así la estimación de solución aparece desde ya)
+      const p = new Intl.DateTimeFormat('en-CA', { timeZone: getSetting('timezone', 'America/Asuncion'), year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).reduce((o, x) => (o[x.type] = x.value, o), {});
+      start = `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+    }
+    // al volver a Normal se limpian la hora y la nota, para que el próximo aviso no herede datos viejos
+    if (mode === 'NORMAL') { start = ''; note = ''; }
     saveSettings({
       notice_mode: mode,
-      notice_start: String(req.body.notice_start || '').trim(),
+      notice_start: start,
       notice_interval_hours: interval,
-      notice_note: String(req.body.notice_note || '').trim()
+      notice_note: note
     });
     const noticeSvc = require('../services/serviceNoticeService');
     const n = noticeSvc.computeNotice();
     const detail = n.active ? (n.label + (n.estimateText ? ' — estimado ' + n.estimateText : '')) : 'Normal (sin aviso)';
-    req.session._msg = { type: 'success', text: 'Estado del servicio actualizado:' + detail };
+    req.session._msg = { type: 'success', text: 'Estado del servicio actualizado: ' + detail };
   } catch (e) {
-    req.session._msg = { type: 'error', text: 'No se pudo guardar el estado del servicio:' + e.message };
+    req.session._msg = { type: 'error', text: 'No se pudo guardar el estado del servicio: ' + e.message };
   }
   res.redirect('/admin/service-notice');
 });

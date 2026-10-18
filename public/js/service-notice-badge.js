@@ -1,5 +1,5 @@
 /* service-notice-badge.js — badge mode status layanan di topbar admin.
-   SELALU tampil; yang berbeda hanya label & warna (Normal / Gamas / Perbaikan Sistem).
+   SELALU tampil; yang berbeda hanya label & warna (Normal / Caída general / Mantenimiento).
    Data disuntik server-side via window.__serviceNotice. Non-invasif: tidak mengubah view. */
 (function () {
   var n = window.__serviceNotice;
@@ -7,7 +7,7 @@
 
   function labelOf() {
     if (n.badgeLabel) return n.badgeLabel;
-    if (n.mode === 'GANGGUAN_MASAL') return 'Gamas';
+    if (n.mode === 'GANGGUAN_MASAL') return 'Caída general';
     if (n.mode === 'PERBAIKAN') return 'Mantenimiento del sistema';
     return 'Normal';
   }
@@ -22,7 +22,7 @@
     return 'sn-badge-normal';
   }
   function titleOf() {
-    if (n.mode === 'GANGGUAN_MASAL') return 'Estado del servicio: falla masiva' + (n.estimateText ? ' \u00b7 fin estimado ' + n.estimateText : '');
+    if (n.mode === 'GANGGUAN_MASAL') return 'Estado del servicio: caída general' + (n.estimateText ? ' \u00b7 fin estimado ' + n.estimateText : '');
     if (n.mode === 'PERBAIKAN') return 'Estado del servicio: mantenimiento' + (n.estimateText ? ' \u00b7 fin estimado ' + n.estimateText : '');
     return 'Estado del servicio: normal (sin inconvenientes)';
   }

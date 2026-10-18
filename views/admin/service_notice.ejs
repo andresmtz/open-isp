@@ -78,6 +78,7 @@
     <div class="card mb16">
       <div class="card-hd"><h6><i class="bi bi-eye"></i> <%= t('admin.service_notice.preview', 'Pratinjau Kotak Pesan') %></h6></div>
       <div class="card-bd">
+        <div id="snNone" class="hint" style="display:none;padding:14px 16px;border:1px dashed var(--border);border-radius:14px;font-size:13.5px"><i class="bi bi-check-circle"></i> En modo <b>Normal</b> los clientes, técnicos y cobradores no ven ningún aviso. Elegí <b>Caída general</b> o <b>Mantenimiento</b> arriba para ver cómo quedaría antes de guardar.</div>
         <div id="snPreview" class="sn-preview" data-tone="primary">
           <div class="sn-ico"><i class="bi bi-tools" id="snIcon"></i></div>
           <div class="sn-main">
@@ -97,8 +98,8 @@
   var I18N_SN = {
     mass: "<%= t('admin.service_notice.js_mass', 'Caída general') %>",
     repair: "<%= t('admin.service_notice.js_repair', 'Mantenimiento del sistema') %>",
-    massText: "<%= t('admin.service_notice.js_mass_text', 'Sedang terjadi gangguan pada jaringan kami. Tim teknis sedang menangani dan akan segera memulihkan layanan.') %>",
-    repairText: "<%= t('admin.service_notice.js_repair_text', 'Sedang ada sedikit perbaikan sistem. Mohon kesabarannya ya, layanan akan kembali normal secepatnya.') %>",
+    massText: <%- JSON.stringify(noticeDefaults.mass).replace(/</g, '\\u003c') %>,
+    repairText: <%- JSON.stringify(noticeDefaults.repair).replace(/</g, '\\u003c') %>,
     eta: "<%= t('admin.service_notice.js_eta', 'Estimasi selesai:') %>",
     since: "<%= t('admin.service_notice.js_since', 'sejak') %>"
   };
@@ -116,18 +117,19 @@
     eta: document.getElementById('snEta')
   };
   function pad(n){ return String(n).length < 2 ? '0' + n : String(n); }
-  function fmt(d){ return pad(d.getHours()) + '.' + pad(d.getMinutes()) + ' ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); }
+  function fmt(d){ return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ' ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); }
   function render(){
     var mode = els.mode.value;
-    if (mode === 'NORMAL') { out.box.style.display = 'none'; return; }
-    out.box.style.display = 'flex';
+    var none = document.getElementById('snNone');
+    if (mode === 'NORMAL') { out.box.style.display = 'none'; none.style.display = ''; return; }
+    out.box.style.display = 'flex'; none.style.display = 'none';
     var mass = mode === 'GANGGUAN_MASAL';
     out.box.setAttribute('data-tone', mass ? 'danger' : 'primary');
     out.ico.className = 'bi ' + (mass ? 'bi-exclamation-triangle-fill' : 'bi-tools');
     out.title.textContent = mass ? I18N_SN.mass : I18N_SN.repair;
     out.text.textContent = els.note.value.trim() || (mass ? I18N_SN.massText : I18N_SN.repairText);
     var startVal = els.start.value;
-    if (!startVal) { out.eta.innerHTML = ''; return; }
+    if (!startVal) { out.eta.innerHTML = '<i class="bi bi-clock-history"></i> Sin hora de inicio: al guardar se toma la hora actual.'; return; }
     var start = new Date(startVal);
     if (isNaN(start.getTime())) { out.eta.innerHTML = ''; return; }
     var iv = parseInt(els.interval.value, 10); if (!iv || iv < 1) iv = 5;
@@ -140,6 +142,14 @@
     [els.mode, els.start, els.interval, els.note].forEach(function(el){ el.addEventListener(ev, render); });
   });
   render();
+  // Confirmación: el aviso lo ven todos los clientes
+  var _initialMode = els.mode.value;
+  document.getElementById('noticeForm').addEventListener('submit', function(e){
+    var m = els.mode.value;
+    var msg = m === 'NORMAL' ? (_initialMode !== 'NORMAL' ? '¿Quitar el aviso? Los clientes dejan de verlo.' : '')
+      : (m === 'GANGGUAN_MASAL' ? '¿Publicar el aviso de CAÍDA GENERAL? Lo van a ver todos los clientes en el portal y en la página principal.' : '¿Publicar el aviso de MANTENIMIENTO? Lo van a ver todos los clientes en el portal y en la página principal.');
+    if (msg && !confirm(msg)) e.preventDefault();
+  });
 </script>
 </body>
 </html>

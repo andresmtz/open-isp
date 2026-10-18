@@ -23,6 +23,12 @@ const MODE_PERBAIKAN = 'PERBAIKAN';
 
 let _cache = { at: 0, value: null };
 
+// Textos por defecto (los usa también la vista previa del panel)
+const DEFAULT_TEXTS = {
+  mass: 'Hay una falla en nuestra red. El equipo técnico ya está trabajando para restablecer el servicio lo antes posible.',
+  repair: 'Estamos realizando un mantenimiento menor. Disculpe las molestias, el servicio se normalizará en breve.',
+};
+
 function getTimezone() {
   return getSetting('timezone', 'America/Asuncion') || 'America/Asuncion';
 }
@@ -64,9 +70,7 @@ function computeNotice(nowInput) {
 
   const isMass = mode === MODE_GANGGUAN;
   const label = isMass ? 'Caída general' : 'Mantenimiento del sistema';
-  const defaultText = isMass
-    ? 'Hay una falla en nuestra red. El equipo técnico ya está trabajando para restablecer el servicio lo antes posible.'
-    : 'Estamos realizando un mantenimiento menor. Disculpe las molestias, el servicio se normalizará en breve.';
+  const defaultText = isMass ? DEFAULT_TEXTS.mass : DEFAULT_TEXTS.repair;
   const note = String(getSetting('notice_note', '') || '').trim();
   const text = note || defaultText;
 
@@ -88,7 +92,7 @@ function computeNotice(nowInput) {
     active: true,
     tone: isMass ? 'danger' : 'primary',
     label,
-    badgeLabel: isMass ? 'Gamas' : 'Mantenimiento del sistema',
+    badgeLabel: isMass ? 'Caída general' : 'Mantenimiento del sistema',
     text,
     intervalHours,
     start,
@@ -112,6 +116,7 @@ function getServiceNotice() {
 }
 
 module.exports = {
+  DEFAULT_TEXTS,
   computeNotice,
   getServiceNotice,
   fmtDateTime,

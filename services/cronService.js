@@ -430,6 +430,10 @@ function startCronJobs() {
     // Historial de potencia de las ONU (services/onuPowerHistoryService.js): toma la muestra cuando pasa el intervalo
     try { await require('./onuPowerHistoryService').sample(); } catch (e) { logger.warn('[Potencia] historial: ' + e.message); }
   });
+  cron.schedule('5,35 * * * *', async () => {
+    // Copias de seguridad en Genesis: aviso si alguna se atrasa (services/backupWatchService.js)
+    try { await require('./backupWatchService').check(); } catch (e) { logger.warn('[Copias] ' + e.message); }
+  });
   cron.schedule('*/20 * * * *', async () => {
     // Aviso preventivo de señal: una vez por día, reclamo para el técnico si la señal viene bajando (services/signalWatchService.js)
     try { await require('./signalWatchService').run(); } catch (e) { logger.warn('[Señal] ' + e.message); }

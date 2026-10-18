@@ -17,6 +17,11 @@
   <link rel="stylesheet" href="/css/portal-theme.css?v=3">
   <link rel="icon" href="/img/icons/icon-192.png">
   <script>document.documentElement.classList.add('js');(function(){try{var s=localStorage.getItem('landing-theme')||'dark';document.documentElement.setAttribute('data-theme',s);}catch(e){}})();function toggleTheme(){var el=document.documentElement;var t=el.getAttribute('data-theme')==='dark'?'light':'dark';el.setAttribute('data-theme',t);try{localStorage.setItem('landing-theme',t);}catch(e){}}</script>
+  <style>
+    /* Enlaces dentro de los reclamos (ubicación, etc.) y botón "Cómo llegar" */
+    .t-link{color:var(--info);text-decoration:underline;text-underline-offset:2px;font-weight:700;word-break:break-all}
+    .t-go{display:inline-flex;align-items:center;gap:6px;margin:6px 0 2px;padding:7px 14px;border-radius:999px;background:var(--info);color:#fff!important;font-weight:700;font-size:13px;text-decoration:none}
+  </style>
 </head>
 <body class="portal-body">
 

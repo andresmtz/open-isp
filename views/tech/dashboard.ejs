@@ -40,6 +40,9 @@
       <div style="font-weight:700;font-size:15px"><%= ticket.customer_name %></div>
       <div class="muted" style="font-size:12px;margin:6px 0 0">
         <i class="bi bi-geo-alt-fill"></i> <%= ticket.customer_address || t('tech.ticket.no_address', 'Tidak ada alamat') %><br>
+        <% var _la = Number(ticket.customer_lat), _ln = Number(ticket.customer_lng); if (ticket.customer_lat && ticket.customer_lng && Number.isFinite(_la) && Number.isFinite(_ln) && (_la || _ln)) { %>
+          <a class="t-go" href="https://www.google.com/maps/dir/?api=1&destination=<%= _la %>,<%= _ln %>" target="_blank" rel="noopener"><i class="bi bi-sign-turn-right-fill"></i> Cómo llegar</a><br>
+        <% } %>
         <i class="bi bi-telephone-fill"></i> <a href="https://wa.me/<%= ticket.customer_phone %>" style="color:var(--info)"><%= ticket.customer_phone || '-' %></a>
       </div>
 
@@ -53,11 +56,11 @@
           </div>
           <% _msg = _msg.slice(_rm[0].length); %>
         <% } %>
-        <div style="white-space:pre-wrap"><%= _msg %></div>
+        <div style="white-space:pre-wrap"><%- linkify(_msg) %></div>
         <% if (ticket.officeNotes && ticket.officeNotes.length) { %>
           <div style="margin-top:8px;padding:8px 10px;border-radius:10px;border:1px solid rgba(56,189,248,.45);background:rgba(56,189,248,.08)">
             <div style="font-weight:800;font-size:12px;color:#38bdf8;margin-bottom:4px"><i class="bi bi-info-circle-fill"></i> Información de la oficina</div>
-            <% ticket.officeNotes.forEach(function(n){ %><div style="font-size:13px;white-space:pre-wrap;margin-top:4px"><%= n.text %> <span class="muted" style="font-size:11px">— <%= String(n.created_at || '').slice(8,10) %>/<%= String(n.created_at || '').slice(5,7) %> <%= String(n.created_at || '').slice(11,16) %></span></div><% }) %>
+            <% ticket.officeNotes.forEach(function(n){ %><div style="font-size:13px;white-space:pre-wrap;margin-top:4px"><%- linkify(n.text) %> <span class="muted" style="font-size:11px">— <%= String(n.created_at || '').slice(8,10) %>/<%= String(n.created_at || '').slice(5,7) %> <%= String(n.created_at || '').slice(11,16) %></span></div><% }) %>
           </div>
         <% } %>
         <% if (ticket.customer_id && ['open','in_progress'].indexOf(ticket.status) !== -1) { %>

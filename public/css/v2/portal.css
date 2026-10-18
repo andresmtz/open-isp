@@ -172,3 +172,4 @@ html[data-ui="v2"] .leaflet-popup-content-wrapper{border-radius:16px}
 
 /* Ingreso de técnicos / cobradores / código: tarjeta centrada en la pantalla */
 html[data-ui="v2"] .otp-wrap{min-height:100vh;min-height:100dvh;align-items:center;padding:24px 16px}
+html[data-ui="v2"] .t-go{background:var(--v2p-ink)!important;color:var(--v2p-on-ink)!important}

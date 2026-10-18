@@ -120,6 +120,13 @@ function company() { return getSetting('company_header', 'ISP App'); }
 
 router.use((req, res, next) => {
   res.locals.session = req.session;
+  // Texto con enlaces: los links (por ejemplo la ubicación en Google Maps) se pueden tocar. Escapa el resto.
+  res.locals.linkify = (txt) => String(txt == null ? '' : txt)
+    .replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+    .replace(/https?:\/\/[^\s<]+/g, u => {
+      const isMap = /maps\.google|google\.[a-z.]+\/maps|goo\.gl\/maps|maps\.app\.goo\.gl/i.test(u);
+      return '<a href="' + u + '" target="_blank" rel="noopener" class="t-link">' + (isMap ? '<i class="bi bi-geo-alt-fill"></i> Abrir en Google Maps' : u) + '</a>';
+    });
   res.locals.settings = getSettings();
   res.locals.formatDateLocal = formatDateLocal;
   res.locals.formatTimeLocal = formatTimeLocal;

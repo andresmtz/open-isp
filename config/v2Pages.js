@@ -102,7 +102,7 @@ function simplePages(body, { brandName }) {
 /** Transforma una página HTML si corresponde. `locals`: res.locals (uiDesign, brandName, brandLogo). */
 function transform(body, locals) {
   if (typeof body !== 'string' || !locals || locals.uiDesign !== 'v2' || body.indexOf('</head>') === -1) return body;
-  if (body.indexOf('data-ui="v2"') !== -1 || body.indexOf('id="v2-portal"') !== -1 || body.indexOf('id="v2-simple"') !== -1) return body;
+  if (/<html[^>]*\sdata-ui="v2"/i.test(body) || body.indexOf('id="v2-portal"') !== -1 || body.indexOf('id="v2-simple"') !== -1) return body;
   try {
     if (body.indexOf('/css/landing.css') !== -1) return landingPages(body, locals);
     if (body.indexOf('tailwind.config') !== -1 && body.indexOf('--lime:#ADFF2F') !== -1) return customerPortal(body, locals);

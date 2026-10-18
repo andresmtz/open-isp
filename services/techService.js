@@ -21,7 +21,7 @@ function getTechStats(techId) {
 
 function getAssignedTickets(techId) {
   return db.prepare(`
-    SELECT t.*, c.name as customer_name, c.phone as customer_phone, c.address as customer_address 
+    SELECT t.*, c.name as customer_name, c.phone as customer_phone, c.address as customer_address, c.lat as customer_lat, c.lng as customer_lng
     FROM tickets t 
     JOIN customers c ON t.customer_id = c.id 
     WHERE t.technician_id = ? AND t.status != 'resolved'
@@ -32,7 +32,7 @@ function getAssignedTickets(techId) {
 function getOpenTickets() {
   require('./installationService').ensureSchema(); // columna tickets.kind
   return db.prepare(`
-    SELECT t.*, c.name as customer_name, c.phone as customer_phone, c.address as customer_address 
+    SELECT t.*, c.name as customer_name, c.phone as customer_phone, c.address as customer_address, c.lat as customer_lat, c.lng as customer_lng
     FROM tickets t 
     JOIN customers c ON t.customer_id = c.id 
     WHERE t.status = 'open' AND COALESCE(t.kind, '') != 'install'
@@ -42,7 +42,7 @@ function getOpenTickets() {
 
 function getResolvedTickets(techId) {
   return db.prepare(`
-    SELECT t.*, c.name as customer_name, c.phone as customer_phone, c.address as customer_address 
+    SELECT t.*, c.name as customer_name, c.phone as customer_phone, c.address as customer_address, c.lat as customer_lat, c.lng as customer_lng
     FROM tickets t 
     JOIN customers c ON t.customer_id = c.id 
     WHERE t.technician_id = ? AND t.status = 'resolved'

@@ -26,7 +26,7 @@
 
       <div class="ticket-msg">
         <div class="subj" style="color:var(--danger)"><%= ticket.subject %></div>
-        <div><%= ticket.message %></div>
+        <div style="white-space:pre-wrap"><%- linkify(ticket.message) %></div>
       </div>
 
       <form method="POST" action="/tech/tickets/<%= ticket.id %>/take">

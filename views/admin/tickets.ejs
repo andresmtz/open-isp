@@ -109,7 +109,11 @@
                 <% if (ticket.technician_name) { %>
                   <div class="fw6" style="font-size:12px"><i class="bi bi-person-badge me-1"></i><%= ticket.technician_name %></div>
                 <% } else { %>
+                  <% if (['open','in_progress'].indexOf(ticket.status) !== -1) { %>
+                    <button type="button" class="btn btn-sm btn-g" style="padding:3px 10px;font-size:12px" title="Elegir el técnico que atiende este reclamo" onclick="document.querySelector('.update-btn[data-id=&quot;<%= ticket.id %>&quot;]').click()"><i class="bi bi-person-plus"></i> Asignar técnico</button>
+                  <% } else { %>
                   <span class="text-muted small"><%= t('admin.tickets.no_technician', 'No existe') %></span>
+                  <% } %>
                 <% } %>
               </td>
               <td>
@@ -128,7 +132,7 @@
                       data-subject="<%= ticket.subject %>" data-customer="<%= ticket.customer_name %>"
                       data-notes="<%= ticket.technician_notes || '' %>" data-photos="<%= ticket.photos || '' %>"
                       data-customer-photos="<%= ticket.customer_photos || '' %>" data-tech-id="<%= ticket.technician_id || '' %>"
-                      data-tech="<%= ticket.technician_name || t('admin.tickets.no_technician', 'No existe') %>"><i class="bi bi-pencil"></i> Actualizar estado</button>
+                      data-tech="<%= ticket.technician_name || t('admin.tickets.no_technician', 'No existe') %>"><i class="bi bi-person-gear"></i> Asignar técnico / cambiar estado</button>
                     <% if ((ticket.photos && ticket.photos !== '' && ticket.photos !== '[]') || (ticket.customer_photos && ticket.customer_photos !== '' && ticket.customer_photos !== '[]')) { %>
                     <button class="btn act-item primary view-photos-btn" title="Ver foto"
                       data-id="<%= ticket.id %>" data-photos="<%= ticket.photos || '' %>"

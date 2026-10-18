@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Conversaciones | <%= company %></title>
-  <!-- Diseño nuevo (piloto). Fuera del tema anterior: no incluye /css/admin.css ni /js/service-notice-badge.js -->
+  <!-- Diseño nuevo: página con estilos propios. (Marca para que no se inyecte el aviso de estado anterior: /js/service-notice-badge.js) -->
   <script>
     // Tema antes de pintar (misma preferencia que el resto del panel: localStorage "app-theme")
     (function(){ try { var t = localStorage.getItem('app-theme'); if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', t); } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); } })();
@@ -106,7 +106,7 @@
     .av{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;letter-spacing:.02em;position:relative;overflow:hidden}.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
     .av.cust{background:#d8e6dc;color:#2f5c50}.av.lead{background:#f6e7b4;color:#7a5d0a}.av.int{background:var(--well);color:var(--muted)}.av.hot{background:#f4cdbd;color:#a3361a}
     [data-theme="dark"] .av.cust{background:rgba(108,197,154,.18);color:#9fdcbd}[data-theme="dark"] .av.lead{background:rgba(242,201,76,.18);color:#f2d47a}[data-theme="dark"] .av.hot{background:rgba(216,83,45,.22);color:#f3a588}
-    .bd{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+    .cvb{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
     .cv-item .t{display:flex;justify-content:space-between;gap:6px;font-weight:700;font-size:14px}
     .cv-item .t span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .cv-item .t span:last-child{font-weight:600;font-size:11.5px;color:var(--faint);white-space:nowrap}
@@ -459,7 +459,7 @@
       el.innerHTML = items.map(function(c){
         var pre = (c.last_sender && c.last_sender !== 'cliente' ? (SENDERS[c.last_sender] || '') + ': ' : '') + (c.last_preview || '');
         return '<div class="cv-item' + (c.id === sel ? ' on' : '') + '" data-id="' + c.id + '">' +
-          avHtml(c) + '<div class="bd">' +
+          avHtml(c) + '<div class="cvb">' +
           '<div class="t"><span><input type="checkbox" class="sel" data-id="' + c.id + '"' + (picked[c.id] ? ' checked' : '') + '>' + esc(title(c)) + '</span><span>' + esc(ago(c.last_message_at)) + '</span></div>' +
           '<div class="p">' + esc(pre) + '</div><div class="b">' + chips(c) + '</div>' +
           (filter === 'ventas' && c.org && ['parciales', 'listo', 'requisitos'].indexOf(c.org.stage) !== -1 ? '<div class="cv-chk">' + checkLine(c.org) + '</div>' : '') + '</div></div>';

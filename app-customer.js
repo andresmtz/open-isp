@@ -2108,7 +2108,7 @@ app.use('/admin', (req, res, next) => {
         body = body.replace('</head>', '  <link rel="stylesheet" href="/css/admin-theme.css?v=8">\n  <script src="/js/admin-theme-sync.js?v=7"></script>\n  <script src="/js/admin-sw-cleanup.js" defer></script>\n  <script src="/js/admin-toast.js?v=5"></script>\n  <script src="/js/admin-search.js?v=2"></script>\n</head>');
         // Diseño nuevo (v2): hojas de estilo encima del tema anterior y marca en <html> (sin parpadeo)
         if (res.locals.uiDesign === 'v2') {
-          body = body.replace('</head>', '  <link rel="stylesheet" href="/css/v2/shell.css?v=2">\n  <link rel="stylesheet" href="/css/v2/app.css?v=2">\n</head>');
+          body = body.replace('</head>', '  <link rel="stylesheet" href="/css/v2/shell.css?v=2">\n  <link rel="stylesheet" href="/css/v2/app.css?v=3">\n</head>');
           body = body.replace(/<html(\s|>)/i, (m, c) => '<html data-ui="v2"' + c);
         }
       }

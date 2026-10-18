@@ -72,6 +72,7 @@ html[data-ui="v2"]:not(#v2) .sc-label{text-transform:none!important;letter-spaci
 html[data-ui="v2"]:not(#v2) .sc-val{font-size:28px!important;font-weight:700!important;letter-spacing:-.02em;color:var(--v2-text)!important}
 html[data-ui="v2"]:not(#v2) .sc.p{background:var(--v2-ink)!important;border-color:transparent!important}
 html[data-ui="v2"]:not(#v2) .sc.p .sc-val,html[data-ui="v2"]:not(#v2) .sc.p .sc-label,html[data-ui="v2"]:not(#v2) .sc.p .sc-sub{color:var(--v2-on-ink)!important}
+html[data-ui="v2"]:not(#v2) .sc.p :is(b,strong,small,span){color:inherit!important}
 html[data-ui="v2"]:not(#v2) .sc.p .sc-icon{background:rgba(255,255,255,.14);color:var(--v2-on-ink)!important}
 html[data-ui="v2"]:not(#v2) .sc.s .sc-icon{background:rgba(47,92,80,.16);color:var(--v2-pine)!important}
 html[data-ui="v2"]:not(#v2) .sc.w .sc-icon{background:rgba(242,201,76,.32);color:#7a5d0a!important}

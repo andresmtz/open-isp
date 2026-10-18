@@ -805,7 +805,7 @@ async function loadDevices() {
     }
 
     // Update offline list on dashboard
-    renderOfflineList(devicesData.filter(d => d.status === 'offline').slice(0, 5));
+    renderOfflineList(devicesData.filter(d => d.status === 'offline').sort((a, b) => offlineSince(b) - offlineSince(a)).slice(0, 5));
     // AUTO-REFRESH DISABLED: scheduleFastRefreshIfNeeded() is intentionally removed
     // Dashboard will not auto-refresh during sync operations
 
@@ -817,6 +817,14 @@ async function loadDevices() {
 }
 
 // ── OFFLINE LIST (dashboard) ───────────────────────────────────
+// Cuándo se desconectó: último aviso TR-069, o la hora de desconexión que informa la OLT ("… (2026/10/18 12:58:31)").
+// Sin dato: 0 (van al final). La lista se ordena de la más reciente a la más antigua.
+function offlineSince(d) {
+  let t = d.lastInform ? new Date(d.lastInform).getTime() : 0;
+  const m = /\((\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2}):(\d{2})\)/.exec(d.note || '');
+  if (m) { const o = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime(); if (!isNaN(o) && o > t) t = o; }
+  return isNaN(t) ? 0 : t;
+}
 function renderOfflineList(offlineDevices) {
   const el = document.getElementById('offline-list');
   if (!el) return;
@@ -825,7 +833,7 @@ function renderOfflineList(offlineDevices) {
     return;
   }
   el.innerHTML = offlineDevices.map(d => {
-    const ago = d.lastInform ? timeSince(new Date(d.lastInform)) : I18N.never;
+    const since = offlineSince(d), ago = since ? timeSince(new Date(since)) : I18N.never;
     return `<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
       <div>
         <div style="font-size:13px;font-weight:600">${escHtml((d.pppoeUsername && d.pppoeUsername !== 'N/A' && d.pppoeUsername !== '-') ? d.pppoeUsername : (d.tags.join(', ') || '-'))}</div>

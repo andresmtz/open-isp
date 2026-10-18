@@ -4583,7 +4583,8 @@ router.post('/tickets/quick', requireAdminSession, express.json(), async (req, r
 router.get('/outages', requireAdminSession, (req, res) => {
   const outSvc = require('../services/outageService');
   let mass = []; try { mass = require('../services/massOutageService').list({ limit: 10 }); } catch (_) {}
-  res.render('admin/outages', { mass,
+  let signal = { recent: [], next: [] }; try { const sw = require('../services/signalWatchService'); signal = { recent: sw.recent(10), next: sw.candidates() }; } catch (_) {}
+  res.render('admin/outages', { mass, signal,
     title: 'Equipos caídos', company: company(), activePage: 'outages', isAdmin: !!req.session.isAdmin,
     rows: outSvc.list({ all: req.query.all === '1' }), all: req.query.all === '1', cfg: outSvc.settings(), msg: flashMsg(req),
   });

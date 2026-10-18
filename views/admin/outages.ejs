@@ -57,6 +57,23 @@
       </div>
     </div>
 
+    <%# Aviso preventivo de señal (services/signalWatchService.js) %>
+    <div class="card mb16">
+      <div class="card-hd"><h6><i class="bi bi-graph-down-arrow"></i> Aviso preventivo de señal</h6></div>
+      <div class="card-bd" style="font-size:13px">
+        <div class="text-muted" style="margin-bottom:8px">Una vez por día se revisa el historial de potencia de los clientes con servicio. Si la señal viene bajando, ya está en nivel malo o el equipo se cae y vuelve seguido, se abre un reclamo preventivo para el técnico (hasta 3 por día) y llega un resumen por WhatsApp. Al cliente no se le escribe.</div>
+        <% const nextList = (signal.next || []); %>
+        <% if (nextList.length) { %>
+          <div style="margin-bottom:8px"><b>Para revisar:</b>
+            <% nextList.forEach(x => { %><div style="padding:4px 0;border-top:1px solid var(--border)"><a href="/admin/customers/<%= x.customer.id %>/ficha"><%= x.customer.name %></a> — <%= x.analysis.text %> <% if (x.skip) { %><span class="text-muted">(no se avisa: <%= x.skip %>)</span><% } %></div><% }) %>
+          </div>
+        <% } else { %><div><i class="bi bi-check-circle" style="color:var(--success)"></i> Ningún cliente con servicio tiene la señal en problemas.</div><% } %>
+        <% if ((signal.recent || []).length) { %>
+          <div class="text-muted" style="font-size:12px;margin-top:6px"><b>Avisos recientes:</b> <%= signal.recent.map(r => (r.name || '#' + r.customer_id) + ' (#' + r.ticket_id + ', ' + String(r.created_at || '').slice(8, 10) + '/' + String(r.created_at || '').slice(5, 7) + ')').join(' · ') %></div>
+        <% } %>
+      </div>
+    </div>
+
     <div class="alert alert-s" style="font-size:13px">
       <i class="bi bi-info-circle"></i>
       Cuando la ONU de un cliente <b>activo y al día</b> está apagada más de <b><%= cfg.outage_query_hours %> h</b> y no tiene asistencia abierta, se le pregunta por WhatsApp qué ve en el equipo.

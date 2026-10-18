@@ -96,7 +96,10 @@ function analyze(customerId, { until = null, days = 7 } = {}) {
   for (let i = 1; i < recent.length; i++) if (recent[i - 1].online && !recent[i].online) flaps++;
   const out = { base, last, min, flaps, samples: h.length };
   if (last <= bad || (base != null && base - last >= 2)) {
-    return { ...out, kind: 'degradacion', text: `La señal venía bajando: de ${fmt(base)} a ${fmt(last)} dBm${last <= bad ? ' (ya en nivel malo)' : ''}. Probable problema de fibra, conector o empalme: conviene que pase el técnico.` };
+    const dropping = base != null && base - last >= 1;
+    return { ...out, kind: 'degradacion', text: dropping
+      ? `La señal venía bajando: de ${fmt(base)} a ${fmt(last)} dBm${last <= bad ? ' (ya en nivel malo)' : ''}. Probable problema de fibra, conector o empalme: conviene que pase el técnico.`
+      : `La señal está en nivel malo (${fmt(last)} dBm; lo aceptable es ${fmt(bad)} o mejor). Puede cortarse en cualquier momento: revisar conectores, roseta y empalmes.` };
   }
   if (flaps >= 3) {
     return { ...out, kind: 'inestable', text: `El equipo se cayó y volvió ${flaps} veces en las últimas 48 h con señal ${fmt(last)} dBm. Puede ser energía inestable, un conector flojo o la ONU fallando.` };

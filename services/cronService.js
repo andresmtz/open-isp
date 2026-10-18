@@ -430,6 +430,10 @@ function startCronJobs() {
     // Historial de potencia de las ONU (services/onuPowerHistoryService.js): toma la muestra cuando pasa el intervalo
     try { await require('./onuPowerHistoryService').sample(); } catch (e) { logger.warn('[Potencia] historial: ' + e.message); }
   });
+  cron.schedule('*/20 * * * *', async () => {
+    // Aviso preventivo de señal: una vez por día, reclamo para el técnico si la señal viene bajando (services/signalWatchService.js)
+    try { await require('./signalWatchService').run(); } catch (e) { logger.warn('[Señal] ' + e.message); }
+  });
   cron.schedule('*/3 * * * *', async () => {
     // Caídas masivas: varias ONU del mismo puerto PON apagadas a la vez (services/massOutageService.js)
     try { await require('./massOutageService').scan(); } catch (e) { logger.warn('[Caída masiva] ' + e.message); }

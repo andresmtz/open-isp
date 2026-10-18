@@ -8,7 +8,7 @@ Esta guía explica cómo están armadas las copias de seguridad de Faster y qué
 |---|---|---|---|
 | Todas las VM y contenedores del Proxmox de Faster (10.255.0.2): open-isp, MikroTik CHR, cloudflared, Uptime Kuma, AdGuard, homelable y MikroDash | Proxmox Backup Server en **Genesis** (10.10.1.94:8007), almacén `faster` | 02:00, 08:00, 14:00 y 20:00 | las últimas 8 copias, 14 diarias, 8 semanales y 6 mensuales |
 | Datos del sistema: base de datos (copia en caliente), documentos, fotos, comprobantes, ajustes y sesión de WhatsApp | mismo almacén, grupo `host/openisp-datos` | cada hora, en el minuto 17 | igual que la fila anterior |
-| **VM de reserva 908 `open-isp-reserva`** | Genesis, con IP fija **192.168.218.208** (reserva DHCP en `/etc/dnsmasq.d/genesis.conf`) | se actualiza a las 02:40, 08:40, 14:40 y 20:40 con la última copia | apagada y con la red desconectada |
+| **VM de reserva 908 `open-isp-reserva`** | Genesis, con IP fija **192.168.218.208** (reserva DHCP en `/etc/dnsmasq.d/genesis.conf`) | se actualiza a las 02:40, 08:40, 14:40 y 20:40 con la última copia | apagada y con la red desconectada; simulacro completo OK el 18/10/2026 |
 
 - Todas las copias van **cifradas**. Las claves están en el Proxmox de Faster (`/etc/pve/priv/storage/pbs-genesis.enc`), en la VM (`/root/.pbs/db.key`) y en Genesis, fuera del almacén de copias (`/root/claves-backup-faster/`).
   - **Guardá también una copia de esos dos archivos en un lugar seguro tuyo**, por ejemplo un gestor de contraseñas o un pendrive guardado. Sin ellos no se puede restaurar.
@@ -27,17 +27,16 @@ Esta guía explica cómo están armadas las copias de seguridad de Faster y qué
    faster-levantar-reserva.sh
    ```
    - Primero controla que el sistema de Faster **no** responda. Si responde, no hace nada, para no duplicar mensajes, cortes ni la sesión de WhatsApp.
-   - Después conecta la red, enciende la VM 908 y le carga los datos de la última copia horaria. Como mucho se pierde una hora.
-   - Al final muestra la IP de la reserva: siempre **`http://192.168.218.208:3001`**.
-2. Para que clientes y técnicos entren por la dirección de siempre, entrá a **Cloudflare Zero Trust → Networks → Tunnels**:
-   - pasá el nombre del sistema al **túnel de Genesis** (contenedor 100 `cloudflared`, IP 192.168.218.215), porque el de Faster no está;
-   - el servicio de destino es `http://192.168.218.208:3001`;
-   - el sistema ya confía en ese túnel (`trusted_proxies` incluye 192.168.218.215), así que ve bien la IP real de cada visitante.
-3. WhatsApp vuelve a conectarse con la sesión copiada. Si pide vincular de nuevo, escaneá el QR desde Sistema → WhatsApp.
-4. Alcance de la reserva desde Genesis:
-   - **llega** al MikroTik (10.255.0.1) y al Proxmox de Faster por la WireGuard, si el sitio de Faster sigue en pie;
-   - **llega a la OLT** (192.168.8.100) por el router de casa, que tiene una ruta /32 hacia el NOC (la red 192.168.8.x de casa es de otra OLT, la 192.168.8.200);
-   - si el sitio de Faster está caído, no llega a ninguno de los dos. Igual funcionan:
+   - Deja puesta la marca "reserva en uso" (`/var/lib/faster-reserva.activa` en Genesis). Si la VM de Faster vuelve a encenderse sola, por ejemplo cuando vuelve la luz, **no arranca el sistema** mientras exista esa marca.
+   - Conecta la red, enciende la VM 908 y quita las rutas fijas que trae copiadas de Faster (iban por 10.255.0.4, que en Genesis no existe).
+   - Le carga los datos de la última copia horaria (como mucho se pierde una hora), WhatsApp incluido.
+2. **Entrar por IP**, desde casa o la WireGuard: **`http://10.10.1.94:3001`**. Genesis redirige ese puerto a la reserva (192.168.218.208); la redirección se quita al volver.
+3. **Solo si hace falta que entren clientes y técnicos** por la dirección de siempre: en **Cloudflare Zero Trust → Networks → Tunnels**, pasá el nombre del sistema al **túnel de Genesis** (contenedor 100 `cloudflared`, IP 192.168.218.215), con destino `http://192.168.218.208:3001`.
+4. WhatsApp se conecta con la sesión copiada. Si pide vincular de nuevo, escaneá el QR desde Sistema → WhatsApp.
+5. Alcance de la reserva, si el sitio de Faster sigue en pie (probado el 18/10/2026):
+   - llega al MikroTik: la API acepta 10.10.1.94;
+   - llega a la OLT, por la ruta /32 del router de casa hacia el NOC.
+   Si el sitio de Faster está caído, no llega a ninguno de los dos, pero igual funcionan:
    - cobros;
    - portal de clientes;
    - conversaciones;
@@ -45,13 +44,20 @@ Esta guía explica cómo están armadas las copias de seguridad de Faster y qué
 
 ## Cuando vuelve Faster
 
-1. **Primero apagá la reserva** en Genesis:
+1. En **Genesis**:
    ```bash
-   qm shutdown 908
+   faster-volver-a-faster.sh
    ```
-2. Si mientras tanto se trabajó en la reserva (cobros, chats), llevá esos datos al sistema original **antes** de encenderlo. Pedí ayuda para hacer esa copia y no pisar nada.
-3. Encendé la VM 108 de Faster y volvé a apuntar el túnel de Cloudflare a 10.255.0.12:3001.
-4. Desconectá de nuevo la red de la reserva (en el script `faster-reserva-actualizar.sh`) y dejala apagada: se actualiza sola en la próxima copia.
+   Frena el sistema en la reserva, hace una copia final con todo lo que se trabajó ahí, la apaga, le desconecta la red y quita el acceso por IP.
+2. En la **VM de Faster** (10.255.0.12):
+   ```bash
+   faster-cargar-desde-reserva.sh
+   ```
+   - Guarda los datos que tenía en `/root/antes-de-volver-<fecha>/`.
+   - Carga la copia final de la reserva, con la base de datos y la sesión de WhatsApp para no tener que escanear el QR.
+   - Quita la marca de "reserva en uso" y arranca el sistema.
+3. Si habías cambiado Cloudflare, volvé a apuntarlo a `http://10.255.0.12:3001`.
+4. La reserva se actualiza sola en la próxima copia y queda apagada y desconectada.
 
 ## Restaurar una copia puntual
 

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Indicadores del negocio | <%= company %></title>
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .bz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:16px}
+    .bz-two{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+    @media (max-width:1100px){.bz-two{grid-template-columns:1fr}}
+    .bz-bars{display:flex;align-items:flex-end;gap:6px;height:180px;padding:10px 4px 0}
+    .bz-bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+    .bz-bar i{display:block;width:100%;max-width:34px;border-radius:8px 8px 4px 4px;background:var(--v2-pine,var(--success));min-height:3px}
+    .bz-bar.cur i{background:var(--v2-tomato,var(--danger))}
+    .bz-bar span{font-size:10.5px;color:var(--muted);margin-top:6px;white-space:nowrap}
+    .bz-bar b{font-size:10.5px;margin-bottom:4px;white-space:nowrap}
+    .bz-ab{display:flex;align-items:flex-end;gap:6px;height:120px;padding-top:8px}
+    .bz-ab .col{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:2px;height:100%}
+    .bz-ab .col i{display:block;width:40%;max-width:14px;border-radius:5px 5px 2px 2px;min-height:2px}
+    .bz-ab .up{background:var(--v2-pine,var(--success))}.bz-ab .dn{background:var(--v2-tomato,var(--danger))}
+    .bz-lbl{display:flex;gap:6px}.bz-lbl span{flex:1;text-align:center;font-size:10.5px;color:var(--muted)}
+    table.bz{width:100%;border-collapse:collapse;font-size:13px}
+    table.bz th{text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:8px 6px;border-bottom:1px solid var(--border)}
+    table.bz th:first-child,table.bz td:first-child{text-align:left}
+    table.bz td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--border);white-space:nowrap}
+    table.bz tr:last-child td{border-bottom:0;font-weight:700}
+    .bz-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+    .bz-row:last-child{border-bottom:0}
+    .bz-meter{height:6px;border-radius:6px;background:var(--border);overflow:hidden;margin-top:4px}
+    .bz-meter i{display:block;height:100%;background:var(--v2-tomato,var(--danger));border-radius:6px}
+    .bz-note{font-size:11.5px;color:var(--muted);margin-top:8px}
+  </style>
+</head>
+<body>
+<%- include('partials/sidebar', { activePage: 'business', company }) %>
+<div class="mw">
+  <div class="topbar">
+    <div class="tb-title"><button class="hb-menu" onclick="toggleSidebar()"><i class="bi bi-list"></i></button><i class="bi bi-graph-up-arrow"></i> Indicadores del negocio</div>
+  </div>
+  <div class="page">
+    <% const G = (n) => 'Gs. ' + Number(n || 0).toLocaleString('es-PY'); const t = s.totals; const last = s.rows[s.rows.length - 1];
+       const maxC = Math.max(1, ...s.rows.map(r => r.cobrado)), maxAB = Math.max(1, ...s.rows.map(r => Math.max(r.altas, r.bajas))); %>
+    <div class="bz-grid">
+      <div class="sc p"><i class="bi bi-people sc-icon"></i><div class="sc-label">Clientes con servicio</div><div class="sc-val"><%= t.activos %></div><div class="sc-sub">+<%= t.altas12 %> altas · −<%= t.bajas12 %> bajas en 12 meses</div></div>
+      <div class="sc"><i class="bi bi-cash-coin sc-icon"></i><div class="sc-label">Cobrado este mes</div><div class="sc-val" style="font-size:22px"><%= G(last.cobrado) %></div><div class="sc-sub"><%= last.pagos %> pagos · facturado <%= G(last.facturado) %></div></div>
+      <div class="sc"><i class="bi bi-person-badge sc-icon"></i><div class="sc-label">Ingreso promedio por cliente</div><div class="sc-val" style="font-size:22px"><%= G(t.arpu) %></div><div class="sc-sub">cobrado del mes ÷ clientes activos</div></div>
+      <div class="sc"><i class="bi bi-box-arrow-right sc-icon"></i><div class="sc-label">Bajas por mes (promedio)</div><div class="sc-val"><%= t.churnAvg %> %</div><div class="sc-sub">de los clientes activos, últimos 12 meses</div></div>
+      <div class="sc"><i class="bi bi-hourglass-split sc-icon"></i><div class="sc-label">Por cobrar</div><div class="sc-val" style="font-size:22px"><%= G(s.deuda.total) %></div><div class="sc-sub"><%= s.deuda.clientes %> clientes con deuda</div></div>
+    </div>
+
+    <div class="bz-two">
+      <div class="card" style="margin:0">
+        <div class="card-hd"><h6><i class="bi bi-bar-chart"></i> Cobrado por mes</h6></div>
+        <div class="card-bd">
+          <div class="bz-bars">
+            <% s.rows.forEach((r, i) => { %>
+              <div class="bz-bar<%= i === s.rows.length - 1 ? ' cur' : '' %>" title="<%= r.label %>: <%= G(r.cobrado) %> (<%= r.pagos %> pagos)">
+                <b><%= r.cobrado >= 1e6 ? (r.cobrado / 1e6).toFixed(1).replace('.', ',') + ' M' : Math.round(r.cobrado / 1000) + ' mil' %></b>
+                <i style="height:<%= Math.max(2, Math.round(100 * r.cobrado / maxC)) %>%"></i>
+                <span><%= r.label %></span>
+              </div>
+            <% }) %>
+          </div>
+          <div class="bz-note">El mes actual (en rojo) todavía está en curso.</div>
+        </div>
+      </div>
+      <div class="card" style="margin:0">
+        <div class="card-hd"><h6><i class="bi bi-arrow-down-up"></i> Altas y bajas</h6></div>
+        <div class="card-bd">
+          <div class="bz-ab">
+            <% s.rows.forEach(r => { %><div class="col" title="<%= r.label %>: +<%= r.altas %> / −<%= r.bajas %>"><i class="up" style="height:<%= Math.round(100 * r.altas / maxAB) %>%"></i><i class="dn" style="height:<%= Math.round(100 * r.bajas / maxAB) %>%"></i></div><% }) %>
+          </div>
+          <div class="bz-lbl"><% s.rows.forEach(r => { %><span><%= r.label.split(' ')[0] %></span><% }) %></div>
+          <div class="bz-note"><i class="bi bi-square-fill" style="color:var(--v2-pine,var(--success))"></i> altas &nbsp; <i class="bi bi-square-fill" style="color:var(--v2-tomato,var(--danger))"></i> bajas</div>
+          <h6 style="margin:16px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Motivos de baja (12 meses)</h6>
+          <% if (!s.motivos.length) { %><div class="text-muted" style="font-size:13px">Sin bajas en el período.</div><% } %>
+          <% s.motivos.forEach(m => { %><div class="bz-row"><span><%= m.motivo %></span><b><%= m.n %></b></div><% }) %>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-hd"><h6><i class="bi bi-table"></i> Mes a mes</h6></div>
+      <div class="card-bd" style="overflow-x:auto">
+        <table class="bz">
+          <tr><th>Mes</th><th>Activos</th><th>Altas</th><th>Bajas</th><th>% bajas</th><th>Facturado</th><th>Cobrado</th><th>Pendiente del mes</th><th>Ingreso por cliente</th></tr>
+          <% s.rows.slice().reverse().forEach(r => { %>
+            <tr style="font-weight:400"><td><%= r.label %></td><td><%= r.activos %></td><td><%= r.altas ? '+' + r.altas : '–' %></td><td><%= r.bajas ? '−' + r.bajas : '–' %></td><td><%= r.churn ? r.churn + ' %' : '–' %></td><td><%= G(r.facturado) %></td><td><%= G(r.cobrado) %></td><td><%= r.pendiente ? G(r.pendiente) : '–' %></td><td><%= r.arpu ? G(r.arpu) : '–' %></td></tr>
+          <% }) %>
+          <tr><td>12 meses</td><td><%= t.activos %></td><td>+<%= t.altas12 %></td><td>−<%= t.bajas12 %></td><td><%= t.churnAvg %> %</td><td></td><td><%= G(t.cobrado12) %></td><td></td><td></td></tr>
+        </table>
+        <div class="bz-note">"Cobrado" cuenta las facturas pagadas en ese mes, aunque sean de meses anteriores. "Facturado" y "Pendiente" son las facturas de ese período.</div>
+      </div>
+    </div>
+
+    <div class="bz-two" style="margin-top:16px">
+      <div class="card" style="margin:0">
+        <div class="card-hd"><h6><i class="bi bi-geo"></i> Reclamos por zona (90 días)</h6></div>
+        <div class="card-bd">
+          <% const maxZ = Math.max(1, ...s.zonas.map(z => z.reclamos)); %>
+          <% if (!s.zonas.length) { %><div class="text-muted" style="font-size:13px">Sin reclamos en los últimos 90 días.</div><% } %>
+          <% s.zonas.forEach(z => { %>
+            <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+              <div style="display:flex;justify-content:space-between;font-size:13px"><b><%= z.zona %></b><span><%= z.reclamos %> reclamo<%= z.reclamos > 1 ? 's' : '' %> · <%= z.clientes %> cliente<%= z.clientes > 1 ? 's' : '' %><%= z.equipos ? ' de ' + z.equipos : '' %></span></div>
+              <div class="bz-meter"><i style="width:<%= Math.round(100 * z.reclamos / maxZ) %>%"></i></div>
+            </div>
+          <% }) %>
+          <div class="bz-note">La zona es el puerto de la OLT. Cuando se carguen las cajas NAP se puede ver por caja.</div>
+          <% if (s.topClientes.length) { %>
+            <h6 style="margin:16px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Clientes con más reclamos</h6>
+            <% s.topClientes.forEach(c => { %><div class="bz-row"><a href="/admin/customers/<%= c.id %>/ficha"><%= c.name %></a><b><%= c.n %></b></div><% }) %>
+          <% } %>
+        </div>
+      </div>
+      <div class="card" style="margin:0">
+        <div class="card-hd"><h6><i class="bi bi-calendar-week"></i> Cobranza</h6></div>
+        <div class="card-bd">
+          <% const EST = { active: 'Activos con deuda', suspended: 'Cortados', ditangguhkan: 'Con promesa de pago' }; %>
+          <% s.porEstado.forEach(e => { %><div class="bz-row"><span><%= EST[e.status] || e.status %> (<%= e.clientes %>)</span><b><%= G(e.total) %></b></div><% }) %>
+          <h6 style="margin:16px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Promesas que vencen en 7 días</h6>
+          <% if (!s.promesas.length) { %><div class="text-muted" style="font-size:13px">Ninguna.</div><% } %>
+          <% s.promesas.forEach(p => { %><div class="bz-row"><span><a href="/admin/customers/<%= p.id %>/ficha"><%= p.name %></a> <span class="text-muted">· hasta <%= p.hasta.split('-').reverse().join('/') %></span></span><b><%= G(p.deuda) %></b></div><% }) %>
+          <% if (s.promesas.length) { %><div class="bz-row"><span>Esperado esta semana</span><b><%= G(s.promesas.reduce((a, p) => a + p.deuda, 0)) %></b></div><% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

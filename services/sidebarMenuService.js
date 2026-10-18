@@ -54,7 +54,8 @@ const MENU_DEFINITIONS = [
     { key: 'collector_payments', section: 'billing', href: '/admin/collector-payments', icon: 'bi bi-check2-square', labelKey: 'admin.nav.collector_payments', labelDefault: 'Aprobación de cobradores', roles: ['admin', 'cashier'], activePages: ['collector_payments'] }
   ] },
 
-  { key: 'grp_finance', section: 'finance', href: '/admin/reports', icon: 'bi bi-cash-stack', labelKey: 'admin.nav.grp_finance', labelDefault: 'Finanzas', roles: ['admin', 'cashier'], activePages: ['reports', 'account_collections', 'cashiers_reports', 'payroll', 'cash_in', 'expenses', 'expense_categories'], children: [
+  { key: 'grp_finance', section: 'finance', href: '/admin/reports', icon: 'bi bi-cash-stack', labelKey: 'admin.nav.grp_finance', labelDefault: 'Finanzas', roles: ['admin', 'cashier'], activePages: ['business', 'reports', 'account_collections', 'cashiers_reports', 'payroll', 'cash_in', 'expenses', 'expense_categories'], children: [
+    { key: 'business', section: 'finance', href: '/admin/negocio', icon: 'bi bi-graph-up-arrow', labelKey: 'admin.nav.business', labelDefault: 'Indicadores del negocio', roles: ['admin'], activePages: ['business'] },
     { key: 'reports', section: 'finance', href: '/admin/reports', icon: 'bi bi-bar-chart-line', labelKey: 'admin.nav.finance_report', labelDefault: 'Reporte financiero', roles: ['admin', 'cashier'], activePages: ['reports'] },
     { key: 'account_collections', section: 'finance', href: '/admin/finance/by-account', icon: 'bi bi-bank', labelKey: 'admin.nav.account_collections', labelDefault: 'Cobros por cuenta', roles: ['admin'], activePages: ['account_collections'] },
     { key: 'cashiers_reports', section: 'finance', href: '/admin/cashiers/reports', icon: 'bi bi-journal-text', labelKey: 'admin.nav.cashiers_reports', labelDefault: 'Reporte de cajeros', roles: ['admin', 'cashier'], activePages: ['cashiers_reports'] },

@@ -4589,6 +4589,12 @@ router.get('/outages', requireAdminSession, (req, res) => {
     rows: outSvc.list({ all: req.query.all === '1' }), all: req.query.all === '1', cfg: outSvc.settings(), msg: flashMsg(req),
   });
 });
+// Indicadores del negocio: solo el administrador (la oficina no ve ingresos ni lo que falta cobrar)
+router.get('/negocio', requireAdminSession, restrictToAdmin, (req, res) => {
+  try {
+    res.render('admin/business', { title: 'Indicadores del negocio', company: company(), activePage: 'business', s: require('../services/businessService').stats() });
+  } catch (e) { logger.error('[Negocio] ' + e.message); res.status(500).send('Error: ' + e.message); }
+});
 // Caídas masivas (services/massOutageService.js)
 router.post('/outages/mass/:id/:action', requireAdminSession, async (req, res) => {
   const ms = require('../services/massOutageService');

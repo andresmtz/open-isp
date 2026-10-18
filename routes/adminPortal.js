@@ -3136,7 +3136,7 @@ router.get('/conversations/media/:id', requireAdminSession, async (req, res) => 
   } catch (e) { res.status(404).send('Archivo no disponible: ' + e.message); }
 });
 router.post('/conversations/:id/org', requireAdminSession, express.json(), express.urlencoded({ extended: true }), (req, res) => {
-  try { convOrg.setOrg(Number(req.params.id), req.body || {}); res.json({ ok: true }); }
+  try { convOrg.setOrg(Number(req.params.id), Object.assign({}, req.body || {}, { _by: convActor(req) })); res.json({ ok: true }); }
   catch (e) { res.json({ ok: false, message: e.message }); }
 });
 // Cliente ya registrado: guardar en su ficha la foto (cédula / casa) o la ubicación que mandó por el chat

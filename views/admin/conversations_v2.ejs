@@ -366,6 +366,21 @@
     .lt i{font-size:10px;margin-right:2px}
     .cv-item .lt{color:var(--muted);opacity:1;margin-top:2px}
 
+
+    /* Mover tarjetas */
+    .tile[draggable="true"]{cursor:grab}
+    .tile.dragging{opacity:.45;transform:scale(.97)}
+    .board.is-dragging [data-drop]{transition:box-shadow .15s,background .15s}
+    .board.is-dragging [data-drop].drop-on{box-shadow:0 0 0 3px var(--ink) inset;background:var(--glass-2)}
+    .board.is-dragging .bcol:not(.drop-on) .bcards{opacity:.85}
+    .tile .dots{cursor:pointer;opacity:.75}
+    .tile .dots:hover{opacity:1;background:rgba(255,255,255,.15)}
+    .mv-menu{position:fixed;z-index:200;width:220px;background:var(--float);color:var(--text);border-radius:18px;box-shadow:var(--shadow-pop);padding:6px;font-size:13px}
+    .mv-menu .mv-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:6px 10px 4px}
+    .mv-menu button{display:flex;gap:8px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:9px 10px;border-radius:12px;cursor:pointer;font:inherit;color:inherit}
+    .mv-menu button:hover{background:var(--well)}
+    .mv-menu .mv-sep{height:1px;background:var(--line);margin:4px 6px}
+
     /* Tablero */
     .bfil{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
     .bfil .search{width:min(300px,100%);height:40px}
@@ -1232,13 +1247,16 @@
     var ch = '';
     if (c.unread > 0) ch += '<span class="u">' + c.unread + ' sin leer</span>';
     if (o.inbox === 'por_atender' && o.category && CAT[o.category]) ch += '<span title="Su clasificación: pasa a esa columna al responderlo">' + CAT[o.category] + '</span>';
+    if (o.pinned) ch += '<span title="Columna elegida a mano' + (o.pinBy ? ' por ' + esc(o.pinBy) : '') + '">📌 A mano</span>';
+    if (o.unlinked) ch += '<span title="Escribe por un pago o una falla pero no está vinculado a un cliente: abrí el chat y vinculalo">¿Cliente sin vincular?</span>';
+    if (o.reconnect) ch += '<span>Reconexión</span>';
     if (o.nearClose && !isInt) ch += '<span>🔥 A punto de cerrar</span>';
     if (o.lead && !isInt && ['parciales', 'listo', 'requisitos'].indexOf(o.stage) !== -1) ch += '<span>' + Object.keys(CHK).filter(function(k){ return o.check[k] && o.check[k].ok; }).length + '/4 requisitos</span>';
     if (o.suggest && o.suggest.length && !isInt) ch += '<span>¿Cliente? ' + esc(o.suggest[0].name) + '</span>';
     if (c.assigned_to) ch += '<span><i class="bi bi-person"></i> ' + esc(c.assigned_to) + '</span>';
     String(c.labels || '').split(',').map(function(x){ return x.trim(); }).filter(Boolean).slice(0, 2).forEach(function(l){ ch += '<span>' + esc(l) + '</span>'; });
-    return '<button class="tile ' + cls + (c.unread > 0 ? ' unr' : '') + '" onclick="goConv(' + c.id + ',\'' + (inbox || o.inbox || '') + '\')" title="Abrir el chat">' +
-      '<div class="tt">' + top + '<span class="dots"><i class="bi bi-chat-dots"></i></span></div>' +
+    return '<button class="tile ' + cls + (c.unread > 0 ? ' unr' : '') + '" draggable="true" data-id="' + c.id + '" data-inbox="' + esc(inbox || o.inbox || '') + '" data-pinned="' + (o.pinned ? 1 : 0) + '" title="Abrir el chat · arrastrala para cambiarla de columna">' +
+      '<div class="tt">' + top + '<span class="dots" data-move="1" title="Mover a…"><i class="bi bi-three-dots"></i></span></div>' +
       '<div class="nm">' + esc(title(c)) + '</div><div class="sb">' + esc(sub) + '</div>' +
       '<div class="pv">' + esc(pre) + '</div>' + timesLine(c) +
       '<div class="ft"><div class="tchips">' + ch + '</div>' + avHtml(c) + '</div></button>';
@@ -1256,19 +1274,74 @@
       el.innerHTML = COLS.map(function(col){
         var items = d.cols[col.k] || [];
         var x = col.k === 'ventas' && n.cerca ? '🔥 ' + n.cerca : '';
-        return '<div class="card bcol"><div class="bh"><i class="d" style="background:' + col.d + '"></i>' + col.t + ' <span class="n">' + (n[col.k] || 0) + '</span>' + unreadBadge(n, col.k) + '<span class="x">' + x + '</span>' +
+        return '<div class="card bcol" data-drop="' + col.k + '"><div class="bh"><i class="d" style="background:' + col.d + '"></i>' + col.t + ' <span class="n">' + (n[col.k] || 0) + '</span>' + unreadBadge(n, col.k) + '<span class="x">' + x + '</span>' +
           '<button class="cbtn" style="width:30px;height:30px;font-size:12px" title="Abrir en la bandeja" onclick="openInbox(\'' + col.k + '\')"><i class="bi bi-arrow-up-right"></i></button></div>' +
           '<div class="bcards" data-k="' + col.k + '">' + (items.length ? items.map(function(c){ return tile(c, col.c, col.k); }).join('') + ((n[col.k] || 0) > items.length ? '<button class="pchip" onclick="openInbox(\'' + col.k + '\')">Ver las ' + n[col.k] + ' en la bandeja</button>' : '') : '<div class="empty2">' + (bq || bm ? 'Sin resultados' : 'Nada pendiente 🎉') + '</div>') + '</div></div>';
       }).join('') +
       '<div class="bside">' +
-        '<div class="card" onclick="openInbox(\'archivo\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-archive"></i></span><b>Archivo</b><small>' + fmtN(n.archivo) + ' chats</small>' + unreadBadge(n, 'archivo') + '</div>' +
+        '<div class="card" data-drop="archivo" onclick="openInbox(\'archivo\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-archive"></i></span><b>Archivo</b><small>' + fmtN(n.archivo) + ' chats</small>' + unreadBadge(n, 'archivo') + '</div>' +
         '<div class="card" onclick="openInbox(\'avisos\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-megaphone"></i></span><b>Avisos</b><small>' + fmtN(n.avisos) + ' enviados</small>' + unreadBadge(n, 'avisos') + '</div>' +
-        '<div class="card" onclick="openInbox(\'internas\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-people"></i></span><b>Internas</b><small>' + fmtN(n.internas) + ' chats</small>' + unreadBadge(n, 'internas') + '</div>' +
-        (IS_ADMIN ? '<div class="card" onclick="openInbox(\'ocultas\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-eye-slash"></i></span><b>Ocultas</b><small>' + fmtN(n.ocultas) + ' chats</small>' + unreadBadge(n, 'ocultas') + '</div>' : '') +
+        '<div class="card" data-drop="internas" onclick="openInbox(\'internas\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-people"></i></span><b>Internas</b><small>' + fmtN(n.internas) + ' chats</small>' + unreadBadge(n, 'internas') + '</div>' +
+        (IS_ADMIN ? '<div class="card" data-drop="ocultas" onclick="openInbox(\'ocultas\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-eye-slash"></i></span><b>Ocultas</b><small>' + fmtN(n.ocultas) + ' chats</small>' + unreadBadge(n, 'ocultas') + '</div>' : '') +
       '</div>';
       el.querySelectorAll('.bcards').forEach(function(x){ if (keep[x.dataset.k]) x.scrollTop = keep[x.dataset.k]; });
     });
   }
+
+  // ── Mover tarjetas: arrastrando (computadora) o con "Mover a…" (celular) ──
+  var MOVE_TO = { ventas: 'Ventas', soporte: 'Soporte técnico', pagos: 'Pagos y cobranza', clientes: 'Clientes', archivo: 'Archivo', internas: 'Internas', ocultas: 'Ocultas' };
+  function moveConv(id, to, fromPinned){
+    if (to === 'por_atender') { toast('"Por atender" es automática: entra ahí todo lo que espera respuesta.', true); return; }
+    var done = function(d, msg){ if (!d.ok) return toast(d.message || 'No se pudo mover', true); toast(msg); loadBoard(); if (view === 'resumen') loadHot && loadHot(); };
+    if (['ventas', 'soporte', 'pagos', 'clientes'].indexOf(to) !== -1) return api('/admin/conversations/' + id + '/org', { inbox_pin: to }).then(function(d){ done(d, 'Movida a ' + MOVE_TO[to] + ' 📌'); });
+    if (to === 'auto') return api('/admin/conversations/' + id + '/org', { inbox_pin: '' }).then(function(d){ done(d, 'Vuelve a la clasificación automática'); });
+    if (to === 'archivo') return api('/admin/conversations/' + id + '/state', { state: 'closed' }).then(function(d){ done(d, 'Archivada (vuelve sola si el contacto escribe)'); });
+    if (to === 'internas') return api('/admin/conversations/' + id + '/org', { internal: 1, inbox_pin: '' }).then(function(d){ done(d, 'Marcada como chat interno'); });
+    if (to === 'ocultas') {
+      var keys = Object.keys(IGN), r = prompt('¿Por qué se oculta? Escribí el número:\n' + keys.map(function(k, i){ return (i + 1) + ') ' + IGN[k]; }).join('\n') + '\n\nLo que mande ese número ya no se va a guardar.', '1');
+      var k = keys[Number(r) - 1]; if (!k) return;
+      return api('/admin/conversations/bulk', { ids: [id], action: 'ignore', reason: k }).then(function(d){ done(d, 'Oculta: ' + IGN[k]); });
+    }
+  }
+  var dragId = 0;
+  var boardEl = document.getElementById('board');
+  boardEl.addEventListener('dragstart', function(e){ var t = e.target.closest && e.target.closest('.tile[data-id]'); if (!t) return; dragId = Number(t.dataset.id); t.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(dragId)); } catch (_) {} boardEl.classList.add('is-dragging'); });
+  boardEl.addEventListener('dragend', function(e){ var t = e.target.closest && e.target.closest('.tile'); if (t) t.classList.remove('dragging'); boardEl.classList.remove('is-dragging'); boardEl.querySelectorAll('.drop-on').forEach(function(x){ x.classList.remove('drop-on'); }); });
+  boardEl.addEventListener('dragover', function(e){ var z = e.target.closest && e.target.closest('[data-drop]'); if (!z || !dragId) return; e.preventDefault(); boardEl.querySelectorAll('.drop-on').forEach(function(x){ if (x !== z) x.classList.remove('drop-on'); }); z.classList.add('drop-on'); });
+  boardEl.addEventListener('dragleave', function(e){ var z = e.target.closest && e.target.closest('[data-drop]'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('drop-on'); });
+  boardEl.addEventListener('drop', function(e){
+    var z = e.target.closest && e.target.closest('[data-drop]'); if (!z || !dragId) return; e.preventDefault();
+    var id = dragId; dragId = 0; z.classList.remove('drop-on');
+    var tile = boardEl.querySelector('.tile[data-id="' + id + '"]');
+    if (tile && tile.dataset.inbox === z.dataset.drop) return;
+    moveConv(id, z.dataset.drop);
+  });
+  // Clic en la tarjeta: abre el chat; en "…": menú para moverla
+  var mvMenu = document.createElement('div'); mvMenu.className = 'mv-menu'; mvMenu.hidden = true; document.body.appendChild(mvMenu);
+  function openMoveMenu(tile, anchor){
+    var id = Number(tile.dataset.id), cur = tile.dataset.inbox;
+    mvMenu.innerHTML = '<div class="mv-h">Mover a…</div>' + ['ventas', 'soporte', 'pagos', 'clientes'].filter(function(k){ return k !== cur; }).map(function(k){ return '<button data-to="' + k + '">' + MOVE_TO[k] + '</button>'; }).join('') +
+      '<div class="mv-sep"></div><button data-to="archivo"><i class="bi bi-archive"></i> Archivar</button><button data-to="internas"><i class="bi bi-people"></i> Chat interno</button>' + (IS_ADMIN ? '<button data-to="ocultas"><i class="bi bi-eye-slash"></i> Ocultar…</button>' : '') +
+      (tile.dataset.pinned === '1' ? '<div class="mv-sep"></div><button data-to="auto"><i class="bi bi-magic"></i> Volver a automático</button>' : '') +
+      '<div class="mv-sep"></div><button data-to="open"><i class="bi bi-chat-dots"></i> Abrir el chat</button>';
+    mvMenu.dataset.id = id; mvMenu.dataset.inbox = cur; mvMenu.hidden = false;
+    var r = anchor.getBoundingClientRect(), w = 220;
+    mvMenu.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w)) + 'px';
+    mvMenu.style.top = Math.min(window.innerHeight - mvMenu.offsetHeight - 8, r.bottom + 6) + 'px';
+  }
+  mvMenu.addEventListener('click', function(e){
+    var b = e.target.closest('button[data-to]'); if (!b) return;
+    var id = Number(mvMenu.dataset.id); mvMenu.hidden = true;
+    if (b.dataset.to === 'open') return goConv(id, mvMenu.dataset.inbox);
+    moveConv(id, b.dataset.to);
+  });
+  document.addEventListener('click', function(e){ if (!mvMenu.hidden && !e.target.closest('.mv-menu') && !e.target.closest('[data-move]')) mvMenu.hidden = true; });
+  boardEl.addEventListener('click', function(e){
+    var t = e.target.closest('.tile[data-id]'); if (!t) return;
+    var mv = e.target.closest('[data-move]');
+    if (mv) { e.preventDefault(); e.stopPropagation(); openMoveMenu(t, mv); return; }
+    goConv(Number(t.dataset.id), t.dataset.inbox);
+  });
   var bt; document.getElementById('bdQ').addEventListener('input', function(e){ clearTimeout(bt); bt = setTimeout(function(){ bq = e.target.value; loadBoard(); }, 300); });
   document.querySelector('#vTablero .bfil').addEventListener('click', function(e){
     var b = e.target.closest('.pchip'); if (!b) return;

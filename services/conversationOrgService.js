@@ -43,11 +43,13 @@ const KW = [
 // Temas por puntaje: cuenta lo que escribe el cliente (x2) y lo que respondemos nosotros (Meta AI / persona)
 const TOPIC = {
   pago: /(comprobante|pago recibido|pagu[eé]|ya pag|\bpag(o|ar|ue)\b|transfer|\bgiro|dep[oó]sit|alias|cu[aá]nto debo|deuda|factura|monto|abon(ar|[eé]|o)|mango|tigo money|billetera)/i,
-  soporte: /(sin (servicio|internet|wi-?fi|wfi|se[ñn]al|conexi|luz|energ)|no (anda|funciona|tengo (internet|wi-?fi|se[ñn]al)|hay (internet|se[ñn]al)|carga|conecta|navega|me anda|est[aá] funcionando|funcion)|est[aá] funcionando|luz roja|luces|\broja\b|qu[eé] pas[oó]|volver(á)? (el|la) (wi-?fi|internet|servicio|se[ñn]al)|reactiv|reinici|contraseñ|cotrace|clave|dispositivo|lent[oa]|se (corta|cae|cort[oó])|cable|router|m[oó]dem|\bonu\b|velocidad|conexi[oó]n|se[ñn]al)/i,
+  soporte: /(sin (servicio|internet|wi-?fi|wfi|se[ñn]al|conexi|luz|energ)|no (anda|funciona|tengo (internet|wi-?fi|se[ñn]al)|hay (internet|se[ñn]al)|carga|conecta|navega|me anda|est[aá] funcionando|funcion)|est[aá] funcionando|luz roja|luces|\broja\b|qu[eé] pas[oó]|volver(á)? (el|la) (wi-?fi|internet|servicio|se[ñn]al)|reactiv|reinici|contraseñ|contra[cs]e[ñn]a|cotrace|clave|dispositivo|lent[oa]|se (corta|cae|cort[oó])|cable|router|m[oó]dem|\bonu\b|velocidad|conexi[oó]n|se[ñn]al)/i,
   baja: /(retir(ar|o|en|amos)|dar de baja|baja del servicio|ya no (quiero|voy|vamos|lo uso|usamos)|cancelar el servicio|devolver el equipo)/i,
   instalacion: /(instal|cobertura|requisitos|\bplan(es)?\b|precio|contratar|fachada|c[eé]dula|ubicaci[oó]n)/i,
   adicionales: /(c[aá]mara|seguridad|\btv\b|televis|notebook|computador|impresora|reparaci)/i,
 };
+// "Me instalaron ayer", "ya está instalado": se habla de una instalación hecha, no de pedir una
+const DONE_INSTALL = /instal(aron|[oó]|amos|ado|ada|aste)\b/i;
 const NOTICE = [
   ['Aviso final', /aviso final/i], ['Suspensión', /suspendid|suspensi[oó]n/i], ['Aviso de deuda', /aviso importante|aviso de deuda|registra.*sin pagar/i],
   ['Recordatorio de pago', /recordatorio|le recordamos|te recordamos|est[aá] por vencer/i], ['Confirmación de pago', /pago recibido|comprobante de pago|factura saldada/i],
@@ -76,6 +78,10 @@ function ensureSchema() {
   add('ignored_by', "TEXT DEFAULT ''");
   add('ignored_at', 'TEXT');
   add('purged_before', 'TEXT');
+  // Columna elegida a mano (arrastrando la tarjeta): manda sobre la automática hasta que el contacto escriba por un tema nuevo
+  add('inbox_pin', "TEXT DEFAULT ''");
+  add('pin_at', 'TEXT');
+  add('pin_by', "TEXT DEFAULT ''");
   _schema = true;
 }
 
@@ -125,7 +131,7 @@ const _cache = new Map();
 function analyze(c) {
   ensureSchema();
   const hour = Math.floor(Date.now() / 3600000);
-  const key = [c.last_message_at, c.dismissed_at, c.ignored, c.state, c.customer_id, c.customer_status, c.motive, c.lead_stage, c.lost_reason, c.internal, c.cedula_msg, c.fachada_msg, c.lead_name, hour].join('|');
+  const key = [c.last_message_at, c.dismissed_at, c.ignored, c.state, c.customer_id, c.customer_status, c.motive, c.lead_stage, c.lost_reason, c.internal, c.cedula_msg, c.fachada_msg, c.lead_name, c.inbox_pin, c.pin_at, hour].join('|');
   const hit = _cache.get(c.id);
   if (hit && hit.key === key) return hit.data;
 
@@ -138,7 +144,8 @@ function analyze(c) {
   let notice = null;
   for (const m of msgs) {
     if (m.sender !== 'sistema' && m.sender !== 'persona') continue;
-    const k = NOTICE.find(([, re]) => re.test(m.body || ''));
+    // la confirmación de un pago a veces menciona "suspendido" o "recordamos": primero se reconoce como confirmación
+    const k = /pago recibido|comprobante de pago|factura saldada/i.test(m.body || '') ? NOTICE[NOTICE.length - 1] : NOTICE.find(([, re]) => re.test(m.body || ''));
     if (k) { notice = { type: k[0], ts: m.ts }; break; }
   }
 
@@ -150,11 +157,14 @@ function analyze(c) {
     if (i > anchor && (new Date(msgs[i - 1].ts) - new Date(msgs[i].ts)) > 3 * 86400000) break;
     episode.push(msgs[i]);
   }
+  const custLike = !!c.customer_id && c.customer_status !== 'inactive'; // cliente (activo, suspendido o cancelado)
   const score = {};
-  episode.forEach((m, i) => {
-    if (m.sender === 'sistema' || m.sender === 'auto') return; // plantillas automáticas no definen el tema
+  // en un cliente cuenta lo más reciente (los últimos 12 mensajes): una instalación larga no tapa el reclamo de hoy
+  (custLike ? episode.slice(0, 12) : episode).forEach((m, i) => {
+    // plantillas automáticas no definen el tema (salvo el aviso de cambio de WiFi, que es una gestión de soporte)
+    if (m.sender === 'sistema' || m.sender === 'auto') { if (/wi-?fi fue actualizado|clave nueva/i.test(m.body || '')) score.soporte = (score.soporte || 0) + 3; return; }
     const w = (m.sender === 'cliente' ? 2 : 1) * (i < 3 ? 4 : (i < 8 ? 2 : 1));
-    for (const [k, re] of Object.entries(TOPIC)) if (re.test(m.body || '')) score[k] = (score[k] || 0) + w;
+    for (const [k, re] of Object.entries(TOPIC)) if (re.test(m.body || '') && !(k === 'instalacion' && custLike && DONE_INSTALL.test(m.body || '') && !/requisit|c[eé]dula|fachada|cobertura/i.test(m.body || ''))) score[k] = (score[k] || 0) + w;
   });
   // fotos del cliente que nosotros tratamos como comprobante
   const recent = episode.slice(0, 6);
@@ -163,19 +173,24 @@ function analyze(c) {
   // 1) lo que escribió el cliente en sus últimos mensajes de texto manda
   const clientTexts = episode.filter(m => m.sender === 'cliente' && m.body && !ACK_RE.test(String(m.body).trim())).slice(0, 3);
   const cscore = {};
-  clientTexts.forEach((m, i) => { for (const [k, re] of Object.entries(TOPIC)) if (re.test(m.body)) cscore[k] = (cscore[k] || 0) + (3 - i); });
+  clientTexts.forEach((m, i) => { for (const [k, re] of Object.entries(TOPIC)) if (re.test(m.body) && !(k === 'instalacion' && custLike && DONE_INSTALL.test(m.body))) cscore[k] = (cscore[k] || 0) + (3 - i); });
+  // Un cliente ya instalado que dice "me instalaron ayer" no está pidiendo una instalación (salvo traslado u otra conexión)
+  if (custLike && cscore.instalacion && (score.soporte || 0) > 0 && !clientTexts.some(m => /traslad|mudanz|otra (casa|conexi|instalaci)/i.test(m.body))) delete cscore.instalacion;
   for (const k of ['soporte', 'baja', 'pago', 'instalacion', 'adicionales']) if ((cscore[k] || 0) > best) { best = cscore[k]; motiveAuto = k; }
   // 2) si el cliente no escribió nada que indique el tema (audios, fotos, "gracias"), se usa toda la conversación reciente
-  if (!best) for (const k of ['soporte', 'pago', 'baja', 'instalacion', 'adicionales']) if ((score[k] || 0) > best) { best = score[k]; motiveAuto = k; }
+  if (!best) for (const k of ['soporte', 'pago', 'baja', 'instalacion', 'adicionales']) if ((score[k] || 0) > best && !(k === 'instalacion' && custLike && (score.soporte || 0) >= (score.instalacion || 0))) { best = score[k]; motiveAuto = k; }
   const isCustomer = !!c.customer_id && !['inactive', 'cancelled'].includes(c.customer_status);
   const REQ_RE = /requisitos|c[eé]dula|fachada|ubicaci[oó]n/i;
   const reqMsg = ours.slice().reverse().find(m => ['meta_ai', 'persona', 'auto'].includes(m.sender) && REQ_RE.test(m.body || ''));
   // Quien no es cliente y habló de instalar (o ya le pidieron requisitos) es una venta, aunque mencione el wifi
-  if (!isCustomer && !['pago', 'baja', 'adicionales'].includes(motiveAuto) &&
+  // (si escribió por una falla, es soporte: probablemente un cliente que escribe desde otro número)
+  if (!custLike && !['pago', 'baja', 'adicionales'].includes(motiveAuto) && !(motiveAuto === 'soporte' && cscore.soporte) &&
       (reqMsg || fromClient.some(m => TOPIC.instalacion.test(m.body || '')))) motiveAuto = 'instalacion';
   // respondió a un aviso de cobranza sin otro tema claro → cobranza
-  if (isCustomer && motiveAuto === 'otro' && notice && COBRANZA_NOTICES.has(notice.type) && episode.some(m => m.ts === notice.ts)) motiveAuto = 'cobranza';
-  if (!isCustomer && motiveAuto === 'otro' && clientCount) motiveAuto = 'instalacion';
+  if (custLike && motiveAuto === 'otro' && notice && COBRANZA_NOTICES.has(notice.type) && episode.some(m => m.ts === notice.ts)) motiveAuto = 'cobranza';
+  // le mandamos un aviso de cobranza (suspensión, aviso final…) después de su último mensaje y no respondió → cobranza
+  if (custLike && notice && COBRANZA_NOTICES.has(notice.type) && notice.ts > (fromClient[0] ? fromClient[0].ts : '')) motiveAuto = 'cobranza';
+  if (!custLike && motiveAuto === 'otro' && clientCount) motiveAuto = 'instalacion';
   const motive = c.motive || motiveAuto;
 
   // embudo de ventas
@@ -228,13 +243,26 @@ function analyze(c) {
   // el mismo cliente tiene una conversación más reciente desde otro número: esta queda en el archivo
   const newer = c.customer_id ? db.prepare('SELECT id FROM wa_conversations WHERE customer_id=? AND id!=? AND last_message_at > ? LIMIT 1').get(c.customer_id, c.id, c.last_message_at || '') : null;
   // Clasificación propia del chat (su columna cuando ya está respondido)
+  //  - clientes (también los cancelados: retiro de equipo o deuda es cobranza) → según el tema
+  //  - excliente que quiere volver → Ventas (reconexión)
+  //  - contacto sin vincular que escribe por un pago o una falla → esa columna (probablemente un cliente desde otro número)
+  const exCustomer = !!c.customer_id && c.customer_status === 'cancelled';
+  const unlinkedClient = !c.customer_id && ['pago', 'cobranza', 'baja', 'soporte'].includes(motive);
+  const byMotive = ['pago', 'cobranza', 'baja'].includes(motive) ? 'pagos' : (motive === 'soporte' ? 'soporte' : 'clientes');
   let category;
   if (internal) category = 'internas';
   else if (!clientCount) category = 'avisos';
-  else if (!isCustomer) category = 'ventas';
-  else if (['pago', 'cobranza', 'baja'].includes(motive)) category = 'pagos';
-  else if (motive === 'soporte') category = 'soporte';
-  else category = 'clientes';
+  else if (exCustomer && motive === 'instalacion') category = 'ventas';
+  else if (custLike || unlinkedClient) category = byMotive;
+  else category = 'ventas';
+  // Columna elegida a mano: vale hasta que el contacto escriba por un tema nuevo (después de una pausa de más de 3 días)
+  let pinned = null;
+  if (c.inbox_pin && ['ventas', 'soporte', 'pagos', 'clientes'].includes(c.inbox_pin) && !internal) {
+    const asc = msgs.slice().reverse();
+    const idx = asc.findIndex(m => m.sender === 'cliente' && m.ts > (c.pin_at || ''));
+    const newTopic = idx > 0 && (new Date(asc[idx].ts) - new Date(asc[idx - 1].ts)) > 3 * 86400000;
+    if (!newTopic) { pinned = c.inbox_pin; category = c.inbox_pin; }
+  }
   // ¿Espera respuesta? (el contacto escribió último, no es solo un "gracias", y nadie lo marcó como que no requiere respuesta)
   const waiting = c.state === 'waiting_human' || (c.last_sender === 'cliente' && !onlyAck && !(c.dismissed_at && c.dismissed_at >= (c.last_inbound_at || '')));
   // Todo lo que espera respuesta va primero a "Por atender" (también los chats internos); al responderlo pasa a su columna.
@@ -249,10 +277,11 @@ function analyze(c) {
   // Fecha y hora del último mensaje del contacto y de la última respuesta nuestra (para mostrar en las tarjetas)
   const lastReply = ours.find(m => m.sender === 'persona' || m.sender === 'meta_ai') || null;
   const data = {
-    category, lastIn: fromClient[0] ? fromClient[0].ts : null,
+    category, pinned, pinBy: pinned ? (c.pin_by || '') : '', reconnect: exCustomer && motive === 'instalacion', unlinked: unlinkedClient,
+    lastIn: fromClient[0] ? fromClient[0].ts : null,
     lastReply: lastReply ? { ts: lastReply.ts, sender: lastReply.sender } : null,
-    inbox, motive, motiveAuto, stage, stageAuto, check, missing, nearClose: nearClose && !internal, notice, internal, suggest, newerConv: newer ? newer.id : null,
-    images, lead: !isCustomer && !internal, // los chats internos no son ventas waitingSince: c.state === 'waiting_human' ? c.handoff_at : (c.last_sender === 'cliente' ? (c.last_inbound_at || (tail.length ? tail[tail.length - 1].ts : null)) : null),
+    inbox, motive, motiveAuto, stage, stageAuto, check, missing, nearClose: nearClose && !internal && category === 'ventas', notice, internal, suggest, newerConv: newer ? newer.id : null,
+    images, lead: category === 'ventas' && !internal, // interesados: solo lo que está en Ventas waitingSince: c.state === 'waiting_human' ? c.handoff_at : (c.last_sender === 'cliente' ? (c.last_inbound_at || (tail.length ? tail[tail.length - 1].ts : null)) : null),
   };
   _cache.set(c.id, { key, data });
   return data;
@@ -323,6 +352,14 @@ function setOrg(convId, f) {
   if (f.internal !== undefined) set.internal = f.internal === '' || f.internal === null ? null : (Number(f.internal) ? 1 : 0);
   if (f.lead_name !== undefined) set.lead_name = String(f.lead_name || '').trim().slice(0, 120);
   if (f.dismiss !== undefined) set.dismissed_at = f.dismiss ? new Date().toISOString() : null;
+  if (f.inbox_pin !== undefined) {
+    const v = String(f.inbox_pin || '');
+    if (v && !['ventas', 'soporte', 'pagos', 'clientes'].includes(v)) throw new Error('Columna inválida');
+    set.inbox_pin = v; set.pin_at = v ? new Date().toISOString() : null; set.pin_by = v ? String(f._by || '').slice(0, 80) : '';
+    // si estaba archivado u oculto como interno por error, al moverlo vuelve a la vista
+    if (v) { set.internal = 0; const st = db.prepare('SELECT state FROM wa_conversations WHERE id=?').get(id); if (st && st.state === 'closed') db.prepare("UPDATE wa_conversations SET state='open' WHERE id=?").run(id); }
+    require('../config/logger').logger.info(`[Conversaciones] chat ${id} movido a ${v || '(automático)'} por ${f._by || '-'}`);
+  }
   for (const k of ['cedula_msg', 'fachada_msg']) {
     if (f[k] === undefined) continue;
     const v = f[k] ? Number(f[k]) : null;

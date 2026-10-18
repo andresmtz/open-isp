@@ -206,6 +206,8 @@ app.use((req, res, next) => {
   res.locals.APP_CUR = cfg.currencySymbol;
   res.locals.fmtMoney = regional.formatMoney;
   res.locals.wifiRules = require('./config/wifiRules'); // reglas y textos únicos del nombre y la clave del WiFi
+  // Diseño del panel: v2 (nuevo) o classic (anterior). Se cambia desde el menú del usuario (administrador).
+  res.locals.uiDesign = String(getSetting('ui_design', 'v2')) === 'classic' ? 'classic' : 'v2';
   res.locals.fmtNum = regional.formatNumber;
   res.locals.regional = cfg;
 
@@ -2102,6 +2104,11 @@ app.use('/admin', (req, res, next) => {
         body.indexOf('no-admin-theme') === -1
       ) {
         body = body.replace('</head>', '  <link rel="stylesheet" href="/css/admin-theme.css?v=8">\n  <script src="/js/admin-theme-sync.js?v=7"></script>\n  <script src="/js/admin-sw-cleanup.js" defer></script>\n  <script src="/js/admin-toast.js?v=5"></script>\n  <script src="/js/admin-search.js?v=2"></script>\n</head>');
+        // Diseño nuevo (v2): hojas de estilo encima del tema anterior y marca en <html> (sin parpadeo)
+        if (res.locals.uiDesign === 'v2') {
+          body = body.replace('</head>', '  <link rel="stylesheet" href="/css/v2/shell.css?v=1">\n  <link rel="stylesheet" href="/css/v2/app.css?v=1">\n</head>');
+          body = body.replace(/<html(\s|>)/i, (m, c) => '<html data-ui="v2"' + c);
+        }
       }
     } catch (e) {}
     return originalSend(body);

@@ -3035,11 +3035,21 @@ router.post('/extras/catalog', requireAdminSession, restrictToAdmin, express.jso
 const convSvc = require('../services/conversationService');
 const convOrg = require('../services/conversationOrgService');
 const convActor = (req) => req.session.isAdmin ? (req.session.adminUser || 'Administrador') : (req.session.cashierName || 'Oficina');
-// Diseño nuevo de la bandeja (piloto, en paralelo a la actual): mismos datos, misma lógica
-router.get(['/conversations', '/conversations/nuevo'], requireAdminSession, (req, res) => {
+// Diseño del panel: v2 (nuevo) o classic (anterior). Solo el administrador; afecta a todos los usuarios.
+router.get('/ui-design', requireAdminSession, (req, res) => {
+  if (!req.session.isAdmin) return res.redirect('/admin');
+  const to = req.query.to === 'classic' ? 'classic' : 'v2';
+  require('../config/settingsManager').saveSettings({ ui_design: to });
+  try { auditSvc && auditSvc.logAuditTrail && auditSvc.logAuditTrail({ action: 'UPDATE', entity_type: 'ui_design', entity_id: to, actor_type: 'admin', actor_name: req.session.adminUser || 'admin', details: { ui_design: to }, ip_address: req.ip }); } catch (_) {}
+  req.session._msg = { type: 'success', text: to === 'v2' ? 'Diseño nuevo activado.' : 'Volviste al diseño anterior. Para reactivar el nuevo: Sistema → Configuración, o /admin/ui-design?to=v2' };
+  res.redirect(req.get('referer') && !/ui-design/.test(req.get('referer')) ? req.get('referer') : '/admin');
+});
+
+// Bandeja de Conversaciones: con el diseño nuevo usa su vista propia; la anterior queda en /conversations/clasico
+router.get(['/conversations', '/conversations/nuevo', '/conversations/clasico'], requireAdminSession, (req, res) => {
   try {
     convOrg.ensureSchema();
-    const v2 = req.path === '/conversations/nuevo';
+    const v2 = req.path === '/conversations/nuevo' || (req.path === '/conversations' && res.locals.uiDesign === 'v2');
     res.render(v2 ? 'admin/conversations_v2' : 'admin/conversations', {
       userName: req.session.isAdmin ? (req.session.adminUser || 'Administrador') : (req.session.cashierName || 'Oficina'),
       title: 'Conversaciones', company: company(), activePage: 'conversations', msg: flashMsg(req),

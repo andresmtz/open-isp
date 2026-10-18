@@ -1,4 +1,5 @@
 <!-- views/admin/partials/sidebar.ejs -->
+<% if (typeof uiDesign !== 'undefined' && uiDesign === 'v2') { %><%- include('v2shell') %><% } %>
 <script>
 (function() {
   const savedTheme = localStorage.getItem('app-theme') || 'dark';

@@ -1,0 +1,77 @@
+<%#
+  Diseño nuevo (v2): barra superior con menú en pastillas + barra flotante de accesos rápidos.
+  Se arma con las mismas secciones y permisos del menú lateral (sidebarSections). El menú lateral
+  sigue existiendo como panel deslizable en el celular. Interruptor: ajuste "ui_design" (v2 | classic).
+%>
+<%
+  const _sess = (typeof session !== 'undefined' && session) ? session : {};
+  const _user = _sess.isAdmin ? (_sess.adminUser || 'Administrador') : (_sess.cashierName || 'Oficina');
+  const _ap = typeof activePage !== 'undefined' ? activePage : '';
+  const _secs = (typeof sidebarSections !== 'undefined' && sidebarSections) ? sidebarSections : [];
+  const _lbl = (o) => (o.labelKey && typeof t === 'function') ? t(o.labelKey, o.labelDefault) : o.labelDefault;
+  const _SEC = { main: 'Operación', billing: 'Clientes y cobros', finance: 'Finanzas', service: 'Servicio', user_management: 'Usuarios', system: 'Sistema', cashier: 'Caja' };
+  const _isOn = (it) => (it.activePages || []).includes(_ap) || (it.children || []).some(k => (k.activePages || []).includes(_ap));
+  const _canSee = (key) => _secs.some(s => s.items.some(i => i.key === key || (i.children || []).some(k => k.key === key)));
+  const _home = _secs.flatMap(s => s.items).find(i => i.key === 'dashboard');
+%>
+<div class="v2-mesh" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></div>
+<header class="v2-top" id="v2Top">
+  <a class="v2-brand" href="/admin"><span class="v2-lg"><%= String(company || 'F').trim().charAt(0).toUpperCase() %></span><span class="v2-bn"><%= company %></span></a>
+  <nav class="v2-nav" aria-label="Secciones">
+    <% if (_home) { %><a class="v2-pill<%= _isOn(_home) ? ' on' : '' %>" href="<%= _home.hrefResolved %>">Inicio</a><% } %>
+    <% _secs.forEach((s) => { const items = s.items.filter(i => i.key !== 'dashboard'); if (!items.length) return; const on = items.some(_isOn); %>
+      <div class="v2-dd">
+        <button type="button" class="v2-pill<%= on ? ' on' : '' %>" aria-haspopup="true"><%= _SEC[s.key] || _lbl(s) %> <i class="bi bi-chevron-down"></i></button>
+        <div class="v2-menu" role="menu">
+          <% items.forEach((i) => { const kids = i.children || []; %>
+            <% if (kids.length) { %>
+              <div class="v2-mg"><div class="v2-mh"><i class="<%= i.icon %>"></i> <%= _lbl(i) %></div>
+                <% kids.forEach((k) => { %><a role="menuitem" class="v2-mi<%= (k.activePages || []).includes(_ap) ? ' on' : '' %>" href="<%= k.locked ? 'javascript:void(0)' : k.hrefResolved %>"<% if (k.locked) { %> onclick='return showLockedMenuNotice(<%- JSON.stringify(k.lockedMessage).split("<").join("\\u003c") %>)'<% } %>><i class="<%= k.icon %>"></i><span><%= _lbl(k) %></span></a><% }) %>
+              </div>
+            <% } else { %>
+              <a role="menuitem" class="v2-mi<%= _isOn(i) ? ' on' : '' %>" href="<%= i.locked ? 'javascript:void(0)' : i.hrefResolved %>"<% if (i.locked) { %> onclick='return showLockedMenuNotice(<%- JSON.stringify(i.lockedMessage).split("<").join("\\u003c") %>)'<% } %>><i class="<%= i.icon %>"></i><span><%= _lbl(i) %></span></a>
+            <% } %>
+          <% }) %>
+        </div>
+      </div>
+    <% }) %>
+  </nav>
+  <div class="v2-right">
+    <button type="button" class="v2-ib v2-menu-btn" onclick="toggleSidebar()" title="Menú"><i class="bi bi-list"></i></button>
+    <button type="button" class="v2-ib" onclick="v2Theme()" title="Tema claro / oscuro"><i class="bi bi-circle-half"></i></button>
+    <div class="v2-dd v2-dd-r">
+      <button type="button" class="v2-me" title="<%= _user %>"><%= String(_user).trim().charAt(0).toUpperCase() %></button>
+      <div class="v2-menu" role="menu">
+        <div class="v2-mh"><i class="bi bi-person-circle"></i> <%= _user %><%= _sess.isAdmin ? ' · Administrador' : ' · Oficina' %></div>
+        <% if (_sess.isAdmin) { %>
+          <a class="v2-mi" href="/admin/account/password"><i class="bi bi-key"></i><span>Cambiar contraseña</span></a>
+          <a class="v2-mi" href="/admin/sidebar-settings"><i class="bi bi-layout-sidebar-inset"></i><span>Configurar el menú</span></a>
+          <a class="v2-mi" href="/admin/ui-design?to=classic" onclick="return confirm('¿Volver al diseño anterior para todo el sistema? Se puede reactivar el nuevo desde este mismo menú.')"><i class="bi bi-arrow-counterclockwise"></i><span>Volver al diseño anterior</span></a>
+        <% } %>
+        <a class="v2-mi" href="/lang/es"><i class="bi bi-translate"></i><span>Español</span></a>
+        <a class="v2-mi v2-danger" href="/admin/logout"><i class="bi bi-box-arrow-left"></i><span>Cerrar sesión</span></a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="v2-dock" aria-label="Accesos rápidos">
+  <button type="button" data-tip="Buscar (Ctrl+K)" onclick="v2Palette()"><i class="bi bi-search"></i></button>
+  <% if (_home) { %><a data-tip="Inicio" href="/admin"<%= _ap === 'dashboard' ? ' class=on' : '' %>><i class="bi bi-house"></i></a><% } %>
+  <% if (_canSee('customers')) { %><a data-tip="Clientes" href="/admin/customers"<%= _ap === 'customers' ? ' class=on' : '' %>><i class="bi bi-people"></i></a><% } %>
+  <% if (_canSee('conversations')) { %><a data-tip="Conversaciones" href="/admin/conversations"<%= _ap === 'conversations' ? ' class=on' : '' %>><i class="bi bi-chat-dots"></i></a><% } %>
+  <% if (_canSee('tickets')) { %><a data-tip="Asistencias" href="/admin/tickets"<%= _ap === 'tickets' ? ' class=on' : '' %>><i class="bi bi-tools"></i></a><% } %>
+  <% if (_canSee('outages')) { %><a data-tip="Equipos caídos" href="/admin/outages"<%= _ap === 'outages' ? ' class=on' : '' %>><i class="bi bi-wifi-off"></i></a><% } %>
+  <% if (_canSee('pending_payments')) { %><a data-tip="Pagos pendientes" href="/admin/pending-payments"<%= _ap === 'pending_payments' ? ' class=on' : '' %>><i class="bi bi-receipt"></i></a><% } %>
+  <span class="v2-sep"></span>
+  <button type="button" data-tip="Tema claro / oscuro" onclick="v2Theme()"><i class="bi bi-moon-stars v2-th"></i></button>
+</nav>
+
+<!-- Buscador rápido: secciones del menú y clientes -->
+<div class="v2-pal" id="v2Pal" hidden>
+  <div class="v2-pal-box" role="dialog" aria-label="Buscar">
+    <label class="v2-pal-in"><i class="bi bi-search"></i><input id="v2PalQ" placeholder="Buscar una sección o un cliente…" autocomplete="off"><kbd>Esc</kbd></label>
+    <div class="v2-pal-res" id="v2PalRes"></div>
+  </div>
+</div>
+<script src="/js/v2-shell.js?v=1" defer></script>

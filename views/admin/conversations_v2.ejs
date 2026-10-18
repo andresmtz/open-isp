@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="<%= typeof lang !== 'undefined' && lang ? lang : 'es' %>">
+<html lang="<%= typeof lang !== 'undefined' && lang ? lang : 'es' %>" data-ui="v2">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Conversaciones | <%= company %></title>
@@ -8,8 +8,7 @@
     // Tema antes de pintar (misma preferencia que el resto del panel: localStorage "app-theme")
     (function(){ try { var t = localStorage.getItem('app-theme'); if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', t); } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); } })();
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/v2/shell.css?v=1">
   <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
   <style>
     /* ── Tokens ─────────────────────────────────────────────────────────────── */
@@ -40,7 +39,7 @@
     }
     *{box-sizing:border-box}
     html,body{margin:0;height:100%}
-    body{font-family:var(--font);font-size:14px;font-weight:500;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;overflow:hidden}
+    body{font-family:var(--font);font-size:14px;font-weight:500;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;overflow:hidden;display:flex;flex-direction:column}
     a{color:inherit}
     button,input,select,textarea{font:inherit;color:inherit}
     /* Fondo con manchas de color suaves */
@@ -49,7 +48,7 @@
     .mesh .a{width:62vw;height:62vw;left:-18vw;top:-28vw;background:radial-gradient(closest-side,var(--mesh-a),transparent)}
     .mesh .b{width:58vw;height:58vw;right:-16vw;bottom:-30vw;background:radial-gradient(closest-side,var(--mesh-b),transparent)}
     .mesh .c{width:40vw;height:40vw;left:38vw;top:-14vw;background:radial-gradient(closest-side,var(--mesh-c),transparent)}
-    .app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:16px clamp(16px,1.6vw,28px) 16px calc(clamp(16px,1.6vw,28px) + 76px)}
+    .app{position:relative;z-index:1;flex:1;min-height:0;display:flex;flex-direction:column;padding:4px clamp(16px,1.6vw,28px) 16px calc(clamp(16px,1.6vw,28px) + 78px)}
 
     /* ── Barra superior ─────────────────────────────────────────────────────── */
     .top{display:flex;align-items:center;gap:16px;margin-bottom:14px}
@@ -96,8 +95,8 @@
     .cv-tab.on{background:var(--float);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
     .cv-tab .n{font-weight:800;margin-left:3px;font-size:11px;color:var(--faint)}
     .cv-tab.on .n{color:var(--tomato)}
-    .row-tools{display:flex;gap:6px;align-items:center}
-    .row-tools select{flex:1;min-width:0;height:36px;border-radius:999px;border:1px solid var(--line);background:var(--glass-2);padding:0 12px;font-size:12.5px;font-weight:600;outline:0}.row-tools select.on{background:var(--ink);color:var(--on-ink);border-color:transparent}
+    .row-tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .row-tools select{flex:1 1 130px;min-width:0;height:36px;border-radius:999px;border:1px solid var(--line);background:var(--glass-2);padding:0 12px;font-size:12.5px;font-weight:600;outline:0}.row-tools select.on{background:var(--ink);color:var(--on-ink);border-color:transparent}
     .tbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--glass-2);display:grid;place-items:center;cursor:pointer;font-size:14px}
     .tbtn:hover{background:var(--glass-3)}.tbtn.on{background:var(--ink);color:var(--on-ink)}
     .cv-list{overflow-y:auto;flex:1;padding:4px 10px 12px}
@@ -248,36 +247,10 @@
   </style>
 </head>
 <body>
-<div class="mesh" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></div>
 
-<!-- Accesos rápidos -->
-<nav class="dock" aria-label="Accesos rápidos">
-  <button data-tip="Buscar conversación" onclick="document.getElementById('cvQ').focus()"><i class="bi bi-search"></i></button>
-  <button data-tip="Buscar mensajes nuevos" onclick="cvSync(false, this)"><i class="bi bi-arrow-repeat"></i></button>
-  <% if (isAdmin) { %><button data-tip="Respuestas rápidas" onclick="qeOpen()"><i class="bi bi-lightning-charge"></i></button>
-  <button data-tip="Traer todo el historial" onclick="cvSync(true, this)"><i class="bi bi-cloud-download"></i></button><% } %>
-  <button data-tip="Elegir varias" id="selBtn" onclick="selToggle()"><i class="bi bi-check2-square"></i></button>
-  <div class="sep"></div>
-  <a data-tip="Diseño anterior" href="/admin/conversations<%= selected ? '?c=' + selected : '' %>"><i class="bi bi-layout-text-window-reverse"></i></a>
-  <button data-tip="Tema claro / oscuro" onclick="toggleTheme()"><i class="bi bi-moon-stars" id="thIc"></i></button>
-</nav>
+<%- include('partials/v2shell') %>
 
 <div class="app">
-  <header class="top">
-    <a class="brand" href="/admin"><span class="lg"><%= String(company || 'F').trim().charAt(0).toUpperCase() %></span><span><%= company %></span></a>
-    <nav class="nav" aria-label="Secciones">
-      <a href="/admin">Inicio</a>
-      <% if (isAdmin || can('ver_clientes')) { %><a href="/admin/customers">Clientes</a><% } %>
-      <a class="on" href="/admin/conversations/nuevo">Conversaciones</a>
-      <% if (isAdmin || can('reclamos')) { %><a href="/admin/tickets">Asistencias</a><a href="/admin/outages">Equipos caídos</a><% } %>
-      <% if (isAdmin || can('ver_facturas')) { %><a href="/admin/billing">Facturación</a><% } %>
-      <% if (isAdmin) { %><a href="/admin/settings">Configuración</a><% } %>
-    </nav>
-    <div class="tright">
-      <button class="ibtn" title="Tema claro / oscuro" onclick="toggleTheme()"><i class="bi bi-circle-half"></i></button>
-      <span class="me" title="<%= userName %>"><%= String(userName || 'A').trim().charAt(0).toUpperCase() %></span>
-    </div>
-  </header>
 
   <section class="head rise">
     <h1>Conversaciones<br>de WhatsApp</h1>
@@ -286,7 +259,8 @@
       <div class="st"><span class="ic"><i class="bi bi-fire"></i></span><div><b><span id="stVe">–</span> <span class="badge tomato" id="stHot" style="display:none"></span></b><small>Interesados en ventas</small></div></div>
       <div class="st"><span class="ic"><i class="bi bi-tools"></i></span><div><b id="stSo">–</b><small>Soporte técnico</small></div></div>
     </div>
-    <div class="hours"><i class="bi bi-clock"></i> Atención humana <b><%= hours %></b> · aviso a los <b><%= alertMinutes %> min</b><%= inHours ? '' : ' · fuera de horario' %></div>
+    <a class="hours" style="text-decoration:none" href="/admin/conversations/clasico<%= selected ? '?c=' + selected : '' %>" title="Abrir la bandeja con el diseño anterior"><i class="bi bi-layout-text-window-reverse"></i> Diseño anterior</a>
+    <div class="hours" style="margin-left:0"><i class="bi bi-clock"></i> Atención humana <b><%= hours %></b> · aviso a los <b><%= alertMinutes %> min</b><%= inHours ? '' : ' · fuera de horario' %></div>
   </section>
 
   <% if (msg) { %><div class="well" style="margin-bottom:12px" data-flash="1"><%= msg.text %></div><% } %>
@@ -302,6 +276,9 @@
           <% }) %>
         </div>
         <div class="row-tools">
+          <button class="tbtn" onclick="cvSync(false, this)" title="Buscar mensajes nuevos"><i class="bi bi-arrow-repeat"></i></button>
+          <% if (isAdmin) { %><button class="tbtn" onclick="qeOpen()" title="Respuestas rápidas"><i class="bi bi-lightning-charge"></i></button><button class="tbtn" onclick="cvSync(true, this)" title="Traer todo el historial"><i class="bi bi-cloud-download"></i></button><% } %>
+          <button class="tbtn" id="selBtn" onclick="selToggle()" title="Elegir varias"><i class="bi bi-check2-square"></i></button>
           <select id="cvMore" title="Otras bandejas">
             <option value="">Más bandejas…</option>
             <% Object.keys(inboxes).filter(function(k){ return !PRIMARY[k]; }).forEach(function(k){ %><option value="<%= k %>" data-label="<%= inboxes[k] %>"><%= inboxes[k] %></option><% }) %>
@@ -395,6 +372,7 @@
 
 <script src="/js/admin-toast.js?v=5"></script>
 <script>
+  window.toggleSidebar = function(){ if (window.v2Palette) window.v2Palette(); };
   window.toggleTheme = function(){
     var cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', cur);
@@ -683,7 +661,7 @@
     selecting = !selecting; picked = {};
     document.getElementById('cvList').classList.toggle('selecting', selecting);
     document.getElementById('cvBulk').classList.toggle('open', selecting);
-    document.getElementById('selBtn').style.background = selecting ? 'rgba(255,255,255,.22)' : '';
+    document.getElementById('selBtn').classList.toggle('on', selecting);
     bulkCount(); loadList();
   };
   window.bulkDo = function(action, ids, reason){

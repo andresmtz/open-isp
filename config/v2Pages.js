@@ -17,7 +17,7 @@ const initial = (name) => esc((String(name || '').trim().match(/[\p{L}\p{N}]/u) 
 
 function landingPages(body, { brandName }) {
   const L = initial(brandName);
-  body = body.replace('</head>', '  <link rel="stylesheet" href="/css/v2/portal.css?v=2">\n</head>');
+  body = body.replace('</head>', '  <link rel="stylesheet" href="/css/v2/portal.css?v=3">\n</head>');
   body = body.replace(/<html(\s|>)/i, (m, c) => '<html data-ui="v2"' + c);
   body = body.replace(/<meta name="theme-color" content="#0A0D14">/gi, '<meta name="theme-color" content="#111412">');
   // logo de la barra superior de las páginas públicas y del ingreso

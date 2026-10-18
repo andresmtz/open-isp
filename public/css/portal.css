@@ -59,3 +59,7 @@
 
 /* == UI HARDENING (audit ui-ux.md) - jangan hapus marker == */
 img { max-width: 100%; height: auto; }
+
+/* La barra de abajo se esconde al bajar y vuelve al subir (views/tech/partials/bottom_nav.ejs) */
+.portal-bottomnav{transition:transform .28s ease}
+.portal-bottomnav.nav-hidden{transform:translateY(110%)}

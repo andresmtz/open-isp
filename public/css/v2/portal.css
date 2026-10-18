@@ -118,13 +118,15 @@ html[data-ui="v2"] .mb,html[data-ui="v2"] .modal-content{background:var(--bg2)!i
 html[data-ui="v2"] .bill-head{background:transparent}
 
 /* ── Panel del técnico / cobrador ── */
-html[data-ui="v2"] .portal-body{padding-top:76px;padding-bottom:104px}
+html[data-ui="v2"] .portal-body{padding-top:76px;padding-bottom:92px}
 html[data-ui="v2"] .portal-topnav{top:10px;left:12px;right:12px;height:56px;border-radius:999px;border:1px solid var(--v2p-rim);background:var(--glass);box-shadow:var(--v2p-shadow);padding:0 8px 0 10px}
 html[data-ui="v2"] .portal-topnav .t{font-family:var(--font-sans);font-weight:700;font-size:16px;gap:10px}
 html[data-ui="v2"] .portal-topnav .nav-btn{width:40px;height:40px;justify-content:center;border-radius:50%;font-size:17px}
 html[data-ui="v2"] .portal-topnav .nav-btn:hover{background:var(--ghost-h);color:var(--text)}
 html[data-ui="v2"] .portal-topnav .lang-btn{width:auto;padding:0 10px;border-radius:999px;font-size:12px}
-html[data-ui="v2"] .portal-bottomnav{left:50%;right:auto;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));width:min(560px,calc(100% - 24px));height:64px;padding:6px;gap:4px;border-radius:999px;border:0;background:var(--v2p-dock);color:var(--v2p-on-dock);box-shadow:0 24px 60px -18px rgba(0,0,0,.55)}
+html[data-ui="v2"] .portal-bottomnav{left:50%;right:auto;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));width:auto;max-width:calc(100% - 24px);height:58px;padding:5px;gap:2px;border-radius:999px;border:0;background:var(--v2p-dock);color:var(--v2p-on-dock);box-shadow:0 24px 60px -18px rgba(0,0,0,.55);transition:transform .28s var(--ease),opacity .28s}
+html[data-ui="v2"] .portal-bottomnav.nav-hidden{transform:translate(-50%,calc(100% + 24px));opacity:0;pointer-events:none}
+html[data-ui="v2"] .portal-bottomnav .portal-nav-item{flex:none;width:68px;font-size:10px}
 html[data-ui="v2"] .portal-nav-item{color:var(--v2p-on-dock);opacity:.7;height:100%;justify-content:center;border-radius:999px;transition:background .2s,opacity .2s}
 html[data-ui="v2"] .portal-nav-item:hover{opacity:1}
 html[data-ui="v2"] .portal-nav-item.active{color:var(--v2p-on-dock);opacity:1;background:rgba(255,255,255,.16)}

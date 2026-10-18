@@ -1,12 +1,36 @@
   </div> <!-- End container -->
 
-  <nav class="portal-bottomnav">
-    <a href="/tech" class="portal-nav-item <%= activePage === 'dashboard' ? 'active' : '' %>"><i class="bi bi-briefcase-fill"></i><span><%= t('tech.nav.my_tasks', 'Tugas Saya') %></span></a>
-    <% if (typeof can !== 'function' || can('reclamos_libres')) { %><a href="/tech/pool" class="portal-nav-item <%= activePage === 'pool' ? 'active' : '' %>"><i class="bi bi-inbox-fill"></i><span><%= t('tech.nav.new_tickets', 'Tiket Baru') %></span></a><% } %>
-    <% if ((typeof attendanceOn !== 'undefined' && attendanceOn) && (typeof can !== 'function' || can('asistencia'))) { %><a href="/tech/attendance" class="portal-nav-item <%= activePage === 'attendance' ? 'active' : '' %>"><i class="bi bi-calendar-check-fill"></i><span><%= t('collector.absensi','Absensi') %></span></a><% } %>
-    <% if (typeof can !== 'function' || can('mapa')) { %><a href="/tech/map" class="portal-nav-item <%= activePage === 'map' ? 'active' : '' %>"><i class="bi bi-map-fill"></i><span><%= t('tech.nav.map', 'Peta') %></span></a><% } %>
-    <% if (typeof can !== 'function' || can('equipos')) { %><a href="/tech/monitoring" class="portal-nav-item <%= activePage === 'monitoring' ? 'active' : '' %>"><i class="bi bi-display-fill"></i><span><%= t('tech.nav.monitor', 'Monitor') %></span></a><% } %>
+  <%
+    // Accesos del técnico según sus permisos. Si solo tiene "Mis tareas", no se muestra la barra:
+    // no hay a dónde cambiar y solo taparía la pantalla.
+    var _can = function (k) { return typeof can !== 'function' || can(k); };
+    var _nav = [{ href: '/tech', page: 'dashboard', icon: 'bi-briefcase-fill', label: t('tech.nav.my_tasks', 'Tugas Saya') }];
+    if (_can('reclamos_libres')) _nav.push({ href: '/tech/pool', page: 'pool', icon: 'bi-inbox-fill', label: t('tech.nav.new_tickets', 'Tiket Baru') });
+    if ((typeof attendanceOn !== 'undefined' && attendanceOn) && _can('asistencia')) _nav.push({ href: '/tech/attendance', page: 'attendance', icon: 'bi-calendar-check-fill', label: t('collector.absensi', 'Absensi') });
+    if (_can('mapa')) _nav.push({ href: '/tech/map', page: 'map', icon: 'bi-map-fill', label: t('tech.nav.map', 'Peta') });
+    if (_can('equipos')) _nav.push({ href: '/tech/monitoring', page: 'monitoring', icon: 'bi-display-fill', label: t('tech.nav.monitor', 'Monitor') });
+  %>
+  <% if (_nav.length > 1) { %>
+  <nav class="portal-bottomnav" id="techNav">
+    <% _nav.forEach(function (n) { %><a href="<%= n.href %>" class="portal-nav-item <%= activePage === n.page ? 'active' : '' %>"><i class="bi <%= n.icon %>"></i><span><%= n.label %></span></a><% }) %>
   </nav>
+  <script>
+    // La barra se esconde al bajar (para leer cómodo) y vuelve al subir o al llegar al final
+    (function () {
+      var nav = document.getElementById('techNav'), last = window.scrollY, ticking = false;
+      window.addEventListener('scroll', function () {
+        if (ticking) return; ticking = true;
+        requestAnimationFrame(function () {
+          var y = window.scrollY, end = (window.innerHeight + y) >= document.documentElement.scrollHeight - 40;
+          nav.classList.toggle('nav-hidden', y > last && y > 80 && !end);
+          last = y; ticking = false;
+        });
+      }, { passive: true });
+    })();
+  </script>
+  <% } else { %>
+  <style>.portal-body{padding-bottom:28px!important}</style>
+  <% } %>
 
 </body>
 </html>

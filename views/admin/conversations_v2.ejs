@@ -350,6 +350,22 @@
     .hc.t-butter .hacts button{border-color:rgba(23,25,26,.3)}.hc.t-butter .hacts button.pri{background:#17191a;color:#fbf8f2}
     .hacts .by{font-size:11.5px;opacity:.8}
 
+
+    /* Mensajes sin leer y horarios en las tarjetas */
+    .unb{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;background:var(--tomato);color:var(--on-tomato);border-radius:999px;padding:2px 8px;margin-left:4px;animation:unbIn .35s var(--ease)}
+    .cv-tab .unb{font-size:10px;padding:1px 6px;margin-left:5px}
+    @keyframes unbIn{from{transform:scale(.6)}to{transform:none}}
+    .bside .unb{margin:2px 0 0}
+    .tile.unr{box-shadow:0 0 0 2px var(--tomato),0 14px 26px -16px rgba(0,0,0,.5)}
+    .tile.unr::after{content:"";position:absolute;top:12px;right:46px;width:9px;height:9px;border-radius:50%;background:var(--tomato);box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+    .tile.t-tomato.unr{box-shadow:0 0 0 2px #fbf8f2,0 14px 26px -16px rgba(0,0,0,.5)}
+    .tile.t-tomato.unr::after{background:#fbf8f2}
+    .cv-item.unr .t span:first-child{font-weight:800}
+    .cv-item.unr .t span:first-child::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--tomato);margin-right:6px;vertical-align:1px}
+    .lt{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;opacity:.78;margin-top:6px;font-weight:600}
+    .lt i{font-size:10px;margin-right:2px}
+    .cv-item .lt{color:var(--muted);opacity:1;margin-top:2px}
+
     /* Tablero */
     .bfil{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
     .bfil .search{width:min(300px,100%);height:40px}
@@ -424,7 +440,7 @@
   <section class="head rise">
     <h1>Conversaciones</h1>
     <div class="stats">
-      <div class="st"><span class="ic"><i class="bi bi-hourglass-split"></i></span><div><b><span id="stPa">–</span> <span class="badge butter" id="stPaB" style="display:none"></span></b><small>Por atender</small></div></div>
+      <div class="st"><span class="ic"><i class="bi bi-hourglass-split"></i></span><div><b><span id="stPa">–</span> <span class="badge tomato" id="stPaB" style="display:none"></span></b><small>Por atender</small></div></div>
       <div class="st"><span class="ic"><i class="bi bi-fire"></i></span><div><b><span id="stVe">–</span> <span class="badge tomato" id="stHot" style="display:none"></span></b><small>Interesados en ventas</small></div></div>
       <div class="st"><span class="ic"><i class="bi bi-tools"></i></span><div><b id="stSo">–</b><small>Soporte técnico</small></div></div>
     </div>
@@ -664,6 +680,7 @@
   }
   function chips(c){
     var o = c.org || {}, h = '';
+    if (o.inbox === 'por_atender' && o.category === 'internas') h += '<span class="cv-chip"><i class="bi bi-people"></i> Interna</span>';
     if (c.state === 'waiting_human') h += '<span class="cv-chip wait"><i class="bi bi-person-raised-hand"></i> Meta AI derivó · ' + esc(ago(c.handoff_at)) + '</span>';
     else if (o.inbox === 'por_atender' && o.waitingSince) h += '<span class="cv-chip wait"><i class="bi bi-hourglass-split"></i> Sin respuesta · ' + esc(ago(o.waitingSince)) + '</span>';
     if (o.nearClose) h += '<span class="cv-chip hot">🔥 A punto de cerrar</span>';
@@ -671,7 +688,7 @@
     else if (c.customer_id) h += '<span class="cv-chip cust">Cliente' + (c.customer_status && c.customer_status !== 'active' ? ' · ' + esc(CUST_ST[c.customer_status] || c.customer_status) : '') + '</span>';
     if (c.ignored === 1) h += '<span class="cv-chip">Oculta · ' + esc(IGN[c.ignored_reason] || c.ignored_reason || '') + '</span>';
     if (o.suggest && o.suggest.length) h += '<span class="cv-chip cust" title="El nombre coincide con un cliente registrado">¿Cliente? ' + esc(o.suggest[0].name) + '</span>';
-    if (o.motive && o.motive !== 'otro') h += '<span class="cv-chip mot">' + esc(MOTIVES[o.motive] || o.motive) + '</span>';
+    if (o.motive && o.motive !== 'otro' && !o.internal) h += '<span class="cv-chip mot">' + esc(MOTIVES[o.motive] || o.motive) + '</span>';
     if (c.unread > 0) h += '<span class="cv-chip unread">' + c.unread + '</span>';
     String(c.labels || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean).slice(0, 2).forEach(function(l){ h += '<span class="cv-chip">' + esc(l) + '</span>'; });
     if (c.assigned_to) h += '<span class="cv-chip"><i class="bi bi-person"></i> ' + esc(c.assigned_to) + '</span>';
@@ -684,9 +701,10 @@
       var n = d.counts || {};
       document.querySelectorAll('[data-n]').forEach(function(x){
         var k = x.dataset.n;
-        x.textContent = k === 'ventas' ? ((n.ventas || 0) + (n.cerca ? ' · 🔥' + n.cerca : '')) : (n[k] || '');
+        x.innerHTML = esc(k === 'ventas' ? ((n.ventas || 0) + (n.cerca ? ' · 🔥' + n.cerca : '')) : (n[k] || '')) + unreadBadge(n, k);
       });
-      document.querySelectorAll('#cvMore option[value]').forEach(function(op){ if (op.value) op.textContent = op.dataset.label + (n[op.value] ? ' (' + n[op.value] + ')' : ''); });
+      setHeadCounts(n);
+      document.querySelectorAll('#cvMore option[value]').forEach(function(op){ if (op.value) op.textContent = op.dataset.label + (n[op.value] ? ' (' + n[op.value] + ')' : '') + ((n.unread || {})[op.value] ? ' · ✉ ' + n.unread[op.value] : ''); });
       var setTxt = function(id, v){ var e = document.getElementById(id); if (e) e.textContent = v; };
       setTxt('stPa', n.por_atender || 0); setTxt('stVe', n.ventas || 0); setTxt('stSo', n.soporte || 0);
       var hot = document.getElementById('stHot'); if (hot) { hot.style.display = n.cerca ? '' : 'none'; hot.textContent = '🔥 ' + (n.cerca || 0) + ' a punto de cerrar'; }
@@ -695,10 +713,10 @@
       if (!items.length) { el.innerHTML = '<div class="cv-empty">No hay conversaciones en esta bandeja.</div>'; return; }
       el.innerHTML = items.map(function(c){
         var pre = (c.last_sender && c.last_sender !== 'cliente' ? (SENDERS[c.last_sender] || '') + ': ' : '') + (c.last_preview || '');
-        return '<div class="cv-item' + (c.id === sel ? ' on' : '') + '" data-id="' + c.id + '">' +
+        return '<div class="cv-item' + (c.id === sel ? ' on' : '') + (c.unread > 0 ? ' unr' : '') + '" data-id="' + c.id + '">' +
           avHtml(c) + '<div class="cvb">' +
           '<div class="t"><span><input type="checkbox" class="sel" data-id="' + c.id + '"' + (picked[c.id] ? ' checked' : '') + '>' + esc(title(c)) + '</span><span>' + esc(ago(c.last_message_at)) + '</span></div>' +
-          '<div class="p">' + esc(pre) + '</div><div class="b">' + chips(c) + '</div>' +
+          '<div class="p">' + esc(pre) + '</div>' + timesLine(c) + '<div class="b">' + chips(c) + '</div>' +
           (filter === 'ventas' && c.org && ['parciales', 'listo', 'requisitos'].indexOf(c.org.stage) !== -1 ? '<div class="cv-chk">' + checkLine(c.org) + '</div>' : '') + '</div></div>';
       }).join('');
     });
@@ -1170,31 +1188,59 @@
     setView('bandeja'); openConv(id);
   };
   function setHeadCounts(n){
+    var b = document.getElementById('stPaB'), u = n.unreadTotal || 0;
+    if (b) { b.style.display = u ? '' : 'none'; b.innerHTML = '<i class="bi bi-envelope-fill"></i> ' + u + ' sin leer'; }
+    document.title = (u ? '(' + u + ') ' : '') + 'Conversaciones | ' + <%- JSON.stringify(company).replace(/</g, '\\u003c') %>;
     var setTxt = function(id, v){ var e = document.getElementById(id); if (e) e.textContent = v; };
     setTxt('stPa', n.por_atender || 0); setTxt('stVe', n.ventas || 0); setTxt('stSo', n.soporte || 0);
     var hot = document.getElementById('stHot'); if (hot) { hot.style.display = n.cerca ? '' : 'none'; hot.textContent = '🔥 ' + (n.cerca || 0) + ' a punto de cerrar'; }
   }
 
+  // Fecha y hora corta: "hoy 15:32", "ayer 09:10", "17/10 15:32" (con año si no es este año)
+  function when(iso){
+    var d = new Date(iso); if (isNaN(d)) return '';
+    var hm = d.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', hour12: false });
+    var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+    var diff = Math.floor((t0 - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+    if (diff <= 0) return 'hoy ' + hm;
+    if (diff === 1) return 'ayer ' + hm;
+    return d.toLocaleDateString('es-PY', d.getFullYear() === t0.getFullYear() ? { day: '2-digit', month: '2-digit' } : { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + hm;
+  }
+  var REPLY_BY = { persona: 'Oficina', meta_ai: 'Meta AI' };
+  // Línea con el último mensaje del contacto y la última respuesta (quién y cuándo)
+  function timesLine(c){
+    var o = c.org || {}, h = '';
+    if (o.lastIn) h += '<span title="Último mensaje del contacto"><i class="bi bi-chat-left-text"></i> ' + esc(when(o.lastIn)) + '</span>';
+    h += o.lastReply ? '<span title="Última respuesta"><i class="bi bi-reply-fill"></i> ' + esc(REPLY_BY[o.lastReply.sender] || 'Respuesta') + ' · ' + esc(when(o.lastReply.ts)) + '</span>'
+                     : '<span title="Todavía nadie respondió"><i class="bi bi-reply"></i> Sin respuesta</span>';
+    return '<div class="lt">' + h + '</div>';
+  }
+  var CAT = { internas: 'Interna', ventas: 'Ventas', soporte: 'Soporte', pagos: 'Pagos', clientes: 'Cliente', avisos: 'Avisos' };
+  // Sobre con la cantidad de chats sin leer (para encabezados y pestañas)
+  function unreadBadge(n, k){ var u = (n.unread || {})[k] || 0; return u ? '<span class="unb" title="' + u + ' chat' + (u > 1 ? 's' : '') + ' con mensajes sin leer"><i class="bi bi-envelope-fill"></i> ' + u + '</span>' : ''; }
+
   // ── Tarjeta de conversación (tablero y "esperan respuesta") ──
   function tile(c, cls, inbox){
     var o = c.org || {};
-    var sub = c.customer_id ? ('Cliente' + (c.customer_status && c.customer_status !== 'active' ? ' · ' + (CUST_ST[c.customer_status] || c.customer_status) : '') + (c.customer_code ? ' · ' + c.customer_code : ''))
-                            : (o.lead ? (STAGES[o.stage] || 'Interesado') : 'Contacto');
+    var isInt = o.category === 'internas' || o.internal;
+    var sub = isInt ? 'Chat interno' : (c.customer_id ? ('Cliente' + (c.customer_status && c.customer_status !== 'active' ? ' · ' + (CUST_ST[c.customer_status] || c.customer_status) : '') + (c.customer_code ? ' · ' + c.customer_code : ''))
+                            : (o.lead ? (STAGES[o.stage] || 'Interesado') : 'Contacto'));
     var top = c.state === 'waiting_human' ? '<span><i class="bi bi-person-raised-hand"></i> Meta AI derivó · ' + esc(ago(c.handoff_at)) + '</span>'
-            : (o.inbox === 'por_atender' && o.waitingSince ? '<span><i class="bi bi-hourglass-split"></i> Espera hace ' + esc(ago(o.waitingSince)) + '</span>'
-            : '<span>' + esc(ago(c.last_message_at)) + (o.motive && o.motive !== 'otro' ? ' · ' + esc(MOTIVES[o.motive] || o.motive) : '') + '</span>');
+            : (o.inbox === 'por_atender' && (o.waitingSince || o.lastIn) ? '<span><i class="bi bi-hourglass-split"></i> Espera hace ' + esc(ago(o.waitingSince || o.lastIn)) + '</span>'
+            : '<span>' + esc(ago(c.last_message_at)) + (!isInt && o.motive && o.motive !== 'otro' ? ' · ' + esc(MOTIVES[o.motive] || o.motive) : '') + '</span>');
     var pre = (c.last_sender && c.last_sender !== 'cliente' ? (SENDERS[c.last_sender] || '') + ': ' : '') + (c.last_preview || '');
     var ch = '';
     if (c.unread > 0) ch += '<span class="u">' + c.unread + ' sin leer</span>';
-    if (o.nearClose) ch += '<span>🔥 A punto de cerrar</span>';
-    if (o.lead && ['parciales', 'listo', 'requisitos'].indexOf(o.stage) !== -1) ch += '<span>' + Object.keys(CHK).filter(function(k){ return o.check[k] && o.check[k].ok; }).length + '/4 requisitos</span>';
-    if (o.suggest && o.suggest.length) ch += '<span>¿Cliente? ' + esc(o.suggest[0].name) + '</span>';
+    if (o.inbox === 'por_atender' && o.category && CAT[o.category]) ch += '<span title="Su clasificación: pasa a esa columna al responderlo">' + CAT[o.category] + '</span>';
+    if (o.nearClose && !isInt) ch += '<span>🔥 A punto de cerrar</span>';
+    if (o.lead && !isInt && ['parciales', 'listo', 'requisitos'].indexOf(o.stage) !== -1) ch += '<span>' + Object.keys(CHK).filter(function(k){ return o.check[k] && o.check[k].ok; }).length + '/4 requisitos</span>';
+    if (o.suggest && o.suggest.length && !isInt) ch += '<span>¿Cliente? ' + esc(o.suggest[0].name) + '</span>';
     if (c.assigned_to) ch += '<span><i class="bi bi-person"></i> ' + esc(c.assigned_to) + '</span>';
     String(c.labels || '').split(',').map(function(x){ return x.trim(); }).filter(Boolean).slice(0, 2).forEach(function(l){ ch += '<span>' + esc(l) + '</span>'; });
-    return '<button class="tile ' + cls + '" onclick="goConv(' + c.id + ',\'' + (inbox || o.inbox || '') + '\')" title="Abrir el chat">' +
+    return '<button class="tile ' + cls + (c.unread > 0 ? ' unr' : '') + '" onclick="goConv(' + c.id + ',\'' + (inbox || o.inbox || '') + '\')" title="Abrir el chat">' +
       '<div class="tt">' + top + '<span class="dots"><i class="bi bi-chat-dots"></i></span></div>' +
       '<div class="nm">' + esc(title(c)) + '</div><div class="sb">' + esc(sub) + '</div>' +
-      '<div class="pv">' + esc(pre) + '</div>' +
+      '<div class="pv">' + esc(pre) + '</div>' + timesLine(c) +
       '<div class="ft"><div class="tchips">' + ch + '</div>' + avHtml(c) + '</div></button>';
   }
 
@@ -1210,15 +1256,15 @@
       el.innerHTML = COLS.map(function(col){
         var items = d.cols[col.k] || [];
         var x = col.k === 'ventas' && n.cerca ? '🔥 ' + n.cerca : '';
-        return '<div class="card bcol"><div class="bh"><i class="d" style="background:' + col.d + '"></i>' + col.t + ' <span class="n">' + (n[col.k] || 0) + '</span><span class="x">' + x + '</span>' +
+        return '<div class="card bcol"><div class="bh"><i class="d" style="background:' + col.d + '"></i>' + col.t + ' <span class="n">' + (n[col.k] || 0) + '</span>' + unreadBadge(n, col.k) + '<span class="x">' + x + '</span>' +
           '<button class="cbtn" style="width:30px;height:30px;font-size:12px" title="Abrir en la bandeja" onclick="openInbox(\'' + col.k + '\')"><i class="bi bi-arrow-up-right"></i></button></div>' +
           '<div class="bcards" data-k="' + col.k + '">' + (items.length ? items.map(function(c){ return tile(c, col.c, col.k); }).join('') + ((n[col.k] || 0) > items.length ? '<button class="pchip" onclick="openInbox(\'' + col.k + '\')">Ver las ' + n[col.k] + ' en la bandeja</button>' : '') : '<div class="empty2">' + (bq || bm ? 'Sin resultados' : 'Nada pendiente 🎉') + '</div>') + '</div></div>';
       }).join('') +
       '<div class="bside">' +
-        '<div class="card" onclick="openInbox(\'archivo\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-archive"></i></span><b>Archivo</b><small>' + fmtN(n.archivo) + ' chats</small></div>' +
-        '<div class="card" onclick="openInbox(\'avisos\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-megaphone"></i></span><b>Avisos</b><small>' + fmtN(n.avisos) + ' enviados</small></div>' +
-        '<div class="card" onclick="openInbox(\'internas\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-people"></i></span><b>Internas</b><small>' + fmtN(n.internas) + ' chats</small></div>' +
-        (IS_ADMIN ? '<div class="card" onclick="openInbox(\'ocultas\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-eye-slash"></i></span><b>Ocultas</b><small>' + fmtN(n.ocultas) + ' chats</small></div>' : '') +
+        '<div class="card" onclick="openInbox(\'archivo\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-archive"></i></span><b>Archivo</b><small>' + fmtN(n.archivo) + ' chats</small>' + unreadBadge(n, 'archivo') + '</div>' +
+        '<div class="card" onclick="openInbox(\'avisos\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-megaphone"></i></span><b>Avisos</b><small>' + fmtN(n.avisos) + ' enviados</small>' + unreadBadge(n, 'avisos') + '</div>' +
+        '<div class="card" onclick="openInbox(\'internas\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-people"></i></span><b>Internas</b><small>' + fmtN(n.internas) + ' chats</small>' + unreadBadge(n, 'internas') + '</div>' +
+        (IS_ADMIN ? '<div class="card" onclick="openInbox(\'ocultas\')"><span class="bi2" style="background:var(--well)"><i class="bi bi-eye-slash"></i></span><b>Ocultas</b><small>' + fmtN(n.ocultas) + ' chats</small>' + unreadBadge(n, 'ocultas') + '</div>' : '') +
       '</div>';
       el.querySelectorAll('.bcards').forEach(function(x){ if (keep[x.dataset.k]) x.scrollTop = keep[x.dataset.k]; });
     });
@@ -1277,7 +1323,7 @@
     return '<div class="tile hc ' + w.cls + '" data-id="' + c.id + '" data-inbox="' + esc(o.inbox || '') + '">' +
       '<div class="tt"><span class="why">' + w.t + '</span>' + waitPill(c) + '</div>' +
       '<div class="hh">' + avHtml(c) + '<div style="min-width:0"><div class="nm">' + esc(title(c)) + '</div><div class="sb">' + esc(sub) + '</div></div></div>' +
-      '<div class="kds">' + keyData(c) + '</div>' +
+      '<div class="kds">' + keyData(c) + '</div>' + timesLine(c) +
       '<div class="mini" data-id="' + c.id + '">' + (c.messages || []).map(miniMsg).join('') + '</div>' +
       '<div class="hacts">' + acts + '</div></div>';
   }

@@ -227,21 +227,32 @@ function analyze(c) {
   const old = !c.last_message_at || (Date.now() - new Date(c.last_message_at)) > archiveDays * 86400000;
   // el mismo cliente tiene una conversación más reciente desde otro número: esta queda en el archivo
   const newer = c.customer_id ? db.prepare('SELECT id FROM wa_conversations WHERE customer_id=? AND id!=? AND last_message_at > ? LIMIT 1').get(c.customer_id, c.id, c.last_message_at || '') : null;
+  // Clasificación propia del chat (su columna cuando ya está respondido)
+  let category;
+  if (internal) category = 'internas';
+  else if (!clientCount) category = 'avisos';
+  else if (!isCustomer) category = 'ventas';
+  else if (['pago', 'cobranza', 'baja'].includes(motive)) category = 'pagos';
+  else if (motive === 'soporte') category = 'soporte';
+  else category = 'clientes';
+  // ¿Espera respuesta? (el contacto escribió último, no es solo un "gracias", y nadie lo marcó como que no requiere respuesta)
+  const waiting = c.state === 'waiting_human' || (c.last_sender === 'cliente' && !onlyAck && !(c.dismissed_at && c.dismissed_at >= (c.last_inbound_at || '')));
+  // Todo lo que espera respuesta va primero a "Por atender" (también los chats internos); al responderlo pasa a su columna.
+  // Las ocultas nunca se muestran; lo viejo o reemplazado por otro número del mismo cliente queda en el archivo.
   let inbox;
   if (c.ignored === 1) inbox = 'ocultas';
-  else if (internal) inbox = 'internas';
   else if (c.state === 'closed' || old || newer) inbox = 'archivo';
-  else if (!clientCount) inbox = 'avisos';
-  else if (c.state === 'waiting_human' || (c.last_sender === 'cliente' && !onlyAck && !(c.dismissed_at && c.dismissed_at >= (c.last_inbound_at || '')))) inbox = 'por_atender';
-  else if (!isCustomer) inbox = 'ventas';
-  else if (['pago', 'cobranza', 'baja'].includes(motive)) inbox = 'pagos';
-  else if (motive === 'soporte') inbox = 'soporte';
-  else inbox = 'clientes';
+  else if (waiting && clientCount) inbox = 'por_atender';
+  else inbox = category;
 
   const suggest = !c.customer_id && !internal && clientCount ? suggestCustomers([c.name, c.lead_name].filter(Boolean).join(' ')) : [];
+  // Fecha y hora del último mensaje del contacto y de la última respuesta nuestra (para mostrar en las tarjetas)
+  const lastReply = ours.find(m => m.sender === 'persona' || m.sender === 'meta_ai') || null;
   const data = {
-    inbox, motive, motiveAuto, stage, stageAuto, check, missing, nearClose, notice, internal, suggest, newerConv: newer ? newer.id : null,
-    images, lead: !isCustomer, waitingSince: c.state === 'waiting_human' ? c.handoff_at : (c.last_sender === 'cliente' ? c.last_inbound_at : null),
+    category, lastIn: fromClient[0] ? fromClient[0].ts : null,
+    lastReply: lastReply ? { ts: lastReply.ts, sender: lastReply.sender } : null,
+    inbox, motive, motiveAuto, stage, stageAuto, check, missing, nearClose: nearClose && !internal, notice, internal, suggest, newerConv: newer ? newer.id : null,
+    images, lead: !isCustomer && !internal, // los chats internos no son ventas waitingSince: c.state === 'waiting_human' ? c.handoff_at : (c.last_sender === 'cliente' ? (c.last_inbound_at || (tail.length ? tail[tail.length - 1].ts : null)) : null),
   };
   _cache.set(c.id, { key, data });
   return data;
@@ -258,8 +269,13 @@ function list({ inbox = 'por_atender', q = '', motive = '', admin = false } = {}
   let rows = allConvs().map(c => Object.assign(c, { org: analyze(c) }));
   // los chats ocultos (personales, promociones) solo los ve el administrador
   if (!admin) { rows = rows.filter(r => r.org.inbox !== 'ocultas'); if (inbox === 'ocultas') inbox = 'por_atender'; }
-  const counts = {};
-  for (const r of rows) counts[r.org.inbox] = (counts[r.org.inbox] || 0) + 1;
+  const counts = {}, unread = {};
+  for (const r of rows) {
+    counts[r.org.inbox] = (counts[r.org.inbox] || 0) + 1;
+    if (r.unread > 0) unread[r.org.inbox] = (unread[r.org.inbox] || 0) + 1; // chats con mensajes sin leer, por bandeja
+  }
+  counts.unread = unread;
+  counts.unreadTotal = Object.keys(unread).filter(k => k !== 'ocultas').reduce((t, k) => t + unread[k], 0);
   counts.cerca = rows.filter(r => r.org.inbox === 'ventas' && r.org.nearClose).length;
   let out = inbox === 'todas' ? rows.filter(r => r.org.inbox !== 'ocultas') : rows.filter(r => r.org.inbox === inbox);
   if (motive) out = out.filter(r => r.org.motive === motive);
@@ -500,7 +516,7 @@ function stats({ days = 30, admin = false } = {}) {
   const dayOf = (iso) => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
   const hourOf = (iso) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hourCycle: 'h23' }).format(new Date(iso)));
   const rows = allConvs().map(c => Object.assign(c, { org: analyze(c) }));
-  const valid = new Map(rows.filter(r => !['ocultas', 'internas'].includes(r.org.inbox)).map(r => [r.id, r]));
+  const valid = new Map(rows.filter(r => r.org.inbox !== 'ocultas' && !r.org.internal).map(r => [r.id, r])); // sin chats internos ni ocultos
 
   // días del período (incluye hoy)
   const today = dayOf(new Date().toISOString());

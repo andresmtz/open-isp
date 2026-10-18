@@ -476,7 +476,112 @@ function remove(ids) {
   return { convs: list.length, msgs: n };
 }
 
+/** Tablero: las bandejas de trabajo con sus conversaciones (hasta `limit` por columna). */
+function board({ q = '', motive = '', admin = false, limit = 60 } = {}) {
+  const cols = ['por_atender', 'ventas', 'soporte', 'pagos', 'clientes'];
+  const out = { counts: null, cols: {} };
+  for (const k of cols) {
+    const r = list({ inbox: k, q, motive, admin });
+    if (!out.counts) out.counts = r.counts;
+    out.cols[k] = r.items.slice(0, limit);
+  }
+  return out;
+}
+
+/**
+ * Números para el resumen de Conversaciones (gráficos). Solo cuenta chats con clientes e interesados
+ * (no los ocultos ni los internos). Tiempo de respuesta: desde que el contacto escribe (después de una
+ * respuesta nuestra) hasta la primera respuesta de una persona o de Meta AI.
+ */
+function stats({ days = 30, admin = false } = {}) {
+  ensureSchema();
+  days = Math.min(90, Math.max(7, Number(days) || 30));
+  const tz = getSetting('timezone', 'America/Asuncion') || 'America/Asuncion';
+  const dayOf = (iso) => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+  const hourOf = (iso) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hourCycle: 'h23' }).format(new Date(iso)));
+  const rows = allConvs().map(c => Object.assign(c, { org: analyze(c) }));
+  const valid = new Map(rows.filter(r => !['ocultas', 'internas'].includes(r.org.inbox)).map(r => [r.id, r]));
+
+  // días del período (incluye hoy)
+  const today = dayOf(new Date().toISOString());
+  const dayKeys = [];
+  for (let i = days - 1; i >= 0; i--) dayKeys.push(dayOf(new Date(Date.now() - i * 86400000).toISOString()));
+  const from = new Date(Date.now() - (days + 1) * 86400000).toISOString();
+  const per = {}; dayKeys.forEach(d => { per[d] = { in: 0, persona: 0, meta_ai: 0, auto: 0, newc: 0 }; });
+  const hours = Array(24).fill(0);
+  const who = {};
+  const msgs = db.prepare('SELECT conv_id, ts, sender, by_name, body, media_type FROM wa_messages WHERE ts >= ? ORDER BY conv_id, ts, id').all(from);
+
+  const waits = []; // { min, by }
+  let prevConv = 0, pending = null, lastSender = '';
+  for (const m of msgs) {
+    if (!valid.has(m.conv_id)) continue;
+    if (m.conv_id !== prevConv) { prevConv = m.conv_id; pending = null; lastSender = ''; }
+    const d = dayOf(m.ts), inRange = per[d];
+    if (m.sender === 'cliente') {
+      if (inRange) { per[d].in++; hours[hourOf(m.ts)]++; }
+      const ack = m.media_type === 'sticker' || (!m.media_type && ACK_RE.test(String(m.body || '').trim()));
+      if (!pending && lastSender !== 'cliente' && !ack) pending = m.ts;
+    } else {
+      const k = m.sender === 'persona' ? 'persona' : (m.sender === 'meta_ai' ? 'meta_ai' : 'auto');
+      if (inRange) per[d][k]++;
+      if (inRange) {
+        const label = m.sender === 'meta_ai' ? 'Meta AI' : (m.sender === 'persona'
+          ? (m.by_name && !/^sistema/i.test(m.by_name) ? (m.by_name === 'WhatsApp Web' ? 'Oficina · WhatsApp Web' : 'Panel · ' + m.by_name) : 'Oficina · celular')
+          : 'Avisos automáticos');
+        who[label] = (who[label] || 0) + 1;
+      }
+      if (pending && (m.sender === 'persona' || m.sender === 'meta_ai')) {
+        const min = (new Date(m.ts) - new Date(pending)) / 60000;
+        if (min >= 0 && dayOf(pending) in per) waits.push({ min, by: m.sender, day: dayOf(pending) });
+        pending = null;
+      }
+    }
+    lastSender = m.sender;
+  }
+  // conversaciones nuevas por día (primer mensaje del contacto)
+  const firsts = db.prepare("SELECT conv_id, MIN(ts) ts FROM wa_messages WHERE sender='cliente' GROUP BY conv_id HAVING MIN(ts) >= ?").all(from);
+  for (const f of firsts) { const d = dayOf(f.ts); if (per[d] && valid.has(f.conv_id)) per[d].newc++; }
+
+  const median = (a) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); const i = Math.floor(s.length / 2); return s.length % 2 ? s[i] : (s[i - 1] + s[i]) / 2; };
+  const alertMin = Number(getSetting('crm_handoff_alert_minutes', 2)) || 2;
+  const goal = Math.max(5, Number(getSetting('crm_reply_goal_minutes', 15)) || 15);
+  const inGoal = waits.filter(w => w.min <= goal).length;
+  const half = Math.floor(days / 2), firstHalf = new Set(dayKeys.slice(0, half)), secondHalf = new Set(dayKeys.slice(half));
+  const medPrev = median(waits.filter(w => firstHalf.has(w.day)).map(w => w.min));
+  const medNow = median(waits.filter(w => secondHalf.has(w.day)).map(w => w.min));
+
+  // bandejas activas y embudo de ventas
+  const inboxes = {}; for (const r of valid.values()) inboxes[r.org.inbox] = (inboxes[r.org.inbox] || 0) + 1;
+  const funnel = {}, lost = {};
+  for (const r of valid.values()) {
+    if (!r.org.lead) continue;
+    const recent = r.last_message_at && (Date.now() - new Date(r.last_message_at)) < days * 86400000;
+    if (!recent) continue;
+    funnel[r.org.stage] = (funnel[r.org.stage] || 0) + 1;
+    if (r.org.stage === 'perdido' && r.lost_reason) lost[r.lost_reason] = (lost[r.lost_reason] || 0) + 1;
+  }
+  const waiting = [...valid.values()].filter(r => r.org.inbox === 'por_atender')
+    .sort((a, b) => (a.state === 'waiting_human' ? 0 : 1) - (b.state === 'waiting_human' ? 0 : 1) || String(a.org.waitingSince || '').localeCompare(String(b.org.waitingSince || '')))
+    .slice(0, 4);
+  const recent = db.prepare(`SELECT m.conv_id, m.ts, m.sender, m.by_name, m.body, m.media_type FROM wa_messages m
+    ORDER BY m.ts DESC, m.id DESC LIMIT 60`).all().filter(m => valid.has(m.conv_id)).slice(0, 8)
+    .map(m => { const c = valid.get(m.conv_id); return Object.assign(m, { name: c.customer_name || c.lead_name || c.name || ('+' + (c.phone || '?')), avatar_file: c.avatar_file, avatar_checked_at: c.avatar_checked_at, customer_id: c.customer_id, org: { lead: c.org.lead, nearClose: c.org.nearClose } }); });
+
+  const sum = (k) => dayKeys.reduce((t, d) => t + per[d][k], 0);
+  return {
+    days, today, dayKeys, per, hours, who, goal, alertMin,
+    totals: { in: sum('in'), persona: sum('persona'), meta_ai: sum('meta_ai'), auto: sum('auto'), newc: sum('newc'),
+      todayIn: per[today] ? per[today].in : 0, todayNew: per[today] ? per[today].newc : 0 },
+    reply: { n: waits.length, median: median(waits.map(w => w.min)), medPerson: median(waits.filter(w => w.by === 'persona').map(w => w.min)),
+      medMeta: median(waits.filter(w => w.by === 'meta_ai').map(w => w.min)), inGoal, pct: waits.length ? Math.round(100 * inGoal / waits.length) : null,
+      byMeta: waits.filter(w => w.by === 'meta_ai').length, medPrev, medNow },
+    inboxes, funnel, lost, waiting, recent,
+  };
+}
+
 module.exports = {
+  board, stats,
   IGNORE_REASONS, ignore, unignore, purge, clear, remove,
   INBOXES, MOTIVES, STAGES, LOST, ensureSchema, analyze, list, info, setOrg, quickReplies, saveQuickReplies,
   searchCustomers, linkCustomer, createRequest,

@@ -3077,6 +3077,14 @@ router.get('/conversations/list', requireAdminSession, (req, res) => {
   }
   catch (e) { res.json({ ok: false, message: e.message }); }
 });
+router.get('/conversations/board', requireAdminSession, (req, res) => {
+  try { res.json(Object.assign({ ok: true }, convOrg.board({ q: req.query.q || '', motive: String(req.query.m || ''), admin: !!req.session.isAdmin }))); }
+  catch (e) { res.json({ ok: false, message: e.message }); }
+});
+router.get('/conversations/stats', requireAdminSession, (req, res) => {
+  try { res.json(Object.assign({ ok: true }, convOrg.stats({ days: req.query.d, admin: !!req.session.isAdmin }))); }
+  catch (e) { logger.error('[Conversaciones] resumen: ' + e.message); res.json({ ok: false, message: e.message }); }
+});
 router.get('/conversations/counts', requireAdminSession, (req, res) => {
   try { res.json({ ok: true, counts: convSvc.counts() }); } catch (e) { res.json({ ok: false, message: e.message }); }
 });

@@ -260,7 +260,7 @@
     .c-mix{grid-column:span 4}
     .c-who,.c-funnel,.c-act{grid-column:span 4}
     .c-hours{grid-column:span 7}.c-new{grid-column:span 5}
-    .hot{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:12px}
+    .hotg{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:12px}
     .tile{border-radius:var(--r-tile);padding:14px 16px;display:flex;flex-direction:column;cursor:pointer;min-height:150px;transition:transform .2s var(--ease),box-shadow .2s;position:relative;overflow:hidden;text-align:left;border:0;font:inherit}
     .tile:hover{transform:translateY(-2px);box-shadow:0 18px 30px -18px rgba(0,0,0,.45)}
     .tile .tt{font-size:11.5px;opacity:.75;display:flex;justify-content:space-between;gap:6px;align-items:center}
@@ -345,11 +345,11 @@
       .c-reply{grid-column:span 5}.c-mix{grid-column:span 7}
       .c-who,.c-funnel{grid-column:span 6}.c-act{grid-column:span 12}
       .c-hours,.c-new{grid-column:span 12}
-      .hot{grid-template-columns:repeat(4,1fr)}
+      .hotg{grid-template-columns:repeat(4,1fr)}
     }
     @media (max-width:860px){
       .ov{grid-template-columns:1fr}.ov .card{grid-column:1/-1!important}
-      .hot{grid-template-columns:1fr 1fr}
+      .hotg{grid-template-columns:1fr 1fr}
       .board{grid-template-columns:repeat(5,82vw) 110px;scroll-snap-type:x mandatory}.bcol{scroll-snap-align:start;max-height:72vh}
       .hright{margin-left:0;width:100%}.seg{flex:1}.seg button{flex:1;justify-content:center;padding:8px 6px}
       #vResumen,#vTablero{overflow:visible}
@@ -418,7 +418,7 @@
       </div>
       <div class="card c-hot rise d1">
         <div class="ch"><h3>Esperan respuesta</h3><span class="hint" id="hotHint"></span><button class="cbtn" title="Ver el tablero" onclick="setView('tablero')"><i class="bi bi-arrow-up-right"></i></button></div>
-        <div class="hot" id="ovHot"><div class="hot-empty">Cargando…</div></div>
+        <div class="hotg" id="ovHot"><div class="hot-empty">Cargando…</div></div>
       </div>
       <div class="card c-reply rise d1">
         <div class="ch"><h3>Tiempo de respuesta</h3><span class="cbtn" title="Desde que el contacto escribe hasta la primera respuesta (de una persona o de Meta AI)"><i class="bi bi-info-lg"></i></span></div>

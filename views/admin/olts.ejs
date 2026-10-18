@@ -269,6 +269,19 @@
         </div>
       </div>
 
+      <!-- Puertos PON: clientes, en línea y desconectados por puerto -->
+      <div id="pon-ports" class="pon-ports" style="display:none"></div>
+      <style>
+        .pon-ports{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:14px 0}
+        .pon-card{border:1px solid var(--border);border-radius:18px;padding:12px 14px;cursor:pointer;background:var(--bg2,transparent);transition:transform .15s}
+        .pon-card:hover{transform:translateY(-1px)}
+        .pon-card.on{outline:2px solid var(--primary);outline-offset:-2px}
+        .pon-card h5{margin:0 0 6px;font-size:14px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+        .pon-card .pc-n{display:flex;gap:12px;font-size:12.5px;flex-wrap:wrap}
+        .pon-card .pc-bar{height:7px;border-radius:7px;background:var(--danger);overflow:hidden;margin-top:8px}
+        .pon-card .pc-bar i{display:block;height:100%;background:var(--success)}
+        .pon-card .pc-sub{font-size:11px;color:var(--muted);margin-top:5px}
+      </style>
       <!-- System Info Bar -->
       <div class="system-info-bar">
         <div class="info-item"><i class="bi bi-thermometer-half"></i> <%= t('admin.olts.system.temp', 'Suhu') %>: <strong id="stat-temp">-</strong></div>
@@ -874,6 +887,9 @@ async function loadOltDashboard(id) {
       unauthContainer.style.display = 'none';
     }
 
+    // Resumen por puerto PON (tocar un puerto filtra la lista de abajo)
+    renderPonPorts(stats.onus || []);
+
     // Render Table
     const tbody = document.getElementById('onu-table-body');
     if (stats.onus && stats.onus.length > 0) {
@@ -1180,6 +1196,41 @@ document.addEventListener('DOMContentLoaded', () => {
     handleOltChange();
   }
 });
+
+// Puertos PON: total de clientes, en línea y desconectados (los "Sin registro" son equipos suspendidos o retirados)
+var ponFilter = '';
+function renderPonPorts(onus) {
+  var el = document.getElementById('pon-ports'); if (!el) return;
+  var ports = {};
+  onus.forEach(function (u) {
+    var p = String(u.id || u.index || '').split(':')[0]; if (!p) return;
+    var x = ports[p] = ports[p] || { total: 0, on: 0, off: 0, susp: 0, cli: 0 };
+    x.total++; if (u.customer_id) x.cli++;
+    if (String(u.status || '').toLowerCase() === 'online') x.on++; else { x.off++; if (/sin registro/i.test(u.offline_reason || '')) x.susp++; }
+  });
+  var keys = Object.keys(ports).sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true }); });
+  if (!keys.length) { el.style.display = 'none'; return; }
+  var T = keys.reduce(function (t, k) { var x = ports[k]; t.total += x.total; t.on += x.on; t.off += x.off; t.susp += x.susp; t.cli += x.cli; return t; }, { total: 0, on: 0, off: 0, susp: 0, cli: 0 });
+  var card = function (k, x, label) {
+    var pct = x.total ? Math.round(100 * x.on / x.total) : 0;
+    return '<div class="pon-card' + (ponFilter === k ? ' on' : '') + '" data-port="' + k + '" title="Tocá para ver solo este puerto">' +
+      '<h5><span>' + label + '</span><span style="font-size:12px;color:var(--muted)">' + pct + '% en línea</span></h5>' +
+      '<div class="pc-n"><span><b>' + x.total + '</b> equipos</span><span style="color:var(--success)"><b>' + x.on + '</b> en línea</span><span style="color:var(--danger)"><b>' + x.off + '</b> desconectados</span></div>' +
+      '<div class="pc-bar"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="pc-sub">' + x.cli + ' con cliente asignado' + (x.susp ? ' · ' + x.susp + ' sin registro (suspendidos o retirados)' : '') + '</div></div>';
+  };
+  el.innerHTML = card('', T, 'Todos los puertos') + keys.map(function (k) { return card(k, ports[k], k.replace('EPON', 'Puerto PON ')); }).join('');
+  el.style.display = 'grid';
+  el.onclick = function (e) {
+    var c = e.target.closest('.pon-card'); if (!c) return;
+    ponFilter = c.dataset.port;
+    el.querySelectorAll('.pon-card').forEach(function (x) { x.classList.toggle('on', x.dataset.port === ponFilter); });
+    document.querySelectorAll('#onu-table-body tr').forEach(function (tr) {
+      var txt = tr.textContent || '';
+      tr.style.display = !ponFilter || txt.indexOf(ponFilter + ':') !== -1 ? '' : 'none';
+    });
+  };
+}
 </script>
 </body>
 </html>

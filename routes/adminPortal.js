@@ -6493,14 +6493,23 @@ router.get('/api/devices', requireAdmin, async (req, res) => {
   try {
     const { search, status, limit = 999999, offset = 0 } = req.query;
     const m = await mergedDevices();
-    let devices = m.devices;
+    // Nombre del cliente de cada equipo (por usuario PPPoE o etiqueta), para mostrarlo en lugar de la etiqueta técnica
+    const byKey = new Map();
+    for (const c of db.prepare('SELECT id, name, status, pppoe_username, genieacs_tag FROM customers').all()) {
+      for (const k of [c.pppoe_username, c.genieacs_tag]) { const key = String(k || '').trim().toLowerCase(); if (key && (!byKey.has(key) || byKey.get(key).status === 'cancelled')) byKey.set(key, c); }
+    }
+    let devices = m.devices.map(d => {
+      const keys = [d.pppoeUsername, ...(d.tags || [])].map(k => String(k || '').trim().toLowerCase()).filter(k => k && k !== 'n/a' && k !== '-');
+      const c = keys.map(k => byKey.get(k)).find(Boolean);
+      return c ? Object.assign({}, d, { customerName: c.name, customerId: c.id, customerStatus: c.status }) : d;
+    });
     if (search) {
       const q = String(search).toLowerCase();
       const billingCustomers = customerSvc.getAllCustomers(q);
       const matchingTags = new Set(billingCustomers.map(c => c.genieacs_tag?.toLowerCase()).filter(Boolean));
       const matchingPppoes = new Set(billingCustomers.map(c => c.pppoe_username?.toLowerCase()).filter(Boolean));
       devices = devices.filter(d =>
-        [d.id, d.serialNumber, d.pppoeIP, d.oltRef, d.syncStatusLabel, ...(d.tags || [])].some(v => String(v || '').toLowerCase().includes(q)) ||
+        [d.id, d.serialNumber, d.pppoeIP, d.oltRef, d.syncStatusLabel, d.customerName, ...(d.tags || [])].some(v => String(v || '').toLowerCase().includes(q)) ||
         (Array.isArray(d.tags) && d.tags.some(t => matchingTags.has(String(t || '').toLowerCase()))) ||
         (String(d.pppoeUsername || '') !== 'N/A' && String(d.pppoeUsername || '').toLowerCase().includes(q)) ||
         matchingPppoes.has(String(d.pppoeUsername || '').toLowerCase()));

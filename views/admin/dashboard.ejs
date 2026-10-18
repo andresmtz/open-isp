@@ -727,7 +727,8 @@ async function loadDevices() {
           </td>
           <td class="text-muted">${i + 1}</td>
           <td>
-            <span class="badge bm">${escHtml(tagStr)}</span>
+            ${d.customerName ? `<a href="/admin/customers/${d.customerId}/ficha" style="display:block;font-weight:700;font-size:13.5px;margin-bottom:4px;color:inherit;text-decoration:none" title="Abrir la ficha del cliente">${escHtml(d.customerName)}</a>` : ''}
+            <span class="badge bm" title="Etiqueta / usuario PPPoE">${escHtml(tagStr)}</span>
             ${d.tr069 ? '<span class="badge bs" style="margin-left:4px" title="Gestionada por TR-069: SSID y equipos conectados">TR-069</span>' : '<span class="badge bm" style="margin-left:4px;opacity:.7" title="Solo datos de la OLT">OLT</span>'}
             <div style="font-size:11px;color:var(--muted);margin-top:4px" title="${I18N.lastInform}"><i class="bi bi-clock"></i> ${lastInformStr}</div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px" title="${I18N.lastSync}"><i class="bi bi-arrow-repeat"></i> ${lastSyncStr}</div>
@@ -836,8 +837,8 @@ function renderOfflineList(offlineDevices) {
     const since = offlineSince(d), ago = since ? timeSince(new Date(since)) : I18N.never;
     return `<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
       <div>
-        <div style="font-size:13px;font-weight:600">${escHtml((d.pppoeUsername && d.pppoeUsername !== 'N/A' && d.pppoeUsername !== '-') ? d.pppoeUsername : (d.tags.join(', ') || '-'))}</div>
-        <div style="font-size:11px;color:var(--muted)">${escHtml(d.serialNumber)}${d.note ? ' · ' + d.note : ''}</div>
+        <div style="font-size:13px;font-weight:600">${d.customerName ? `<a href="/admin/customers/${d.customerId}/ficha" style="color:inherit;text-decoration:none" title="Abrir la ficha del cliente">${escHtml(d.customerName)}</a>` : escHtml((d.pppoeUsername && d.pppoeUsername !== 'N/A' && d.pppoeUsername !== '-') ? d.pppoeUsername : (d.tags.join(', ') || '-'))}</div>
+        <div style="font-size:11px;color:var(--muted)">${d.customerName ? escHtml((d.pppoeUsername && d.pppoeUsername !== 'N/A' && d.pppoeUsername !== '-') ? d.pppoeUsername : (d.tags.join(', ') || '')) + ' · ' : ''}${escHtml(d.serialNumber)}${d.note ? ' · ' + escHtml(d.note) : ''}</div>
       </div>
       <div style="text-align:right">
         <span class="badge bd">${I18N.offlineBadge}</span>

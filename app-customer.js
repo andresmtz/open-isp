@@ -252,7 +252,7 @@ app.use((req, res, next) => {
   res.locals.serviceNotice = noticeSvc.getServiceNotice();
   res.locals.uptimeUrl = getSetting('uptime_url', '');
   res.locals.heroVer = getSetting('landing_hero_version', '');
-  res.locals.projectUrl = String(getSetting('project_url', 'https://github.com/oxpoe/open-isp') || '').replace(/\/+$/, '');
+  res.locals.projectUrl = String(getSetting('project_url', '') || '').replace(/\/+$/, ''); // vacío: no se muestran links al repositorio
   res.locals.appVersion = String(getSetting('app_version', '0.5.1') || '0.5.1');
   res.locals.appVersionName = String(getSetting('app_version_name', 'pickle-lime') || 'pickle-lime');
   res.locals.pwaVersion = String(getSetting('pwa_version', '2.0') || '2.0');
@@ -1224,7 +1224,11 @@ app.use((req, res, next) => {
 });
 
 // Halaman depan (Landing Page)
+// Página web pública (inicio, quiénes somos, contacto): oculta salvo que se active en Configuración
+// (landing_enabled). Mientras está oculta, la dirección principal lleva al ingreso de clientes.
+const landingOn = () => { const v = getSetting('landing_enabled', false); return v === true || v === 'true'; };
 app.get('/', (req, res) => {
+  if (!landingOn()) return res.redirect('/customer/login');
   // Mode aplikasi/PWA → langsung ke login pelanggan (opsi A)
   if (req.query.app === '1' || req.query.source === 'pwa') {
     return res.redirect('/customer/login');
@@ -1975,6 +1979,7 @@ function ensureDonationOrderQrisUnique(baseAmount, donorPhone, donorName, notes)
 
 // Halaman Publik Donasi QRIS Statis
 app.get(['/donasi', '/donate', '/public/donasi'], (req, res) => {
+  if (!landingOn()) return res.redirect('/customer/login');
   const settings = getSettingsWithCache();
   res.render('donate', {
     settings,
@@ -1986,6 +1991,7 @@ app.get(['/donasi', '/donate', '/public/donasi'], (req, res) => {
 
 // Endpoint Buat Pesanan Donasi dengan Kode Unik
 app.post(['/donasi/create', '/api/donasi/create'], (req, res) => {
+  if (!landingOn()) return res.status(404).json({ success: false, message: 'No disponible' });
   try {
     const { name, phone, amount, notes } = req.body || {};
     const donorName = String(name || 'Hamba Allah').trim();

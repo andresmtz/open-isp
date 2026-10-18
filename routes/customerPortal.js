@@ -771,6 +771,7 @@ router.get('/privacy', (req, res) => {
 
 // Route: Tentang Kami
 router.get('/about', (req, res) => {
+  { const v = (getSettingsWithCache() || {}).landing_enabled; if (!(v === true || v === 'true')) return res.redirect('/customer/login'); }
   const settings = getSettingsWithCache();
   res.render('about', { 
     settings, 
@@ -781,6 +782,7 @@ router.get('/about', (req, res) => {
 
 // Route: Kontak Support
 router.get('/contact', (req, res) => {
+  { const v = (getSettingsWithCache() || {}).landing_enabled; if (!(v === true || v === 'true')) return res.redirect('/customer/login'); }
   const settings = getSettingsWithCache();
   res.render('contact', { 
     settings, 

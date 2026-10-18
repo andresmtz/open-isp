@@ -605,9 +605,17 @@
                 }
               </script>
               <div class="fg">
-                <label class="fl"><%= t('admin.set.repo_link','Link Repositori Proyek (GitHub)') %></label>
-                <input class="fc" name="project_url" value="<%= settings.project_url || 'https://github.com/oxpoe/open-isp' %>" placeholder="https://github.com/oxpoe/open-isp">
-                <div style="font-size:10px; color:var(--muted); margin-top:4px"><%= t('admin.set.repo_hint','Dipakai untuk tautan ') %><b>Repo</b>, <b>Form/Issue</b> (<code>/issues/new/choose</code>), <b>Wiki</b>, y <b>Lisensi</b> di landing page.</div>
+                <label class="fl">Página web pública de la empresa</label>
+                <select class="fs" name="landing_enabled">
+                  <option value="false" <%= (settings.landing_enabled === true || settings.landing_enabled === 'true') ? '' : 'selected' %>>Oculta: la dirección principal lleva al ingreso de clientes</option>
+                  <option value="true" <%= (settings.landing_enabled === true || settings.landing_enabled === 'true') ? 'selected' : '' %>>Visible: inicio con planes, quiénes somos y contacto</option>
+                </select>
+                <div style="font-size:10px; color:var(--muted); margin-top:4px">Mientras está oculta, nadie ve la página de inicio, "Quiénes somos" ni "Contacto". El portal de clientes, los términos y la privacidad siguen funcionando.</div>
+              </div>
+              <div class="fg">
+                <label class="fl">Link del repositorio del proyecto (opcional)</label>
+                <input class="fc" name="project_url" value="<%= settings.project_url || '' %>" placeholder="Vacío: no se muestra">
+                <div style="font-size:10px; color:var(--muted); margin-top:4px">Si se completa, la página web muestra enlaces al repositorio, reportes, wiki y licencia. Vacío: no se muestra ninguno.</div>
               </div>
               <div class="fg">
                 <label class="fl"><%= t('admin.set.uptime_link','Link Uptime Website (Status)') %></label>

@@ -75,6 +75,17 @@ app.use(require('./config/payments').guard);
 // Safari pide estos íconos por su cuenta: se sirve el ícono de la app (antes daban 404)
 app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'], (req, res) => res.sendFile(require('path').join(__dirname, 'public', 'img', 'apple-touch-icon.png')));
 app.get('/manifest.json', (req, res) => res.redirect(301, '/manifest.webmanifest'));
+// Favicon: la marca con la inicial (se invierte con el tema del navegador); con íconos del logo, el PNG del logo
+app.get('/favicon.svg', (req, res) => {
+  const mark = require('./config/brandMark');
+  if (mark.source() === 'logo') return res.redirect(302, '/img/icons/icon-192.png');
+  res.type('image/svg+xml').set('Cache-Control', 'public, max-age=86400').send(mark.svg({ size: 64, adaptive: true }));
+});
+app.get('/favicon.ico', (req, res) => {
+  const f = path.join(__dirname, 'public', 'img', 'icons', 'favicon-48.png');
+  if (!fs.existsSync(f)) return res.redirect(302, '/favicon.svg');
+  res.type('image/png').set('Cache-Control', 'public, max-age=86400').sendFile(f);
+});
 
 // Kompresi gzip (performa: respons HTML/CSS/JS lebih kecil)
 app.use(compression());
@@ -280,6 +291,10 @@ app.use((req, res, next) => {
   const _send = res.send.bind(res);
   res.send = function (body) {
     try {
+      // favicon: el mismo en todas las páginas (panel, técnicos, clientes)
+      if (typeof body === 'string' && body.indexOf('</head>') !== -1 && body.indexOf('/favicon.svg') === -1) {
+        body = body.replace(/\s*<link rel="(?:shortcut )?icon"[^>]*>/gi, '').replace('</head>', '  ' + require('./config/brandMark').headLinks() + '\n</head>');
+      }
       if (typeof body === 'string' && body.indexOf('<html') !== -1 && body.indexOf('</head>') !== -1 && body.indexOf('/css/page-loader.css') === -1) {
         body = body.replace('</head>', '  <link rel="stylesheet" href="/css/page-loader.css?v=1">\n  <script src="/js/page-loader.js" defer></script>\n</head>');
       }
@@ -2230,6 +2245,11 @@ logger.info(`Attempting to start server on configured port: ${port}`);
 
 // Mulai server dengan port dari konfigurasi
 startServer(port);
+
+// Íconos de la app con la marca de la empresa (si cambió la inicial o faltan)
+require('./services/iconService').ensureMarkIcons()
+  .then((done) => { if (done) { try { require('./config/settingsManager').saveSettings({ logo_version: String(Date.now()) }); } catch (_) {} logger.info('[Íconos] creados con la marca de la empresa'); } })
+  .catch((e) => logger.warn('[Íconos] no se pudieron crear con la marca: ' + e.message));
 
 if (getSetting('whatsapp_enabled', false)) {
   const gwType = getSetting('wa_gateway_type', 'gowa');

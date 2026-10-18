@@ -2,7 +2,7 @@
    Strategi: HTML & CSS/JS = network-first (selalu ambil terbaru saat online),
    gambar & manifest & font = cache-first (jarang berubah).
    Naikkan CACHE_NAME bila perlu purge (v4 → v5 → ...). */
-const CACHE_NAME = 'customer-pwa-v7';
+const CACHE_NAME = 'customer-pwa-v8';
 const PRECACHE_URLS = [
   // Aset inti (network-first tapi disimpan untuk offline)
   '/css/auth.css',

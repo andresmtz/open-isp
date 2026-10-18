@@ -5557,7 +5557,7 @@ router.post('/settings/logo-upload', requireAdminSession, qrisUpload.single('log
     const fullPath = path.join(dir, 'logo.png');
     fs.writeFileSync(fullPath, f.buffer);
     let _iconMsg = '';
-    try { await require('../services/iconService').generatePwaIcons(f.buffer); _iconMsg = ' Los íconos de la app (192/512/maskable/apple) también se actualizaron.'; }
+    if (require('../config/brandMark').source() === 'logo') try { await require('../services/iconService').generatePwaIcons(f.buffer); _iconMsg = ' Los íconos de la app (192/512/maskable/apple) también se actualizaron.'; }
     catch (e) { try { logger.warn('[Logo] Gagal generate ikon PWA: ' + e.message); } catch (_) {} _iconMsg = ' (Ikon PWA gagal dibuat.)'; }
     try { saveSettings({ logo_version: String(Date.now()) }); } catch (e) {}
 
@@ -5605,7 +5605,7 @@ router.post('/settings/branding/logo/:type', requireAdminSession, qrisUpload.sin
 
     let extra = '';
     if (type === 'pwa') {
-      try { await require('../services/iconService').generatePwaIcons(f.buffer); extra = ' Los íconos de la app (192/512/maskable/apple) se regeneraron.'; }
+      try { await require('../services/iconService').generatePwaIcons(f.buffer); saveSettings({ app_icon_source: 'logo' }); extra = ' Los íconos de la app (192/512/maskable/apple) y el favicon ahora usan esta imagen.'; }
       catch (e) { extra = ' (No se pudieron crear los íconos de la app.)'; }
     }
     req.session._msg = { type: 'success', text: 'Logo ' + type + ' actualizado.' + extra };
@@ -5617,10 +5617,15 @@ router.post('/settings/branding/logo/:type', requireAdminSession, qrisUpload.sin
 
 router.post('/settings/regenerate-icons', requireAdminSession, async (req, res) => {
   try {
+    if (String((req.query && req.query.source) || (req.body && req.body.source) || '') === 'mark') {
+      await require('../services/iconService').generateMarkIcons();
+      try { saveSettings({ app_icon_source: 'mark', logo_version: String(Date.now()) }); } catch (e) {}
+      return res.json({ ok: true, message: 'Íconos de la app y favicon creados con la marca (la inicial de la empresa).' });
+    }
     const p = path.join(__dirname, '../public/img/logo.png');
     if (!fs.existsSync(p)) return res.json({ ok: false, message: 'Todavía no hay logo. Subí un logo primero.' });
     await require('../services/iconService').generatePwaIcons(fs.readFileSync(p));
-    try { saveSettings({ logo_version: String(Date.now()) }); } catch (e) {}
+    try { saveSettings({ app_icon_source: 'logo', logo_version: String(Date.now()) }); } catch (e) {}
     return res.json({ ok: true, message: 'Íconos de la app creados a partir del logo actual.' });
   } catch (e) { return res.json({ ok: false, message: 'No se pudieron generar los íconos:' + e.message }); }
 });

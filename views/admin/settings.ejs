@@ -526,7 +526,8 @@
                       <div style="font-size:10px; color:var(--muted); margin-top:4px"><%- t('admin.set.pwa_icon_hint','Setelah upload, ikon PWA (192/512/maskable/apple-touch) &amp; favicon otomatis dibuat ulang dari gambar ini. Sebaiknya gambar persegi (1:1).') %></div>
                     </div>
                     <button class="btn btn-s" type="button" onclick="uploadBrandLogo('pwa', this)" style="height:38px"><i class="bi bi-upload"></i> Upload</button>
-                    <button class="btn btn-g" type="button" onclick="regenPwaIcons(this)" style="height:38px"><i class="bi bi-phone"></i> Regenerar íconos</button>
+                    <button class="btn btn-g" type="button" onclick="regenPwaIcons(this)" style="height:38px"><i class="bi bi-phone"></i> Íconos desde el logo</button>
+                    <button class="btn btn-g" type="button" onclick="regenPwaIcons(this, 'mark')" style="height:38px" title="El cuadrado con la inicial de la empresa, como en el panel"><i class="bi bi-app"></i> Íconos con la marca</button>
                   </div>
                   <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
                     <div style="font-size:10px; color:var(--muted)">Preview:</div>
@@ -942,10 +943,10 @@ async function testWebhook() {
     if (out) { out.textContent = 'Falló — ' + e.message; out.style.color = 'var(--danger)'; }
   }
 }
-window.regenPwaIcons = function (btn) {
-  if (!confirm('¿Regenerar los íconos de la app (192/512/maskable/apple) a partir del logo actual?')) return;
+window.regenPwaIcons = function (btn, source) {
+  if (!confirm(source === 'mark' ? '¿Usar la marca (la inicial de la empresa) para los íconos de la app y el favicon?' : '¿Crear los íconos de la app y el favicon a partir del logo actual?')) return;
   var old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Procesando...';
-  fetch('/admin/settings/regenerate-icons', { method: 'POST' })
+  fetch('/admin/settings/regenerate-icons' + (source === 'mark' ? '?source=mark' : ''), { method: 'POST' })
     .then(function (r) { return r.json().catch(function () { return {}; }); })
     .then(function (d) { alert((d && d.message) || 'Listo'); })
     .catch(function (e) { alert('Error: ' + e.message); })

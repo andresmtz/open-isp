@@ -17,7 +17,7 @@ const initial = (name) => esc((String(name || '').trim().match(/[\p{L}\p{N}]/u) 
 
 function landingPages(body, { brandName }) {
   const L = initial(brandName);
-  body = body.replace('</head>', '  <link rel="stylesheet" href="/css/v2/portal.css?v=3">\n</head>');
+  body = body.replace('</head>', '  <link rel="stylesheet" href="/css/v2/portal.css?v=3">\n  <script src="/js/v2-confirm.js?v=1" defer></script>\n</head>');
   body = body.replace(/<html(\s|>)/i, (m, c) => '<html data-ui="v2"' + c);
   body = body.replace(/<meta name="theme-color" content="#0A0D14">/gi, '<meta name="theme-color" content="#111412">');
   // logo de la barra superior de las páginas públicas y del ingreso
@@ -73,7 +73,7 @@ function customerPortal(body, { brandName, brandLogo }) {
   const DARK = { '#1B2233': '#2a2f2c', '#0F1420': '#1c201e', '#131A29': '#232826', '#0B0F18': '#151816', '#10170C': '#1f2a24', '#0A0E08': '#141a16', '#0A0D14': '#141715' };
   body = body.replace(/#1B2233|#0F1420|#131A29|#0B0F18|#10170C|#0A0E08|#0A0D14/gi, (m) => DARK[m.toUpperCase()] || m);
   body = body.replace(/rgba\(20,\s*24,\s*36,/g, 'rgba(24,28,26,');
-  body = body.replace('</head>', PORTAL_VARS + '</head>');
+  body = body.replace('</head>', PORTAL_VARS + '<script src="/js/v2-confirm.js?v=1" defer></script>\n</head>');
   return body;
 }
 

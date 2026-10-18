@@ -823,7 +823,8 @@ router.get('/api/device/:tag', requireTechSession, async (req, res) => {
 
 router.post('/api/device/:tag/ssid', requireTechSession, express.json(), async (req, res) => {
   const { ssid } = req.body;
-  if (!ssid) return res.status(400).json({ error: 'SSID required' });
+  const _nErr = require('../config/wifiRules').checkName(String(ssid || '').trim());
+  if (_nErr) return res.status(400).json({ error: _nErr, message: _nErr });
   const ok = await customerDevice.updateSSID(req.params.tag, ssid);
   // Kirim notifikasi WhatsApp ke pelanggan
   if (ok) {
@@ -855,7 +856,8 @@ router.post('/api/device/:tag/ssid', requireTechSession, express.json(), async (
 
 router.post('/api/device/:tag/password', requireTechSession, express.json(), async (req, res) => {
   const { password } = req.body;
-  if (!password || password.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' });
+  const _kErr = require('../config/wifiRules').checkKey(String(password || '').trim());
+  if (_kErr) return res.status(400).json({ error: _kErr, message: _kErr });
   const ok = await customerDevice.updatePassword(req.params.tag, password);
   // Kirim notifikasi WhatsApp ke pelanggan
   if (ok) {
@@ -1329,6 +1331,9 @@ router.post('/api/add-wan/:deviceId', requireTechSession, async (req, res) => {
         } = req.body;
         
         // 1. Validasi awal
+        // WiFi: reglas únicas (sin espacios ni caracteres especiales)
+        const _wifiErr = require('../config/wifiRules').checkOptional({ ssid24: wifiSsid24, pass24: wifiPass24, ssid5: wifiSsid5, pass5: wifiPass5 });
+        if (_wifiErr) return res.json({ success: false, message: _wifiErr });
         const normalizedMode = String(mode || '').trim().toLowerCase();
         if (!['pppoe', 'bridge'].includes(normalizedMode)) {
             return res.json({ success: false, message: 'Modo WAN inválido' });

@@ -6470,7 +6470,8 @@ router.get('/api/device/:tag', requireAdmin, async (req, res) => {
 
 router.post('/api/device/:tag/ssid', requireAdmin, express.json(), async (req, res) => {
   const { ssid } = req.body;
-  if (!ssid) return res.status(400).json({ error: 'SSID required' });
+  const _nErr = require('../config/wifiRules').checkName(String(ssid || '').trim());
+  if (_nErr) return res.status(400).json({ error: _nErr, message: _nErr });
   const ok = await customerDevice.updateSSID(req.params.tag, ssid);
   // Kirim notifikasi WhatsApp ke pelanggan
   if (ok) {
@@ -6495,7 +6496,8 @@ router.post('/api/device/:tag/ssid', requireAdmin, express.json(), async (req, r
 
 router.post('/api/device/:tag/password', requireAdmin, express.json(), async (req, res) => {
   const { password } = req.body;
-  if (!password || password.length < 8) return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' });
+  const _kErr = require('../config/wifiRules').checkKey(String(password || '').trim());
+  if (_kErr) return res.status(400).json({ error: _kErr, message: _kErr });
   const ok = await customerDevice.updatePassword(req.params.tag, password);
   // Kirim notifikasi WhatsApp ke pelanggan
   if (ok) {
@@ -6526,6 +6528,8 @@ router.post('/api/device/:tag/reboot', requireAdmin, async (req, res) => {
 router.post('/api/bulk/ssid', requireAdmin, express.json(), async (req, res) => {
   const { tags, ssid } = req.body;
   if (!Array.isArray(tags) || !ssid) return res.status(400).json({ error: 'Tags and SSID required' });
+  const _nErr = require('../config/wifiRules').checkName(String(ssid || '').trim());
+  if (_nErr) return res.status(400).json({ error: _nErr, message: _nErr });
   const results = [];
   for (const tag of tags) {
     try {

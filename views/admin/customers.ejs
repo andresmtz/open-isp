@@ -1400,8 +1400,8 @@
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
         <div style="font-weight:700;font-size:13px;margin-bottom:6px"><i class="bi bi-wifi"></i> WiFi elegido por el cliente</div>
         <div class="form-row">
-          <div class="fg"><label class="fl">Nombre de la red (5G = nombre + "-5G")</label><input class="fc" id="eq_ssid" maxlength="28"></div>
-          <div class="fg"><label class="fl">Clave (vacío = no cambiar)</label><input class="fc" id="eq_key" maxlength="63" autocomplete="off"></div>
+          <div class="fg"><label class="fl">Nombre de la red (5G = nombre + "-5G")</label><input class="fc" id="eq_ssid" maxlength="28" autocapitalize="off" spellcheck="false"><div style="font-size:11px;color:var(--muted);margin-top:3px"><%= wifiRules.NAME_HINT %></div></div>
+          <div class="fg"><label class="fl">Clave (vacío = no cambiar)</label><input class="fc" id="eq_key" maxlength="63" autocomplete="off" autocapitalize="off" spellcheck="false"><div style="font-size:11px;color:var(--muted);margin-top:3px"><%= wifiRules.KEY_HINT %></div></div>
           <div class="fg"><label class="fl">MAC de la etiqueta</label><input class="fc" id="eq_mac" placeholder="80:07:1B:F4:EE:68" style="text-transform:uppercase"></div>
         </div>
         <button class="btn btn-g btn-sm" onclick="eqSave()"><i class="bi bi-check-lg"></i> Guardar WiFi / MAC</button>
@@ -2714,6 +2714,9 @@ async function cancelCustService(id) {
 <script>
 (function () {
   var cur = { id: null, name: '' };
+  // Reglas únicas del WiFi (config/wifiRules.js)
+  var WIFI_R = { name: new RegExp('^' + <%- JSON.stringify(wifiRules.NAME_PATTERN) %> + '$'), key: new RegExp('^' + <%- JSON.stringify(wifiRules.KEY_PATTERN) %> + '$'),
+    nameHint: <%- JSON.stringify(wifiRules.NAME_HINT) %>, keyHint: <%- JSON.stringify(wifiRules.KEY_HINT) %>, nameMsg: <%- JSON.stringify(wifiRules.NAME_MSG) %>, keyMsg: <%- JSON.stringify(wifiRules.KEY_MSG) %> };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); };
   function row(k, v) { return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">' + k + '</span><span style="text-align:right">' + v + '</span></div>'; }
   async function load(keys) {
@@ -2742,8 +2745,8 @@ async function cancelCustService(id) {
     h += '<div id="onu-clients" style="margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:10px"><div style="color:var(--muted);font-size:12px"><i class="bi bi-arrow-repeat"></i> Consultando equipos conectados…</div></div>';
     h += '<div style="margin-top:14px;padding:12px;border:1px solid var(--border);border-radius:10px">'
       + '<div style="font-weight:700;margin-bottom:8px"><i class="bi bi-pencil"></i> Cambiar WiFi</div>'
-      + '<div class="fg"><label class="fl">Nombre de la red (2.4 GHz)</label><input class="fc" id="onu-n" value="' + esc(w24.name) + '" maxlength="28"><div style="font-size:11px;color:var(--muted);margin-top:3px">Sin espacios. La red 5G se llamará igual + <b>-5G</b>.</div></div>'
-      + '<div class="fg"><label class="fl">Clave nueva (para las dos redes)</label><input class="fc" id="onu-k" type="text" minlength="8" maxlength="63" autocomplete="off" placeholder="mínimo 8 caracteres"></div>'
+      + '<div class="fg"><label class="fl">Nombre de la red (2.4 GHz)</label><input class="fc" id="onu-n" value="' + esc(w24.name) + '" maxlength="28" autocapitalize="off" spellcheck="false"><div style="font-size:11px;color:var(--muted);margin-top:3px">' + WIFI_R.nameHint + ' La red 5G se llamará igual + <b>-5G</b>.</div></div>'
+      + '<div class="fg"><label class="fl">Clave nueva (para las dos redes)</label><input class="fc" id="onu-k" type="text" minlength="8" maxlength="63" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="mínimo 8 caracteres"><div style="font-size:11px;color:var(--muted);margin-top:3px">' + WIFI_R.keyHint + '</div></div>'
       + '<div style="font-size:11.5px;color:var(--warning);margin-bottom:8px"><i class="bi bi-exclamation-triangle"></i> Los equipos del cliente se desconectan y tienen que volver a conectarse con la clave nueva. El cliente recibe la clave por WhatsApp.</div>'
       + '<button type="button" class="btn btn-p btn-sm" id="onu-save" onclick="onuSave()"><i class="bi bi-check-lg"></i> Aplicar, verificar y guardar</button> <span id="onu-res" style="font-size:12px"></span></div>';
     body.innerHTML = h + histHtml(d.history);
@@ -2787,7 +2790,8 @@ async function cancelCustService(id) {
   window.onuSave = async function () {
     var n = document.getElementById('onu-n').value.trim(), k = document.getElementById('onu-k').value;
     var res = document.getElementById('onu-res'), btn = document.getElementById('onu-save');
-    if (!n || k.length < 8) { res.innerHTML = '<span style="color:var(--danger)">Completá el nombre y una clave de 8 caracteres o más.</span>'; return; }
+    if (!WIFI_R.name.test(n)) { res.innerHTML = '<span style="color:var(--danger)">' + esc(WIFI_R.nameMsg) + '</span>'; return; }
+    if (!WIFI_R.key.test(k)) { res.innerHTML = '<span style="color:var(--danger)">' + esc(WIFI_R.keyMsg) + '</span>'; return; }
     if (!confirm('¿Cambiar el WiFi a "' + n + '" / "' + n + '-5G"? Los equipos del cliente se van a desconectar.')) return;
     btn.disabled = true; res.innerHTML = '<i class="bi bi-arrow-repeat"></i> Aplicando y verificando… (puede tardar unos segundos)';
     try {

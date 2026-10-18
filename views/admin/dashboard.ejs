@@ -337,7 +337,7 @@
     <div class="mh"><span class="mt"><i class="bi bi-wifi"></i> <%= t('admin.dashboard.edit_ssid', 'Cambiar SSID') %></span><button class="mc" onclick="closeModal('ssidModal')">&times;</button></div>
     <div class="mbody">
       <input type="hidden" id="edit-tag">
-      <div class="fg"><label class="fl"><%= t('admin.dashboard.new_ssid', 'SSID Baru') %></label><input class="fc" id="new-ssid" placeholder="<%= t('admin.dashboard.new_ssid_placeholder', 'Nama WiFi baru') %>"></div>
+      <div class="fg"><label class="fl"><%= t('admin.dashboard.new_ssid', 'SSID Baru') %></label><input class="fc" id="new-ssid" maxlength="28" autocapitalize="off" spellcheck="false" placeholder="<%= t('admin.dashboard.new_ssid_placeholder', 'Nama WiFi baru') %>"><div style="font-size:11px;color:var(--muted);margin-top:3px"><%= wifiRules.NAME_HINT %></div></div>
     </div>
     <div class="mf">
       <button class="btn btn-g" onclick="closeModal('ssidModal')"><%= t('common.cancel', 'Batal') %></button>
@@ -355,7 +355,7 @@
     <div class="mh"><span class="mt"><i class="bi bi-key"></i> <%= t('admin.dashboard.edit_wifi_password', 'Cambiar contraseña del WiFi') %></span><button class="mc" onclick="closeModal('passwordModal')">&times;</button></div>
     <div class="mbody">
       <input type="hidden" id="edit-pass-tag">
-      <div class="fg"><label class="fl"><%= t('admin.dashboard.new_password', 'Password Baru') %></label><input class="fc" id="new-password" type="text" placeholder="<%= t('admin.dashboard.new_password_placeholder', 'Mínimo 8 caracteres') %>"></div>
+      <div class="fg"><label class="fl"><%= t('admin.dashboard.new_password', 'Password Baru') %></label><input class="fc" id="new-password" type="text" maxlength="63" autocapitalize="off" spellcheck="false" placeholder="<%= t('admin.dashboard.new_password_placeholder', 'Mínimo 8 caracteres') %>"><div style="font-size:11px;color:var(--muted);margin-top:3px"><%= wifiRules.KEY_HINT %></div></div>
     </div>
     <div class="mf">
       <button class="btn btn-g" onclick="closeModal('passwordModal')"><%= t('common.cancel', 'Batal') %></button>
@@ -921,7 +921,7 @@ document.getElementById('btn-save-ssid').addEventListener('click', async functio
   const tag  = document.getElementById('edit-tag').value;
   const ssid = document.getElementById('new-ssid').value.trim();
   
-  if (!ssid) return showToast(I18N.ssidRequired, 'd');
+  if (!new RegExp('^' + <%- JSON.stringify(wifiRules.NAME_PATTERN) %> + '$').test(ssid)) return showToast(<%- JSON.stringify(wifiRules.NAME_MSG) %>, 'd');
   
   btn.disabled = true;
   txt.style.display = 'none';
@@ -957,7 +957,7 @@ document.getElementById('btn-save-password').addEventListener('click', async fun
   const tag  = document.getElementById('edit-pass-tag').value;
   const pass = document.getElementById('new-password').value;
   
-  if (!pass || pass.length < 8) return showToast(I18N.passwordMin, 'd');
+  if (!new RegExp('^' + <%- JSON.stringify(wifiRules.KEY_PATTERN) %> + '$').test(pass)) return showToast(<%- JSON.stringify(wifiRules.KEY_MSG) %>, 'd');
   
   btn.disabled = true;
   txt.style.display = 'none';

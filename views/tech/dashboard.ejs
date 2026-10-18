@@ -78,8 +78,9 @@
               <label style="font-size:12px;display:block;margin:8px 0 2px">Foto de la etiqueta de la ONU NUEVA</label>
               <input type="file" name="label" accept="image/*" multiple required class="p-input" style="width:100%">
               <label style="font-size:12px;display:block;margin:8px 0 2px">WiFi: se mantiene <b><%= sp.wifi || 'el guardado' %></b>. Si el cliente quiere otro:</label>
-              <input name="ssid" class="p-input" maxlength="28" pattern="[A-Za-z0-9_.\-]{1,28}" placeholder="Nombre nuevo (opcional)" style="width:100%">
-              <input name="key" class="p-input" minlength="8" maxlength="63" placeholder="Clave nueva (opcional)" style="width:100%;margin-top:6px" autocomplete="off">
+              <input name="ssid" class="p-input" maxlength="28" pattern="<%= wifiRules.NAME_PATTERN %>" title="<%= wifiRules.NAME_HINT %>" autocapitalize="off" spellcheck="false" placeholder="Nombre nuevo (opcional)" style="width:100%">
+              <input name="key" class="p-input" minlength="8" maxlength="63" pattern="<%= wifiRules.KEY_PATTERN %>" title="<%= wifiRules.KEY_HINT %>" autocapitalize="off" spellcheck="false" placeholder="Clave nueva (opcional)" style="width:100%;margin-top:6px" autocomplete="off">
+              <div class="muted" style="font-size:11px;margin-top:2px">Nombre: <%= wifiRules.NAME_HINT %><br>Clave: <%= wifiRules.KEY_HINT %></div>
               <div class="muted" style="font-size:11px;margin-top:6px">La ONU vieja se da de baja recién cuando la nueva funcione.</div>
               <button class="btn btn-primary btn-sm" style="margin-top:8px;width:100%"><i class="bi bi-upload"></i> Cambiar equipo</button>
             </form>
@@ -126,10 +127,11 @@
             <label style="font-size:12px;display:block;margin:8px 0 2px">MAC de la etiqueta (opcional)</label>
             <input name="mac" class="p-input" value="<%= eq.mac %>" placeholder="80:07:1B:F4:EE:68" style="width:100%;text-transform:uppercase">
             <label style="font-size:12px;display:block;margin:8px 0 2px">Nombre del WiFi que eligió el cliente</label>
-            <input name="ssid" class="p-input" value="<%= eq.ssid %>" maxlength="28" pattern="[A-Za-z0-9_.\-]{1,28}" placeholder="Sin espacios ni acentos" style="width:100%">
-            <div class="muted" style="font-size:11px;margin-top:2px">La red 5G se llama igual con "-5G" al final.</div>
-            <label style="font-size:12px;display:block;margin:8px 0 2px">Clave del WiFi (mínimo 8)</label>
-            <input name="key" class="p-input" minlength="8" maxlength="63" placeholder="<%= eq.ssid ? 'Dejar vacío para no cambiarla' : '' %>" style="width:100%" autocomplete="off">
+            <input name="ssid" class="p-input" value="<%= eq.ssid %>" maxlength="28" pattern="<%= wifiRules.NAME_PATTERN %>" title="<%= wifiRules.NAME_HINT %>" autocapitalize="off" spellcheck="false" placeholder="Sin espacios ni acentos" style="width:100%">
+            <div class="muted" style="font-size:11px;margin-top:2px"><%= wifiRules.NAME_HINT %> La red 5G se llama igual con "-5G" al final.</div>
+            <label style="font-size:12px;display:block;margin:8px 0 2px">Clave del WiFi</label>
+            <input name="key" class="p-input" minlength="8" maxlength="63" pattern="<%= wifiRules.KEY_PATTERN %>" title="<%= wifiRules.KEY_HINT %>" autocapitalize="off" spellcheck="false" placeholder="<%= eq.ssid ? 'Dejar vacío para no cambiarla' : '' %>" style="width:100%" autocomplete="off">
+            <div class="muted" style="font-size:11px;margin-top:2px"><%= wifiRules.KEY_HINT %></div>
             <% if (eq.status) { %><div style="font-size:12px;margin-top:6px;color:<%= eq.status === 'aplicado' ? 'var(--success,#10b981)' : (eq.status.indexOf('error') === 0 ? '#ef4444' : 'var(--muted)') %>">WiFi: <%= eq.status === 'aplicado' ? 'configurado en la ONU' : (eq.status === 'pendiente' ? 'pendiente: la oficina vincula la ONU y se aplica solo' : eq.status) %></div><% } %>
             <button class="btn btn-primary btn-sm" style="margin-top:8px;width:100%"><i class="bi bi-upload"></i> Guardar datos del equipo</button>
           </form>

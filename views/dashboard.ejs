@@ -433,8 +433,8 @@
       <div class="mbody">
         <div class="field" style="margin-top:0">
           <label for="modalSsidInput">Nuevo nombre del WiFi (SSID)</label>
-          <input type="text" name="ssid" id="modalSsidInput" class="inp inp-plain" placeholder="Ejemplo: WiFi_Casa_Familia" required>
-          <div class="form-note">Los dispositivos se desconectarán un momento después del cambio.</div>
+          <input type="text" name="ssid" id="modalSsidInput" class="inp inp-plain" placeholder="Ejemplo: WiFi_Casa_Familia" required maxlength="28" pattern="<%= wifiRules.NAME_PATTERN %>" title="<%= wifiRules.NAME_HINT %>" autocapitalize="off" spellcheck="false">
+          <div class="form-note"><%= wifiRules.NAME_HINT %> Los dispositivos se desconectarán un momento después del cambio.</div>
         </div>
       </div>
       <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('editSsidModal')">Cancelar</button><button type="submit" class="lbtn lbtn-primary">Guardar nombre del WiFi</button></div>
@@ -450,9 +450,9 @@
     <form action="/customer/change-password" method="POST">
       <div class="mbody">
         <div class="field" style="margin-top:0">
-          <label for="modalPassInput">Nueva contraseña del WiFi (mínimo 8 caracteres)</label>
-          <input type="password" name="password" id="modalPassInput" class="inp inp-plain" minlength="8" placeholder="Ejemplo: Secreta12345" required>
-          <div class="form-note">Use al menos 8 caracteres combinando letras y números. Guarde bien esta contraseña.</div>
+          <label for="modalPassInput">Nueva contraseña del WiFi</label>
+          <input type="password" name="password" id="modalPassInput" class="inp inp-plain" minlength="8" maxlength="63" pattern="<%= wifiRules.KEY_PATTERN %>" title="<%= wifiRules.KEY_HINT %>" placeholder="Ejemplo: Secreta12345" required autocapitalize="off" spellcheck="false">
+          <div class="form-note"><%= wifiRules.KEY_HINT %> Guarde bien esta contraseña.</div>
         </div>
       </div>
       <div class="mf"><button type="button" class="lbtn lbtn-ghost" onclick="hideModal('editPasswordModal')">Cancelar</button><button type="submit" class="lbtn lbtn-primary">Guardar contraseña</button></div>

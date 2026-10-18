@@ -1648,18 +1648,18 @@
         <label class="field-label" for="ssid-input"><%= t('pwa.net.ssid','Nama WiFi (SSID)') %></label>
         <div class="field-input-wrap">
           <i class="ph-fill ph-wifi-high" style="color:var(--lime);font-size:16px;"></i>
-          <input class="field-input" type="text" id="ssid-input" value="" placeholder="<%= t('pwa.wifi.name_ph','Nombre del WiFi') %>" maxlength="28" autocomplete="off">
+          <input class="field-input" type="text" id="ssid-input" value="" placeholder="<%= t('pwa.wifi.name_ph','Nombre del WiFi') %>" maxlength="28" pattern="<%= wifiRules.NAME_PATTERN %>" autocapitalize="off" spellcheck="false" autocomplete="off">
         </div>
-        <p class="field-hint">Sin espacios (puede usar guion o guion bajo). Su red de 5 GHz se va a llamar igual, terminada en <b>-5G</b>.</p>
+        <p class="field-hint"><%= wifiRules.NAME_HINT %> Su red de 5 GHz se va a llamar igual, terminada en <b>-5G</b>.</p>
       </div>
 
       <div class="field">
         <label class="field-label" for="pwd-input"><%= t('pwa.net.f_password','Password') %></label>
         <div class="field-input-wrap">
           <i class="ph-fill ph-lock-key" style="color:var(--lime);font-size:16px;"></i>
-          <input class="field-input" type="password" id="pwd-input" value="" placeholder="<%= t('pwa.wifi.pwd_ph','Password baru (min. 8 karakter)') %>" minlength="8" maxlength="63" autocomplete="new-password">
+          <input class="field-input" type="password" id="pwd-input" value="" placeholder="Clave nueva (mínimo 8)" minlength="8" maxlength="63" pattern="<%= wifiRules.KEY_PATTERN %>" autocapitalize="off" spellcheck="false" autocomplete="new-password">
         </div>
-        <p class="field-hint">Mínimo 8 caracteres, sin espacios. La misma clave se usa en las dos redes (2.4 y 5 GHz).</p>
+        <p class="field-hint"><%= wifiRules.KEY_HINT %> La misma clave se usa en las dos redes (2.4 y 5 GHz).</p>
       </div>
 
       <div style="margin:4px 0 14px;padding:12px 14px;border-radius:14px;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.35);color:var(--text);font-size:12.5px;line-height:1.45">
@@ -1885,6 +1885,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
+  var WIFI_NAME_RE = new RegExp('^' + <%- JSON.stringify(wifiRules.NAME_PATTERN) %> + '$'), WIFI_KEY_RE = new RegExp('^' + <%- JSON.stringify(wifiRules.KEY_PATTERN) %> + '$');
   let swiper = null;
   const tabs = ['home', 'billing', 'speedtest', 'network', 'profile'];
   const pageTitles = { home: '<%= t('common.home','Beranda') %>', billing: '<%= t('pwa.nav.billing','Tagihan') %>', speedtest: 'Speed Test', network: '<%= t('pwa.nav.network','Jaringan') %>', profile: '<%= t('pwa.nav.account','Akun') %>' };
@@ -2149,8 +2150,8 @@
     let ssid = document.getElementById('ssid-input').value.trim();
     const pwd = document.getElementById('pwd-input').value;
     if (/-5G$/i.test(ssid)) ssid = ssid.slice(0, -3);
-    if (!/^[A-Za-z0-9_.\-]{1,28}$/.test(ssid)) { showToast('El nombre debe tener hasta 28 caracteres, sin espacios (letras, números, guion o guion bajo).', true); return; }
-    if (pwd.length < 8 || /\s/.test(pwd)) { showToast('La clave debe tener al menos 8 caracteres y no llevar espacios.', true); return; }
+    if (!WIFI_NAME_RE.test(ssid)) { showToast(<%- JSON.stringify(wifiRules.NAME_MSG) %>, true); return; }
+    if (!WIFI_KEY_RE.test(pwd)) { showToast(<%- JSON.stringify(wifiRules.KEY_MSG) %>, true); return; }
     if (!confirm('Sus redes van a quedar como "' + ssid + '" y "' + ssid + '-5G".\n\nTodos sus equipos se van a desconectar del WiFi y tendrá que volver a conectarlos con la clave nueva.\n\n¿Continuar?')) return;
     closeSettingModal();
     _busy(true, 'Aplicando el cambio en su equipo… no cierre la página');
@@ -2610,8 +2611,8 @@ window.__PORTAL__ = <%- portalJson %>;
     if ((window.__PORTAL__ || {}).onuDetected === false) { showToast('<%= t('pwa.js.onu_missing_wifi','ONU tidak terdeteksi — ubah sandi tidak dapat dilakukan.') %>', true); setTimeout(window.openOnuModal, 900); return; }
     var ssid = document.getElementById('ssid-input').value.trim();
     var pwd  = document.getElementById('pwd-input').value;
-    if (!ssid) { showToast('<%= t('pwa.js.ssid_empty','El SSID no puede quedar vacío') %>', true); return; }
-    if (pwd && pwd.length < 8) { showToast('La contraseña debe tener al menos 8 caracteres', true); return; }
+    if (!WIFI_NAME_RE.test(ssid)) { showToast(<%- JSON.stringify(wifiRules.NAME_MSG) %>, true); return; }
+    if (pwd && !WIFI_KEY_RE.test(pwd)) { showToast(<%- JSON.stringify(wifiRules.KEY_MSG) %>, true); return; }
     var chain = Promise.resolve();
     if (pwd) chain = chain.then(function(){ return doPost('/customer/change-password', {password:pwd}); });
     chain = chain.then(function(){ return doPost('/customer/change-ssid', {ssid:ssid}); });

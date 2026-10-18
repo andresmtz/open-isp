@@ -845,8 +845,9 @@ function fallbackCustomer(tag) {
   };
 }
 
-const SSID_RE = /^[^<>"'`\\&\u0000-\u001f\u007f]{1,32}$/;
-function isValidSsid(v) { return SSID_RE.test(String(v || '')); }
+// Reglas únicas del WiFi (config/wifiRules.js): sin espacios ni caracteres especiales
+const wifiRules = require('../config/wifiRules');
+function isValidSsid(v) { return wifiRules.validName(v); }
 
 async function updateSSID(tag, newSSID, actor = null) {
   try {
@@ -952,8 +953,8 @@ async function updatePassword(tag, newPassword, actor = null) {
   try {
     const pwRaw = String(newPassword ?? '');
     const pw = pwRaw.replace(/[\r\n\t]+/g, '').trim();
-    if (pw.length < 8) {
-      logger.warn(`[updatePassword] Password too short for tag ${tag}`);
+    if (!wifiRules.validKey(pw)) {
+      logger.warn(`[updatePassword] clave de WiFi rechazada (no cumple las reglas) para ${tag}`);
       return false;
     }
     const device = await resolveDeviceToken(tag);

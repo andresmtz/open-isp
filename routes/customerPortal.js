@@ -2283,7 +2283,7 @@ router.post('/change-ssid', async (req, res) => {
     return wantsJson ? res.json({ ok: false, message: 'El nombre del WiFi (SSID) no puede quedar vacío.' }) : res.redirect('/customer/dashboard');
   }
   if (!customerDevice.isValidSsid(ssidClean)) {
-    const m = 'El nombre del WiFi debe tener de 1 a 32 caracteres y no puede llevar < > " \' ` \\ ni &.';
+    const m = require('../config/wifiRules').NAME_MSG;
     req.session._msg = { type: 'danger', text: m };
     return wantsJson ? res.json({ ok: false, message: m }) : res.redirect('/customer/dashboard');
   }
@@ -2345,9 +2345,10 @@ router.post('/change-password', async (req, res) => {
   if (!loginId) return wantsJson ? res.status(401).json({ ok: false, message: 'La sesión venció. Vuelva a ingresar.' }) : res.redirect('/customer/login');
   const passwordRaw = req.body ? req.body.password : '';
   const password = String(passwordRaw ?? '').replace(/[\r\n\t]+/g, '').trim();
-  if (password.length < 8) {
-    req.session._msg = { type: 'danger', text: 'No se pudo cambiar la contraseña. Debe tener al menos 8 caracteres.' };
-    return wantsJson ? res.json({ ok: false, message: 'No se pudo cambiar la contraseña. Debe tener al menos 8 caracteres.' }) : res.redirect('/customer/dashboard');
+  const _keyErr = require('../config/wifiRules').checkKey(password);
+  if (_keyErr) {
+    req.session._msg = { type: 'danger', text: _keyErr };
+    return wantsJson ? res.json({ ok: false, message: _keyErr }) : res.redirect('/customer/dashboard');
   }
 
   const profile = findCustomerProfileByLoginId(loginId);

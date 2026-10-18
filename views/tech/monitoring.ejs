@@ -62,12 +62,14 @@
         
         <div id="ssid-input-group" class="d-none">
           <label class="form-label small text-secondary"><%= t('tech.mon.new_ssid','Nuevo nombre del WiFi (SSID)') %></label>
-          <input type="text" id="new-ssid" class="form-control bg-dark border-secondary text-white" placeholder="Ingrese el nuevo SSID">
+          <input type="text" id="new-ssid" class="form-control bg-dark border-secondary text-white" placeholder="Ingrese el nuevo SSID" maxlength="28" pattern="<%= wifiRules.NAME_PATTERN %>" title="<%= wifiRules.NAME_HINT %>" autocapitalize="off" spellcheck="false">
+          <div class="small text-secondary mt-1"><%= wifiRules.NAME_HINT %></div>
         </div>
         
         <div id="pass-input-group" class="d-none">
           <label class="form-label small text-secondary"><%= t('tech.mon.new_pass','Password WiFi Baru') %></label>
-          <input type="text" id="new-password" class="form-control bg-dark border-secondary text-white" placeholder="Mínimo 8 caracteres">
+          <input type="text" id="new-password" class="form-control bg-dark border-secondary text-white" placeholder="Mínimo 8 caracteres" maxlength="63" pattern="<%= wifiRules.KEY_PATTERN %>" title="<%= wifiRules.KEY_HINT %>" autocapitalize="off" spellcheck="false">
+          <div class="small text-secondary mt-1"><%= wifiRules.KEY_HINT %></div>
         </div>
         
         <div id="reboot-confirm" class="d-none text-center py-2">
@@ -181,25 +183,26 @@
                           <div class="row g-3">
                               <div class="col-6">
                                 <label class="form-label small text-secondary"><%= t('tech.mon.ssid_label','SSID (Nama Wi-Fi)') %></label>
-                                <input type="text" id="wifiSsid24" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Cargando...">
+                                <input type="text" id="wifiSsid24" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Cargando..." maxlength="28" pattern="<%= wifiRules.NAME_PATTERN %>" title="<%= wifiRules.NAME_HINT %>" autocapitalize="off" spellcheck="false">
                               </div>
                               <div class="col-6">
                                 <label class="form-label small text-secondary"><%= t('tech.mon.wifi_pass','Sandi Wi-Fi (WPA2)') %></label>
-                                <input type="password" id="wifiPass24" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Completar solo si se cambia">
+                                <input type="password" id="wifiPass24" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Completar solo si se cambia" maxlength="63" pattern="<%= wifiRules.KEY_PATTERN %>" title="<%= wifiRules.KEY_HINT %>" autocapitalize="off" spellcheck="false">
                               </div>
                           </div>
                       </div>
+                      <div class="small text-secondary mt-2">Nombre: <%= wifiRules.NAME_HINT %> Clave: <%= wifiRules.KEY_HINT %></div>
                       <!-- 5GHz Band -->
                       <div id="band5Fields" class="border-top border-secondary border-opacity-50 pt-3" style="display: none;">
                           <h6 class="mb-2 text-white" style="font-size: 13px;"><i class="bi bi-lightning-charge me-1"></i> Wi-Fi 5GHz</h6>
                           <div class="row g-3">
                               <div class="col-6">
                                 <label class="form-label small text-secondary"><%= t('tech.mon.ssid_label','SSID (Nama Wi-Fi)') %></label>
-                                <input type="text" id="wifiSsid5" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Cargando...">
+                                <input type="text" id="wifiSsid5" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Cargando..." maxlength="31" autocapitalize="off" spellcheck="false">
                               </div>
                               <div class="col-6">
                                 <label class="form-label small text-secondary"><%= t('tech.mon.wifi_pass','Sandi Wi-Fi (WPA2)') %></label>
-                                <input type="password" id="wifiPass5" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Completar solo si se cambia">
+                                <input type="password" id="wifiPass5" class="form-control bg-dark border-secondary text-white shadow-none" placeholder="Completar solo si se cambia" maxlength="63" pattern="<%= wifiRules.KEY_PATTERN %>" title="<%= wifiRules.KEY_HINT %>" autocapitalize="off" spellcheck="false">
                               </div>
                           </div>
                       </div>
@@ -412,12 +415,12 @@ document.getElementById('btn-submit-action').addEventListener('click', async fun
   
   if (type === 'ssid') {
     const ssid = document.getElementById('new-ssid').value.trim();
-    if (!ssid) return alert('El SSID no puede quedar vacío');
+    if (!new RegExp('^' + <%- JSON.stringify(wifiRules.NAME_PATTERN) %> + '$').test(ssid)) return alert(<%- JSON.stringify(wifiRules.NAME_MSG) %>);
     url = `/tech/api/device/${tag}/ssid`;
     body = { ssid };
   } else if (type === 'pass') {
     const password = document.getElementById('new-password').value.trim();
-    if (password.length < 8) return alert('La contraseña debe tener al menos 8 caracteres');
+    if (!new RegExp('^' + <%- JSON.stringify(wifiRules.KEY_PATTERN) %> + '$').test(password)) return alert(<%- JSON.stringify(wifiRules.KEY_MSG) %>);
     url = `/tech/api/device/${tag}/password`;
     body = { password };
   } else if (type === 'reboot') {

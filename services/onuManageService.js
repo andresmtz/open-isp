@@ -21,8 +21,9 @@ const { getSetting } = require('../config/settingsManager');
 const SSID_24 = 1;
 const SSID_5 = 5;
 const SUFFIX_5G = '-5G';
-const NAME_RE = /^[A-Za-z0-9_.\-]{1,28}$/;          // sin espacios: la consola de la OLT corta en el espacio
-const KEY_RE = /^[A-Za-z0-9!@$%^&*()_+\-=.,:;~\[\]{}]{8,63}$/; // sin espacios, "?" (ayuda de la consola), comillas ni "#" o ">" (fin del prompt)
+const wifiRules = require('../config/wifiRules'); // reglas únicas del WiFi (sin espacios ni caracteres especiales)
+const NAME_RE = wifiRules.NAME_RE;          // sin espacios: la consola de la OLT corta en el espacio
+const KEY_RE = wifiRules.KEY_RE; // sin espacios, "?" (ayuda de la consola), comillas ni "#" o ">" (fin del prompt)
 const RECHECK_DAYS = 7;
 
 // ── Esquema ──────────────────────────────────────────────────────────────────
@@ -240,9 +241,9 @@ async function readDetail(customerId, { includeKeys = false } = {}) {
 function validate(name, key) {
   let n = String(name || '').trim();
   if (n.toUpperCase().endsWith(SUFFIX_5G)) n = n.slice(0, -SUFFIX_5G.length);
-  if (!NAME_RE.test(n)) throw new Error('El nombre debe tener de 1 a 28 caracteres, sin espacios: letras, números, guion, guion bajo o punto.');
+  if (!NAME_RE.test(n)) throw new Error(wifiRules.NAME_MSG);
   const k = String(key || '');
-  if (!KEY_RE.test(k)) throw new Error('La clave debe tener de 8 a 63 caracteres, sin espacios ni signos de pregunta o comillas.');
+  if (!KEY_RE.test(k)) throw new Error(wifiRules.KEY_MSG);
   return { name: n, key: k };
 }
 

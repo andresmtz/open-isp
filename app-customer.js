@@ -205,6 +205,7 @@ app.use((req, res, next) => {
   res.locals.APP_LOCALE = cfg.locale;
   res.locals.APP_CUR = cfg.currencySymbol;
   res.locals.fmtMoney = regional.formatMoney;
+  res.locals.wifiRules = require('./config/wifiRules'); // reglas y textos únicos del nombre y la clave del WiFi
   res.locals.fmtNum = regional.formatNumber;
   res.locals.regional = cfg;
 

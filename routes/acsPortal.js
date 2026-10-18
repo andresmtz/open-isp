@@ -1702,6 +1702,9 @@ router.post('/api/add-wan/:deviceId', requireAdmin, async (req, res) => {
         } = req.body;
         
         // 1. Validasi awal
+        // WiFi: reglas únicas (sin espacios ni caracteres especiales)
+        const _wifiErr = require('../config/wifiRules').checkOptional({ ssid24: wifiSsid24, pass24: wifiPass24, ssid5: wifiSsid5, pass5: wifiPass5 });
+        if (_wifiErr) return res.json({ success: false, message: _wifiErr });
         const normalizedMode = String(mode || '').trim().toLowerCase();
         if (!['pppoe', 'bridge'].includes(normalizedMode)) {
             return res.json({ success: false, message: 'Modo WAN inválido' });

@@ -6498,9 +6498,13 @@ router.get('/api/devices', requireAdmin, async (req, res) => {
     for (const c of db.prepare('SELECT id, name, status, pppoe_username, genieacs_tag FROM customers').all()) {
       for (const k of [c.pppoe_username, c.genieacs_tag]) { const key = String(k || '').trim().toLowerCase(); if (key && (!byKey.has(key) || byKey.get(key).status === 'cancelled')) byKey.set(key, c); }
     }
+    // ONU asignadas en el inventario (por MAC/serie): manda sobre la etiqueta, que en la OLT puede ser de un usuario anterior
+    const byId = new Map(db.prepare('SELECT id, name, status FROM customers').all().map(c => [c.id, c]));
+    const byMac = new Map();
+    try { for (const o of db.prepare('SELECT mac, customer_id FROM onu_inventory WHERE customer_id IS NOT NULL').all()) if (o.mac && byId.has(o.customer_id)) byMac.set(String(o.mac).toLowerCase(), byId.get(o.customer_id)); } catch (_) {}
     let devices = m.devices.map(d => {
       const keys = [d.pppoeUsername, ...(d.tags || [])].map(k => String(k || '').trim().toLowerCase()).filter(k => k && k !== 'n/a' && k !== '-');
-      const c = keys.map(k => byKey.get(k)).find(Boolean);
+      const c = byMac.get(String(d.serialNumber || '').toLowerCase()) || keys.map(k => byKey.get(k)).find(Boolean);
       return c ? Object.assign({}, d, { customerName: c.name, customerId: c.id, customerStatus: c.status }) : d;
     });
     if (search) {

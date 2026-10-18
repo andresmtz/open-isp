@@ -332,6 +332,7 @@ async function createTicket(c, o, ans) {
     ans === '2' ? 'El cliente informó LUZ ROJA en el equipo (respuesta a la consulta automática).' : 'El cliente informó luces normales pero sin internet (respuesta a la consulta automática).',
     `ONU apagada en la OLT desde el ${fmtDate(o.down_since)}${o.onu_id ? ' (' + o.onu_id + ')' : ''}.`,
     acs.rx != null ? `Última potencia reportada: ${acs.rx} dBm${acs.rx <= -27 ? ' (señal débil antes de caerse)' : ''}.` : '',
+    diagText(c.id, o.down_since),
     ans === '2' ? 'Llevar medidor de potencia; revisar conectores, roseta y tramo hasta la caja.' : 'Revisar ONU, cableado y registro en la OLT.',
   ].filter(Boolean);
   const ts = require('./ticketService');
@@ -351,13 +352,19 @@ async function createTicket(c, o, ans) {
   return tid;
 }
 
+// Diagnóstico de la señal antes de la caída (services/onuPowerHistoryService.js)
+function diagText(customerId, until) {
+  try { const d = require('./onuPowerHistoryService').analyze(customerId, { until }); return d.kind === 'sin_datos' ? '' : 'Historial de la señal: ' + d.text; }
+  catch (_) { return ''; }
+}
+
 // ── panel ───────────────────────────────────────────────────────────────────
 function list({ all } = {}) {
   ensureSchema();
   const rows = db.prepare(`SELECT o.*, c.name, c.customer_code, c.phone FROM onu_outages o LEFT JOIN customers c ON c.id=o.customer_id
     ${all ? '' : `WHERE o.state IN (${OPEN_STATES.map(() => '?').join(',')}) OR o.created_at >= datetime('now','-7 days')`}
     ORDER BY o.id DESC LIMIT 300`).all(...(all ? [] : OPEN_STATES));
-  return rows.map(r => Object.assign(r, { stateLabel: STATES[r.state] || r.state, open: OPEN_STATES.includes(r.state) }));
+  return rows.map(r => Object.assign(r, { stateLabel: STATES[r.state] || r.state, open: OPEN_STATES.includes(r.state), diag: diagText(r.customer_id, r.down_since).replace(/^Historial de la señal: /, '') }));
 }
 function close(id, actor) {
   ensureSchema();

@@ -193,6 +193,7 @@ router.get('/', requireTechSession, (req, res) => {
         const pkg = c.package_id ? db.prepare('SELECT name FROM packages WHERE id=?').get(c.package_id) : null;
         const eqCur = (() => { try { return require('../services/customerEquipmentService').current(t.customer_id); } catch (_) { return null; } })();
         t.support = { active: ['active', 'suspended', 'ditangguhkan'].includes(c.status), wifi: c.wifi_ssid || '', plan: pkg ? pkg.name : '', onu: eqCur ? `${eqCur.type || 'ONU'} · ${String(eqCur.mac || '').toUpperCase()}` : '' };
+        try { const d = require('../services/onuPowerHistoryService').analyze(t.customer_id); if (d.kind !== 'sin_datos') t.support.signal = d.text; } catch (_) {}
       }
       if (t.kind === 'install' && t.customer_id) {
         const c = db.prepare('SELECT reg_wifi_ssid, reg_wifi_status, reg_onu_mac FROM customers WHERE id=?').get(t.customer_id) || {};

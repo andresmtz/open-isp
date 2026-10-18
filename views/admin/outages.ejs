@@ -45,7 +45,7 @@
               <td><%= fmt(r.down_since) %></td>
               <td><%= fmt(r.asked_at) %><%= r.asked_count > 1 ? ' (' + r.asked_count + '×)' : '' %><% if (r.meta_ai) { %><div class="text-muted small" title="Meta AI también contestó en el chat">🤖 Meta AI intervino</div><% } %></td>
               <td><span class="badge <%= badge[r.state] || 'bw' %>"><%= r.stateLabel %></span><% if (r.resolved_at) { %><div class="text-muted small"><%= fmt(r.resolved_at) %></div><% } %></td>
-              <td><div class="og-ans" title="<%= r.answer %>"><%= r.answer || '-' %></div><% if (r.notes) { %><div class="text-muted small"><%= r.notes %></div><% } %></td>
+              <td><div class="og-ans" title="<%= r.answer %>"><%= r.answer || '-' %></div><% if (r.notes) { %><div class="text-muted small"><%= r.notes %></div><% } %><% if (r.diag) { %><div class="small" style="margin-top:3px;max-width:320px;white-space:normal">📉 <%= r.diag %></div><% } %></td>
               <td><%- r.ticket_id ? '<a href="/admin/tickets?search=' + encodeURIComponent(r.name || '') + '">#' + r.ticket_id + '</a>' : '-' %></td>
               <td style="white-space:nowrap">
                 <% if (r.conv_id) { %><a class="btn btn-g btn-sm" href="/admin/conversations?c=<%= r.conv_id %>" title="Ver chat"><i class="bi bi-chat-dots"></i></a><% } %>

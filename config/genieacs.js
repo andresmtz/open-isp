@@ -1067,6 +1067,7 @@ function customerLines(c, fallbackPppoe) {
     let t = `   👤 *Cliente:* ${c.name}${c.customer_code ? ` (${c.customer_code})` : ''}${c.status && c.status !== 'active' ? ` — ${ESTADO_CLIENTE[c.status] || c.status}` : ''}\n`;
     if (c.phone) t += `   📞 *Teléfono:* ${c.phone}\n`;
     if (c.address) t += `   📍 *Dirección:* ${c.address}\n`;
+    try { const d = require('../services/onuPowerHistoryService').analyze(c.id); if (d.kind !== 'sin_datos') t += `   📉 *Señal:* ${d.text}\n`; } catch (_) {}
     return t;
 }
 

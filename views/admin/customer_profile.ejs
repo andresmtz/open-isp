@@ -126,6 +126,12 @@
           <div class="fp-row"><span class="k">Potencia</span><span class="v" id="fpPower"><span class="text-muted">Midiendo…</span></span></div>
           <% if (c.wifi_ssid) { %><div class="fp-row"><span class="k">WiFi</span><span class="v"><%= c.wifi_ssid %></span></div><% } %>
           <% if (equipment && equipment.installed_at) { %><div class="fp-row"><span class="k">Equipo instalado</span><span class="v"><%= fdt(equipment.installed_at) %></span></div><% } %>
+          <div style="margin-top:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:12.5px;font-weight:700"><span><i class="bi bi-graph-up"></i> Señal de la fibra</span>
+              <span><button type="button" class="btn btn-g btn-sm fp-ph" data-d="7">7 días</button> <button type="button" class="btn btn-g btn-sm fp-ph" data-d="30">30 días</button></span></div>
+            <div id="fpChart" style="margin-top:6px"><span class="text-muted" style="font-size:12px">Cargando…</span></div>
+            <div id="fpDiag" style="font-size:12.5px;margin-top:4px"></div>
+          </div>
           <% if (outages.length) { const o = outages[0]; %>
             <div class="fp-warn"><i class="bi bi-wifi-off"></i> Última caída: <%= fdt(o.down_since ? new Date(o.down_since).toLocaleString('sv-SE', { timeZone: 'America/Asuncion' }) : o.created_at) %> — <%= ({ consultado: 'consultado', sin_energia: 'sin energía', asistencia: 'asistencia creada', ausente: 'de viaje', foto: 'revisar respuesta', sin_respuesta: 'sin respuesta', restablecido: 'se restableció', cerrado: 'cerrado' })[o.state] || o.state %>. <a href="/admin/outages">Ver</a></div>
           <% } %>
@@ -243,7 +249,33 @@ function fpGeo(action) {
     .then(function (r) { return r.json(); }).then(function (d) { fpToast(d.ok, d.message); if (d.ok) setTimeout(function () { location.reload(); }, 1200); })
     .catch(function () { fpToast(false, 'No se pudo guardar'); });
 }
-<% if (c.status !== 'inactive') { %>fpPower();<% } %>
+function fpChart(days) {
+  var box = document.getElementById('fpChart'), dg = document.getElementById('fpDiag'); if (!box) return;
+  document.querySelectorAll('.fp-ph').forEach(function (b) { b.classList.toggle('btn-p', Number(b.dataset.d) === days); b.classList.toggle('btn-g', Number(b.dataset.d) !== days); });
+  fetch('/admin/customers/' + FP_ID + '/power-history?days=' + days, { headers: { Accept: 'application/json' } }).then(function (r) { return r.json(); }).then(function (d) {
+    if (!d.ok) { box.innerHTML = '<span class="text-muted" style="font-size:12px">No se pudo cargar el historial.</span>'; return; }
+    var P = d.points || [];
+    if (P.length < 2) { box.innerHTML = '<span class="text-muted" style="font-size:12px">Todavía no hay historial: se guarda una medición cada 30 minutos desde hoy.</span>'; dg.textContent = ''; return; }
+    var W = 600, H = 150, L = 34, R = 6, T = 8, B = 20;
+    var t0 = Date.parse(P[0].t), t1 = Date.parse(P[P.length - 1].t); if (t1 <= t0) t1 = t0 + 1;
+    var vals = P.filter(function (p) { return p.rx != null; }).map(function (p) { return p.rx; });
+    var lo = Math.min(d.bad - 2, Math.min.apply(null, vals.length ? vals : [d.bad]) - 1), hi = Math.max(d.good + 4, Math.max.apply(null, vals.length ? vals : [d.good]) + 1);
+    var X = function (t) { return L + (Date.parse(t) - t0) / (t1 - t0) * (W - L - R); }, Y = function (v) { return T + (hi - v) / (hi - lo) * (H - T - B); };
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block" role="img" aria-label="Potencia de la ONU">';
+    [[d.good, '#10b981', 'buena'], [d.bad, '#ef4444', 'mala']].forEach(function (g) { svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(g[0]) + '" y2="' + Y(g[0]) + '" stroke="' + g[1] + '" stroke-dasharray="4 4" stroke-width="1"/><text x="2" y="' + (Y(g[0]) + 4) + '" font-size="10" fill="' + g[1] + '">' + g[0] + '</text>'; });
+    var seg = [], segs = [];
+    P.forEach(function (p) { if (p.rx == null) { if (seg.length) segs.push(seg); seg = []; } else seg.push(X(p.t).toFixed(1) + ',' + Y(p.rx).toFixed(1)); });
+    if (seg.length) segs.push(seg);
+    segs.forEach(function (s) { svg += s.length > 1 ? '<polyline fill="none" stroke="#38bdf8" stroke-width="1.8" points="' + s.join(' ') + '"/>' : '<circle r="2" fill="#38bdf8" cx="' + s[0].split(',')[0] + '" cy="' + s[0].split(',')[1] + '"/>'; });
+    P.forEach(function (p) { if (p.rx == null) svg += '<rect x="' + (X(p.t) - 1).toFixed(1) + '" y="' + (H - B + 2) + '" width="2.5" height="8" fill="#ef4444"><title>Desconectada ' + new Date(p.t).toLocaleString('es-PY') + '</title></rect>'; });
+    var f = function (t) { var x = new Date(t); return ('0' + x.getDate()).slice(-2) + '/' + ('0' + (x.getMonth() + 1)).slice(-2); };
+    svg += '<text x="' + L + '" y="' + (H - 1) + '" font-size="10" fill="currentColor" opacity=".6">' + f(P[0].t) + '</text><text x="' + (W - R) + '" y="' + (H - 1) + '" font-size="10" text-anchor="end" fill="currentColor" opacity=".6">' + f(P[P.length - 1].t) + '</text></svg>';
+    box.innerHTML = svg + '<div class="text-muted" style="font-size:11px">Línea azul: potencia (dBm). Marcas rojas abajo: ONU desconectada.</div>';
+    dg.textContent = d.diag && d.diag.kind !== 'sin_datos' ? '📉 ' + d.diag.text : '';
+  }).catch(function () { box.innerHTML = '<span class="text-muted" style="font-size:12px">No se pudo cargar el historial.</span>'; });
+}
+document.querySelectorAll('.fp-ph').forEach(function (b) { b.addEventListener('click', function () { fpChart(Number(b.dataset.d)); }); });
+<% if (c.status !== 'inactive') { %>fpPower(); fpChart(7);<% } %>
 </script>
 </body>
 </html>

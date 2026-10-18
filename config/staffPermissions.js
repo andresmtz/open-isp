@@ -30,6 +30,7 @@ const CATALOG = [
     ['GET', `^/customers/${ID}/sticker-onu$`],
     ['GET', `^/customers/${ID}/history$`],
     ['GET', `^/customers/${ID}/ficha$`],
+    ['GET', `^/customers/${ID}/power-history$`],
     ['GET', `^/customers/${ID}/onu-power$`],
     ['GET', `^/customers/${ID}/documents(/${ID})?$`],
     ['GET', `^/customers/${ID}/extras$`],

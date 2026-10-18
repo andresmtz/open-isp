@@ -2652,6 +2652,14 @@ router.get('/customers/:id/ficha', requireAdminSession, async (req, res) => {
     });
   } catch (e) { logger.error('[Ficha] ' + e.message); req.session._msg = { type: 'error', text: 'No se pudo abrir la ficha: ' + e.message }; res.redirect('/admin/customers'); }
 });
+// Historial de potencia de la ONU (gráfico de la ficha) y diagnóstico de la señal
+router.get('/customers/:id/power-history', requireAdminSession, (req, res) => {
+  try {
+    const ph = require('../services/onuPowerHistoryService');
+    const days = Math.min(180, Math.max(1, Number(req.query.days) || 7));
+    res.json({ ok: true, ...ph.chart(Number(req.params.id), days), diag: ph.analyze(Number(req.params.id), { days: Math.min(days, 7) }) });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
 // Ubicación del cliente desde la ficha: marcar a confirmar, cargar a mano o pedírsela al cliente por WhatsApp
 router.post('/customers/:id/geo', requireAdminSession, express.json(), async (req, res) => {
   try {

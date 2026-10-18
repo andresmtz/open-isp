@@ -46,4 +46,4 @@ function text(p) {
   return `Potencia: ${p.rx} dBm (${p.level})` + (p.distance && p.distance !== '-' ? ` · distancia ${p.distance} m` : '');
 }
 
-module.exports = { forCustomer, verdict, text };
+module.exports = { forCustomer, verdict, text, readAll };

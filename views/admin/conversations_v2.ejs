@@ -90,14 +90,14 @@
     .cv-tools{padding:16px 16px 10px;display:flex;flex-direction:column;gap:10px}
     .search{display:flex;align-items:center;gap:8px;background:var(--glass-2);border:1px solid var(--line);border-radius:999px;padding:0 14px;height:42px}
     .search input{flex:1;border:0;background:transparent;outline:0;font-size:13.5px}
-    .cv-tabs{display:flex;gap:4px;flex-wrap:wrap;background:var(--well);padding:4px;border-radius:18px}
-    .cv-tab{font-size:12.5px;font-weight:600;padding:7px 11px;border-radius:999px;border:0;background:transparent;color:var(--muted);cursor:pointer;transition:background .2s,color .2s}
+    .cv-tabs{display:flex;gap:2px;background:var(--well);padding:4px;border-radius:999px;overflow-x:auto;scrollbar-width:none}.cv-tabs::-webkit-scrollbar{display:none}
+    .cv-tab{flex:none;font-size:12px;font-weight:600;padding:7px 9px;border-radius:999px;border:0;background:transparent;color:var(--muted);cursor:pointer;transition:background .2s,color .2s}
     .cv-tab:hover{color:var(--text)}
     .cv-tab.on{background:var(--float);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
-    .cv-tab .n{font-weight:800;margin-left:4px;font-size:11px;color:var(--faint)}
+    .cv-tab .n{font-weight:800;margin-left:3px;font-size:11px;color:var(--faint)}
     .cv-tab.on .n{color:var(--tomato)}
     .row-tools{display:flex;gap:6px;align-items:center}
-    .row-tools select{flex:1;height:36px;border-radius:999px;border:1px solid var(--line);background:var(--glass-2);padding:0 12px;font-size:12.5px;font-weight:600;outline:0}
+    .row-tools select{flex:1;min-width:0;height:36px;border-radius:999px;border:1px solid var(--line);background:var(--glass-2);padding:0 12px;font-size:12.5px;font-weight:600;outline:0}.row-tools select.on{background:var(--ink);color:var(--on-ink);border-color:transparent}
     .tbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--glass-2);display:grid;place-items:center;cursor:pointer;font-size:14px}
     .tbtn:hover{background:var(--glass-3)}.tbtn.on{background:var(--ink);color:var(--on-ink)}
     .cv-list{overflow-y:auto;flex:1;padding:4px 10px 12px}
@@ -295,12 +295,17 @@
     <div class="card cv-pane cv-left rise d1">
       <div class="cv-tools">
         <label class="search"><i class="bi bi-search" style="color:var(--faint)"></i><input id="cvQ" placeholder="Buscar nombre, teléfono, etiqueta o texto…" autocomplete="off"></label>
+        <% var PRIMARY = { por_atender: 'Por atender', ventas: 'Ventas', soporte: 'Soporte', pagos: 'Pagos', clientes: 'Clientes' }; %>
         <div class="cv-tabs" id="cvTabs">
-          <% Object.keys(inboxes).forEach(function(k, i){ %>
-            <button class="cv-tab<%= i === 0 ? ' on' : '' %>" data-f="<%= k %>"><%= inboxes[k] %><span class="n" data-n="<%= k %>"></span></button>
+          <% Object.keys(PRIMARY).filter(function(k){ return inboxes[k]; }).forEach(function(k, i){ %>
+            <button class="cv-tab<%= i === 0 ? ' on' : '' %>" data-f="<%= k %>" title="<%= inboxes[k] %>"><%= PRIMARY[k] %><span class="n" data-n="<%= k %>"></span></button>
           <% }) %>
         </div>
         <div class="row-tools">
+          <select id="cvMore" title="Otras bandejas">
+            <option value="">Más bandejas…</option>
+            <% Object.keys(inboxes).filter(function(k){ return !PRIMARY[k]; }).forEach(function(k){ %><option value="<%= k %>" data-label="<%= inboxes[k] %>"><%= inboxes[k] %></option><% }) %>
+          </select>
           <select id="cvMot">
             <option value="">Todos los motivos</option>
             <% Object.keys(motives).forEach(function(k){ %><option value="<%= k %>"><%= motives[k] %></option><% }) %>
@@ -397,6 +402,7 @@
     var ic = document.getElementById('thIc'); if (ic) ic.className = cur === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
   };
   (function(){ var ic = document.getElementById('thIc'); if (ic && document.documentElement.getAttribute('data-theme') === 'dark') ic.className = 'bi bi-sun'; })();
+  (function(){ var on = document.querySelector('.nav a.on'); if (on && on.parentNode.scrollWidth > on.parentNode.clientWidth) on.parentNode.scrollLeft = on.offsetLeft - 60; })();
 </script>
 <script>
 (function(){
@@ -432,7 +438,7 @@
   var openMo = function(id){ document.getElementById(id).classList.add('show'); };
 
   function title(c){ return c.customer_name || c.lead_name || c.name || ('+' + (c.phone || '?')); }
-  function initials(s){ var p = String(s || '').replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/).filter(Boolean); return ((p[0] || '?').charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase(); }
+  function initials(s){ var p = String(s || '').replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/).filter(function(w){ return /\p{L}/u.test(w); }); if (!p.length) return (String(s || '?').replace(/\D/g, '').slice(-2) || '?'); return (p[0].charAt(0) + (p.length > 1 ? p[1].charAt(0) : '')).toUpperCase(); }
   function avClass(c){ var o = c.org || {}; if (o.nearClose) return 'hot'; if (c.customer_id) return 'cust'; if (o.lead) return 'lead'; return 'int'; }
   function checkLine(o){
     return Object.keys(CHK).map(function(k){
@@ -464,6 +470,7 @@
         var k = x.dataset.n;
         x.textContent = k === 'ventas' ? ((n.ventas || 0) + (n.cerca ? ' · 🔥' + n.cerca : '')) : (n[k] || '');
       });
+      document.querySelectorAll('#cvMore option[value]').forEach(function(op){ if (op.value) op.textContent = op.dataset.label + (n[op.value] ? ' (' + n[op.value] + ')' : ''); });
       var setTxt = function(id, v){ var e = document.getElementById(id); if (e) e.textContent = v; };
       setTxt('stPa', n.por_atender || 0); setTxt('stVe', n.ventas || 0); setTxt('stSo', n.soporte || 0);
       var hot = document.getElementById('stHot'); if (hot) { hot.style.display = n.cerca ? '' : 'none'; hot.textContent = '🔥 ' + (n.cerca || 0) + ' a punto de cerrar'; }
@@ -893,6 +900,13 @@
     var b = e.target.closest('.cv-tab'); if (!b) return;
     filter = b.dataset.f;
     document.querySelectorAll('.cv-tab').forEach(function(x){ x.classList.toggle('on', x === b); });
+    var mo = document.getElementById('cvMore'); mo.value = ''; mo.classList.remove('on');
+    loadList();
+  });
+  document.getElementById('cvMore').addEventListener('change', function(e){
+    if (!e.target.value) return;
+    filter = e.target.value; e.target.classList.add('on');
+    document.querySelectorAll('.cv-tab').forEach(function(x){ x.classList.remove('on'); });
     loadList();
   });
   document.getElementById('cvMot').addEventListener('change', function(e){ motive = e.target.value; loadList(); });

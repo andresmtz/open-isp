@@ -50,7 +50,9 @@
     %>
 
     <div class="fp-head">
-      <div>
+      <div style="display:flex;gap:14px;align-items:center">
+        <% if (avatar) { %><img src="<%= avatar.url %>" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;flex:none;box-shadow:0 0 0 3px var(--v2-glass-3, rgba(255,255,255,.6))" onerror="this.remove()"><% } %>
+        <div>
         <div class="fp-name"><%= c.name %></div>
         <div class="fp-sub">
           <span class="badge <%= st[1] %>"><%= st[0] %></span>
@@ -60,6 +62,7 @@
             <% if (session) { %><span style="color:#10b981;font-weight:700"><i class="bi bi-circle-fill" style="font-size:8px"></i> Conectado <%= session.uptime ? '· ' + session.uptime : '' %></span>
             <% } else { %><span style="color:#94a3b8;font-weight:700"><i class="bi bi-circle-fill" style="font-size:8px"></i> Desconectado</span><% } %>
           <% } %>
+        </div>
         </div>
       </div>
       <div class="fp-acts">

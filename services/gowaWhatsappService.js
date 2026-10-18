@@ -207,4 +207,15 @@ async function getLastQrImage() {
   } catch (e) { return null; }
 }
 
-module.exports = { sendGowaMessage, sendGowaText, sendGowaImage, sendGowaDocument, testGowaConnection, gowaStatus, listDevices, ensureDevice, getLoginQr, getLastQrImage, normalizePhoneJid, baseUrl, resolveDeviceId, invalidateDeviceCache };
+// Foto de perfil de WhatsApp de un contacto (si su privacidad lo permite). Devuelve la URL temporal o null.
+async function getAvatarUrl(jid, { preview = true } = {}) {
+  const dev = await resolveDeviceId().catch(() => '');
+  const url = baseUrl() + '/user/avatar?phone=' + encodeURIComponent(jid) + '&is_preview=' + (preview ? 'true' : 'false');
+  const res = await fetch(url, { headers: commonHeaders(undefined, dev) });
+  let body = null; try { body = await res.json(); } catch (_) {}
+  if (!res.ok) { const msg = body && (body.message || body.code) || ('HTTP ' + res.status); const e = new Error(msg); e.status = res.status; throw e; }
+  const r = body && body.results;
+  return (r && (r.url || r.URL)) || null;
+}
+
+module.exports = { getAvatarUrl, sendGowaMessage, sendGowaText, sendGowaImage, sendGowaDocument, testGowaConnection, gowaStatus, listDevices, ensureDevice, getLoginQr, getLastQrImage, normalizePhoneJid, baseUrl, resolveDeviceId, invalidateDeviceCache };

@@ -2642,11 +2642,12 @@ router.get('/customers/:id/ficha', requireAdminSession, async (req, res) => {
     const onu = safe(() => require('../services/onuManageService').forCustomer(id), null);
     const events = safe(() => require('../services/customerHistoryService').timeline(id, { money }), []);
     const phones = [c.phone, ...safe(() => require('../config/customerPhones').list(c), [])].filter(Boolean);
+    const avatar = safe(() => require('../services/waAvatarService').forCustomer(id), null);
     const cust = money ? c : Object.assign({}, c, { package_price: null });
     delete cust.pppoe_password; delete cust.hotspot_password; delete cust.wifi_key;
     res.render('admin/customer_profile', {
       title: c.name, company: company(), activePage: 'customers', c: cust, phones, session, geo, gapInfo: safe(() => gaps.gapsFor(id), null),
-      docs: docList, extras, tickets, fin, convs, outages, equipment, onu, events, money, isAdmin,
+      docs: docList, extras, tickets, fin, convs, outages, equipment, onu, events, money, isAdmin, avatar,
       perms: { edit: isAdmin || can('clientes_alta'), wifi: isAdmin || can('wifi_clientes'), cobrar: isAdmin || can('cobrar'), reclamos: isAdmin || can('reclamos'), conv: isAdmin || can('conversaciones') },
       msg: flashMsg(req),
     });
@@ -3073,6 +3074,13 @@ router.get('/conversations/list', requireAdminSession, (req, res) => {
 });
 router.get('/conversations/counts', requireAdminSession, (req, res) => {
   try { res.json({ ok: true, counts: convSvc.counts() }); } catch (e) { res.json({ ok: false, message: e.message }); }
+});
+// Foto de perfil de WhatsApp del contacto (guardada localmente por services/waAvatarService.js)
+router.get('/conversations/:id/avatar', requireAdminSession, (req, res) => {
+  const p = require('../services/waAvatarService').fileFor(Number(req.params.id));
+  if (!p) return res.status(404).end();
+  res.set('Cache-Control', 'private, max-age=86400');
+  res.type('jpg').sendFile(p);
 });
 router.get('/conversations/:id/messages', requireAdminSession, (req, res) => {
   try {

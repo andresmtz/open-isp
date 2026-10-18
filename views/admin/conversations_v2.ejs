@@ -103,7 +103,7 @@
     .cv-item{display:flex;gap:11px;padding:11px 10px;border-radius:18px;cursor:pointer;transition:background .2s var(--ease);margin-bottom:2px}
     .cv-item:hover{background:var(--well)}
     .cv-item.on{background:var(--float);box-shadow:0 10px 24px -16px rgba(40,30,20,.35)}
-    .av{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;letter-spacing:.02em}
+    .av{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;letter-spacing:.02em;position:relative;overflow:hidden}.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
     .av.cust{background:#d8e6dc;color:#2f5c50}.av.lead{background:#f6e7b4;color:#7a5d0a}.av.int{background:var(--well);color:var(--muted)}.av.hot{background:#f4cdbd;color:#a3361a}
     [data-theme="dark"] .av.cust{background:rgba(108,197,154,.18);color:#9fdcbd}[data-theme="dark"] .av.lead{background:rgba(242,201,76,.18);color:#f2d47a}[data-theme="dark"] .av.hot{background:rgba(216,83,45,.22);color:#f3a588}
     .bd{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
@@ -417,6 +417,7 @@
 
   function title(c){ return c.customer_name || c.lead_name || c.name || ('+' + (c.phone || '?')); }
   function initials(s){ var p = String(s || '').replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/).filter(function(w){ return /\p{L}/u.test(w); }); if (!p.length) return (String(s || '?').replace(/\D/g, '').slice(-2) || '?'); return (p[0].charAt(0) + (p.length > 1 ? p[1].charAt(0) : '')).toUpperCase(); }
+  function avHtml(c, extra){ var img = c.avatar_file ? '<img src="/admin/conversations/' + c.id + '/avatar?v=' + encodeURIComponent(c.avatar_checked_at || '') + '" alt="" loading="lazy" onerror="this.remove()">' : ''; return '<div class="av ' + avClass(c) + (extra ? ' ' + extra : '') + '">' + esc(initials(title(c))) + img + '</div>'; }
   function avClass(c){ var o = c.org || {}; if (o.nearClose) return 'hot'; if (c.customer_id) return 'cust'; if (o.lead) return 'lead'; return 'int'; }
   function checkLine(o){
     return Object.keys(CHK).map(function(k){
@@ -458,7 +459,7 @@
       el.innerHTML = items.map(function(c){
         var pre = (c.last_sender && c.last_sender !== 'cliente' ? (SENDERS[c.last_sender] || '') + ': ' : '') + (c.last_preview || '');
         return '<div class="cv-item' + (c.id === sel ? ' on' : '') + '" data-id="' + c.id + '">' +
-          '<div class="av ' + avClass(c) + '">' + esc(initials(title(c))) + '</div><div class="bd">' +
+          avHtml(c) + '<div class="bd">' +
           '<div class="t"><span><input type="checkbox" class="sel" data-id="' + c.id + '"' + (picked[c.id] ? ' checked' : '') + '>' + esc(title(c)) + '</span><span>' + esc(ago(c.last_message_at)) + '</span></div>' +
           '<div class="p">' + esc(pre) + '</div><div class="b">' + chips(c) + '</div>' +
           (filter === 'ventas' && c.org && ['parciales', 'listo', 'requisitos'].indexOf(c.org.stage) !== -1 ? '<div class="cv-chk">' + checkLine(c.org) + '</div>' : '') + '</div></div>';
@@ -529,7 +530,7 @@
   function renderHead(c){
     conv = c;
     document.getElementById('cvName').textContent = title(c);
-    var avEl = document.getElementById('cvAv'); avEl.className = 'av ' + avClass(Object.assign({ org: info && info.org }, c)); avEl.textContent = initials(title(c));
+    var avEl = document.getElementById('cvAv'); avEl.outerHTML = avHtml(Object.assign({ org: info && info.org }, c)).replace('<div class="av', '<div id="cvAv" class="av');
     var sub = (c.phone ? '+' + c.phone : 'Chat ' + c.jid) + (c.name && c.name !== title(c) ? ' · WhatsApp: ' + c.name : '');
     var st = STATES[c.state] || c.state;
     document.getElementById('cvSub').innerHTML = esc(sub) + ' · <b>' + esc(st) + '</b>' + (c.state === 'human' && c.attended_by ? ' (' + esc(c.attended_by) + ')' : '') +
@@ -564,7 +565,7 @@
     var ringC = o.nearClose ? 'var(--tomato)' : (cu0 ? (st0 === 'active' ? 'var(--pine)' : (st0 === 'cancelled' ? 'var(--faint)' : 'var(--butter)')) : (o.lead ? 'var(--butter)' : 'var(--faint)'));
     var ringP = o.lead ? Math.round(100 * Object.keys(CHK).filter(function(k){ return o.check[k] && o.check[k].ok; }).length / Object.keys(CHK).length) : 100;
     var waNum = String(c.phone || '').replace(/\D/g, '');
-    h += '<div class="prof"><div class="ring" style="--c:' + ringC + ';--p:' + ringP + '"><div class="av ' + avClass(Object.assign({ org: o }, c)) + '">' + esc(initials(title(c))) + '</div></div>' +
+    h += '<div class="prof"><div class="ring" style="--c:' + ringC + ';--p:' + ringP + '">' + avHtml(Object.assign({ org: o }, c)) + '</div>' +
       '<b>' + esc(title(c)) + '</b><div class="sub">' + (c.phone ? '+' + esc(c.phone) : '') + (cu0 && cu0.customer_code ? ' · ' + esc(cu0.customer_code) : '') + '</div>' +
       '<div class="chips">' + (cu0 ? '<span class="cv-chip cust">' + esc(CUST_ST[st0] || st0) + '</span>' : (o.lead ? '<span class="cv-chip lead">' + esc(STAGES[o.stage] || 'Interesado') + '</span>' : '<span class="cv-chip">Contacto</span>')) +
       (o.lead ? '<span class="cv-chip">' + ringP + '% de requisitos</span>' : '') + '</div>' +

@@ -422,6 +422,10 @@ function startCronJobs() {
     // Pedidos de actualización de datos en cola: de a pocos y en horario hábil (services/dataRequestService.js)
     try { await require('./dataRequestService').processQueue(); } catch (e) { logger.warn('[Actualizar datos] ' + e.message); }
   });
+  cron.schedule('*/10 * * * *', async () => {
+    // Fotos de perfil de WhatsApp de los contactos: de a pocas, renovadas cada wa_avatar_days (services/waAvatarService.js)
+    try { await require('./waAvatarService').refreshDue(); } catch (e) { logger.warn('[Fotos WhatsApp] ' + e.message); }
+  });
   cron.schedule('*/5 * * * *', async () => {
     // Historial de potencia de las ONU (services/onuPowerHistoryService.js): toma la muestra cuando pasa el intervalo
     try { await require('./onuPowerHistoryService').sample(); } catch (e) { logger.warn('[Potencia] historial: ' + e.message); }

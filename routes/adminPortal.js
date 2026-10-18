@@ -3035,10 +3035,13 @@ router.post('/extras/catalog', requireAdminSession, restrictToAdmin, express.jso
 const convSvc = require('../services/conversationService');
 const convOrg = require('../services/conversationOrgService');
 const convActor = (req) => req.session.isAdmin ? (req.session.adminUser || 'Administrador') : (req.session.cashierName || 'Oficina');
-router.get('/conversations', requireAdminSession, (req, res) => {
+// Diseño nuevo de la bandeja (piloto, en paralelo a la actual): mismos datos, misma lógica
+router.get(['/conversations', '/conversations/nuevo'], requireAdminSession, (req, res) => {
   try {
     convOrg.ensureSchema();
-    res.render('admin/conversations', {
+    const v2 = req.path === '/conversations/nuevo';
+    res.render(v2 ? 'admin/conversations_v2' : 'admin/conversations', {
+      userName: req.session.isAdmin ? (req.session.adminUser || 'Administrador') : (req.session.cashierName || 'Oficina'),
       title: 'Conversaciones', company: company(), activePage: 'conversations', msg: flashMsg(req),
       selected: Number(req.query.c) || 0, isAdmin: !!req.session.isAdmin,
       senders: convSvc.SENDERS, states: convSvc.STATES,

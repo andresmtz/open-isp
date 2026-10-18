@@ -62,7 +62,7 @@ const CATALOG = [
     ['POST', `^/billing/${ID}/(whatsapp|send-pdf-wa)$`],
   ] },
   { key: 'conversaciones', label: 'Conversaciones de WhatsApp', help: 'Ver y responder las conversaciones de WhatsApp de clientes e interesados, y recibir el aviso cuando Meta AI deriva a una persona.', def: false, needs: ['ver_clientes'], rules: [
-    ['GET', '^/conversations$'],
+    ['GET', '^/conversations(/nuevo)?$'],
     ['GET', '^/conversations/(list|counts)$'],
     ['GET', `^/conversations/${ID}/messages$`],
     ['GET', `^/conversations/media/${ID}$`],

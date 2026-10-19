@@ -870,6 +870,40 @@ async function suspendCustomer(id) {
   return true;
 }
 
+/**
+ * Factura de un mes que el cliente no usó porque estaba cortado: valor completo del plan con descuento del 100 %
+ * y la nota del motivo. Queda saldada (monto 0), sin tocar el saldo a favor ni las promociones del cliente.
+ * Si ya existe una factura impaga de ese período, se le aplica el mismo descuento.
+ */
+function skippedMonthInvoice(customer, month, year, by = 'Sistema') {
+  const note = `Descuento total: el servicio estuvo cortado en el período ${month}/${year}, no se cobra. Se factura desde el próximo período.`;
+  const ex = db.prepare('SELECT * FROM invoices WHERE customer_id=? AND period_month=? AND period_year=? LIMIT 1').get(customer.id, month, year);
+  if (ex && ex.status !== 'unpaid') return { invoiceId: ex.id, skipped: true };
+  let full;
+  if (ex) full = Number(ex.amount_before_discount || 0) > 0 ? Number(ex.amount_before_discount) : Number(ex.amount);
+  else {
+    const pkg = db.prepare('SELECT * FROM packages WHERE id=?').get(customer.package_id);
+    if (!pkg) throw new Error('No se encontró el plan del cliente');
+    full = Number(require('./billingService').computeInvoiceAmountAndMeta(customer, pkg, month, year).amount) || 0;
+  }
+  let invoiceId;
+  if (ex) {
+    db.prepare(`UPDATE invoices SET amount=0, amount_before_discount=?, discount_type='percent', discount_value=100, discount_amount=?, status='paid', paid_at=NOW_LOCAL(),
+      paid_by_name='Descuento (mes cortado)', amount_paid=0, payment_method='descuento', notes=TRIM(COALESCE(notes,'') || ' ' || ?),
+      qris_unique_code=NULL, qris_amount_unique=NULL, qris_assigned_at=NULL WHERE id=? AND status='unpaid'`).run(full, full, note, ex.id);
+    invoiceId = ex.id;
+  } else {
+    invoiceId = Number(db.prepare(`INSERT INTO invoices (customer_id, period_month, period_year, amount, amount_before_discount, discount_type, discount_value, discount_amount,
+      status, paid_at, paid_by_name, amount_paid, payment_method, notes) VALUES (?,?,?,0,?,'percent',100,?,'paid',NOW_LOCAL(),'Descuento (mes cortado)',0,'descuento',?)`)
+      .run(customer.id, month, year, full, full, note).lastInsertRowid);
+  }
+  try {
+    db.prepare(`INSERT INTO discount_logs (invoice_id, customer_id, period_month, period_year, discount_type, discount_value, discount_amount, amount_before, amount_after, applied_by, note)
+      VALUES (?,?,?,?,'percent',100,?,?,0,?,?)`).run(invoiceId, customer.id, month, year, full, full, by, note);
+  } catch (_) {}
+  return { invoiceId, amount: full };
+}
+
 function _handleUnsuspendInvoice(id, customer, wasSuspended, targetStatus) {
   if (wasSuspended && (targetStatus === 'active' || targetStatus === 'ditangguhkan') && customer.package_id) {
     try {
@@ -879,8 +913,17 @@ function _handleUnsuspendInvoice(id, customer, wasSuspended, targetStatus) {
       const existingCurInv = db.prepare('SELECT id FROM invoices WHERE customer_id = ? AND period_month = ? AND period_year = ? LIMIT 1').get(id, curMonth, curYear);
       if (!existingCurInv) {
         const billingSvc = require('./billingService');
-        billingSvc.generateInvoiceForCustomer(id, curMonth, curYear);
-        logger.info(`[activateCustomer] Pelanggan "${customer.name}" (ID: ${id}) dibuka dari isolir (status: ${targetStatus}). Tagihan periode berjalan ${curMonth}/${curYear} otomatis diterbitkan.`);
+        const bc = require('../config/billingCycle');
+        if (bc.cutStampFor(curYear, curMonth, customer) <= bc.nowStamp(new Date())) {
+          // Se reconecta después del día de corte del período en curso: ese mes no se usó (estaba cortado cuando se
+          // emitieron las facturas), así que no se cobra. Queda la factura con su valor y un descuento total que lo
+          // explica; se vuelve a facturar normalmente desde el próximo período.
+          const r = skippedMonthInvoice(customer, curMonth, curYear);
+          logger.info(`[activateCustomer] ${customer.name} (ID: ${id}) reconectado después del corte: período ${curMonth}/${curYear} con descuento total (factura #${r.invoiceId}, mes cortado).`);
+        } else {
+          billingSvc.generateInvoiceForCustomer(id, curMonth, curYear);
+          logger.info(`[activateCustomer] ${customer.name} (ID: ${id}) reconectado (status: ${targetStatus}): se emitió la factura del período en curso ${curMonth}/${curYear}.`);
+        }
       }
     } catch (invErr) {
       logger.error(`[activateCustomer] Gagal generate tagihan periode berjalan untuk pelanggan "${customer.name}" (ID: ${id}): ${invErr.message}`);
@@ -1165,6 +1208,7 @@ Dihapus: ${removed.join(', ') || '-'}`);
 }
 
 module.exports = {
+  skippedMonthInvoice,
   applySuspendNetwork, applyActivateNetwork, getEffectiveRouterId,
   getAllCustomers, getAllCustomerAreas, getCustomerById, createCustomer, updateCustomer, deleteCustomer, bulkDeleteCustomers, getCustomerStats,
   getAllPackages, getPackageById, createPackage, updatePackage, deletePackage,

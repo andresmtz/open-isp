@@ -49,8 +49,8 @@ function destinations() {
       const digits = m[0].replace(/\D/g, '');
       if (digits.length < 6) continue;
       let lb = (label && !/^\d/.test(label) && label.length < 40 ? label : prev) || 'Cuenta';
-      // "Alias (C.I.): 4.020.592" debajo de "Bancop: 0310176859" → es el alias de esa cuenta de Bancop
-      if (/^alias\b/i.test(lb) && bank) lb = `${bank} (alias${/c\.?\s*i/i.test(lb) ? ' C.I.' : ''})`;
+      // "Alias (C.I.): 4.020.592" debajo de "Bancop: 0310176859" → es esa misma cuenta de Bancop
+      if (/^alias\b/i.test(lb) && bank) lb = bank;
       else bank = /tigo|giro|billetera|mango|wally|zimple|celular|tel[eé]fono/i.test(lb + ' ' + prev) ? '' : lb;
       out.push({ type: 'number', value: digits, label: lb, kind: kindOfDest(lb + ' ' + prev) });
     }
@@ -159,7 +159,7 @@ function parse(text) {
     const di = lines.findIndex(l => /^(enviado a|a la cuenta de|destino|destinatario|beneficiario|cuenta destino|para)\b/i.test(l));
     const b = di >= 0 ? bankIn(lines.slice(di, di + 5).join(' ')) : '';
     const d = b && destinations().find(x => x.type === 'number' && bankIn(x.label) === b);
-    if (d) r.dest = Object.assign({}, d, { label: d.label + ' (por titular)' });
+    if (d) r.dest = d;
   }
   // Tipo: depósito (escrito) > según la cuenta de destino > "transferencia" escrita > giro / billetera
   if (/dep[oó]sito/i.test(t) && !/transferencia/i.test(t)) r.kind = 'Depósito';

@@ -24,9 +24,9 @@ async function forSession(session, canSee) {
     try {
       const c = require('./conversationOrgService').list({ inbox: 'por_atender', admin: !!session.isAdmin }).counts || {};
       const unread = Number(c.unreadTotal || 0), waiting = Number(c.por_atender || 0);
-      if (unread || waiting) items.push({ key: 'chats', icon: 'bi bi-whatsapp', tone: unread ? 'info' : 'muted', count: unread,
-        title: unread ? plural(unread, 'chat con mensajes sin leer', 'chats con mensajes sin leer') : 'Chats por atender',
-        detail: waiting ? plural(waiting, 'esperando respuesta', 'esperando respuesta') : '', href: '/admin/conversations' });
+      if (unread || waiting) items.push({ key: 'chats', icon: 'bi bi-whatsapp', tone: 'info', count: unread || waiting,
+        title: unread ? plural(unread, 'chat con mensajes sin leer', 'chats con mensajes sin leer') : plural(waiting, 'chat por atender', 'chats por atender'),
+        detail: unread && waiting ? waiting + ' esperando respuesta' : '', href: '/admin/conversations' });
     } catch (e) { logger.warn('[Avisos] chats: ' + e.message); }
   }
 

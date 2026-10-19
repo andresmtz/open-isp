@@ -8,7 +8,7 @@
     // Tema antes de pintar (misma preferencia que el resto del panel: localStorage "app-theme")
     (function(){ try { var t = localStorage.getItem('app-theme'); if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', t); } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); } })();
   </script>
-  <link rel="stylesheet" href="/css/v2/shell.css?v=2">
+  <link rel="stylesheet" href="/css/v2/shell.css?v=3">
   <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
   <style>
     /* ── Tokens ─────────────────────────────────────────────────────────────── */

@@ -38,6 +38,13 @@
   </nav>
   <div class="v2-right">
     <button type="button" class="v2-ib v2-menu-btn" onclick="toggleSidebar()" title="Menú"><i class="bi bi-list"></i></button>
+    <div class="v2-dd v2-dd-r v2-nt" id="v2Nt">
+      <button type="button" class="v2-ib" title="Avisos" aria-label="Avisos"><i class="bi bi-bell"></i><span class="v2-nb" id="v2NtB" hidden></span></button>
+      <div class="v2-menu v2-nt-menu" role="menu">
+        <div class="v2-mh"><i class="bi bi-bell"></i> Para revisar</div>
+        <div id="v2NtL"><div class="v2-nt-empty">Cargando…</div></div>
+      </div>
+    </div>
     <button type="button" class="v2-ib" onclick="v2Theme()" title="Tema claro / oscuro"><i class="bi bi-circle-half"></i></button>
     <div class="v2-dd v2-dd-r">
       <button type="button" class="v2-me" title="<%= _user %>"><%= String(_user).trim().charAt(0).toUpperCase() %></button>
@@ -75,5 +82,5 @@
     <div class="v2-pal-res" id="v2PalRes"></div>
   </div>
 </div>
-<script src="/js/v2-shell.js?v=4" defer></script>
+<script src="/js/v2-shell.js?v=5" defer></script>
 <script src="/js/v2-confirm.js?v=1" defer></script>

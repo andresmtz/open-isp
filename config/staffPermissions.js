@@ -21,6 +21,7 @@ const BASE = [
   ['GET', '^/set-active-router$'],
   ['GET', '^/areas$'],
   ['GET', '^/novedades$'],
+  ['GET', '^/notifications$'],
   ['GET|POST', '^/cashiers/attendance(/checkin|/checkout)?$'],
 ];
 

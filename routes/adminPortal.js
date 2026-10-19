@@ -3089,6 +3089,14 @@ router.get('/conversations/stats', requireAdminSession, (req, res) => {
   try { res.json(Object.assign({ ok: true }, convOrg.stats({ days: req.query.d, admin: !!req.session.isAdmin }))); }
   catch (e) { logger.error('[Conversaciones] resumen: ' + e.message); res.json({ ok: false, message: e.message }); }
 });
+// Campana de avisos de la barra superior (services/notificationService.js): solo lo que la persona puede ver
+router.get('/notifications', requireAdminSession, async (req, res) => {
+  try {
+    const keys = new Set();
+    for (const sec of sidebarMenuSvc.getSidebarSections(req.session)) for (const i of sec.items) { if (!i.locked) keys.add(i.key); for (const k of (i.children || [])) if (!k.locked) keys.add(k.key); }
+    res.set('Cache-Control', 'no-store').json(Object.assign({ ok: true }, await require('../services/notificationService').forSession(req.session, (k) => keys.has(k))));
+  } catch (e) { res.json({ ok: false, total: 0, items: [], message: e.message }); }
+});
 router.get('/conversations/counts', requireAdminSession, (req, res) => {
   try { res.json({ ok: true, counts: convSvc.counts() }); } catch (e) { res.json({ ok: false, message: e.message }); }
 });

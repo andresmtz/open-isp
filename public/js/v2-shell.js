@@ -137,3 +137,32 @@
     else if (e.key === 'Escape' && !pal.hidden) close();
   });
 })();
+
+// Campana de avisos: lo que hay para revisar (chats sin leer, comprobantes, caídas, reclamos, sistema).
+// Se actualiza cada minuto; el punto se anima cuando hay algo nuevo desde la última vez que se abrió.
+(function () {
+  var box = document.getElementById('v2Nt'); if (!box) return;
+  var badge = document.getElementById('v2NtB'), list = document.getElementById('v2NtL');
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var get = function (k) { try { return localStorage.getItem(k); } catch (_) { return null; } };
+  var put = function (k, v) { try { localStorage.setItem(k, v); } catch (_) {} };
+  var last = null;
+  var sig = function (d) { return d.items.map(function (i) { return i.key + ':' + i.count; }).join('|'); };
+  var paint = function (d) {
+    last = d;
+    badge.hidden = !d.total; badge.textContent = d.total > 99 ? '99+' : String(d.total);
+    box.classList.toggle('v2-nt-new', !!d.total && get('v2NtSeen') !== sig(d));
+    list.innerHTML = d.items.length ? d.items.map(function (i) {
+      var inner = '<span class="v2-nt-ic t-' + esc(i.tone) + '"><i class="' + esc(i.icon) + '"></i></span><span class="v2-nt-tx"><b>' + esc(i.title) + '</b>' + (i.detail ? '<small>' + esc(i.detail) + '</small>' : '') + '</span>';
+      return i.href ? '<a class="v2-nt-it" href="' + esc(i.href) + '">' + inner + '</a>' : '<div class="v2-nt-it">' + inner + '</div>';
+    }).join('') : '<div class="v2-nt-empty"><i class="bi bi-check2-circle"></i> Todo al día</div>';
+  };
+  var load = function () {
+    if (document.hidden) return;
+    fetch('/admin/notifications', { credentials: 'same-origin' }).then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.ok) paint(d); }).catch(function () {});
+  };
+  box.querySelector('button').addEventListener('click', function () { if (last) { put('v2NtSeen', sig(last)); box.classList.remove('v2-nt-new'); } });
+  load(); setInterval(load, 60000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+})();

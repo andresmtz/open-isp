@@ -81,13 +81,26 @@ const MESES = { ene: 1, jan: 1, feb: 2, mar: 3, abr: 4, apr: 4, may: 5, jun: 6, 
 const toInt = (s) => { const n = parseInt(String(s).replace(/\D/g, ''), 10); return Number.isFinite(n) ? n : 0; };
 const NUM = /(?:gs\.?|₲|pyg)?\s*(\d{1,3}(?:[.,]\d{3})+|\d{4,9})(?:[.,]00\b)?\s*(?:gs\.?|₲|pyg)?/i;
 
+// Fecha de la operación: la primera válida en cualquiera de los formatos habituales de bancos y billeteras
+const pad2 = (n) => String(n).padStart(2, '0');
+function findDate(t) {
+  const ok = (y, mo, d) => y >= 2020 && y <= 2099 && mo >= 1 && mo <= 12 && d >= 1 && d <= 31 ? `${y}-${pad2(mo)}-${pad2(d)}` : '';
+  const found = [];
+  for (const m of t.matchAll(/\b(20\d{2})[\/\-.](\d{1,2})[\/\-.](\d{1,2})\b/g)) found.push([m.index, ok(+m[1], +m[2], +m[3])]);
+  for (const m of t.matchAll(/(?<![\d.,])(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4}|\d{2})(?![\d.,])/g)) found.push([m.index, ok(+(m[3].length === 2 ? '20' + m[3] : m[3]), +m[2], +m[1])]);
+  for (const m of t.matchAll(/(\d{1,2})[\s\-\/]*(?:de\s*)?(ene|jan|feb|mar|abr|apr|may|jun|jul|ago|aug|sep|set|oct|nov|dic|dec)[a-z]*\.?[\s\-\/,]*(?:de(?:l)?\s*)?(\d{4})/gi)) found.push([m.index, ok(+m[3], MESES[m[2].toLowerCase()], +m[1])]);
+  for (const m of t.matchAll(/\b(ene|jan|feb|mar|abr|apr|may|jun|jul|ago|aug|sep|set|oct|nov|dic|dec)[a-z]*\.?\s+(\d{1,2}),?\s+(\d{4})/gi)) found.push([m.index, ok(+m[3], MESES[m[1].toLowerCase()], +m[2])]);
+  const v = found.filter(x => x[1]).sort((a, b) => a[0] - b[0]);
+  return v.length ? v[0][1] : '';
+}
+
 function parse(text) {
   const t = String(text || '');
   const lines = t.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const r = { amount: 0, date: '', time: '', ref: '', kind: 'Transferencia', origin: '', dest: null, holder: false, looksLike: false };
   // Monto: junto a una palabra clave (misma línea o la siguiente); si no, el primer importe con "Gs"
   for (let i = 0; i < lines.length && !r.amount; i++) {
-    if (/\b(monto|importe|total|valor|debitado|transferido|enviado|acreditado|depositado)\b/i.test(lines[i]) && !/comisi[oó]n|saldo/i.test(lines[i])) {
+    if (/\b(monto|importe|total|valor|debitado|transferido|enviado|acreditado|depositado|env[ií]o|enviaste|transferiste|pagaste|giro)\b/i.test(lines[i]) && !/comisi[oó]n|saldo|cargo|costo|disponible/i.test(lines[i])) {
       for (const l of [lines[i].replace(/^.*?(monto|importe|total|valor)[^0-9]*/i, ''), lines[i + 1] || '']) {
         const m = NUM.exec(l); if (m && toInt(m[1]) >= 1000) { r.amount = toInt(m[1]); break; }
       }
@@ -100,16 +113,16 @@ function parse(text) {
     for (const l of lines) { const m2 = /^\W{0,4}[a-z₲$]{0,3}\.?\s*(\d{1,3}(?:\.\d{3})+)\s*$/i.exec(l.trim()); if (m2 && toInt(m2[1]) >= 1000) { r.amount = toInt(m2[1]); break; } }
   }
   // Fecha y hora
-  let m = /(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/.exec(t);
-  if (m) { const y = Number(m[3].length === 2 ? '20' + m[3] : m[3]); r.date = `${y}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`; }
-  else if ((m = /(\d{1,2})[\s\-\/]*(?:de\s*)?(ene|jan|feb|mar|abr|apr|may|jun|jul|ago|aug|sep|set|oct|nov|dic|dec)[a-z]*\.?[\s\-\/]*(?:de\s*)?(\d{4})/i.exec(t))) r.date = `${m[3]}-${String(MESES[m[2].toLowerCase()]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
+  r.date = findDate(t);
+  let m;
   if ((m = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/.exec(t))) r.time = `${m[1].padStart(2, '0')}:${m[2]}`;
   // N.º de comprobante / operación
   // (el primero que sea un número de 5+ dígitos y no una fecha: "Comprobante de transferencia" es solo el título)
-  for (const x of t.matchAll(/(comprobante|transacci[oó]n|operaci[oó]n|referencia|ref\.?|nro\.?|n[°º]|ticket|c[oó]digo)(?:\s*(?:de|del|n[°º.]?)\s*(?:operaci[oó]n|transacci[oó]n|comprobante))?\s*[:#nº°.]*\s*([A-Z0-9][A-Z0-9-]{4,})/gi)) {
+  for (const x of t.matchAll(/(comprobante|transacci[oó]n|operaci[oó]n|referencia|ref\.?|nro\.?|n[°º]|ticket|c[oó]digo|n[uú]mero|\bid|autorizaci[oó]n|boleta)(?:\s*(?:de|del|n[°º.]?)\s*(?:operaci[oó]n|transacci[oó]n|comprobante))?\s*[:#nº°.]*\s*([A-Z0-9][A-Z0-9-]{4,})/gi)) {
     const dg = x[2].replace(/\D/g, '');
     const isAccount = destinations().some(d => d.type === 'number' && dg.endsWith(d.value)) || /cuenta/i.test(t.slice(Math.max(0, x.index - 25), x.index));
-    if (/\d{5,}/.test(x[2]) && !/^\d{1,2}[\/\-.]\d/.test(x[2]) && !isAccount) { r.ref = x[2].toUpperCase(); break; }
+    const masked = /^\s*[*•·xX]/.test(t.slice(x.index + x[0].length, x.index + x[0].length + 2)); // cuenta enmascarada "0000000310****"
+    if (/\d{5,}/.test(x[2]) && !/^\d{1,2}[\/\-.]\d/.test(x[2]) && !isAccount && !masked) { r.ref = x[2].toUpperCase(); break; }
   }
   // Quién pagó (informativo): bloque "Origen" → "Nombre …", o Remitente / Ordenante / De
   const oi = lines.findIndex(l => /\b(origen|remitente|ordenante|depositante|enviado por|de:)/i.test(l));
@@ -134,7 +147,19 @@ function parse(text) {
   const low = t.toLowerCase();
   for (const d of destinations()) {
     if (d.type === 'user' && low.includes('@' + d.value)) { r.dest = d; break; }
-    if (d.type === 'number' && tokens.some(x => x === d.value || (d.value.length >= 9 && x.slice(-9) === d.value.slice(-9)))) { r.dest = d; break; }
+    const dv = d.value.replace(/^0+/, '');
+    if (d.type === 'number' && tokens.some(x => x === d.value || x.replace(/^0+/, '') === dv || (d.value.length >= 9 && x.slice(-9) === d.value.slice(-9)))) { r.dest = d; break; }
+  }
+  // titular de la empresa (sin tildes: el lector las pierde o las cambia)
+  const plain = (x) => String(x).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  const hn = plain(holderName()).split(/\s+/).filter(w => w.length > 3), T = plain(t);
+  r.holder = hn.length >= 2 && hn.filter(w => T.includes(w)).length >= 2;
+  // cuenta no leída (oculta o mal leída) pero a nombre del titular y en un banco donde la empresa tiene cuenta
+  if (!r.dest && r.holder) {
+    const di = lines.findIndex(l => /^(enviado a|a la cuenta de|destino|destinatario|beneficiario|cuenta destino|para)\b/i.test(l));
+    const b = di >= 0 ? bankIn(lines.slice(di, di + 5).join(' ')) : '';
+    const d = b && destinations().find(x => x.type === 'number' && bankIn(x.label) === b);
+    if (d) r.dest = Object.assign({}, d, { label: d.label + ' (por titular)' });
   }
   // Tipo: depósito (escrito) > según la cuenta de destino > "transferencia" escrita > giro / billetera
   if (/dep[oó]sito/i.test(t) && !/transferencia/i.test(t)) r.kind = 'Depósito';
@@ -142,11 +167,9 @@ function parse(text) {
   else if (/transferencia|transferiste|sipap|sistema nacional de pagos/i.test(t)) r.kind = 'Transferencia';
   else if (/giro|tigo\s*money/i.test(t)) r.kind = 'Giro';
   else if (/billetera|mango|wally|zimple|personal\s*pay/i.test(t)) r.kind = 'Billetera';
-  const hn = holderName().toUpperCase().split(/\s+/).filter(w => w.length > 3);
-  r.holder = hn.length >= 2 && hn.filter(w => t.toUpperCase().includes(w)).length >= 2;
   // Es comprobante si tiene monto, o si va a una cuenta/billetera de la empresa o a nombre del titular aunque el monto no
   // se haya podido leer (queda para revisar con el monto en "?": mejor que lo vea una persona a que se pierda)
-  r.looksLike = (r.amount >= 1000 || !!r.dest || r.holder) && /comprobante|transferencia|dep[oó]sito|giro|monto|importe|operaci[oó]n|enviad[oa]|enviaste|pagaste|transferiste|debitado|acreditado|billetera/i.test(t);
+  r.looksLike = (r.amount >= 1000 || !!r.dest || r.holder) && /env[ií]o|exitos[ao]|sipap|sistema nacional de pagos|a la cuenta de|comprobante|transferencia|dep[oó]sito|giro|monto|importe|operaci[oó]n|enviad[oa]|enviaste|pagaste|transferiste|debitado|acreditado|billetera/i.test(t);
   return r;
 }
 
@@ -158,9 +181,24 @@ async function ocr(buffer) {
     _worker = await T.createWorker('eng', 1, { cachePath: path.join(__dirname, '..', 'database', 'tessdata'), logger: () => {} });
   }
   const sharp = require('sharp');
-  const img = await sharp(buffer).rotate().resize({ width: 1600, withoutEnlargement: false }).greyscale().normalise().png().toBuffer();
-  const { data } = await _worker.recognize(img);
-  return String((data && data.text) || '');
+  // capturas en modo oscuro (letra clara sobre fondo oscuro): se invierten, el lector lee mucho mejor negro sobre blanco
+  let dark = false;
+  try { dark = (await sharp(buffer).rotate().greyscale().stats()).channels[0].mean < 110; } catch (_) {}
+  const prep = (width, threshold) => {
+    let g = sharp(buffer).rotate().resize({ width, withoutEnlargement: false }).greyscale();
+    if (dark) g = g.negate({ alpha: false });
+    g = g.normalise();
+    if (threshold) g = g.threshold(threshold);
+    return g.png().toBuffer();
+  };
+  const read = async (img) => String(((await _worker.recognize(img)).data || {}).text || '');
+  const score = (r) => (r.amount ? 3 : 0) + (r.dest ? 2 : 0) + (r.date ? 1 : 0) + (r.time ? 1 : 0) + (r.ref ? 1 : 0) + (r.origin ? 1 : 0);
+  const t1 = await read(await prep(1600));
+  const r1 = parse(t1);
+  if (r1.amount && r1.dest && r1.date) return t1;
+  // faltan datos: segunda lectura más grande y en blanco y negro puro; se queda con la que leyó más
+  const t2 = await read(await prep(2200, 150));
+  return score(parse(t2)) > score(r1) ? t2 : t1;
 }
 
 // ── GoWA ────────────────────────────────────────────────────────────────────────────────────────
@@ -196,7 +234,13 @@ function checks(p) {
   if (p.ref) {
     const dup = db.prepare("SELECT id, customer_id FROM payment_proofs WHERE ref=? AND id<>? AND status IN ('pendiente','aplicado') LIMIT 1").get(p.ref, p.id);
     out.push(dup ? { ok: false, text: `N.º ${p.ref} ya figura en otro comprobante (#${dup.id})` } : { ok: true, text: `N.º de comprobante ${p.ref} (no usado antes)` });
-  } else out.push({ ok: null, text: 'No se leyó el N.º de comprobante: revisalo en la foto' });
+  } else {
+    // sin número (Eko, Familiar y otros no lo muestran): se controla por monto + fecha + hora + quién pagó
+    const twin = p.amount && p.op_date && p.op_time && db.prepare(`SELECT id FROM payment_proofs WHERE id<>? AND status IN ('pendiente','aplicado')
+      AND amount=? AND op_date=? AND op_time=? AND COALESCE(origin_name,'')=COALESCE(?, '') LIMIT 1`).get(p.id, p.amount, p.op_date, p.op_time, p.origin_name || '');
+    out.push(twin ? { ok: false, text: `Mismo monto, fecha, hora y remitente que el comprobante #${twin.id}: puede ser repetido` }
+      : { ok: null, text: 'El comprobante no trae N.º de operación (normal en algunas apps): se controló por monto, fecha y hora' });
+  }
   if (p.op_date) {
     const d = new Date(p.op_date + 'T12:00:00'), now = new Date();
     const days = Math.floor((now - d) / 86400000);

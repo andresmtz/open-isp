@@ -79,11 +79,12 @@ function holderName() {
 // ── Lectura de los datos del comprobante ─────────────────────────────────────────────────────────
 const MESES = { ene: 1, jan: 1, feb: 2, mar: 3, abr: 4, apr: 4, may: 5, jun: 6, jul: 7, ago: 8, aug: 8, sep: 9, set: 9, oct: 10, nov: 11, dic: 12, dec: 12 };
 const toInt = (s) => { const n = parseInt(String(s).replace(/\D/g, ''), 10); return Number.isFinite(n) ? n : 0; };
-const NUM = /(?:gs\.?|₲|pyg)?\s*(\d{1,3}(?:[.,]\d{3})+|\d{4,9})(?:[.,]00\b)?\s*(?:gs\.?|₲|pyg)?/i;
+const NUM = /(?:gs\.?|₲|pyg)?\s*(\d{1,3}(?:[.,]\d{3})+|(?<!\d)\d{4,7}(?!\d))(?:[.,]00\b)?\s*(?:gs\.?|₲|pyg)?/i;
 
 // Fecha de la operación: la primera válida en cualquiera de los formatos habituales de bancos y billeteras
 const pad2 = (n) => String(n).padStart(2, '0');
 function findDate(t) {
+  t = String(t).replace(/(\d[\s\/\-.]*)0(ct)/gi, '$1o$2');
   const ok = (y, mo, d) => y >= 2020 && y <= 2099 && mo >= 1 && mo <= 12 && d >= 1 && d <= 31 ? `${y}-${pad2(mo)}-${pad2(d)}` : '';
   const found = [];
   for (const m of t.matchAll(/\b(20\d{2})[\/\-.](\d{1,2})[\/\-.](\d{1,2})\b/g)) found.push([m.index, ok(+m[1], +m[2], +m[3])]);
@@ -99,12 +100,16 @@ function parse(text) {
   const lines = t.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const r = { amount: 0, date: '', time: '', ref: '', kind: 'Transferencia', origin: '', dest: null, holder: false, looksLike: false };
   // Monto: junto a una palabra clave (misma línea o la siguiente); si no, el primer importe con "Gs"
-  for (let i = 0; i < lines.length && !r.amount; i++) {
-    if (/\b(monto|importe|total|valor|debitado|transferido|enviado|acreditado|depositado|env[ií]o|enviaste|transferiste|pagaste|giro)\b/i.test(lines[i]) && !/comisi[oó]n|saldo|cargo|costo|disponible/i.test(lines[i])) {
-      for (const l of [lines[i].replace(/^.*?(monto|importe|total|valor)[^0-9]*/i, ''), lines[i + 1] || '']) {
-        const m = NUM.exec(l); if (m && toInt(m[1]) >= 1000) { r.amount = toInt(m[1]); break; }
+  const TIERS = [/\b(mont[oa]|transferido|enviado|env[ií]o|enviaste|transferiste|pagaste)\b/i, /\b(importe|inporte|valor|debitado|acreditado|depositado)\b/i, /\btotal\b/i];
+  for (const kw of TIERS) {
+    for (let i = 0; i < lines.length && !r.amount; i++) {
+      if (!kw.test(lines[i]) || /comisi[oó]n|saldo|cargo|costo|disponible|referencia|remitente|destino|tel[eé]fono|celular|cuenta|cta\.?/i.test(lines[i])) continue;
+      const nx = lines[i + 1] || '';
+      for (const l of [lines[i].replace(/^.*?(mont[oa]|importe|inporte|total|valor)[^0-9]*/i, ''), /[a-z]{4,}\s*:/i.test(nx) ? '' : nx]) {
+        const m = NUM.exec(l); if (m && toInt(m[1]) >= 1000 && toInt(m[1]) <= 50000000) { r.amount = toInt(m[1]); break; }
       }
     }
+    if (r.amount) break;
   }
   // "Gs." / "₲" que el lector suele confundir: cs, 6s, G5, G$, gS, ¢, €, £…
   if (!r.amount) { const m = /(?:\b[gc6][s5$]\.?|[₲¢€£])\s*(\d{1,3}(?:[.,]\d{3})+)|(\d{1,3}(?:[.,]\d{3})+)\s*(?:\b[gc6][s5$]\b|[₲¢€£])/i.exec(t); if (m) r.amount = toInt(m[1] || m[2]); }
@@ -129,7 +134,7 @@ function parse(text) {
   const ep = lines.findIndex(l => /^(enviado por|remitente|ordenante|depositante|de parte de|de)\s*:?\s*$/i.test(l));
   const ep2 = ep >= 0 ? ep : lines.findIndex(l => /^(enviado por|remitente|ordenante|depositante|de parte de)\b\W{0,3}.{0,4}$/i.test(l));
   if (ep2 >= 0) {
-    const nm = String(lines[ep2 + 1] || '').replace(/\s+[^\sA-Za-zÁÉÍÓÚÑáéíóúñ]\S*.*$/, '').replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ ]+$/, '').trim();
+    const nm = String(lines[ep2 + 1] || '').replace(/\s+[^\sA-Za-zÁÉÍÓÚÑáéíóúñ]\S*.*$/, '').replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ ]+$/, '').replace(/(\s+[A-ZÁÉÍÓÚÑ]{1,2})+$/, '').trim();
     if (/^[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}( [A-Za-zÁÉÍÓÚÑáéíóúñ]{2,})+$/.test(nm)) r.origin = nm;
   }
   if (!r.origin && oi >= 0) for (const l of lines.slice(oi, oi + 4)) { const n = /(?:[Nn]ombre|[Rr]emitente|[Oo]rdenante|[Dd]epositante|[Tt]itular)\s*:?\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{5,})/.exec(l); if (n) { r.origin = n[1].trim(); break; } }
@@ -150,6 +155,12 @@ function parse(text) {
     const dv = d.value.replace(/^0+/, '');
     if (d.type === 'number' && tokens.some(x => x === d.value || x.replace(/^0+/, '') === dv || (d.value.length >= 9 && x.slice(-9) === d.value.slice(-9)))) { r.dest = d; break; }
   }
+  // un dígito mal leído en un número largo (celular o cuenta de 9+ cifras): se acepta si es el único que coincide así
+  if (!r.dest) {
+    const off1 = (a, b) => a.length === b.length && [...a].filter((ch, i) => ch !== b[i]).length === 1;
+    const near = destinations().filter(d => d.type === 'number' && d.value.replace(/^0+/, '').length >= 9 && tokens.some(x => off1(x.replace(/^0+/, ''), d.value.replace(/^0+/, ''))));
+    if (near.length === 1) r.dest = near[0];
+  }
   // titular de la empresa (sin tildes: el lector las pierde o las cambia)
   const plain = (x) => String(x).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
   const hn = plain(holderName()).split(/\s+/).filter(w => w.length > 3), T = plain(t);
@@ -161,6 +172,8 @@ function parse(text) {
     const d = b && destinations().find(x => x.type === 'number' && bankIn(x.label) === b);
     if (d) r.dest = d;
   }
+  if (!r.ref) { const mt = /ref\.?\s*tigo\s*\w+\s*:?\s*(\d{6,})/i.exec(t); if (mt) r.ref = mt[1]; }
+  if (!r.ref) { const mx = /transacci[oó]n\s*(?:n[°º.]?|nro\.?)?\s*:?\s*([a-z0-9]{10,40})\b/i.exec(t); if (mx && (mx[1].match(/\d/g) || []).length >= 3) r.ref = mx[1].toUpperCase(); }
   // Tipo: depósito (escrito) > según la cuenta de destino > "transferencia" escrita > giro / billetera
   if (/dep[oó]sito/i.test(t) && !/transferencia/i.test(t)) r.kind = 'Depósito';
   else if (r.dest && r.dest.kind) r.kind = r.dest.kind;
@@ -198,7 +211,17 @@ async function ocr(buffer) {
   if (r1.amount && r1.dest && r1.date) return t1;
   // faltan datos: segunda lectura más grande y en blanco y negro puro; se queda con la que leyó más
   const t2 = await read(await prep(2200, 150));
-  return score(parse(t2)) > score(r1) ? t2 : t1;
+  let best = score(parse(t2)) > score(r1) ? t2 : t1;
+  const rb = parse(best);
+  if (rb.amount && rb.dest) return best;
+  // fotos de tickets de papel o de pantallas: contraste local (CLAHE)
+  try {
+    let g = sharp(buffer).rotate().resize({ width: 2000, withoutEnlargement: false }).greyscale();
+    if (dark) g = g.negate({ alpha: false });
+    const t3 = await read(await g.clahe({ width: 64, height: 64, maxSlope: 3 }).png().toBuffer());
+    if (score(parse(t3)) > score(rb)) best = t3;
+  } catch (_) {}
+  return best;
 }
 
 // ── GoWA ────────────────────────────────────────────────────────────────────────────────────────

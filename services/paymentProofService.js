@@ -39,20 +39,38 @@ function ensureSchema() {
 function destinations() {
   const text = [getSetting('corte_payment_info', ''), getSetting('payment_proof_destinations', '')].join('\n');
   const out = [];
-  let prev = '';
+  let prev = '', bank = '';
   for (const raw of String(text).split(/\r?\n/)) {
     const line = raw.replace(/[^\p{L}\p{N}@:.,()\- ]/gu, ' ').replace(/\s+/g, ' ').trim();
     if (!line) continue;
     const label = (line.split(':')[0] || '').replace(/[\d.\s]+$/, '').trim();
-    for (const m of line.matchAll(/@([A-Za-z0-9_.]{3,})/g)) out.push({ type: 'user', value: m[1].toLowerCase(), label: prev || 'Billetera' });
+    for (const m of line.matchAll(/@([A-Za-z0-9_.]{3,})/g)) out.push({ type: 'user', value: m[1].toLowerCase(), label: prev || 'Billetera', kind: 'Billetera' });
     for (const m of line.matchAll(/\d[\d .]{4,}\d/g)) {
       const digits = m[0].replace(/\D/g, '');
-      if (digits.length >= 6) out.push({ type: 'number', value: digits, label: (label && !/^\d/.test(label) && label.length < 40 ? label : prev) || 'Cuenta' });
+      if (digits.length < 6) continue;
+      let lb = (label && !/^\d/.test(label) && label.length < 40 ? label : prev) || 'Cuenta';
+      // "Alias (C.I.): 4.020.592" debajo de "Bancop: 0310176859" → es el alias de esa cuenta de Bancop
+      if (/^alias\b/i.test(lb) && bank) lb = `${bank} (alias${/c\.?\s*i/i.test(lb) ? ' C.I.' : ''})`;
+      else bank = /tigo|giro|billetera|mango|wally|zimple|celular|tel[eé]fono/i.test(lb + ' ' + prev) ? '' : lb;
+      out.push({ type: 'number', value: digits, label: lb, kind: kindOfDest(lb + ' ' + prev) });
     }
     if (!/\d{5,}|@/.test(line.replace(/[ .]/g, ''))) prev = line.replace(/:$/, '').slice(0, 40);
   }
   return out;
 }
+// Tipo de pago según el destino: cuenta bancaria → transferencia; Tigo → giro; Mango, Wally… → billetera
+function kindOfDest(text) {
+  if (/tigo|giro/i.test(text)) return 'Giro';
+  if (/billetera|mango|wally|zimple|personal\s*pay/i.test(text)) return 'Billetera';
+  return 'Transferencia';
+}
+// Bancos y billeteras de Paraguay (para saber desde dónde pagó; es informativo)
+const BANKS = [['Banco Familiar', /familiar|\beko\b/i], ['Ueno Bank', /\bueno\b/i], ['Itaú', /ita[uú]/i], ['Banco Continental', /continental/i],
+  ['Bancop', /bancop/i], ['Banco BASA', /\bbasa\b/i], ['Banco GNB', /\bgnb\b/i], ['Sudameris', /sudameris/i], ['Visión Banco', /visi[oó]n/i],
+  ['Banco Atlas', /\batlas\b/i], ['Interfisa', /interfisa/i], ['Banco Río', /banco\s*r[ií]o\b/i], ['Zeta Banco', /\bzeta\b/i], ['Banco Nacional de Fomento', /\bbnf\b|fomento/i],
+  ['Tigo Money', /tigo\s*money/i], ['Billetera Personal', /billetera\s*personal|personal\s*pay/i], ['Wally', /\bwally\b/i], ['Mango', /\bmango\b/i], ['Zimple', /zimple/i], ['Cooperativa', /cooperativa/i]];
+const bankIn = (text) => { for (const [name, re] of BANKS) if (re.test(text)) return name; return ''; };
+
 function holderName() {
   const m = /Titular\s*:\s*([^\n]+)/i.exec(String(getSetting('corte_payment_info', '')));
   return m ? m[1].trim() : '';
@@ -93,14 +111,24 @@ function parse(text) {
     const isAccount = destinations().some(d => d.type === 'number' && dg.endsWith(d.value)) || /cuenta/i.test(t.slice(Math.max(0, x.index - 25), x.index));
     if (/\d{5,}/.test(x[2]) && !/^\d{1,2}[\/\-.]\d/.test(x[2]) && !isAccount) { r.ref = x[2].toUpperCase(); break; }
   }
-  // Tipo
-  if (/dep[oó]sito/i.test(t)) r.kind = 'Depósito';
-  else if (/giro|tigo\s*money|billetera|mango|wally|zimple|eko|personal\s*pay/i.test(t)) r.kind = 'Giro';
   // Quién pagó (informativo): bloque "Origen" → "Nombre …", o Remitente / Ordenante / De
   const oi = lines.findIndex(l => /\b(origen|remitente|ordenante|depositante|enviado por|de:)/i.test(l));
   const ep = lines.findIndex(l => /^(enviado por|remitente|ordenante|depositante|de parte de|de)\s*:?\s*$/i.test(l));
-  if (ep >= 0 && /^[A-Za-zÁÉÍÓÚÑáéíóúñ ]{6,}$/.test(lines[ep + 1] || '')) r.origin = lines[ep + 1].trim();
+  const ep2 = ep >= 0 ? ep : lines.findIndex(l => /^(enviado por|remitente|ordenante|depositante|de parte de)\b\W{0,3}.{0,4}$/i.test(l));
+  if (ep2 >= 0) {
+    const nm = String(lines[ep2 + 1] || '').replace(/\s+[^\sA-Za-zÁÉÍÓÚÑáéíóúñ]\S*.*$/, '').replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ ]+$/, '').trim();
+    if (/^[A-Za-zÁÉÍÓÚÑáéíóúñ]{2,}( [A-Za-zÁÉÍÓÚÑáéíóúñ]{2,})+$/.test(nm)) r.origin = nm;
+  }
   if (!r.origin && oi >= 0) for (const l of lines.slice(oi, oi + 4)) { const n = /(?:[Nn]ombre|[Rr]emitente|[Oo]rdenante|[Dd]epositante|[Tt]itular)\s*:?\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{5,})/.exec(l); if (n) { r.origin = n[1].trim(); break; } }
+  // Banco o billetera desde el que pagó: lo que dice el bloque "Enviado por" / "Origen" (o, si no, la app del comprobante)
+  {
+    const from = ep2 >= 0 ? ep2 : oi;
+    const to = lines.findIndex((l, i) => i > from && /^(enviado a|destino|destinatario|beneficiario|para)\b/i.test(l));
+    const block = from >= 0 ? lines.slice(from, to > from ? to : from + 5).join(' ') : '';
+    r.originBank = bankIn(block) || (/\beko\b/i.test(t) ? 'Banco Familiar' : '');
+    if (r.originBank && r.origin && !r.origin.includes('(')) r.origin += ` (${r.originBank})`;
+    else if (r.originBank && !r.origin) r.origin = r.originBank;
+  }
   // Destino: una cuenta o billetera de la empresa
   const tokens = [...t.matchAll(/\d[\d .\-]{4,}\d/g)].map(x => x[0].replace(/\D/g, '')).filter(d => d.length >= 6);
   const low = t.toLowerCase();
@@ -108,6 +136,12 @@ function parse(text) {
     if (d.type === 'user' && low.includes('@' + d.value)) { r.dest = d; break; }
     if (d.type === 'number' && tokens.some(x => x === d.value || (d.value.length >= 9 && x.slice(-9) === d.value.slice(-9)))) { r.dest = d; break; }
   }
+  // Tipo: depósito (escrito) > según la cuenta de destino > "transferencia" escrita > giro / billetera
+  if (/dep[oó]sito/i.test(t) && !/transferencia/i.test(t)) r.kind = 'Depósito';
+  else if (r.dest && r.dest.kind) r.kind = r.dest.kind;
+  else if (/transferencia|transferiste|sipap|sistema nacional de pagos/i.test(t)) r.kind = 'Transferencia';
+  else if (/giro|tigo\s*money/i.test(t)) r.kind = 'Giro';
+  else if (/billetera|mango|wally|zimple|personal\s*pay/i.test(t)) r.kind = 'Billetera';
   const hn = holderName().toUpperCase().split(/\s+/).filter(w => w.length > 3);
   r.holder = hn.length >= 2 && hn.filter(w => t.toUpperCase().includes(w)).length >= 2;
   // Es comprobante si tiene monto, o si va a una cuenta/billetera de la empresa o a nombre del titular aunque el monto no

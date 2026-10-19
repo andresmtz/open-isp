@@ -58,7 +58,7 @@ const CATALOG = [
     ['POST', `^/billing/${ID}/pay$`],
     ['POST', '^/billing/pay-bulk$'],
     ['GET', `^/payment-proofs/${ID}/file$`],
-    ['POST', `^/payment-proofs/${ID}/(apply|reject|assign)$`],
+    ['POST', `^/payment-proofs/${ID}/(apply|reject|assign|misread)$`],
     ['POST', '^/payment-proofs/scan$'],
   ] },
   { key: 'enviar_facturas', label: 'Enviar facturas y comprobantes por WhatsApp', help: 'Botones de enviar factura o comprobante a un cliente.', def: true, needs: ['ver_facturas'], rules: [

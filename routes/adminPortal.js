@@ -221,8 +221,7 @@ async function trySendWhatsappPayment(customerPhone, message) {
     const to = String(customerPhone || '').trim();
     if (!to) return false;
     const waNotify = require('../services/waNotifyService');
-    await waNotify.sendText(to, String(message || '').trim());
-    return true;
+    return await waNotify.sendText(to, String(message || '').trim()); // false si no llegó a ningún número del cliente
   } catch {
     return false;
   }
@@ -267,7 +266,7 @@ async function sendPaymentSuccessWA(customerPhone, customerName, periodText, amo
     });
 
     const sent = await trySendWhatsappPayment(customerPhone, formattedMsg);
-    logger.info(`[Pago] Comprobante por WhatsApp a ${customerName} (${customerPhone}): ${sent ? 'enviado' : 'NO enviado (WhatsApp desactivado o sin conexión)'}`);
+    logger.info(`[Pago] Comprobante por WhatsApp a ${customerName} (${customerPhone}): ${sent ? 'enviado' : 'NO enviado (el número no tiene WhatsApp, o WhatsApp está desactivado o sin conexión)'}`);
     return sent;
   } catch (e) {
     logger.error(`[Pago] Comprobante por WhatsApp a ${customerName}: error ${e.message}`);
@@ -705,7 +704,9 @@ router.get('/pending-payments', requireAdminSession, (req, res) => {
   try { proofs = require('../services/paymentProofService').pending(); } catch (e) { logger.warn('[Comprobantes] ' + e.message); }
   let destLabels = [];
   try { destLabels = [...new Set(require('../services/paymentProofService').destinations().map(d => d.label))]; } catch (_) {}
-  res.render('admin/pending_payments', { title: 'Pagos pendientes', company: company(), activePage: 'pending_payments', rows, proofs, destLabels, msg: flashMsg(req) });
+  let misread = [];
+  if (req.session.isAdmin) { try { misread = require('../services/paymentProofService').misreadList(); } catch (_) {} }
+  res.render('admin/pending_payments', { title: 'Pagos pendientes', company: company(), activePage: 'pending_payments', rows, proofs, destLabels, misread, msg: flashMsg(req) });
 });
 
 router.get('/onu-inventory', requireAdminSession, (req, res) => {
@@ -2861,12 +2862,31 @@ router.post('/payment-proofs/:id/apply', requireAdminSession, express.json(), as
     const amount = Math.round(Number(req.body && req.body.amount) || 0);
     if (amount <= 0) throw new Error('Indicá el monto a aplicar.');
     const by = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
-    const method = ['Transferencia', 'Depósito', 'Giro'].includes(req.body && req.body.method) ? req.body.method : (p.kind || 'Transferencia');
+    const method = ['Transferencia', 'Depósito', 'Giro', 'Billetera'].includes(req.body && req.body.method) ? req.body.method : (p.kind || 'Transferencia');
     const note = `Comprobante por WhatsApp${p.ref ? ' N.º ' + p.ref : ''}${p.dest_label ? ' → ' + p.dest_label : ''} (#${p.id})`;
     const r = await receivePayment(req, p.customer_id, { amount, method, note, destination: String((req.body && req.body.destination) || p.dest_label || '').trim() });
     pp.markApplied(p.id, { by, receiptId: r.receiptId, amount, note: r.message });
+    // lo que se corrigió al aplicar queda como "leído mal" para mejorar el lector
+    try {
+      const dest = String((req.body && req.body.destination) || '').trim(), fix = [];
+      if (Number(p.amount || 0) !== amount) fix.push(`monto ${p.amount ? regional.formatMoney(p.amount) : 'no leído'} → ${regional.formatMoney(amount)}`);
+      if ((p.kind || '') !== method) fix.push(`tipo ${p.kind || '-'} → ${method}`);
+      if (dest && dest !== (p.dest_label || '')) fix.push(`cuenta ${p.dest_label || 'no leída'} → ${dest}`);
+      if (fix.length) pp.markMisread(p.id, 'Corregido al aplicar: ' + fix.join(', '), by);
+    } catch (_) {}
     res.json({ ok: true, message: r.message });
   } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+router.post('/payment-proofs/:id/misread', requireAdminSession, express.json(), (req, res) => {
+  try {
+    const by = req.session.isCashier ? (req.session.cashierName || 'Oficina') : (req.session.adminUser || 'Administrador');
+    require('../services/paymentProofService').markMisread(req.params.id, req.body && req.body.note, by);
+    res.json({ ok: true, message: 'Gracias: quedó marcado como leído mal para revisar el lector.' });
+  } catch (e) { res.status(400).json({ ok: false, message: e.message }); }
+});
+router.post('/payment-proofs/:id/misread-done', requireAdminSession, restrictToAdmin, (req, res) => {
+  try { require('../services/paymentProofService').misreadDone(req.params.id); res.json({ ok: true }); }
+  catch (e) { res.status(400).json({ ok: false, message: e.message }); }
 });
 router.post('/payment-proofs/:id/reject', requireAdminSession, express.json(), (req, res) => {
   try {

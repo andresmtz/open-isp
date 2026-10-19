@@ -59,6 +59,9 @@ async function forSession(session, canSee) {
         items.push({ key: 'wa', icon: 'bi bi-exclamation-octagon', tone: 'danger', count: 1, title: 'WhatsApp desconectado',
           detail: 'No salen ni entran mensajes', href: '/admin/whatsapp' });
     } catch (_) {}
+    const mr = n('SELECT COUNT(*) c FROM payment_proofs WHERE misread=1');
+    add({ key: 'misread', icon: 'bi bi-flag', tone: 'muted', count: mr, title: plural(mr, 'comprobante leído mal', 'comprobantes leídos mal'),
+      detail: 'Para mejorar el lector', href: '/admin/pending-payments#leidos-mal' });
     const late = n('SELECT COUNT(*) c FROM backup_watch WHERE alerted=1');
     add({ key: 'backup', icon: 'bi bi-hdd-network', tone: 'danger', count: late, title: plural(late, 'copia de seguridad atrasada', 'copias de seguridad atrasadas'),
       detail: 'Revisá el servidor de copias', href: '' });

@@ -41,12 +41,38 @@ function saveTemp(buffer, ext) {
   } catch (e) { return ''; }
 }
 
-async function sendText(phone, text) {
+async function sendOnce(phone, text) {
   try {
-    const whatsappService = require('./whatsappService');
-    await whatsappService.sendWhatsAppMessage(phone, spx(text));
-    return true;
+    const ok = await require('./whatsappService').sendWhatsAppMessage(phone, text);
+    return ok !== false;
   } catch (e) { return false; }
+}
+
+/**
+ * Envía un texto. Si falla (por ejemplo, el número principal del cliente no tiene WhatsApp), prueba con los otros
+ * números registrados de ese mismo cliente (principal y adicionales), nunca con los de un cliente cancelado.
+ * Devuelve true si llegó a alguno.
+ */
+async function sendText(phone, text) {
+  const body = spx(text);
+  if (await sendOnce(phone, body)) return true;
+  try {
+    if (!require('../config/waGate').ready()) return false;
+    const cp = require('../config/customerPhones');
+    const found = cp.findByPhone(phone);
+    if (!found || found.status === 'cancelled') return false;
+    const c = require('../config/database').prepare('SELECT phone, alt_phones FROM customers WHERE id=?').get(found.id) || {};
+    const tried = regional.toLocalPhone(phone);
+    for (const alt of [c.phone, ...cp.list(c)]) {
+      const loc = regional.toLocalPhone(alt);
+      if (!loc || loc === tried) continue;
+      if (await sendOnce(loc, body)) {
+        try { require('../config/logger').logger.info(`[WhatsApp] ${found.name}: ${tried} no recibió el mensaje, se envió a su otro número ${loc}`); } catch (_) {}
+        return true;
+      }
+    }
+  } catch (_) {}
+  return false;
 }
 
 async function sendMetaImage(phone, buffer, caption) {

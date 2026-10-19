@@ -71,7 +71,7 @@
           <% } else { %>
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
               <input class="fc" id="pf-a-<%= p.id %>" inputmode="numeric" value="<%= p.amount || (p.debt ? p.debt.total : '') %>" style="flex:1;min-width:110px;font-size:16px;font-weight:700">
-              <select class="fs" id="pf-m-<%= p.id %>" style="flex:0 0 auto"><% ['Transferencia','Depósito','Giro'].forEach(m => { %><option <%= m === p.kind ? 'selected' : '' %>><%= m %></option><% }) %></select>
+              <select class="fs" id="pf-m-<%= p.id %>" style="flex:0 0 auto"><% ['Transferencia','Depósito','Giro','Billetera'].forEach(m => { %><option <%= m === p.kind ? 'selected' : '' %>><%= m %></option><% }) %></select>
             </div>
             <select class="fs" id="pf-d-<%= p.id %>" title="Cuenta o billetera donde entró el dinero">
               <option value="">— ¿A qué cuenta entró? —</option>
@@ -79,11 +79,36 @@
             </select>
             <button type="button" class="btn btn-p btn-pay" onclick="pfApply(<%= p.id %>, this)"><i class="bi bi-check2-circle"></i> Aplicar pago</button>
           <% } %>
-          <button type="button" class="btn btn-g btn-sm" onclick="pfReject(<%= p.id %>)"><i class="bi bi-x-circle"></i> Rechazar</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button type="button" class="btn btn-g btn-sm" onclick="pfReject(<%= p.id %>)"><i class="bi bi-x-circle"></i> Rechazar</button>
+            <button type="button" class="btn btn-g btn-sm" onclick="pfMisread(<%= p.id %>, this)" title="El sistema leyó mal el monto, la cuenta, el tipo, la fecha o quién pagó"><i class="bi bi-flag"></i> <%= p.misread === 1 ? 'Marcado: leído mal' : 'Leído mal' %></button>
+          </div>
         </div>
       <% }) %>
       </div>
     </div>
+
+    <% const _mr = (typeof misread !== 'undefined' && misread) ? misread : []; if (_mr.length) { %>
+    <details class="card" id="leidos-mal" style="padding:12px 14px;margin-bottom:14px;border:1px solid rgba(245,158,11,.45)">
+      <summary style="font-weight:800;font-size:15px;cursor:pointer"><i class="bi bi-flag"></i> Comprobantes leídos mal (<%= _mr.length %>) <span class="pp-sub" style="font-weight:400">para mejorar el lector</span></summary>
+      <div class="pp-list" style="margin-top:10px">
+      <% _mr.forEach(m => { %>
+        <div class="card pp-card" id="mr-<%= m.id %>">
+          <div style="display:flex;gap:10px">
+            <% if (m.file) { %><a href="/admin/payment-proofs/<%= m.id %>/file" target="_blank" rel="noopener" style="flex:0 0 64px"><% if (m.media_type === 'pdf') { %><i class="bi bi-file-earmark-pdf" style="font-size:30px"></i><% } else { %><img src="/admin/payment-proofs/<%= m.id %>/file" alt="Comprobante" style="width:64px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--border)"><% } %></a><% } %>
+            <div style="flex:1;min-width:0;font-size:13px;line-height:1.5">
+              <div class="pp-name">#<%= m.id %> · <%= m.customer_name || '-' %> <span class="pp-sub">(<%= m.status %>)</span></div>
+              <div class="pp-sub">Leyó: <%= m.kind %> · <%= m.amount ? fmtMoney(m.amount) : 'sin monto' %> → <%= m.dest_label || 'sin cuenta' %><%= m.op_date ? ' · ' + m.op_date.split('-').reverse().join('/') : '' %><%= m.op_time ? ' ' + m.op_time : '' %></div>
+              <div><i class="bi bi-chat-left-text"></i> <%= m.misread_note %></div>
+              <div class="pp-sub"><%= m.misread_by %> · <%= String(m.misread_at || '').slice(8,10) %>/<%= String(m.misread_at || '').slice(5,7) %> <%= String(m.misread_at || '').slice(11,16) %></div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-g btn-sm" onclick="pfMisreadDone(<%= m.id %>)"><i class="bi bi-check2"></i> Revisado</button>
+        </div>
+      <% }) %>
+      </div>
+    </details>
+    <% } %>
 
     <div class="pp-sub" style="margin-bottom:10px;font-size:13px">
       <b><%= rows.length %></b> clientes con deuda · Total: <b><%= fmtMoney(total) %></b>
@@ -169,6 +194,16 @@ async function pfReject(id){
   if (r === null) return;
   const j = await pfPost('/admin/payment-proofs/' + id + '/reject', { reason: r });
   alert(j.message || 'Error'); if (j.ok) setTimeout(function(){ location.reload(); }, 1200);
+}
+async function pfMisread(id, btn){
+  const n = prompt('¿Qué leyó mal? Por ejemplo: "el monto es 150.000", "fue a Ueno, no a Bancop", "es un giro", "la fecha es 12/10".', '');
+  if (n === null) return;
+  const j = await pfPost('/admin/payment-proofs/' + id + '/misread', { note: n || 'Sin detalle' });
+  if (j.ok) { btn.innerHTML = '<i class="bi bi-flag-fill"></i> Marcado: leído mal'; } else alert(j.message || 'Error');
+}
+async function pfMisreadDone(id){
+  const j = await pfPost('/admin/payment-proofs/' + id + '/misread-done', {});
+  if (j.ok) { const e = document.getElementById('mr-' + id); if (e) e.remove(); } else alert(j.message || 'Error');
 }
 async function pfAssign(id){
   const v = document.getElementById('pf-c-' + id).value.trim(); if (!v) return;

@@ -32,6 +32,8 @@ function ensureSchema() {
     status TEXT NOT NULL DEFAULT 'pendiente', decided_by TEXT, decided_at TEXT, decision_note TEXT, receipt_id INTEGER,
     created_at TEXT DEFAULT (NOW_LOCAL()))`);
   db.exec('CREATE INDEX IF NOT EXISTS idx_payment_proofs_status ON payment_proofs(status)');
+  // "Leído mal": marcado a mano o corregido al aplicar (monto, tipo o cuenta distintos de lo leído), para revisar el lector
+  for (const col of ['misread INTEGER DEFAULT 0', 'misread_note TEXT', 'misread_by TEXT', 'misread_at TEXT']) { try { db.exec('ALTER TABLE payment_proofs ADD COLUMN ' + col); } catch (_) {} }
   _schemaOk = true;
 }
 
@@ -408,6 +410,21 @@ function assign(id, customerRef, by) {
   logger.info(`[Comprobantes] #${p.id} asignado a ${c.name} por ${by}`);
   return c;
 }
+/** Marca un comprobante como mal leído (misread=1: para revisar; 2: ya revisado). Las notas se acumulan. */
+function markMisread(id, note, by) {
+  ensureSchema();
+  const p = get(id); if (!p) throw new Error('Comprobante no encontrado');
+  const prev = p.misread === 1 && p.misread_note ? p.misread_note + ' · ' : '';
+  db.prepare('UPDATE payment_proofs SET misread=1, misread_note=?, misread_by=?, misread_at=(NOW_LOCAL()) WHERE id=?').run((prev + String(note || '').trim()).slice(0, 1000) || 'Sin detalle', by || '', p.id);
+  return get(id);
+}
+function misreadList() {
+  ensureSchema();
+  return db.prepare(`SELECT p.id, p.status, p.kind, p.amount, p.dest_label, p.op_date, p.op_time, p.ref, p.origin_name, p.misread_note, p.misread_by, p.misread_at, p.file, p.media_type,
+    c.name AS customer_name FROM payment_proofs p LEFT JOIN customers c ON c.id = p.customer_id WHERE p.misread=1 ORDER BY p.misread_at DESC`).all();
+}
+function misreadDone(id) { ensureSchema(); db.prepare('UPDATE payment_proofs SET misread=2 WHERE id=? AND misread=1').run(Number(id)); }
+
 function markApplied(id, { by, receiptId, amount, note }) {
   db.prepare("UPDATE payment_proofs SET status='aplicado', decided_by=?, decided_at=(NOW_LOCAL()), receipt_id=?, amount=COALESCE(?, amount), decision_note=? WHERE id=?").run(by, receiptId || null, amount || null, note || null, Number(id));
 }
@@ -428,4 +445,4 @@ function reparse(id) {
   return get(id);
 }
 
-module.exports = { retryIgnored, reparse, ensureSchema, scan, processMessage, parse, destinations, checks, pending, get, filePath, assign, markApplied, reject, debtOf };
+module.exports = { markMisread, misreadList, misreadDone, retryIgnored, reparse, ensureSchema, scan, processMessage, parse, destinations, checks, pending, get, filePath, assign, markApplied, reject, debtOf };

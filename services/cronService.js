@@ -453,6 +453,8 @@ function startCronJobs() {
   cron.schedule('*/2 * * * *', async () => {
     // Comprobantes de pago recibidos por WhatsApp (services/paymentProofService.js): se leen y quedan para revisar
     try { await require('./paymentProofService').scan(); } catch (e) { logger.warn('[Comprobantes] ' + e.message); }
+    // descartados de los últimos 2 días que el lector actual sí reconoce (por ejemplo, después de una mejora del lector)
+    try { const r = await require('./paymentProofService').retryIgnored({ days: 2 }); if (r.nuevos) logger.info(`[Comprobantes] ${r.nuevos} recuperado(s) de los descartados`); } catch (e) { logger.warn('[Comprobantes] reintento: ' + e.message); }
   });
   cron.schedule('*/2 * * * *', async () => {
     // ONU de instalaciones con etiqueta leída que todavía no aparecían en la OLT (services/onuAutoProvisionService.js)

@@ -75,10 +75,10 @@ function parse(text) {
       }
     }
   }
-  // "Gs." que el lector suele confundir: cs, 6s, G5, G$, gS…
-  if (!r.amount) { const m = /(?:\b[gc6][s5$]\.?|₲)\s*(\d{1,3}(?:[.,]\d{3})+)|(\d{1,3}(?:[.,]\d{3})+)\s*(?:\b[gc6][s5$]\b|₲)/i.exec(t); if (m) r.amount = toInt(m[1] || m[2]); }
+  // "Gs." / "₲" que el lector suele confundir: cs, 6s, G5, G$, gS, ¢, €, £…
+  if (!r.amount) { const m = /(?:\b[gc6][s5$]\.?|[₲¢€£])\s*(\d{1,3}(?:[.,]\d{3})+)|(\d{1,3}(?:[.,]\d{3})+)\s*(?:\b[gc6][s5$]\b|[₲¢€£])/i.exec(t); if (m) r.amount = toInt(m[1] || m[2]); }
   // Comprobante evidente sin "Gs" legible: el importe que aparece solo en su línea
-  if (!r.amount && /comprobante de (transferencia|dep[oó]sito|pago)|transferencia (exitosa|realizada)|enviaste|pago exitoso/i.test(t)) {
+  if (!r.amount && /comprobante de (transferencia|dep[oó]sito|pago)|transferencia (exitosa|realizada|solicitada)|solicitamos el env[ií]o|enviaste|pago exitoso/i.test(t)) {
     for (const l of lines) { const m2 = /^\W{0,4}[a-z₲$]{0,3}\.?\s*(\d{1,3}(?:\.\d{3})+)\s*$/i.exec(l.trim()); if (m2 && toInt(m2[1]) >= 1000) { r.amount = toInt(m2[1]); break; } }
   }
   // Fecha y hora
@@ -110,7 +110,9 @@ function parse(text) {
   }
   const hn = holderName().toUpperCase().split(/\s+/).filter(w => w.length > 3);
   r.holder = hn.length >= 2 && hn.filter(w => t.toUpperCase().includes(w)).length >= 2;
-  r.looksLike = r.amount >= 1000 && /comprobante|transferencia|dep[oó]sito|giro|monto|importe|operaci[oó]n|enviad[oa]|enviaste|pagaste|transferiste|debitado|acreditado|billetera/i.test(t);
+  // Es comprobante si tiene monto, o si va a una cuenta/billetera de la empresa o a nombre del titular aunque el monto no
+  // se haya podido leer (queda para revisar con el monto en "?": mejor que lo vea una persona a que se pierda)
+  r.looksLike = (r.amount >= 1000 || !!r.dest || r.holder) && /comprobante|transferencia|dep[oó]sito|giro|monto|importe|operaci[oó]n|enviad[oa]|enviaste|pagaste|transferiste|debitado|acreditado|billetera/i.test(t);
   return r;
 }
 

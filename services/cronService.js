@@ -21,6 +21,18 @@ const regional = require('../config/regional');
  * Modo migración (setting `migration_mode`): mientras WispHub sigue operando, Open-ISP no genera
  * facturas, no corta, no envía recordatorios ni toca perfiles. Los datos llegan por la sincronización.
  */
+// Momento de corte de una factura. Si se emitió DESPUÉS de su fecha de corte (por ejemplo, la del mes en curso que se
+// emite al reconectar a alguien que estaba cortado), no corta en el acto: tiene cut_grace_late_invoice_days días
+// (7 por defecto) desde que se emitió, para que el cliente reciba el aviso y pueda pagar.
+function cutStampWithGrace(inv, c, cfg) {
+  const base = billingCycle.cutStampFor(inv.period_year, inv.period_month, c, cfg);
+  const created = String(inv.created_at || '').slice(0, 16).replace('T', ' ');
+  if (!created || created < base) return base;
+  const days = Math.max(1, Number(getSetting('cut_grace_late_invoice_days', 7)) || 7);
+  const d = new Date(created.replace(' ', 'T') + ':00Z'); d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 16).replace('T', ' ');
+}
+
 function inMigrationMode(jobName, quiet) {
   const v = getSetting('migration_mode', false);
   const on = v === true || v === 'true';
@@ -545,8 +557,8 @@ function startCronJobs() {
             }
           }
         } else {
-          const unpaid = db.prepare("SELECT period_month, period_year FROM invoices WHERE customer_id=? AND status='unpaid'").all(c.id);
-          const overdue = unpaid.find(function (inv) { return billingCycle.cutStampFor(inv.period_year, inv.period_month, c, cfg) <= nowStamp; });
+          const unpaid = db.prepare("SELECT period_month, period_year, created_at FROM invoices WHERE customer_id=? AND status='unpaid'").all(c.id);
+          const overdue = unpaid.find(function (inv) { return cutStampWithGrace(inv, c, cfg) <= nowStamp; });
           if (overdue) {
             try {
               logger.info(`[CRON] Corte automático: ${c.name} (${c.pppoe_username || c.hotspot_username || '-'}) - factura ${overdue.period_month}/${overdue.period_year} vencida (corte ${billingCycle.cutStampFor(overdue.period_year, overdue.period_month, c, cfg)})`);

@@ -174,6 +174,15 @@ async function provision(customerId, { actor = 'sistema', mode = 'install' } = {
       if (url && au && ap && ru && rp) {
         const [t1] = await run([`onu ${N} pri tr069_mng enable acs_server url ${url} username ${au} password ${ap} certificate disable inform enable inform_interval ${interval} reverse_connection username ${ru} password ${rp}`]);
         if (!/set ok/i.test(t1)) note('TR-069: la OLT no confirmó (se sigue; se puede activar después desde el inventario)');
+        // La OLT puede responder "set ok" sin que la ONU lo tome (pasó con una ONU recién salida de fábrica):
+        // se relee y, si no quedó, se reintenta una vez.
+        let [t2] = await run([`show onu ${N} pri tr069_mng`]);
+        if (!String(t2).includes(url)) {
+          await wait(10000);
+          await run([`onu ${N} pri tr069_mng enable acs_server url ${url} username ${au} password ${ap} certificate disable inform enable inform_interval ${interval} reverse_connection username ${ru} password ${rp}`]);
+          [t2] = await run([`show onu ${N} pri tr069_mng`]);
+        }
+        note(String(t2).includes(url) ? 'TR-069 verificado en la ONU' : 'TR-069: NO quedó en la ONU tras reintentar (activarlo después desde el inventario)');
       }
 
       // 4. Guardar en la ONU (el WiFi, si está cargado, se aplica después con su propio guardado)

@@ -118,11 +118,10 @@ async function enableOne(inv) {
   }
 }
 
-/** Prepara la lista de ONU a activar (compatibles, en línea, todavía sin TR-069).
- *  auto: para la puesta al día nocturna se dejan fuera las que ya fallaron u omitieron (esas van a mano). */
-function plan({ auto = false } = {}) {
+/** Prepara la lista de ONU a activar (compatibles, en línea, todavía sin TR-069). */
+function plan() {
   ensureSchema();
-  const done = new Set(db.prepare(`SELECT onu_ref FROM tr069_rollout WHERE ${auto ? "status IN ('ok','failed','skipped')" : "status = 'ok'"}`).all().map(r => r.onu_ref));
+  const done = new Set(db.prepare("SELECT onu_ref FROM tr069_rollout WHERE status = 'ok'").all().map(r => r.onu_ref));
   const acsTags = db.prepare('SELECT tags FROM acs_devices').all().map(r => r.tags || '').join(' ');
   return mgr().inventory().filter(r => r.compatible === 1 && /online/i.test(r.status || '') && !done.has(r.onu_ref)
     && !(r.pppoe && acsTags.includes(`"${r.pppoe}"`)));
@@ -132,7 +131,7 @@ function status() {
   ensureSchema();
   const at = getSetting('tr069_rollout_at', '');
   const rows = db.prepare(`SELECT r.*, c.name AS customer_name FROM tr069_rollout r LEFT JOIN customers c ON c.id = r.customer_id ORDER BY r.id DESC LIMIT 100`).all();
-  return { scheduledAt: at || null, running: _running, pendingCount: plan().length, catchupTime: getSetting('tr069_catchup_time', '03:00') || '03:00', rows };
+  return { scheduledAt: at || null, running: _running, pendingCount: plan().length, rows };
 }
 
 function schedule(at) {
@@ -170,7 +169,7 @@ async function runBatch({ by = 'programado', list = null } = {}) {
     }
   } finally {
     _running = false;
-    if (!/^(manual|puesta al día)/.test(by)) saveSettings({ tr069_rollout_at: '' });
+    if (by !== 'manual') saveSettings({ tr069_rollout_at: '' });
   }
   notifyAdmin(res, list.length).catch(() => {});
   return res;
@@ -201,20 +200,12 @@ function startOne(onuRef) {
   return inv;
 }
 
-/** Lo llama el cron cada minuto: arranca la tanda cuando llega la hora programada (hora local)
- *  y, una vez por día a la hora de puesta al día, activa las compatibles que quedaron pendientes
- *  (reactivadas, instaladas después o desconectadas durante la tanda). */
+/** Lo llama el cron cada minuto: arranca la tanda cuando llega la hora programada (hora local). */
 async function tick() {
-  if (_running) return;
-  const now = require('../config/billingCycle').nowStamp().slice(0, 16);
   const at = String(getSetting('tr069_rollout_at', '') || '');
-  if (at && now >= at) return runBatch({ by: 'programado ' + at });
-  const daily = String(getSetting('tr069_catchup_time', '03:00') || '');
-  if (!/^\d{2}:\d{2}$/.test(daily) || now.slice(11) !== daily) return;
-  if (getSetting('tr069_catchup_last', '') === now.slice(0, 10)) return;
-  saveSettings({ tr069_catchup_last: now.slice(0, 10) });
-  const list = plan({ auto: true });
-  if (list.length) await runBatch({ by: 'puesta al día ' + now, list });
+  if (!at || _running) return;
+  const now = require('../config/billingCycle').nowStamp().slice(0, 16);
+  if (now >= at) await runBatch({ by: 'programado ' + at });
 }
 
 module.exports = { ensureSchema, enableOne, plan, status, schedule, cancel, runBatch, startOne, tick };

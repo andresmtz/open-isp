@@ -57,7 +57,7 @@
         <p style="font-size:13px;color:var(--muted);margin:0 0 10px">
           Activa la gestión TR-069 en las ONU gestionables, <b>de a una</b>: carga el servidor en la ONU, pasa su WAN a "tr069_internet" y verifica que reconecte.
           Si algo falla vuelve atrás sola; si fallan 2 seguidas, se detiene. Cada cliente tiene un corte de unos segundos. Al terminar te llega un resumen por WhatsApp.
-          Todos los días a las <b><%= rollout.catchupTime %></b> se activan solas las compatibles que quedaron pendientes (reactivadas, instaladas después o desconectadas durante la tanda); las que fallaron o se omitieron quedan para el botón <b>Activar</b> de la lista.
+          Para una ONU suelta (reactivada o desconectada durante la tanda) usá el botón <b>Activar</b> de la lista.
         </p>
         <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin-bottom:10px">
           <span>Con TR-069: <b><%= rows.filter(r => r.tr069).length %></b></span>

@@ -123,7 +123,7 @@
         <div class="card-bd">
           <div class="fp-row"><span class="k">Estado</span><span class="v"><%- session ? '<b style="color:#10b981">Conectado</b>' + (session.uptime ? ' · ' + session.uptime : '') : '<b style="color:#94a3b8">Desconectado</b>' %></span></div>
           <div class="fp-row"><span class="k">Usuario PPPoE</span><span class="v"><code><%= c.pppoe_username || c.hotspot_username || '-' %></code></span></div>
-          <div class="fp-row"><span class="k">IP</span><span class="v"><code><%= (session && session.ip) || c.pppoe_remote_address || c.static_ip || '-' %></code></span></div>
+          <div class="fp-row"><span class="k">IP</span><span class="v"><% const _ip = (session && session.ip) || c.pppoe_remote_address || c.static_ip || ''; %><% if (/^\d{1,3}(\.\d{1,3}){3}$/.test(_ip)) { %><a href="http://<%= _ip %>" target="_blank" rel="noopener" title="Abrir la web del equipo del cliente"><code><%= _ip %></code> <i class="bi bi-box-arrow-up-right" style="font-size:11px"></i></a><% } else { %><code><%= _ip || '-' %></code><% } %></span></div>
           <% if (c.router_name) { %><div class="fp-row"><span class="k">Router</span><span class="v"><%= c.router_name %></span></div><% } %>
           <div class="fp-row"><span class="k">ONU</span><span class="v"><%= onu ? onu.onu_ref : '-' %><%= equipment && equipment.mac ? ' · ' + String(equipment.mac).toUpperCase() : (onu && onu.mac ? ' · ' + String(onu.mac).toUpperCase() : '') %><%= equipment && equipment.type ? ' · ' + equipment.type : '' %></span></div>
           <div class="fp-row"><span class="k">Potencia</span><span class="v" id="fpPower"><span class="text-muted">Midiendo…</span></span></div>

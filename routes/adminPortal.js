@@ -5497,7 +5497,7 @@ router.get('/settings', requireAdminSession, requireSidebarMenuAccess('settings'
   const paymentWebhookUrl = `${baseUrl}/customer/payment/callback`;
   res.render('admin/settings', {
     title: 'Configuración del sistema', company: company(), activePage: 'settings',
-    settings, msg: flashMsg(req),
+    settings, msg: flashMsg(req), isAdmin: !!req.session.isAdmin,
     paymentWebhookUrl, cutTexts: require('../config/cutPage').texts(settings)
   });
 });

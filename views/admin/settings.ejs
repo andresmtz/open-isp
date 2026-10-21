@@ -644,6 +644,22 @@
             </select>
             <div style="font-size:10px; color:var(--muted); margin-top:4px">Con la foto de la etiqueta que sube el técnico se identifica la ONU nueva en la OLT y se le cargan descripción, WAN PPPoE (modo TR-069), TR-069 y el WiFi elegido; siempre termina con <b>write file</b>. Si algo falla, avisa por WhatsApp a la oficina y al técnico.</div>
           </div>
+          <% if (typeof isAdmin !== 'undefined' && isAdmin && settings.acs_public_url) { %>
+          <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+            <h6 style="font-size:12px; margin-bottom: 4px;"><i class="bi bi-broadcast"></i> Datos del servidor TR-069 (para configurar un equipo a mano)</h6>
+            <div style="font-size:10px; color:var(--muted); margin-bottom:10px">Para la pestaña <b>Tr069</b> de la web de la OLT o de la propia ONU/router. Solo lo ve el administrador. Después de cargarlo en la OLT, guardá con <b>System Configuration → Save</b>.</div>
+            <% [['Tr069 Manage Status', 'Enable', 0], ['ACS Server Address', settings.acs_public_url, 0], ['ACS Server Username', settings.acs_cpe_username, 0], ['ACS Server Password', settings.acs_cpe_password, 1],
+                ['Certificate', 'Disable', 0], ['Inform', 'Enable', 0], ['Inform Interval Time', settings.acs_inform_interval || 300, 0],
+                ['Reverse-Conn User Name', settings.acs_cr_username, 0], ['Reverse-Conn Password', settings.acs_cr_password, 1]].forEach(([label, val, secret]) => { %>
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+                <span style="font-size:12px;min-width:170px"><%= label %></span>
+                <input class="fc acs-field" type="<%= secret ? 'password' : 'text' %>" value="<%= val || '' %>" readonly style="max-width:280px;font-family:monospace;font-size:12px">
+                <% if (secret) { %><button type="button" class="btn btn-sm" onclick="const i=this.previousElementSibling;i.type=i.type==='password'?'text':'password'"><i class="bi bi-eye"></i></button><% } %>
+                <button type="button" class="btn btn-sm" title="Copiar" onclick="navigator.clipboard.writeText(this.parentNode.querySelector('input').value);this.innerHTML='<i class=&quot;bi bi-check2&quot;></i>'"><i class="bi bi-clipboard"></i></button>
+              </div>
+            <% }) %>
+          </div>
+          <% } %>
           <% const _ct = (typeof cutTexts !== 'undefined' && cutTexts) || {}; %>
           <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
             <h6 style="font-size:12px; margin-bottom: 4px;"><i class="bi bi-slash-circle"></i> Pantalla de corte (lo que ve un cliente cortado al navegar)</h6>

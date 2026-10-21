@@ -13,6 +13,7 @@
  *        onu N pri wan_adv index 1 bind lan1..lanK ssid1 ssid5
  *        onu N pri wan_adv commit            → se espera "connected" con ese usuario
  *        onu N pri tr069_mng enable …         → servidor TR-069
+ *        onu N pri firewall level low + acl http/https wan enable + acl commit → web de la ONU desde la red interna
  *        WiFi elegido por el cliente (onuManageService.changeWifi: verifica, save_config y write file)
  *        onu N pri save_config + write file   (SIEMPRE, también si algo falla)
  *   4. Se verifica que el MikroTik vea la sesión PPPoE con la IP asignada.
@@ -184,6 +185,18 @@ async function provision(customerId, { actor = 'sistema', mode = 'install' } = {
         }
         note(String(t2).includes(url) ? 'TR-069 verificado en la ONU' : 'TR-069: NO quedó en la ONU tras reintentar (activarlo después desde el inventario)');
       }
+
+      // 3b. Acceso a la web de la ONU desde la red interna (sin IP pública): firewall en "low" y solo HTTP/HTTPS
+      //     por la WAN, para entrar desde la ficha del cliente con un clic en su IP. No es crítico: si no queda, se anota.
+      step = 'acceso web';
+      try {
+        await run([`onu ${N} pri firewall level low`,
+          ...[['http', 80], ['https', 443]].map(([proto, port]) => `onu ${N} pri acl ${proto} control enable lan enable wan enable ipv4_control disable ipv6_control disable port ${port}`),
+          `onu ${N} pri acl commit`]);
+        const [fw, acl] = await run([`show onu ${N} pri firewall`, `show onu ${N} pri acl`]);
+        const httpWan = /HTTP\s*:[^]*?Wan\s*:\s*(\w+)/i.exec(String(acl));
+        note(/Level\s*:\s*Low/i.test(fw) && httpWan && /enable/i.test(httpWan[1]) ? 'Acceso web habilitado (firewall low, HTTP/HTTPS por la WAN)' : 'Acceso web: la ONU no lo confirmó (revisar en la pestaña Security de la OLT)');
+      } catch (e) { note('Acceso web: ' + e.message); }
 
       // 4. Guardar en la ONU (el WiFi, si está cargado, se aplica después con su propio guardado)
       step = 'guardar en la ONU';

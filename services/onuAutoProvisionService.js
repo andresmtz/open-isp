@@ -44,6 +44,9 @@ function wanBlocks(text) {
 }
 const errOf = (t) => /(%\s*(Unknown|Invalid|Incomplete|Ambiguous)[^\n]*|Command incomplete[^\n]*|Error[^\n]*|Fail[^\n]*)/i.exec(String(t || ''));
 
+/** El registro de la instalación lo ve la oficina: las claves (PPPoE del cliente, servidor TR-069) se tapan. */
+const maskKeys = (t) => String(t).replace(/\b(pwd|password)\s+\S+/gi, '$1 ***');
+
 function lanBinding(type) {
   const m = /(\d+)GE/i.exec(String(type || ''));
   const n = Math.max(1, Math.min(4, m ? Number(m[1]) : 2));
@@ -95,7 +98,7 @@ async function provision(customerId, { actor = 'sistema', mode = 'install' } = {
   const { runOnPort, getOlt, serial, writeOlt } = onuMgr()._internal;
   const olt = getOlt(inv.olt_id);
   const N = inv.onu_id, port = inv.port;
-  const run = async (cmds) => { const out = await runOnPort(olt, port, cmds); out.forEach((o, i) => note(`${cmds[i]} → ${String(o).replace(/\s+/g, ' ').slice(-120)}`)); return out; };
+  const run = async (cmds) => { const out = await runOnPort(olt, port, cmds); out.forEach((o, i) => note(maskKeys(`${cmds[i]} → ${String(o).replace(/\s+/g, ' ').slice(-120)}`))); return out; };
 
   // ONU que no admite la configuración remota de VSOL (TP-Link y otras): solo se identifica y se nombra en la OLT
   if (inv.compatible !== 1) {

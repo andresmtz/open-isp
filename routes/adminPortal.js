@@ -729,6 +729,13 @@ router.post('/onu-inventory/tr069/schedule', requireAdminSession, restrictToAdmi
   } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
   res.redirect('/admin/onu-inventory');
 });
+router.post('/onu-inventory/tr069/one', requireAdminSession, restrictToAdmin, express.urlencoded({ extended: true }), (req, res) => {
+  try {
+    const inv = require('../services/tr069RolloutService').startOne(String(req.body.onu_ref || ''));
+    req.session._msg = { type: 'success', text: `Activando TR-069 en ${inv.onu_ref}${inv.customer_name ? ' (' + inv.customer_name + ')' : ''}. Tarda 1 o 2 minutos; actualizá la página para ver el resultado.` };
+  } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
+  res.redirect('/admin/onu-inventory');
+});
 router.post('/onu-inventory/tr069/cancel', requireAdminSession, restrictToAdmin, (req, res) => {
   require('../services/tr069RolloutService').cancel();
   req.session._msg = { type: 'success', text: 'Activación de TR-069 cancelada (si estaba en curso, se detiene después de la ONU actual).' };

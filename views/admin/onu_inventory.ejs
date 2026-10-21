@@ -57,6 +57,7 @@
         <p style="font-size:13px;color:var(--muted);margin:0 0 10px">
           Activa la gestión TR-069 en las ONU gestionables, <b>de a una</b>: carga el servidor en la ONU, pasa su WAN a "tr069_internet" y verifica que reconecte.
           Si algo falla vuelve atrás sola; si fallan 2 seguidas, se detiene. Cada cliente tiene un corte de unos segundos. Al terminar te llega un resumen por WhatsApp.
+          Todos los días a las <b><%= rollout.catchupTime %></b> se activan solas las compatibles que quedaron pendientes (reactivadas, instaladas después o desconectadas durante la tanda); las que fallaron o se omitieron quedan para el botón <b>Activar</b> de la lista.
         </p>
         <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin-bottom:10px">
           <span>Con TR-069: <b><%= rows.filter(r => r.tr069).length %></b></span>
@@ -132,7 +133,12 @@
                 <% } else if (r.compatible === 0) { %><span class="badge bd" title="<%= r.caps || '' %>">No</span>
                 <% } else { %><span class="badge bm">Sin comprobar</span><% } %>
               </td>
-              <td><%- r.tr069 ? '<span class="badge bs" title="Último informe ' + r.tr069 + '">Activo</span>' : '<span class="badge bm">—</span>' %></td>
+              <td style="white-space:nowrap"><% if (r.tr069) { %><span class="badge bs" title="Último informe <%= r.tr069 %>">Activo</span>
+                <% } else if (_adm && r.compatible === 1 && /online/i.test(r.status || '') && !rollout.running) { %>
+                  <form action="/admin/onu-inventory/tr069/one" method="POST" style="display:inline" onsubmit="return confirm('¿Activar TR-069 en <%= r.onu_ref %>? El cliente tiene un corte de unos segundos.')">
+                    <input type="hidden" name="onu_ref" value="<%= r.onu_ref %>"><button class="btn btn-p btn-sm" style="padding:2px 8px"><i class="bi bi-broadcast"></i> Activar</button>
+                  </form>
+                <% } else { %><span class="badge bm">—</span><% } %></td>
               <td><%= r.ssid_name || '-' %></td>
               <td style="white-space:nowrap;font-size:12px;color:var(--muted)"><%= r.checked_at || '-' %></td>
             </tr>

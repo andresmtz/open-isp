@@ -118,10 +118,11 @@ async function enableOne(inv) {
   }
 }
 
-/** Prepara la lista de ONU a activar (compatibles, en línea, todavía sin TR-069). */
-function plan() {
+/** Prepara la lista de ONU a activar (compatibles, en línea, todavía sin TR-069).
+ *  auto: para la puesta al día nocturna se dejan fuera las que ya fallaron u omitieron (esas van a mano). */
+function plan({ auto = false } = {}) {
   ensureSchema();
-  const done = new Set(db.prepare("SELECT onu_ref FROM tr069_rollout WHERE status = 'ok'").all().map(r => r.onu_ref));
+  const done = new Set(db.prepare(`SELECT onu_ref FROM tr069_rollout WHERE ${auto ? "status IN ('ok','failed','skipped')" : "status = 'ok'"}`).all().map(r => r.onu_ref));
   const acsTags = db.prepare('SELECT tags FROM acs_devices').all().map(r => r.tags || '').join(' ');
   return mgr().inventory().filter(r => r.compatible === 1 && /online/i.test(r.status || '') && !done.has(r.onu_ref)
     && !(r.pppoe && acsTags.includes(`"${r.pppoe}"`)));
@@ -131,7 +132,7 @@ function status() {
   ensureSchema();
   const at = getSetting('tr069_rollout_at', '');
   const rows = db.prepare(`SELECT r.*, c.name AS customer_name FROM tr069_rollout r LEFT JOIN customers c ON c.id = r.customer_id ORDER BY r.id DESC LIMIT 100`).all();
-  return { scheduledAt: at || null, running: _running, pendingCount: plan().length, rows };
+  return { scheduledAt: at || null, running: _running, pendingCount: plan().length, catchupTime: getSetting('tr069_catchup_time', '03:00') || '03:00', rows };
 }
 
 function schedule(at) {
@@ -141,11 +142,12 @@ function schedule(at) {
 function cancel() { saveSettings({ tr069_rollout_at: '' }); _stop = true; }
 
 let _running = false, _stop = false;
-async function runBatch({ by = 'programado' } = {}) {
+async function runBatch({ by = 'programado', list = null } = {}) {
   ensureSchema();
   if (_running) return { skipped: 'en curso' };
+  list = list || plan();
+  if (!list.length) return { ok: 0, failed: 0, skipped: 0 };
   _running = true; _stop = false;
-  const list = plan();
   const ins = db.prepare(`INSERT INTO tr069_rollout (olt_id, onu_ref, customer_id, status, step, started_at) VALUES (?,?,?, 'running', 'inicio', (NOW_LOCAL()))`);
   const upd = db.prepare(`UPDATE tr069_rollout SET status = ?, step = ?, message = ?, finished_at = (NOW_LOCAL()) WHERE id = ?`);
   const res = { ok: 0, failed: 0, skipped: 0, stoppedEarly: false, critical: [] };
@@ -168,7 +170,7 @@ async function runBatch({ by = 'programado' } = {}) {
     }
   } finally {
     _running = false;
-    saveSettings({ tr069_rollout_at: '' });
+    if (!/^(manual|puesta al día)/.test(by)) saveSettings({ tr069_rollout_at: '' });
   }
   notifyAdmin(res, list.length).catch(() => {});
   return res;
@@ -188,12 +190,31 @@ async function notifyAdmin(res, total) {
   }
 }
 
-/** Lo llama el cron cada minuto: arranca la tanda cuando llega la hora programada (hora local). */
-async function tick() {
-  const at = String(getSetting('tr069_rollout_at', '') || '');
-  if (!at || _running) return;
-  const now = require('../config/billingCycle').nowStamp().slice(0, 16);
-  if (now >= at) await runBatch({ by: 'programado ' + at });
+/** Activa una sola ONU a pedido (botón del inventario). Corre en segundo plano; el resultado queda en la tabla. */
+function startOne(onuRef) {
+  if (_running) throw new Error('Ya hay una activación en curso; esperá a que termine.');
+  const inv = mgr().inventory().find(r => r.onu_ref === onuRef);
+  if (!inv) throw new Error('No se encontró esa ONU en el inventario.');
+  if (inv.compatible !== 1) throw new Error('Esa ONU no es gestionable por TR-069.');
+  if (!/online/i.test(inv.status || '')) throw new Error('La ONU está desconectada; se puede activar cuando vuelva a estar en línea.');
+  runBatch({ by: 'manual', list: [inv] }).catch(e => logger.error('[TR-069] ' + e.message));
+  return inv;
 }
 
-module.exports = { ensureSchema, enableOne, plan, status, schedule, cancel, runBatch, tick };
+/** Lo llama el cron cada minuto: arranca la tanda cuando llega la hora programada (hora local)
+ *  y, una vez por día a la hora de puesta al día, activa las compatibles que quedaron pendientes
+ *  (reactivadas, instaladas después o desconectadas durante la tanda). */
+async function tick() {
+  if (_running) return;
+  const now = require('../config/billingCycle').nowStamp().slice(0, 16);
+  const at = String(getSetting('tr069_rollout_at', '') || '');
+  if (at && now >= at) return runBatch({ by: 'programado ' + at });
+  const daily = String(getSetting('tr069_catchup_time', '03:00') || '');
+  if (!/^\d{2}:\d{2}$/.test(daily) || now.slice(11) !== daily) return;
+  if (getSetting('tr069_catchup_last', '') === now.slice(0, 10)) return;
+  saveSettings({ tr069_catchup_last: now.slice(0, 10) });
+  const list = plan({ auto: true });
+  if (list.length) await runBatch({ by: 'puesta al día ' + now, list });
+}
+
+module.exports = { ensureSchema, enableOne, plan, status, schedule, cancel, runBatch, startOne, tick };

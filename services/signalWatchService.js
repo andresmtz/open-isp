@@ -1,14 +1,14 @@
 'use strict';
 /**
- * Avisos preventivos de señal: abre un reclamo para el técnico ANTES de que el cliente se quede sin internet.
+ * Avisos preventivos de señal: avisa ANTES de que el cliente se quede sin internet. No abre reclamos solo:
+ * el personal decide con el aviso si hace falta uno (botón "Crear reclamo" en Equipos caídos → createTicket).
  *
  * Una vez por día (signal_watch_hour, 08 h) se analiza el historial de potencia de cada cliente activo cuyo equipo
  * está en línea (services/onuPowerHistoryService.js → analyze):
  *   - "degradacion": la señal bajó 2 dB o más en la semana, o ya está en nivel malo (onu_rx_bad, −27 dBm);
  *   - "inestable": el equipo se cayó y volvió 3 veces o más en 48 h.
- * Por cada uno (sin reclamo abierto y sin aviso en los últimos signal_watch_cooldown_days días) se crea un reclamo
- * "preventivo" con el diagnóstico, hasta signal_watch_max_per_day por día (primero los peores). A la administración le
- * llega un solo resumen. No se le escribe al cliente.
+ * Cada uno (sin reclamo abierto y sin aviso en los últimos signal_watch_cooldown_days días) queda registrado como
+ * aviso y a la administración le llega un solo resumen por WhatsApp (primero los peores). No se le escribe al cliente.
  */
 const db = require('../config/database');
 const { logger } = require('../config/logger');
@@ -66,35 +66,43 @@ async function run({ force = false } = {}) {
   _lastDay = day;
   db.prepare("INSERT INTO signal_alerts (customer_id, kind, text) VALUES (0, '_run', ?)").run(day);
 
-  const max = num('signal_watch_max_per_day', 3);
   const list = candidates(), todo = list.filter(x => !x.skip);
-  const made = [];
-  for (const x of todo.slice(0, max)) {
-    const a = x.analysis, c = x.customer;
-    const subject = x.kind === 'inestable' ? 'Equipo inestable (preventivo)' : (a.base != null && a.base - a.last >= 2 ? 'Señal bajando (preventivo)' : 'Señal baja (preventivo)');
-    const msg = [
-      'Reclamo preventivo creado por el sistema: el cliente todavía tiene servicio, pero la señal indica un problema.',
-      a.text,
-      x.kind === 'inestable' ? '' : `Potencia: ${fmt(a.base)} dBm al inicio de la semana → ${fmt(a.last)} dBm ahora (mínimo ${fmt(a.min)}).`,
-      'Llevar medidor de potencia; revisar conectores, roseta, empalmes y el tramo hasta la caja NAP.',
-    ].filter(Boolean).join('\n');
-    try {
-      const tid = require('./ticketService').createTicket(c.id, subject, msg, { status: 'open' }).lastInsertRowid;
-      db.prepare('INSERT INTO signal_alerts (customer_id, kind, rx_base, rx_last, flaps, ticket_id, text) VALUES (?,?,?,?,?,?,?)').run(c.id, x.kind, a.base, a.last, a.flaps || 0, tid, a.text);
-      made.push({ c, tid, subject, a });
-    } catch (e) { logger.warn(`[Señal] no se pudo crear el reclamo de ${c.name}: ${e.message}`); }
-  }
-  if (made.length || todo.length > made.length) {
-    const rest = todo.slice(made.length);
+  const ins = db.prepare('INSERT INTO signal_alerts (customer_id, kind, rx_base, rx_last, flaps, text) VALUES (?,?,?,?,?,?)');
+  for (const x of todo) ins.run(x.customer.id, x.kind, x.analysis.base, x.analysis.last, x.analysis.flaps || 0, x.analysis.text);
+  if (todo.length) {
     try {
       await require('./waNotifyService').notifyAdmin(`📉 *AVISO PREVENTIVO DE SEÑAL*\n\nClientes con servicio pero con la señal en problemas:\n\n` +
-        made.map(m => `• *${m.c.name}* — ${m.subject.replace(' (preventivo)', '')}: ${fmt(m.a.base)} → ${fmt(m.a.last)} dBm · reclamo #${m.tid}`).join('\n') +
-        (rest.length ? `\n\nQuedan ${rest.length} más para los próximos días: ` + rest.map(r => r.customer.name).join(', ') : '') +
-        `\n\nSe abrió un reclamo para que el técnico lo revise antes de que se queden sin internet.`);
+        todo.map(x => `• *${x.customer.name}* — ${subjectOf(x).replace(' (preventivo)', '')}: ${x.kind === 'inestable' ? x.analysis.flaps + ' caídas en 48 h' : fmt(x.analysis.base) + ' → ' + fmt(x.analysis.last) + ' dBm'}`).join('\n') +
+        `\n\nSi hace falta que vaya el técnico, creá el reclamo desde Equipos caídos → Aviso preventivo de señal.`);
     } catch (e) { logger.warn('[Señal] resumen: ' + e.message); }
   }
-  logger.info(`[Señal] aviso preventivo: ${made.length} reclamo(s), ${todo.length - made.length} pendiente(s), ${list.length - todo.length} omitido(s)`);
-  return { created: made.length, pending: todo.length - made.length, skipped: list.length - todo.length };
+  logger.info(`[Señal] aviso preventivo: ${todo.length} aviso(s), ${list.length - todo.length} omitido(s)`);
+  return { alerted: todo.length, skipped: list.length - todo.length };
+}
+
+function subjectOf(x) {
+  const a = x.analysis;
+  return x.kind === 'inestable' ? 'Equipo inestable (preventivo)' : (a.base != null && a.base - a.last >= 2 ? 'Señal bajando (preventivo)' : 'Señal baja (preventivo)');
+}
+
+/** Lo decide el personal: crea el reclamo preventivo con el diagnóstico del aviso. */
+function createTicket(customerId, { by = '' } = {}) {
+  ensureSchema();
+  const x = candidates().find(k => k.customer.id === Number(customerId));
+  if (!x) throw new Error('Ese cliente ya no tiene la señal en problemas.');
+  if (db.prepare("SELECT 1 FROM tickets WHERE customer_id=? AND status IN ('open','in_progress')").get(x.customer.id)) throw new Error('El cliente ya tiene un reclamo abierto.');
+  const a = x.analysis;
+  const msg = [
+    `Reclamo preventivo${by ? ' creado por ' + by : ''}: el cliente todavía tiene servicio, pero la señal indica un problema.`,
+    a.text,
+    x.kind === 'inestable' ? '' : `Potencia: ${fmt(a.base)} dBm al inicio de la semana → ${fmt(a.last)} dBm ahora (mínimo ${fmt(a.min)}).`,
+    'Llevar medidor de potencia; revisar conectores, roseta, empalmes y el tramo hasta la caja NAP.',
+  ].filter(Boolean).join('\n');
+  const tid = require('./ticketService').createTicket(x.customer.id, subjectOf(x), msg, { status: 'open' }).lastInsertRowid;
+  const last = db.prepare("SELECT id FROM signal_alerts WHERE customer_id=? AND kind != '_run' ORDER BY id DESC LIMIT 1").get(x.customer.id);
+  if (last) db.prepare('UPDATE signal_alerts SET ticket_id=? WHERE id=?').run(tid, last.id);
+  else db.prepare('INSERT INTO signal_alerts (customer_id, kind, rx_base, rx_last, flaps, ticket_id, text) VALUES (?,?,?,?,?,?,?)').run(x.customer.id, x.kind, a.base, a.last, a.flaps || 0, tid, a.text);
+  return { tid, name: x.customer.name };
 }
 
 function recent(limit = 20) {
@@ -102,4 +110,4 @@ function recent(limit = 20) {
   return db.prepare("SELECT s.*, c.name FROM signal_alerts s LEFT JOIN customers c ON c.id = s.customer_id WHERE s.kind != '_run' ORDER BY s.id DESC LIMIT ?").all(limit);
 }
 
-module.exports = { ensureSchema, candidates, run, recent };
+module.exports = { ensureSchema, candidates, run, recent, createTicket };

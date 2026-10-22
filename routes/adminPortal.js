@@ -4644,6 +4644,12 @@ router.post('/outages/mass/:id/:action', requireAdminSession, async (req, res) =
   } catch (e) { req.session._msg = { type: 'error', text: e.message }; }
   res.redirect('/admin/outages');
 });
+router.post('/outages/signal/:customerId/ticket', requireAdminSession, (req, res) => {
+  try {
+    const r = require('../services/signalWatchService').createTicket(req.params.customerId, { by: req.session.cashierName || req.session.adminUser || 'la oficina' });
+    res.json({ ok: true, message: `Reclamo #${r.tid} creado para ${r.name}.` });
+  } catch (e) { res.json({ ok: false, message: e.message }); }
+});
 router.post('/outages/:id/close', requireAdminSession, (req, res) => {
   try { require('../services/outageService').close(Number(req.params.id), req.session.adminUser || req.session.cashierName || 'oficina'); res.json({ ok: true }); }
   catch (e) { res.json({ ok: false, message: e.message }); }

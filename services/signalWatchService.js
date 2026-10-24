@@ -71,7 +71,7 @@ async function run({ force = false } = {}) {
   for (const x of todo) ins.run(x.customer.id, x.kind, x.analysis.base, x.analysis.last, x.analysis.flaps || 0, x.analysis.text);
   if (todo.length) {
     try {
-      await require('./waNotifyService').notifyAdmin(`📉 *AVISO PREVENTIVO DE SEÑAL*\n\nClientes con servicio pero con la señal en problemas:\n\n` +
+      await require('./waNotifyService').notifyNetwork(`📉 *AVISO PREVENTIVO DE SEÑAL*\n\nClientes con servicio pero con la señal en problemas:\n\n` +
         todo.map(x => `• *${x.customer.name}* — ${subjectOf(x).replace(' (preventivo)', '')}: ${x.kind === 'inestable' ? x.analysis.flaps + ' caídas en 48 h' : fmt(x.analysis.base) + ' → ' + fmt(x.analysis.last) + ' dBm'}`).join('\n') +
         `\n\nSi hace falta que vaya el técnico, creá el reclamo desde Equipos caídos → Aviso preventivo de señal.`);
     } catch (e) { logger.warn('[Señal] resumen: ' + e.message); }

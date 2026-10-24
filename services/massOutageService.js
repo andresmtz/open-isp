@@ -55,7 +55,7 @@ function isInMass(customerId) {
 
 const fmt = (ms) => new Date(ms).toLocaleString('es-PY', { timeZone: getSetting('timezone', 'America/Asuncion'), day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
 const dur = (ms) => { const m = Math.max(1, Math.round(ms / 60000)); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min'; };
-async function notify(text) { try { await require('./waNotifyService').notifyAdmin(text); } catch (e) { logger.warn('[Caída masiva] aviso: ' + e.message); } }
+async function notify(text) { try { await require('./waNotifyService').notifyNetwork(text); } catch (e) { logger.warn('[Caída masiva] aviso: ' + e.message); } }
 
 let _busy = false, _oltFails = {};
 async function scan() {

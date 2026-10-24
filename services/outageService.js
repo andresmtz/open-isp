@@ -257,7 +257,7 @@ async function alertNoReply(o, c) {
   try { require('../config/customerPhones').list(c).forEach(p => phones.push(p)); } catch (_) {}
   const list = [...new Set(phones.filter(Boolean).map(String))].join(' / ');
   try {
-    await require('./waNotifyService').notifyAdmin(`📵 *EQUIPO CAÍDO SIN RESPUESTA*\n\n👤 ${c.name}${c.customer_code ? ' (' + c.customer_code + ')' : ''}\n📞 ${list || '-'}\n⏱️ Sin conexión desde el ${fmtDate(o.down_since)}\n\nNo respondió la consulta automática: conviene llamarlo.`);
+    await require('./waNotifyService').notifyNetwork(`📵 *EQUIPO CAÍDO SIN RESPUESTA*\n\n👤 ${c.name}${c.customer_code ? ' (' + c.customer_code + ')' : ''}\n📞 ${list || '-'}\n⏱️ Sin conexión desde el ${fmtDate(o.down_since)}\n\nNo respondió la consulta automática: conviene llamarlo.`);
   } catch (e) { logger.warn('[Caídas] aviso sin respuesta: ' + e.message); }
 }
 
@@ -349,7 +349,7 @@ async function createTicket(c, o, ans) {
       (mapQ ? `• 📍 Ubicación: https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQ)}` : '');
     const list = require('../config/techPermissions').broadcastRecipients();
     for (const t of list) await waNotify.sendText(regional.normalizePhone(String(t.phone).replace(/\D/g, '')), msg);
-    await waNotify.notifyAdmin(`🛠️ Asistencia #${tid} creada automáticamente: ${c.name} — ${subject}.`);
+    await waNotify.notifyNetwork(`🛠️ Asistencia #${tid} creada automáticamente: ${c.name} — ${subject}.`);
   } catch (e) { logger.warn('[Caídas] aviso de asistencia: ' + e.message); }
   return tid;
 }

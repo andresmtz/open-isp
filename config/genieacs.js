@@ -266,7 +266,7 @@ let sendMonitoringAlert = null;
 (async () => {
   try {
     const whatsappBot = await import('../services/whatsappBot.mjs');
-    sendMonitoringAlert = require('../services/waNotifyService').notifyAdmin;
+    sendMonitoringAlert = require('../services/waNotifyService').notifyNetwork;
     logger.info('[GenieACS] WhatsApp monitoring alert integration loaded');
   } catch (error) {
     logger.warn('[GenieACS] WhatsApp bot not available for monitoring alerts');
@@ -1105,7 +1105,8 @@ async function monitorOfflineDevices(thresholdHours = 24) {
                         customer: customerForDevice(device)
                     };
                     // Cancelados o inscriptos: el equipo ya no está (o todavía no está) en servicio, no se avisa.
-                    if (deviceInfo.customer && ['cancelled', 'inactive'].includes(deviceInfo.customer.status)) continue;
+                    // Cortados por mora tampoco: solo se los atiende por temas de pago.
+                    if (deviceInfo.customer && ['cancelled', 'inactive', 'suspended', 'ditangguhkan'].includes(deviceInfo.customer.status)) continue;
                     
                     offlineDevices.push(deviceInfo);
                     logger.info(`[Offline] Perangkat offline: ${deviceInfo.id}, Offline selama: ${deviceInfo.offlineHours} jam`);

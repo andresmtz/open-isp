@@ -476,7 +476,8 @@ async function createRequest(convId, data, actor) {
     name: data.name, phone: c.phone, nik: data.nik || '', address: data.address, package_id: data.package_id,
     lat, lng, notes: ['Solicitud cargada desde Conversaciones de WhatsApp', String(data.notes || '').trim()].filter(Boolean).join(' — '),
   }, { source: 'WhatsApp', actor });
-  db.prepare("UPDATE wa_conversations SET customer_id=?, lead_name=?, lead_stage='' WHERE id=?").run(cust.id, String(data.name || '').trim(), c.id);
+  // crear la solicitud es atender el chat: sale de "Por atender" (y de la campana) hasta que el contacto vuelva a escribir
+  db.prepare("UPDATE wa_conversations SET customer_id=?, lead_name=?, lead_stage='', dismissed_at=?, state=CASE WHEN state='waiting_human' THEN 'open' ELSE state END WHERE id=?").run(cust.id, String(data.name || '').trim(), new Date().toISOString(), c.id);
   _cache.clear(); _cust.at = 0;
   // fotos marcadas → documentos del cliente
   const docs = require('./customerDocumentService');

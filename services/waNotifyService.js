@@ -159,6 +159,30 @@ async function sendToStaff(text) {
   return { sent: sent, total: set.size };
 }
 
+/**
+ * Avisos de red (equipos caídos, caída masiva, señal): administradores + personal de oficina con el permiso
+ * "Ver red" (red_ver) que tenga teléfono. No lleva nada de cobros: eso sigue yendo solo a administradores.
+ */
+async function notifyNetwork(text) {
+  if (!require('../config/waGate').ready()) return false;
+  const set = new Set();
+  try {
+    const admins = getSetting('whatsapp_admin_numbers', []);
+    (Array.isArray(admins) ? admins : String(admins || '').split(',')).forEach((p) => { const n = normalizeNum(p); if (n) set.add(n); });
+  } catch (e) {}
+  try {
+    const db = require('../config/database');
+    for (const c of db.prepare("SELECT phone, permissions FROM cashiers WHERE is_active=1 AND phone IS NOT NULL AND phone != ''").all()) {
+      let perms = {}; try { perms = JSON.parse(c.permissions || '{}'); } catch (_) {}
+      const n = normalizeNum(c.phone);
+      if (perms.red_ver && n) set.add(n);
+    }
+  } catch (e) {}
+  let sent = 0;
+  for (const p of set) { if (await sendText(p, text)) sent++; }
+  return { success: sent > 0, sent, total: set.size, message: `${sent}/${set.size}` };
+}
+
 let _connCache = { at: 0, val: false };
 async function isConnected() {
   if (!require('../config/waGate').ready()) return false;
@@ -196,4 +220,4 @@ async function notifyAdmin(text) {
   return sendToStaff(text);
 }
 
-module.exports = { sendText, sendImage, sendDocument, sendToStaff, notifyAdmin, isConnected, gateway };
+module.exports = { sendText, sendImage, sendDocument, sendToStaff, notifyAdmin, notifyNetwork, isConnected, gateway };

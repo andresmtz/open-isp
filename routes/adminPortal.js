@@ -3190,6 +3190,10 @@ router.post('/conversations/:id/link', requireAdminSession, express.json(), expr
   try { const r = convOrg.linkCustomer(Number(req.params.id), Number((req.body || {}).customer_id)); res.json({ ok: true, message: 'Vinculado a ' + r.name + (r.noPhone ? '. Este chat no muestra el número (WhatsApp lo oculta), así que no se agregó ningún teléfono a la ficha.' : r.asMain ? '. La ficha no tenía teléfono: este número quedó como principal.' : '. El número quedó como teléfono adicional del cliente.') }); }
   catch (e) { res.json({ ok: false, message: e.message }); }
 });
+router.get('/conversations/:id/cedula', requireAdminSession, async (req, res) => {
+  try { res.json(await require('../services/conversationOrgService').readCedula(req.params.id)); }
+  catch (e) { res.json({ ok: false, reason: e.message }); }
+});
 router.post('/conversations/:id/create-request', requireAdminSession, express.json(), express.urlencoded({ extended: true }), async (req, res) => {
   try {
     if (!staffPerms.has(req.session, 'clientes_alta')) throw new Error('No tenés permiso para cargar solicitudes de instalación.');

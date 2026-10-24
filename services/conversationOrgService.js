@@ -443,6 +443,26 @@ function linkCustomer(convId, customerId) {
   return { ok: true, name: cust.name, asMain };
 }
 
+// Lectura de la foto marcada como cédula (número y nombre), guardada por mensaje para no leerla dos veces
+const _ced = new Map();
+async function cedulaOf(c) {
+  if (!c || !c.cedula_msg) return null;
+  if (_ced.has(c.cedula_msg)) return _ced.get(c.cedula_msg);
+  const m = conv.message(c.cedula_msg);
+  const r = await conv.fetchMedia(await conv.mediaPathFor(m, m.jid));
+  const out = await require('./cedulaReaderService').read(Buffer.from(await r.arrayBuffer()));
+  _ced.set(c.cedula_msg, out);
+  if (_ced.size > 200) _ced.delete(_ced.keys().next().value);
+  return out;
+}
+async function readCedula(convId) {
+  const c = db.prepare('SELECT id, cedula_msg FROM wa_conversations WHERE id=?').get(Number(convId));
+  if (!c) throw new Error('Conversación no encontrada');
+  if (!c.cedula_msg) return { ok: false, reason: 'Todavía no hay una foto marcada como cédula.' };
+  const r = await cedulaOf(c);
+  return r && r.ok ? r : { ok: false, reason: 'No se pudo leer la foto de la cédula.' };
+}
+
 async function createRequest(convId, data, actor) {
   ensureSchema();
   const c = db.prepare('SELECT * FROM wa_conversations WHERE id=?').get(Number(convId));
@@ -467,7 +487,10 @@ async function createRequest(convId, data, actor) {
       const m = conv.message(c[col]);
       const rel = await conv.mediaPathFor(m, m.jid);
       const r = await conv.fetchMedia(rel);
-      await docs.add(cust.id, kind, Buffer.from(await r.arrayBuffer()), actor);
+      let buf = Buffer.from(await r.arrayBuffer());
+      // la cédula se guarda derecha (las fotos suelen venir de costado y WhatsApp borra la orientación)
+      if (kind === 'cedula') { try { const rd = await cedulaOf(c); if (rd && rd.angle) buf = await require('./cedulaReaderService').upright(buf, rd.angle); } catch (_) {} }
+      await docs.add(cust.id, kind, buf, actor);
       attached.push(docs.KINDS[kind]);
     } catch (e) { attached.push(docs.KINDS[kind] + ' (no se pudo adjuntar: ' + e.message + ')'); }
   }
@@ -669,7 +692,7 @@ function hot({ admin = false, money = false, limit = 4, msgs = 8 } = {}) {
   return { items, pending: pend.length, near: sales.length };
 }
 
-module.exports = {
+module.exports = { readCedula,
   board, stats, hot,
   IGNORE_REASONS, ignore, unignore, purge, clear, remove,
   INBOXES, MOTIVES, STAGES, LOST, ensureSchema, analyze, list, info, setOrg, quickReplies, saveQuickReplies,

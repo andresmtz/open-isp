@@ -1056,8 +1056,23 @@
         if (!d.ok) { hint.textContent = d.reason || ''; return; }
         var nik = document.getElementById('rqNik'), nm = document.getElementById('rqName');
         if (d.number && !nik.value) nik.value = d.number;
-        if (d.name && !nm.value.trim()) nm.value = d.name.replace(/\b(\w)(\w*)/g, function(_, a, b){ return a + b.toLowerCase(); });
-        hint.innerHTML = '<i class="bi bi-check2-circle" style="color:#4ade80"></i> Leído de la foto: ' + esc(d.number || '?') + (d.name ? ' · ' + esc(d.name) : '') + '. Revisalo antes de crear.';
+        // nombre: se compara lo leído de la cédula con lo que se habló en el chat
+        var title = function(s){ return String(s || '').toLowerCase().split(/\s+/).filter(Boolean).map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' '); };
+        var toks = function(s){ return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().split(/[^a-zñ]+/).filter(function(w){ return w.length > 1; }); };
+        var cedName = title(d.name), chatName = nm.value.trim();
+        var ct = toks(chatName), dt = toks(cedName);
+        var common = ct.filter(function(w){ return dt.indexOf(w) >= 0; }).length;
+        var nameMsg = '';
+        if (cedName && !chatName) { nm.value = cedName; nameMsg = ' El nombre se completó con el de la cédula.'; }
+        else if (cedName && ct.length && common === ct.length) {
+          nameMsg = ' <span style="color:#4ade80">El nombre del chat coincide con la cédula.</span>';
+          if (dt.length > ct.length) nameMsg += ' <a href="#" id="rqUseCed">Usar el completo: ' + esc(cedName) + '</a>';
+        } else if (cedName) {
+          nameMsg = ' <span style="color:#f87171">El nombre del chat (' + esc(chatName) + ') ' + (common ? 'coincide solo en parte' : 'no coincide') + ' con la cédula.</span> <a href="#" id="rqUseCed">Usar el de la cédula: ' + esc(cedName) + '</a>';
+        }
+        hint.innerHTML = '<i class="bi bi-check2-circle" style="color:#4ade80"></i> Leído de la foto: ' + esc(d.number || '?') + (cedName ? ' · ' + esc(cedName) : '') + '. Revisalo antes de crear.' + nameMsg;
+        var use = document.getElementById('rqUseCed');
+        if (use) use.onclick = function(e){ e.preventDefault(); nm.value = cedName; use.parentNode.removeChild(use); };
       }).catch(function(){ hint.textContent = ''; });
     }
     document.getElementById('rqAddr').value = '';
